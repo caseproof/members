@@ -80,7 +80,7 @@ function members_content_permissions_enabled() {
  */
 function members_login_widget_enabled() {
 
-	return apply_filters( 'members_login_widget_enabled', members_get_setting( 'login_form_widget' ) );
+	return apply_filters( 'members_login_widget_enabled', true );
 }
 
 /**
@@ -92,7 +92,7 @@ function members_login_widget_enabled() {
  */
 function members_users_widget_enabled() {
 
-	return apply_filters( 'members_users_widget_enabled', members_get_setting( 'users_widget' ) );
+	return apply_filters( 'members_users_widget_enabled', true );
 }
 
 /**
@@ -129,8 +129,6 @@ function members_get_default_settings() {
 
 		// @since 0.2.0
 		'private_feed'              => 0,
-		'login_form_widget'         => 0,
-		'users_widget'              => 0,
 		'content_permissions_error' => esc_html__( 'Sorry, but you do not have permission to view this content.', 'members' ),
 		'private_feed_error'        => esc_html__( 'You must be logged into the site to view this content.',      'members' ),
 

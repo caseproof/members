@@ -415,7 +415,7 @@ function members_get_clone_role_url( $role ) {
  */
 function members_get_edit_roles_url() {
 
-	return add_query_arg( 'page', 'roles', admin_url( 'users.php' ) );
+	return add_query_arg( 'page', 'roles', admin_url( 'admin.php?page=roles' ) );
 }
 
 /**

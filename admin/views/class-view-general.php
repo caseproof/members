@@ -61,7 +61,6 @@ class View_General extends View {
 		// Add settings sections.
 		add_settings_section( 'roles_caps',          esc_html__( 'Roles and Capabilities', 'members' ), array( $this, 'section_roles_caps' ), 'members-settings' );
 		add_settings_section( 'content_permissions', esc_html__( 'Content Permissions',    'members' ), '__return_false',                     'members-settings' );
-		add_settings_section( 'sidebar_widgets',     esc_html__( 'Sidebar Widgets',        'members' ), '__return_false',                     'members-settings' );
 		add_settings_section( 'private_site',        esc_html__( 'Private Site',           'members' ), '__return_false',                     'members-settings' );
 
 		/* === Settings Fields === */
@@ -74,10 +73,6 @@ class View_General extends View {
 		// Content permissions fields.
 		add_settings_field( 'enable_content_permissions', esc_html__( 'Enable Permissions', 'members' ), array( $this, 'field_enable_content_permissions' ), 'members-settings', 'content_permissions' );
 		add_settings_field( 'content_permissions_error',  esc_html__( 'Error Message',      'members' ), array( $this, 'field_content_permissions_error'  ), 'members-settings', 'content_permissions' );
-
-		// Widgets fields.
-		add_settings_field( 'widget_login', esc_html__( 'Login Widget', 'members' ), array( $this, 'field_widget_login' ), 'members-settings', 'sidebar_widgets' );
-		add_settings_field( 'widget_users', esc_html__( 'Users Widget', 'members' ), array( $this, 'field_widget_users' ), 'members-settings', 'sidebar_widgets' );
 
 		// Private site fields.
 		add_settings_field( 'enable_private_site', esc_html__( 'Enable Private Site', 'members' ), array( $this, 'field_enable_private_site' ), 'members-settings', 'private_site' );
@@ -102,8 +97,6 @@ class View_General extends View {
 		$settings['show_human_caps']      = ! empty( $settings['show_human_caps'] )      ? true : false;
 		$settings['multi_roles']          = ! empty( $settings['multi_roles'] )          ? true : false;
 		$settings['content_permissions']  = ! empty( $settings['content_permissions'] )  ? true : false;
-		$settings['login_form_widget']    = ! empty( $settings['login_form_widget'] )    ? true : false;
-		$settings['users_widget']         = ! empty( $settings['users_widget'] )         ? true : false;
 		$settings['private_blog']         = ! empty( $settings['private_blog'] )         ? true : false;
 		$settings['private_rest_api']     = ! empty( $settings['private_rest_api'] )     ? true : false;
 		$settings['private_feed']         = ! empty( $settings['private_feed'] )         ? true : false;
@@ -222,36 +215,6 @@ class View_General extends View {
 			)
 		);
 	}
-
-	/**
-	 * Login widget field callback.
-	 *
-	 * @since  2.0.0
-	 * @access public
-	 * @return void
-	 */
-	public function field_widget_login() { ?>
-
-		<label>
-			<input type="checkbox" name="members_settings[login_form_widget]" value="true" <?php checked( members_login_widget_enabled() ); ?> />
-			<?php esc_html_e( 'Enable the login form widget.', 'members' ); ?>
-		</label>
-	<?php }
-
-	/**
-	 * Uers widget field callback.
-	 *
-	 * @since  2.0.0
-	 * @access public
-	 * @return void
-	 */
-	public function field_widget_users() { ?>
-
-		<label>
-			<input type="checkbox" name="members_settings[users_widget]" value="true" <?php checked( members_users_widget_enabled() ); ?> />
-			<?php esc_html_e( 'Enable the users widget.', 'members' ); ?>
-		</label>
-	<?php }
 
 	/**
 	 * Enable private site field callback.

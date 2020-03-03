@@ -3,7 +3,7 @@
  * Plugin Name: Members
  * Plugin URI:  https://themehybrid.com/plugins/members
  * Description: A user and role management plugin that puts you in full control of your site's permissions. This plugin allows you to edit your roles and their capabilities, clone existing roles, assign multiple roles per user, block post content, or even make your site completely private.
- * Version:     2.2.0
+ * Version:     2.3.0
  * Author:      Justin Tadlock
  * Author URI:  https://themehybrid.com
  * Text Domain: members
@@ -242,6 +242,16 @@ final class Members_Plugin {
 			require_once( $this->dir . 'admin/class-cap-section.php'    );
 			require_once( $this->dir . 'admin/class-cap-control.php'    );
 		}
+
+		$addons = get_option( 'members_active_addons', array() );
+
+		if ( ! empty( $addons ) ) {
+			foreach ( $addons as $addon ) {
+				if ( file_exists( __DIR__ . "/addons/{$addon}/addon.php" ) ) {
+					include "addons/{$addon}/addon.php";
+				}
+			}
+		}
 	}
 
 	/**
@@ -255,6 +265,12 @@ final class Members_Plugin {
 
 		// Internationalize the text strings used.
 		add_action( 'plugins_loaded', array( $this, 'i18n' ), 2 );
+
+		// Migrate add-ons
+		add_action( 'plugins_loaded', array( $this, 'migrate_addons' ) );
+
+		// MemberPress info in block editor
+		add_action( 'enqueue_block_editor_assets', array( $this, 'block_editor_assets' ) );
 
 		// Register activation hook.
 		register_activation_hook( __FILE__, array( $this, 'activation' ) );
@@ -344,6 +360,99 @@ final class Members_Plugin {
 
 		// Make sure the plugin is deactivated.
 		deactivate_plugins( plugin_basename( __FILE__ ) );
+	}
+
+	/**
+	 * Transition separate add-on plugins into the included add-ons
+	 *
+	 * @return void
+	 */
+	public function migrate_addons() {
+
+		// Bail if we've already migrated the add-ons
+		if ( ! empty( get_option( 'members_addons_migrated' ) ) ) {
+			return;
+		}
+
+		$addons = array();
+
+		$plugins = array(
+			'members-acf-integration' => 'plugin.php',
+			'members-admin-access' => 'members-admin-access.php',
+			'members-block-permissions' => 'plugin.php',
+			'members-category-and-tag-caps' => 'plugin.php',
+			'members-core-create-caps' => 'members-core-create-caps.php',
+			'members-edd-integration' => 'plugin.php',
+			'members-givewp-integration' => 'plugin.php',
+			'members-meta-box-integration' => 'plugin.php',
+			'members-privacy-caps' => 'members-privacy-caps.php',
+			'members-role-hierarchy' => 'members-role-hierarchy.php',
+			'members-role-levels' => 'members-role-levels.php',
+			'members-woocommerce-integration' => 'plugin.php'
+		);
+
+		include ABSPATH . 'wp-admin/includes/file.php';
+
+		foreach ( $plugins as $dir => $file ) {
+			if ( is_plugin_active( "{$dir}/{$file}" ) ) {
+
+				// Deactive it
+				deactivate_plugins( "{$dir}/{$file}", true );
+
+				// Delete it
+				delete_plugins( array( "{$dir}/{$file}" ) );
+
+				// Make sure it's stored in our option for active add-ons
+				$addons[] = $dir;
+			}
+		}
+
+		if ( ! empty( $addons ) ) {
+			update_option( 'members_active_addons', $addons );
+		}
+
+		update_option( 'members_addons_migrated', true );
+	}
+
+	/**
+	 * We need a way to run an add-on's activation hook since the add-ons are no longer separate plugins.
+	 *
+	 * @param  string 	$addon 	Add-on directory name
+	 *
+	 * @return void
+	 */
+	public function run_addon_activator( $addon ) {
+
+		if ( file_exists( __DIR__ . "addons/{$addon}/src/Activator.php" ) ) {
+			
+			// Require the add-on file
+			include "addons/{$addon}/src/Activator.php";
+
+			// Read the file contents into memory, and determine the namespace
+			$contents = file_get_contents( __DIR__ . "/addons/{$addon}/src/Activator.php" );
+			preg_match( '/[\r\n]namespace\W(.+);[\r\n]/', $contents, $matches );
+			$namespace = $matches[1];
+			// Run the activator
+			if ( ! empty( $namespace ) ) {
+				$namespace::activate();
+			}
+		}
+	}
+
+	public function block_editor_assets() {
+		$active_addons = get_option( 'members_active_addons' );
+		if ( ! in_array( 'members-block-permissions', $active_addons ) ) {
+			wp_enqueue_script( 'block-editor-mp-upsell', plugin_dir_url( __FILE__ ) . '/addons/members-block-permissions/public/js/upsell.js' , array(
+				'wp-compose',
+				'wp-element',
+				'wp-hooks',
+				'wp-components'
+			), null, true );
+			wp_localize_script( 'block-editor-mp-upsell', 'membersUpsell', array(
+				'title' => __( 'Permissions', 'members' ),
+				'message' => __( 'To protect this block by paid membership or centrally with a content protection rule, upgrade to MemberPress.', 'members' )
+			) );
+		}
 	}
 }
 

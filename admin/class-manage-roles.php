@@ -58,7 +58,7 @@ final class Manage_Roles {
 
 		// If the role manager is active.
 		if ( members_role_manager_enabled() )
-			add_action( 'admin_menu', array( $this, 'add_admin_page' ) );
+			add_action( 'admin_menu', array( $this, 'add_admin_page' ), 99 );
 	}
 
 	/**
@@ -89,7 +89,7 @@ final class Manage_Roles {
 			$title = esc_html__( 'Edit Role', 'members' );
 
 		// Create the Manage Roles page.
-		$this->page = add_submenu_page( 'users.php', $title, esc_html__( 'Roles', 'members' ), $edit_roles_cap, 'roles', array( $this, 'page' ) );
+		$this->page = add_submenu_page( 'members', $title, esc_html__( 'Roles', 'members' ), $edit_roles_cap, 'roles', array( $this, 'page' ) );
 
 		// Let's roll if we have a page.
 		if ( $this->page ) {

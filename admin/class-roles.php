@@ -33,7 +33,7 @@ final class Roles {
 		add_action( 'current_screen', array( $this, 'current_screen' ) );
 
 		// Set up the role list table columns.
-		add_filter( 'manage_users_page_roles_columns', array( $this, 'manage_roles_columns' ), 5 );
+		add_filter( 'manage_members_page_roles_columns', array( $this, 'manage_roles_columns' ), 5 );
 
 		// Add help tabs.
 		add_action( 'members_load_manage_roles', array( $this, 'add_help_tabs' ) );
@@ -48,7 +48,7 @@ final class Roles {
 	 */
 	public function current_screen( $screen ) {
 
-		if ( 'users_page_roles' === $screen->id )
+		if ( 'members_page_roles' === $screen->id )
 			$screen->add_option( 'per_page', array( 'default' => 20 ) );
 	}
 
