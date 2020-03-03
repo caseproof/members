@@ -9,7 +9,7 @@ var jsDestination = './js/'; // Path to place the minified JS files.
 // Translation related.
 var text_domain = 'members'; // Your textdomain here.
 var translationFile = 'members.pot'; // Name of the transalation file.
-var translationDestination = './languages'; // Where to save the translation files.
+var translationDestination = './lang'; // Where to save the translation files.
 var packageName = 'members'; // Package name.
 var bugReport = 'https://memberpress.com'; // Where can users report bugs.
 var lastTranslator = 'Caseproof LLC <support@memberpress.com>'; // Last translator Email ID.
