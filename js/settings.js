@@ -49,7 +49,7 @@ jQuery( document ).ready( function($) {
 			svg.addClass(response.data.status);
 		})
 		.fail(function(response) {
-			console.log(response.data.msg);
+			alert(response.data.msg);
 		})
 		.always(function(response) {
 			$this.removeClass('processing');
