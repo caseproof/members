@@ -390,7 +390,7 @@ function members_is_wordpress_role( $role ) {
  */
 function members_get_new_role_url() {
 
-	return add_query_arg( 'page', 'role-new', admin_url( 'users.php' ) );
+	return add_query_arg( 'page', 'members', admin_url( 'admin.php' ) );
 }
 
 /**
