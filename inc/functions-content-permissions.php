@@ -149,6 +149,12 @@ function members_enable_content_permissions() {
 		add_filter( 'the_content_feed', 'members_content_permissions_protect', 95 );
 		add_filter( 'get_comment_text', 'members_content_permissions_protect', 95 );
 
+		// Filter the title so that no title is shown where there is no permission
+		add_filter( 'the_title', 'members_title_permissions_protect', 95);
+
+		// Filter results so that the posts with no permission are not shown at all
+		add_filter( 'posts_results', 'members_remove_no_permission_from_results', 95, 2 );
+
 		// Filter the comments template to make sure comments aren't shown to users without access.
 		add_filter( 'comments_template', 'members_content_permissions_comments', 95 );
 
@@ -178,6 +184,41 @@ function members_content_permissions_protect( $content ) {
 	$post_id = get_the_ID();
 
 	return members_can_current_user_view_post( $post_id ) ? $content : members_get_post_error_message( $post_id );
+}
+
+/**
+ * Where the user has no permission to view the post, blank out the title
+ * as the "You do not have permission..." text will be shown as the body or excerpt
+ *
+ * @param $title
+ * @return string
+ */
+function members_title_permissions_protect ($title ) {
+		$post_id = get_the_ID();
+
+		return members_can_current_user_view_post( $post_id ) ? $title : '';
+}
+
+/**
+ * Removes all posts which the user has no permission to view from the search results
+ *
+ * @param WP_Post[] $posts
+ * @param WP_Query $query
+ * @return WP_Post[]
+ */
+function members_search_result_permission_protect ( array $posts, WP_Query $query ) {
+
+    $filteredPosts = array();
+    $currentUserId = get_current_user_id();
+
+    foreach ($posts as $post) {
+        /** WP_Post $post */
+        if(members_can_user_view_post( $currentUserId, $post->ID )) {
+            array_push($filteredPosts, $post);
+        }
+    }
+
+    return $filteredPosts;
 }
 
 /**
