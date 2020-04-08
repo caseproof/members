@@ -1,6 +1,6 @@
 # Change Log
 
-## [2.3.0] - 2020-03-02
+## [3.0] - 2020-04-08
 
 ### Added
 
@@ -8,7 +8,7 @@
 
 ### Changed
 
-- Placed all Members-related settings under one admin menu item.
+- Consolidated all Members-related settings under one admin menu item.
 - Made login and user widgets enabled by default, and removed settings.
 
 ## [2.2.0] - 2019-07-20

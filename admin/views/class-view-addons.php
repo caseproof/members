@@ -54,23 +54,35 @@ class View_Addons extends View {
 
 		<div class="widefat">
 
-			<?php if ( $addons ) : ?>
+			<div class="members-addons">
+				
+				<?php if ( $addons ) : ?>
 
-				<?php foreach ( $addons as $addon ) : ?>
+					<?php foreach ( $addons as $addon ) : ?>
+						
+						<?php
+							if ( $addon->is_memberpress ) {
+								if ( ! is_plugin_active( 'memberpress/memberpress.php' ) ) {
+									$this->addon_card( $addon );
+								}
+							} else {
+								$this->addon_card( $addon );
+							}
+						?>
 
-					<?php $this->addon_card( $addon ); ?>
+					<?php endforeach; ?>
 
-				<?php endforeach; ?>
+				<?php else : ?>
 
-			<?php else : ?>
+					<div class="error notice">
+						<p>
+							<strong><?php esc_html_e( 'There are currently no add-ons to show. Please try again later.', 'members' ); ?></strong>
+						</p>
+					</div>
 
-				<div class="error notice">
-					<p>
-						<strong><?php esc_html_e( 'There are currently no add-ons to show. Please try again later.', 'members' ); ?></strong>
-					</p>
-				</div>
+				<?php endif; ?>
 
-			<?php endif; ?>
+			</div>
 
 		</div><!-- .widefat -->
 

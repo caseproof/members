@@ -1,47 +1,47 @@
 /* ====== Members Settings Screen. ====== */
 
-.admin_page_members-settings .welcome-panel {
+.members_page_members-settings .welcome-panel {
 	margin-top: 0;
 	padding:    40px 20px;
 }
 
-.admin_page_members-settings .welcome-panel .about-description {
+.members_page_members-settings .welcome-panel .about-description {
 	margin: 20px 0;
 }
 
-.admin_page_members-settings .welcome-panel-content {
+.members_page_members-settings .welcome-panel-content {
 	margin: 0;
 }
 
 @media screen and (min-width: 870px) {
 
-	.admin_page_members-settings .members-short-p {
+	.members_page_members-settings .members-short-p {
 		max-width: 612px;
 		margin-left: auto;
 		margin-right: auto;
 	}
 
-	.admin_page_members-settings .welcome-panel-content {
+	.members_page_members-settings .welcome-panel-content {
 		text-align: center;
 	}
 }
 
-.admin_page_members-settings .welcome-panel .button.button-hero {
+.members_page_members-settings .welcome-panel .button.button-hero {
 	margin-left: auto;
 	margin-right: auto;
 }
 
-.admin_page_members-settings .members-svg-wrap {
+.members_page_members-settings .members-svg-wrap {
 	display: inline-block;
 	margin: 0 auto 20px;
 }
 
 @media screen and (max-width: 870px) {
-	.admin_page_members-settings .welcome-panel {
+	.members_page_members-settings .welcome-panel {
 		padding: 20px;
 	}
 
-	.admin_page_members-settings .members-svg-wrap {
+	.members_page_members-settings .members-svg-wrap {
 		float: left;
 		margin-right: 28px;
 	}
@@ -53,7 +53,7 @@
 	}
 }
 
-.admin_page_members-settings .members-svg-link {
+.members_page_members-settings .members-svg-link {
 	display: table-cell;
 	text-align: center;
 	width: 128px;
@@ -67,16 +67,44 @@
 	box-shadow: 0 0 0 4px #363b3f;
 }
 
-.admin_page_members-settings .members-svg-link svg {
+.members_page_members-settings .members-svg-link svg {
 	max-width: 84px;
 	max-height: 64px;
 	width: auto;
 	height: auto;
 }
 
+.members-addons {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+}
+
+.members-addons .plugin-card-top {
+	width: 100%;
+}
+
+.members-addon {
+	width: 100%;
+	position: relative;
+	float: none;
+	display: flex;
+	align-items: center;
+}
+
+.members-addon .desc {
+	margin-bottom: 80px;
+}
+
 .addon-activate {
-	text-align: right;
-	margin-top: 20px;
+	text-align: center;
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	padding: 5px 10px 10px;
+	display: inline-block;
+	width: 100px;
+	position: absolute;
+	right: 20px;
+	bottom: 20px;
 }
 
 .activate-toggle:hover {
@@ -111,9 +139,10 @@
 	opacity: 0.5;
 }
 
-.members-addon .plugin-icon svg {
-	max-width: 128px;
-	max-height: 128px;
+.activate-toggle .action-label {
+	display: inline-block;
+	width: 50px;
+	text-align: left;
 }
 
 .mepr_dummy_txns {
@@ -174,7 +203,7 @@
 	align-items: center;
 	justify-content: center;
 	text-align: left;
-	padding: 30px;
+	padding: 10px;
 }
 
 .features li:before {
@@ -206,10 +235,6 @@
 	border-radius: 300px;
 }
 
-.members-plugin-card.plugin-card {
-	width: calc(32% - 8px);
-}
-
 .members-plugin-card.plugin-card:nth-child(even) {
 	margin-right: inherit;
 }
@@ -221,6 +246,11 @@
 
 .members-plugin-card.plugin-card .plugin-card-top {
 	min-height: 0;
+	padding: 30px 20px;
+}
+
+.members-plugin-card.plugin-card .plugin-icon {
+	top: 30px;
 }
 
 .members-plugin-card.plugin-card .plugin-card-bottom .column-status {
@@ -253,6 +283,27 @@
 .memberpress-about .mp-logo {
 	max-width: 256px;
 	margin: 50px;
+}
+
+.members-about-addons {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	grid-column-gap: 20px;
+}
+
+.members-about-addons .members-plugin-card {
+	margin: 0;
+	width: 100%;
+}
+
+.members-about-addons .members-plugin-card .name h3 a {
+	text-decoration: none;
+}
+
+.members-about-addons .members-plugin-card .plugin-card-bottom {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
 }
 
 /* ====== Manage Roles Screen. ====== */

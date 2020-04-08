@@ -5,7 +5,7 @@ Tags: capabilities, roles, members, users
 Requires at least: 4.7
 Tested up to: 5.2
 Requires PHP: 5.6
-Stable tag: 2.3.0
+Stable tag: 3.0.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -68,7 +68,7 @@ You can also [view the readme](https://github.com/caseproof/members/blob/master/
 
 Since version 2.1.0 of Members, PHP 5.6+ is a soft requirement to use the plugin. The plugin will still work on PHP 5.3+, but it is not recommended.
 
-When Members version 3.0.0 is released, PHP 5.6+ will be a hard requirement and won't work on older versions of PHP.
+As of Members version 3.0.0 is released, PHP 5.6+ is be a hard requirement and won't work on older versions of PHP.
 
 ### I can't access the "Role Manager" features.
 

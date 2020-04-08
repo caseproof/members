@@ -103,7 +103,7 @@ final class Settings_Page {
 	 */
 	private function setup_actions() {
 
-		add_action( 'admin_menu', array( $this, 'admin_menu' ), 999 );
+		add_action( 'admin_menu', array( $this, 'admin_menu' ), 25 );
 		add_action( 'wp_ajax_toggle_addon', array( $this, 'toggle_addon' ) );
 	}
 
@@ -221,7 +221,9 @@ final class Settings_Page {
 		// Create the settings page.
 		$this->settings_page = add_submenu_page( 'members', esc_html_x( 'Settings', 'admin screen', 'members' ), esc_html_x( 'Settings', 'admin screen', 'members' ), apply_filters( 'members_settings_capability', 'manage_options' ), 'members-settings', array( $this, 'settings_page' ) );
 		$this->addons_page = add_submenu_page( 'members', esc_html_x( 'Add-Ons', 'admin screen', 'members' ), _x( '<span style="color: #8CBD5A;">Add-Ons</span>', 'admin screen', 'members' ), apply_filters( 'members_settings_capability', 'manage_options' ), 'members-settings&view=add-ons', array( $this, 'settings_page' ) );
-		$this->payments_page = add_submenu_page( 'members', esc_html_x( 'Payments', 'admin screen', 'members' ), esc_html_x( 'Payments', 'admin screen', 'members' ), apply_filters( 'members_settings_capability', 'manage_options' ), 'members-payments', array( $this, 'payments_page' ) );
+		if ( ! is_plugin_active( 'memberpress/memberpress.php' ) ) {
+			$this->payments_page = add_submenu_page( 'members', esc_html_x( 'Payments', 'admin screen', 'members' ), esc_html_x( 'Payments', 'admin screen', 'members' ), apply_filters( 'members_settings_capability', 'manage_options' ), 'members-payments', array( $this, 'payments_page' ) );
+		}
 		$this->about_page = add_submenu_page( 'members', esc_html_x( 'About Us', 'admin screen', 'members' ), esc_html_x( 'About Us', 'admin screen', 'members' ), apply_filters( 'members_settings_capability', 'manage_options' ), 'members-about', array( $this, 'about_page' ) );
 
 		if ( $this->settings_page ) {
@@ -615,84 +617,86 @@ final class Settings_Page {
 					</div>
 				</div>
 			</div>
-			<div class="members-plugin-card plugin-card plugin-card-memberpress">
-				<div class="plugin-card-top">
-					<div class="name column-name">
-						<h3>
-							<a href="https://memberpress.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=memberpress_icon_title" target="_blank" rel="noopener noreferrer">
-								MemberPress <img src="<?php echo members_plugin()->uri . "img/mp-icon-RGB.jpg"; ?>" class="plugin-icon" alt="">
-							</a>
-						</h3>
+			<div class="members-about-addons">
+				<div class="members-plugin-card plugin-card plugin-card-memberpress" style="margin-left: 0;">
+					<div class="plugin-card-top">
+						<div class="name column-name">
+							<h3>
+								<a href="https://memberpress.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=memberpress_icon_title" target="_blank" rel="noopener noreferrer">
+									MemberPress <img src="<?php echo members_plugin()->uri . "img/mp-icon-RGB.jpg"; ?>" class="plugin-icon" alt="">
+								</a>
+							</h3>
+						</div>
+						<div class="desc column-description">
+							<p>MemberPress will help you build astounding WordPress membership sites, accept credit cards securely, control who sees your content and sell digital downloads... all without the difficult setup.</p>
+						</div>
 					</div>
-					<div class="desc column-description">
-						<p>MemberPress will help you build astounding WordPress membership sites, accept credit cards securely, control who sees your content and sell digital downloads... all without the difficult setup.</p>
+					<div class="plugin-card-bottom">
+						<?php if ( is_plugin_active( 'memberpress/memberpress.php' ) ) : // Installed and active ?>
+							<div class="column-rating column-status">Status: <span class="active">Active</span></div>
+							<div class="column-updated"><a href="https://memberpress.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=memberpress_learn_more" target="_blank" class="button button-secondary">Learn More</a></div>
+						<?php elseif ( array_key_exists( 'memberpress/memberpress.php', $installed_plugins ) ) : // Installed but inactive ?>
+							<div class="column-rating column-status">Status: <span class="inactive">Inactive</span></div>
+							<div class="column-updated"><a href="<?php echo wp_nonce_url( admin_url( 'plugins.php?action=activate&plugin=memberpress/memberpress.php' ), 'activate-plugin_memberpress/memberpress.php' ); ?>" class="button button-secondary">Activate</a></div>
+						<?php else : // Not installed ?>
+							<div class="column-rating column-status">Status: Not Installed</div>
+							<div class="column-updated"><a href="https://memberpress.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=memberpress_install" target="_blank" class="button button-primary">Install Plugin</a></div>
+						<?php endif; ?>
 					</div>
 				</div>
-				<div class="plugin-card-bottom">
-					<?php if ( is_plugin_active( 'memberpress/memberpress.php' ) ) : // Installed and active ?>
-						<div class="column-rating column-status">Status: <span class="active">Active</span></div>
-						<div class="column-updated"><a href="https://memberpress.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=memberpress_learn_more" target="_blank" class="button button-secondary">Learn More</a></div>
-					<?php elseif ( array_key_exists( 'memberpress/memberpress.php', $installed_plugins ) ) : // Installed but inactive ?>
-						<div class="column-rating column-status">Status: <span class="inactive">Inactive</span></div>
-						<div class="column-updated"><a href="<?php echo wp_nonce_url( admin_url( 'plugins.php?action=activate&plugin=memberpress/memberpress.php' ), 'activate-plugin_memberpress/memberpress.php' ); ?>" class="button button-secondary">Activate</a></div>
-					<?php else : // Not installed ?>
-						<div class="column-rating column-status">Status: Not Installed</div>
-						<div class="column-updated"><a href="https://memberpress.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=memberpress_install" target="_blank" class="button button-primary">Install Plugin</a></div>
-					<?php endif; ?>
-				</div>
-			</div>
 
-			<div class="members-plugin-card plugin-card plugin-card-pretty-links">
-				<div class="plugin-card-top">
-					<div class="name column-name">
-						<h3>
-							<a href="https://prettylinks.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=prettylinks_icon_title" target="_blank" rel="noopener noreferrer">
-								Pretty Links <img src="<?php echo members_plugin()->uri . "img/pl-icon-RGB.jpg"; ?>" class="plugin-icon" alt="">
-							</a>
-						</h3>
+				<div class="members-plugin-card plugin-card plugin-card-pretty-links">
+					<div class="plugin-card-top">
+						<div class="name column-name">
+							<h3>
+								<a href="https://prettylinks.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=prettylinks_icon_title" target="_blank" rel="noopener noreferrer">
+									Pretty Links <img src="<?php echo members_plugin()->uri . "img/pl-icon-RGB.jpg"; ?>" class="plugin-icon" alt="">
+								</a>
+							</h3>
+						</div>
+						<div class="desc column-description">
+							<p>The easiest way to monetize your content. Are you tired of managing affiliate offers manually? Pretty Links helps you unlock more affiliate revenue from your existing content ... it’s like a surprise inheritance!</p>
+						</div>
 					</div>
-					<div class="desc column-description">
-						<p>The easiest way to monetize your content. Are you tired of managing affiliate offers manually? Pretty Links helps you unlock more affiliate revenue from your existing content ... it’s like a surprise inheritance!</p>
+					<div class="plugin-card-bottom">
+						<?php if ( is_plugin_active( 'pretty-link/pretty-link.php' ) ) : // Installed and active ?>
+							<div class="column-rating column-status">Status: <span class="active">Active</span></div>
+							<div class="column-updated"><a href="https://prettylinks.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=prettylinks_learn_more" target="_blank" class="button button-secondary">Learn More</a></div>
+						<?php elseif ( array_key_exists( 'pretty-link/pretty-link.php', $installed_plugins ) ) : // Installed but inactive ?>
+							<div class="column-rating column-status">Status: <span class="inactive">Inactive</span></div>
+							<div class="column-updated"><a href="<?php echo wp_nonce_url( admin_url( 'plugins.php?action=activate&plugin=pretty-link/pretty-link.php' ), 'activate-plugin_pretty-link/pretty-link.php' ); ?>" class="button button-secondary">Activate</a></div>
+						<?php else : // Not installed ?>
+							<div class="column-rating column-status">Status: Not Installed</div>
+							<div class="column-updated"><a href="https://prettylinks.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=prettylinks_install" target="_blank" class="button button-primary">Install Plugin</a></div>
+						<?php endif; ?>
 					</div>
 				</div>
-				<div class="plugin-card-bottom">
-					<?php if ( is_plugin_active( 'pretty-link/pretty-link.php' ) ) : // Installed and active ?>
-						<div class="column-rating column-status">Status: <span class="active">Active</span></div>
-						<div class="column-updated"><a href="https://prettylinks.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=prettylinks_learn_more" target="_blank" class="button button-secondary">Learn More</a></div>
-					<?php elseif ( array_key_exists( 'pretty-link/pretty-link.php', $installed_plugins ) ) : // Installed but inactive ?>
-						<div class="column-rating column-status">Status: <span class="inactive">Inactive</span></div>
-						<div class="column-updated"><a href="<?php echo wp_nonce_url( admin_url( 'plugins.php?action=activate&plugin=pretty-link/pretty-link.php' ), 'activate-plugin_pretty-link/pretty-link.php' ); ?>" class="button button-secondary">Activate</a></div>
-					<?php else : // Not installed ?>
-						<div class="column-rating column-status">Status: Not Installed</div>
-						<div class="column-updated"><a href="https://prettylinks.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=prettylinks_install" target="_blank" class="button button-primary">Install Plugin</a></div>
-					<?php endif; ?>
-				</div>
-			</div>
 
-			<div class="members-plugin-card plugin-card plugin-card-affiliate-royale">
-				<div class="plugin-card-top">
-					<div class="name column-name">
-						<h3>
-							<a href="https://affiliateroyale.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=affiliateroyale_icon_title" target="_blank" rel="noopener noreferrer">
-								Affiliate Royale <img src="<?php echo members_plugin()->uri . "img/affiliate_blue-01.png"; ?>" class="plugin-icon" alt="">
-							</a>
-						</h3>
+				<div class="members-plugin-card plugin-card plugin-card-affiliate-royale" style="margin-right: 0;">
+					<div class="plugin-card-top">
+						<div class="name column-name">
+							<h3>
+								<a href="https://affiliateroyale.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=affiliateroyale_icon_title" target="_blank" rel="noopener noreferrer">
+									Affiliate Royale <img src="<?php echo members_plugin()->uri . "img/affiliate_blue-01.png"; ?>" class="plugin-icon" alt="">
+								</a>
+							</h3>
+						</div>
+						<div class="desc column-description">
+							<p>Affiliate Royale is a full-featured Affiliate Program plugin for WordPress. Use it to start an Affiliate Program for your products to dramatically increase traffic, attention and sales.</p>
+						</div>
 					</div>
-					<div class="desc column-description">
-						<p>Affiliate Royale is a complete Affiliate Program plugin for WordPress. Use it to start an Affiliate Program for your products to dramatically increase traffic, attention and sales.</p>
+					<div class="plugin-card-bottom">
+						<?php if ( is_plugin_active( 'affiliate-royale/affiliate-royale.php' ) ) : // Installed and active ?>
+							<div class="column-rating column-status">Status: <span class="active">Active</span></div>
+							<div class="column-updated"><a href="https://affiliateroyale.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=affiliateroyale_learn_more" target="_blank" class="button button-secondary">Learn More</a></div>
+						<?php elseif ( array_key_exists( 'affiliate-royale/affiliate-royale.php', $installed_plugins ) ) : // Installed but inactive ?>
+							<div class="column-rating column-status">Status: <span class="inactive">Inactive</span></div>
+							<div class="column-updated"><a href="<?php echo wp_nonce_url( admin_url( 'plugins.php?action=activate&plugin=affiliate-royale/affiliate-royale.php' ), 'activate-plugin_affiliate-royale/affiliate-royale.php' ); ?>" class="button button-secondary">Activate</a></div>
+						<?php else : // Not installed ?>
+							<div class="column-rating column-status">Status: Not Installed</div>
+							<div class="column-updated"><a href="https://affiliateroyale.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=affiliateroyale_install" target="_blank" class="button button-primary">Install Plugin</a></div>
+						<?php endif; ?>
 					</div>
-				</div>
-				<div class="plugin-card-bottom">
-					<?php if ( is_plugin_active( 'affiliate-royale/affiliate-royale.php' ) ) : // Installed and active ?>
-						<div class="column-rating column-status">Status: <span class="active">Active</span></div>
-						<div class="column-updated"><a href="https://affiliateroyale.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=affiliateroyale_learn_more" target="_blank" class="button button-secondary">Learn More</a></div>
-					<?php elseif ( array_key_exists( 'affiliate-royale/affiliate-royale.php', $installed_plugins ) ) : // Installed but inactive ?>
-						<div class="column-rating column-status">Status: <span class="inactive">Inactive</span></div>
-						<div class="column-updated"><a href="<?php echo wp_nonce_url( admin_url( 'plugins.php?action=activate&plugin=affiliate-royale/affiliate-royale.php' ), 'activate-plugin_affiliate-royale/affiliate-royale.php' ); ?>" class="button button-secondary">Activate</a></div>
-					<?php else : // Not installed ?>
-						<div class="column-rating column-status">Status: Not Installed</div>
-						<div class="column-updated"><a href="https://affiliateroyale.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=affiliateroyale_install" target="_blank" class="button button-primary">Install Plugin</a></div>
-					<?php endif; ?>
 				</div>
 			</div>
 		</div><!-- wrap -->
