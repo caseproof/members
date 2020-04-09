@@ -1,5 +1,11 @@
 # Change Log
 
+## [3.0.2] - 2020-04-09
+
+### Fixed
+
+- Minimized SVG icons to fix issues with parsing them
+
 ## [3.0.1] - 2020-04-09
 
 - Some JS and image files weren't checked in via SVN, so bumped version to add them
