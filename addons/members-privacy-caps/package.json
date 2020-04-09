@@ -1,0 +1,29 @@
+{
+  "name": "members-privacy-caps",
+  "version": "1.0.0",
+  "description": "Creates additional capabilities for control over WordPress' privacy and personal data features.",
+  "main": "index.js",
+  "scripts": {
+    "build:i18n": "node resources/build/i18n.js",
+    "build:dist": "node resources/build/dist.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/justintadlock/members-privacy-caps.git"
+  },
+  "keywords": [
+    "wordpress"
+  ],
+  "author": "Justin Tadlock",
+  "license": "GPL-2.0+",
+  "bugs": {
+    "url": "https://github.com/justintadlock/members-privacy-caps/issues"
+  },
+  "homepage": "https://github.com/justintadlock/members-privacy-caps#readme",
+  "devDependencies": {
+    "copy": "^0.3.1",
+    "node-wp-i18n": "^1.0.5",
+    "rimraf": "^2.6.2"
+  },
+  "dependencies": {}
+}
