@@ -71,9 +71,7 @@ You can also [view the readme](https://github.com/caseproof/members/blob/master/
 
 ### Minimum PHP requirements.
 
-Since version 2.1.0 of Members, PHP 5.6+ is a soft requirement to use the plugin. The plugin will still work on PHP 5.3+, but it is not recommended.
-
-As of Members version 3.0.0 is released, PHP 5.6+ is be a hard requirement and won't work on older versions of PHP.
+Members version 3.0.0 requires PHP 5.6+
 
 ### I can't access the "Role Manager" features.
 
@@ -107,4 +105,4 @@ If upgrading from a version prior to 2.0.0, please note that the plugin now requ
 
 == Changelog ==
 
-The change log is located in the `changelog.md` file in the plugin folder.
+The change log is located in the `changelog.md` file in the plugin folder. You may also [view the change log](https://github.com/caseproof/members/blob/master/changelog.md) online.
