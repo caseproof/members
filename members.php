@@ -424,17 +424,18 @@ final class Members_Plugin {
 	 */
 	public function run_addon_activator( $addon ) {
 
-		if ( file_exists( __DIR__ . "addons/{$addon}/src/Activator.php" ) ) {
+		if ( file_exists( trailingslashit( __DIR__ ) . "addons/{$addon}/src/Activator.php" ) ) {
 			
 			// Require the add-on file
 			include "addons/{$addon}/src/Activator.php";
 
 			// Read the file contents into memory, and determine the namespace
-			$contents = file_get_contents( __DIR__ . "/addons/{$addon}/src/Activator.php" );
+			$contents = file_get_contents( trailingslashit( __DIR__ ) . "addons/{$addon}/src/Activator.php" );
 			preg_match( '/[\r\n]namespace\W(.+);[\r\n]/', $contents, $matches );
 			$namespace = $matches[1];
 			// Run the activator
 			if ( ! empty( $namespace ) ) {
+				$namespace .= '\Activator';
 				$namespace::activate();
 			}
 		}
