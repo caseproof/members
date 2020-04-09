@@ -28,11 +28,11 @@ msgstr ""
 msgid "Members requires PHP version %1$s. You are running version %2$s. Please upgrade and try again."
 msgstr ""
 
-#: members.php:452, addons/members-block-permissions/src/Editor.php:87
+#: members.php:454, addons/members-block-permissions/src/Editor.php:87
 msgid "Permissions"
 msgstr ""
 
-#: members.php:453, addons/members-block-permissions/src/Editor.php:131, addons/members-block-permissions/src/Editor.php:132
+#: members.php:455, addons/members-block-permissions/src/Editor.php:131, addons/members-block-permissions/src/Editor.php:132
 msgid "To protect this block by paid membership or centrally with a content protection rule, upgrade to MemberPress."
 msgstr ""
 
@@ -52,11 +52,11 @@ msgstr ""
 msgid "Edit Capabilities: %s"
 msgstr ""
 
-#: admin/class-manage-roles.php:86, admin/class-manage-roles.php:92, admin/class-manage-users.php:360, admin/class-meta-box-content-permissions.php:174, admin/class-roles.php:170, admin/class-user-edit.php:92
+#: admin/class-manage-roles.php:87, admin/class-manage-roles.php:93, admin/class-manage-users.php:360, admin/class-meta-box-content-permissions.php:174, admin/class-roles.php:170, admin/class-user-edit.php:92
 msgid "Roles"
 msgstr ""
 
-#: admin/class-manage-roles.php:89, admin/class-role-edit.php:298
+#: admin/class-manage-roles.php:90, admin/class-role-edit.php:298
 msgid "Edit Role"
 msgstr ""
 
@@ -176,7 +176,7 @@ msgstr ""
 msgid "The %s role is typically the most important role on the site. Please take extreme caution that you do not inadvertently remove necessary capabilities."
 msgstr ""
 
-#: admin/class-role-edit.php:238, admin/class-role-new.php:227
+#: admin/class-role-edit.php:238, admin/class-role-new.php:243
 msgid "The %s role has been created."
 msgstr ""
 
@@ -185,11 +185,11 @@ msgctxt "role"
 msgid "Add New"
 msgstr ""
 
-#: admin/class-role-edit.php:320, admin/class-role-new.php:328, admin/class-roles.php:67, admin/functions-help.php:62
+#: admin/class-role-edit.php:320, admin/class-role-new.php:344, admin/class-roles.php:67, admin/functions-help.php:62
 msgid "Role Name"
 msgstr ""
 
-#: admin/class-role-edit.php:326, admin/class-role-new.php:334, inc/class-widget-users.php:228
+#: admin/class-role-edit.php:326, admin/class-role-new.php:350, inc/class-widget-users.php:228
 msgid "Role:"
 msgstr ""
 
@@ -201,7 +201,7 @@ msgstr ""
 msgid "Your Role"
 msgstr ""
 
-#: admin/class-role-list-table.php:355, admin/class-role-new.php:336, admin/functions-admin.php:46
+#: admin/class-role-list-table.php:355, admin/class-role-new.php:352, admin/functions-admin.php:46
 msgid "Edit"
 msgstr ""
 
@@ -261,40 +261,40 @@ msgid_plural "Uneditable %s"
 msgstr[0] ""
 msgstr[1] ""
 
-#: admin/class-role-new.php:109, admin/class-role-new.php:109
+#: admin/class-role-new.php:111, admin/class-role-new.php:111
 msgid "Members"
 msgstr ""
 
-#: admin/class-role-new.php:110, admin/class-role-new.php:110
+#: admin/class-role-new.php:133, admin/class-role-new.php:133
 msgctxt "admin screen"
 msgid "Add New Role"
 msgstr ""
 
-#: admin/class-role-new.php:236
+#: admin/class-role-new.php:252
 msgid "You must enter a valid role."
 msgstr ""
 
-#: admin/class-role-new.php:240
+#: admin/class-role-new.php:256
 msgid "The %s role already exists."
 msgstr ""
 
-#: admin/class-role-new.php:244
+#: admin/class-role-new.php:260
 msgid "You must enter a valid role name."
 msgstr ""
 
-#: admin/class-role-new.php:311
+#: admin/class-role-new.php:327
 msgid "Add New Role"
 msgstr ""
 
-#: admin/class-role-new.php:311
+#: admin/class-role-new.php:327
 msgid "Clone Role"
 msgstr ""
 
-#: admin/class-role-new.php:329
+#: admin/class-role-new.php:345
 msgid "%s Clone"
 msgstr ""
 
-#: admin/class-role-new.php:329
+#: admin/class-role-new.php:345
 msgid "Enter role name"
 msgstr ""
 
@@ -314,7 +314,7 @@ msgstr ""
 msgid "%s role deleted."
 msgstr ""
 
-#: admin/class-roles.php:210, admin/functions-help.php:46, admin/views/class-view-addons.php:171
+#: admin/class-roles.php:210, admin/functions-help.php:46, admin/views/class-view-addons.php:183
 msgid "Overview"
 msgstr ""
 
@@ -370,7 +370,7 @@ msgstr ""
 msgid "No add-on provided."
 msgstr ""
 
-#: admin/class-settings.php:136, admin/views/class-view-addons.php:144
+#: admin/class-settings.php:136, admin/views/class-view-addons.php:156
 msgid "Active"
 msgstr ""
 
@@ -378,7 +378,7 @@ msgstr ""
 msgid "Add-on activated"
 msgstr ""
 
-#: admin/class-settings.php:148, admin/views/class-view-addons.php:138, admin/views/class-view-addons.php:144
+#: admin/class-settings.php:148, admin/views/class-view-addons.php:150, admin/views/class-view-addons.php:156
 msgid "Activate"
 msgstr ""
 
@@ -401,17 +401,17 @@ msgctxt "admin screen"
 msgid "<span style=\"color: #8CBD5A;\">Add-Ons</span>"
 msgstr ""
 
-#: admin/class-settings.php:224, admin/class-settings.php:224, admin/class-settings.php:343
+#: admin/class-settings.php:225, admin/class-settings.php:225, admin/class-settings.php:345
 msgctxt "admin screen"
 msgid "Payments"
 msgstr ""
 
-#: admin/class-settings.php:225, admin/class-settings.php:225, admin/class-settings.php:599
+#: admin/class-settings.php:227, admin/class-settings.php:227, admin/class-settings.php:601
 msgctxt "admin screen"
 msgid "About Us"
 msgstr ""
 
-#: admin/class-settings.php:321
+#: admin/class-settings.php:323
 msgctxt "admin screen"
 msgid "Members"
 msgstr ""
@@ -426,6 +426,34 @@ msgstr ""
 
 #: admin/functions-admin.php:50
 msgid "Are you sure you want to delete this role? This is a permanent action and cannot be undone."
+msgstr ""
+
+#: admin/functions-admin.php:181
+msgid "Welcome to Members 3.0!"
+msgstr ""
+
+#: admin/functions-admin.php:182
+msgid "The new Members is here to deliver an easier experience and more advanced features."
+msgstr ""
+
+#: admin/functions-admin.php:183
+msgid "Don't worry, it will work the same as it always has for you!  We've just made the following changes:"
+msgstr ""
+
+#: admin/functions-admin.php:184
+msgid "<strong>1.</strong> We've centralized all of the main Members settings here. This will make things much easier to find and use."
+msgstr ""
+
+#: admin/functions-admin.php:185
+msgid "<strong>2.</strong> All of our Add-ons are now <strong>freely</strong> included in Members! Just visit the Add-ons menu item here to start using these premium features."
+msgstr ""
+
+#: admin/functions-admin.php:186
+msgid "We're excited about these new changes and we hope they'll make your experience with Members even better!"
+msgstr ""
+
+#: admin/functions-admin.php:187
+msgid "- The MemberPress team"
 msgstr ""
 
 #: admin/functions-help.php:23
@@ -958,11 +986,6 @@ msgid_plural "WordPress %s"
 msgstr[0] ""
 msgstr[1] ""
 
-#. translators: %s is the file name wrapped in a code tag.
-#: addons/members-acf-integration/uninstall.php:15, addons/members-block-permissions/uninstall.php:15, addons/members-privacy-caps/uninstall.php:17
-msgid "%s should only be called when uninstalling the plugin."
-msgstr ""
-
 #: addons/members-core-create-caps/addon.php:25
 msgid "Create Posts"
 msgstr ""
@@ -995,27 +1018,27 @@ msgstr ""
 msgid "Deny"
 msgstr ""
 
-#: admin/views/class-view-addons.php:69
+#: admin/views/class-view-addons.php:79
 msgid "There are currently no add-ons to show. Please try again later."
 msgstr ""
 
-#: admin/views/class-view-addons.php:180
+#: admin/views/class-view-addons.php:192
 msgid "Download"
 msgstr ""
 
-#: admin/views/class-view-addons.php:189
+#: admin/views/class-view-addons.php:201
 msgid "Purchase"
 msgstr ""
 
-#: admin/views/class-view-addons.php:208
+#: admin/views/class-view-addons.php:220
 msgid "The Add-Ons screen allows you to view available add-ons for the Members plugin. You can download some plugins directly. Others may be available to purchase."
 msgstr ""
 
-#: admin/views/class-view-addons.php:222
+#: admin/views/class-view-addons.php:234
 msgid "Some plugins may be available for direct download. In such cases, you can click the download button to get a ZIP file of the plugin."
 msgstr ""
 
-#: admin/views/class-view-addons.php:236
+#: admin/views/class-view-addons.php:248
 msgid "Some add-ons may require purchase before downloading them. Clicking the purchase button will take you off-site to view the add-on in more detail."
 msgstr ""
 
@@ -1173,20 +1196,6 @@ msgstr ""
 
 #: addons/members-acf-integration/src/functions-caps.php:57
 msgid "Allows users to delete other user's field groups."
-msgstr ""
-
-#: addons/members-acf-integration/src/Plugin.php:309
-msgid "Advanced Custom Fields"
-msgstr ""
-
-#: addons/members-acf-integration/src/Plugin.php:310
-msgid "Advanced Custom Fields %s"
-msgid_plural "Advanced Custom Fields %s"
-msgstr[0] ""
-msgstr[1] ""
-
-#: addons/members-acf-integration/src/Plugin.php:341
-msgid "Custom Fields"
 msgstr ""
 
 #: addons/members-admin-access/app/class-view-settings.php:39, addons/members-admin-access/app/functions-admin.php:59
