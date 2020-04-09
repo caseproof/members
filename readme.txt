@@ -2,7 +2,7 @@
 
 Contributors: supercleanse
 Donate link: https://memberpress.com/plugins/members
-Tags: members, users, roles, editor, security, access, permission, capabilities
+Tags: members, users, roles, capabilities, editor, security, access, permission
 Requires at least: 4.7
 Tested up to: 5.3
 Requires PHP: 5.6
@@ -71,7 +71,7 @@ You can also [view the readme](https://github.com/caseproof/members/blob/master/
 
 ### Minimum PHP requirements.
 
-Members version 3.0.0 requires PHP 5.6+
+Members now requires PHP 5.6+
 
 ### I can't access the "Role Manager" features.
 
