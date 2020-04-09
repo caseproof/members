@@ -391,7 +391,8 @@ final class Members_Plugin {
 			'members-woocommerce-integration' => 'plugin.php'
 		);
 
-		include ABSPATH . 'wp-admin/includes/file.php';
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+		require_once ABSPATH . 'wp-admin/includes/plugin.php';
 
 		foreach ( $plugins as $dir => $file ) {
 			if ( is_plugin_active( "{$dir}/{$file}" ) ) {

@@ -37,7 +37,7 @@ jQuery( document ).ready( function($) {
 			url: ajaxurl,
 			type: 'POST',
 			data: {
-				action: 'toggle_addon',
+				action: 'mbrs_toggle_addon',
 				nonce: membersAddons.nonce,
 				addon: addon
 			},

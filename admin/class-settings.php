@@ -104,7 +104,7 @@ final class Settings_Page {
 	private function setup_actions() {
 
 		add_action( 'admin_menu', array( $this, 'admin_menu' ), 25 );
-		add_action( 'wp_ajax_toggle_addon', array( $this, 'toggle_addon' ) );
+		add_action( 'wp_ajax_mbrs_toggle_addon', array( $this, 'toggle_addon' ) );
 	}
 
 	/**
