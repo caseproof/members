@@ -114,7 +114,7 @@ final class Settings_Page {
 	 */
 	public function toggle_addon() {
 		
-		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( $_POST['nonce'], 'toggle_addon' ) ) {
+		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( $_POST['nonce'], 'mbrs_toggle_addon' ) ) {
 			die();
 		}
 
