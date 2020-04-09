@@ -25,7 +25,7 @@
  * write to the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * @package   Members
- * @version   3.0.1
+ * @version   3.0.2
  * @author    MemberPress <support@memberpress.com>
  * @copyright Copyright (c) 2004 - 2020, Caseproof
  * @link      https://memberpress.com/plugins/members
