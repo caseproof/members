@@ -28,7 +28,7 @@
  * @version   3.0.0
  * @author    MemberPress <support@memberpress.com>
  * @copyright Copyright (c) 2004 - 2020, Caseproof
- * @link      https://caseproof.com/plugins/members
+ * @link      https://memberpress.com/plugins/members
  * @license   http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  */
 
