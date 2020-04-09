@@ -3,7 +3,7 @@
  * Plugin Name: Members
  * Plugin URI:  https://memberpress.com/plugins/members
  * Description: A user and role management plugin that puts you in full control of your site's permissions. This plugin allows you to edit your roles and their capabilities, clone existing roles, assign multiple roles per user, block post content, or even make your site completely private.
- * Version:     3.0.0
+ * Version:     3.0.1
  * Author:      MemberPress
  * Author URI:  https://memberpress.com
  * Text Domain: members
@@ -25,7 +25,7 @@
  * write to the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * @package   Members
- * @version   3.0.0
+ * @version   3.0.1
  * @author    MemberPress <support@memberpress.com>
  * @copyright Copyright (c) 2004 - 2020, Caseproof
  * @link      https://memberpress.com/plugins/members
