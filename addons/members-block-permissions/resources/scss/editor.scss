@@ -1,0 +1,32 @@
+
+.edit-post-settings-sidebar__panel-block .members-bp-controls {
+
+	.members-bp-notice {
+		margin-bottom: 24px;
+
+		.components-notice {
+			margin: 0;
+
+			&__content {
+				margin: 1em 1em 1em 0;
+			}
+		}
+	}
+
+	.members-bp-checklist {
+
+		&__panel {
+			padding: 8px;
+			margin-bottom: 24px;
+		}
+
+		&__label {
+			display: block;
+			margin-bottom: 4px;
+		}
+
+		&__control {
+			margin-bottom: 0;
+		}
+	}
+}

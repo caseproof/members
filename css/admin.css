@@ -1,59 +1,59 @@
 /* ====== Members Settings Screen. ====== */
 
-.settings_page_members-settings .welcome-panel {
+.members_page_members-settings .welcome-panel {
 	margin-top: 0;
 	padding:    40px 20px;
 }
 
-.settings_page_members-settings .welcome-panel .about-description {
+.members_page_members-settings .welcome-panel .about-description {
 	margin: 20px 0;
 }
 
-.settings_page_members-settings .welcome-panel-content {
+.members_page_members-settings .welcome-panel-content {
 	margin: 0;
 }
 
 @media screen and (min-width: 870px) {
 
-	.settings_page_members-settings .members-short-p {
+	.members_page_members-settings .members-short-p {
 		max-width: 612px;
 		margin-left: auto;
 		margin-right: auto;
 	}
 
-	.settings_page_members-settings .welcome-panel-content {
+	.members_page_members-settings .welcome-panel-content {
 		text-align: center;
 	}
 }
 
-.settings_page_members-settings .welcome-panel .button.button-hero {
+.members_page_members-settings .welcome-panel .button.button-hero {
 	margin-left: auto;
 	margin-right: auto;
 }
 
-.settings_page_members-settings .members-svg-wrap {
+.members_page_members-settings .members-svg-wrap {
 	display: inline-block;
 	margin: 0 auto 20px;
 }
 
 @media screen and (max-width: 870px) {
-	.settings_page_members-settings .welcome-panel {
+	.members_page_members-settings .welcome-panel {
 		padding: 20px;
 	}
 
-	.settings_page_members-settings .members-svg-wrap {
+	.members_page_members-settings .members-svg-wrap {
 		float: left;
 		margin-right: 28px;
 	}
 
-	.settings_page_members-settings.rtl .members-svg-wrap {
+	.admin_page_members-settings.rtl .members-svg-wrap {
 		float: right;
 		margin-right: 0;
 		margin-left: 28px;
 	}
 }
 
-.settings_page_members-settings .members-svg-link {
+.members_page_members-settings .members-svg-link {
 	display: table-cell;
 	text-align: center;
 	width: 128px;
@@ -67,20 +67,252 @@
 	box-shadow: 0 0 0 4px #363b3f;
 }
 
-.settings_page_members-settings .members-svg-link svg {
+.members_page_members-settings .members-svg-link svg {
 	max-width: 84px;
 	max-height: 64px;
 	width: auto;
 	height: auto;
 }
 
+.members-addons {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+}
+
+.members-addons .plugin-card-top {
+	width: 100%;
+}
+
+.members-addon {
+	width: 100%;
+	position: relative;
+	float: none;
+	display: flex;
+	align-items: center;
+}
+
+.members-addon .desc {
+	margin-bottom: 80px;
+}
+
+.addon-activate {
+	text-align: center;
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	padding: 5px 10px 10px;
+	display: inline-block;
+	width: 100px;
+	position: absolute;
+	right: 20px;
+	bottom: 20px;
+}
+
+.activate-toggle:hover {
+	cursor: pointer;
+}
+
+.activate-toggle svg {
+	max-width: 20px;
+	position: relative;
+	top: 5px;
+}
+
+.activate-toggle svg {
+	transform: rotate(180deg);
+}
+
+.activate-toggle svg.active {
+	transform: rotate(0);
+}
+
+.activate-toggle svg path {
+	fill: #cccccc;
+}
+
+.activate-toggle svg.active path {
+	fill: #8CBD5A;
+}
+
+.activate-toggle.processing {
+	cursor: not-allowed;
+	pointer-events: none;
+	opacity: 0.5;
+}
+
+.activate-toggle .action-label {
+	display: inline-block;
+	width: 50px;
+	text-align: left;
+}
+
+.mepr_dummy_txns {
+	filter: blur(3px);
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	z-index: 5;
+	pointer-events: none;
+}
+
+.mepr_dummy_txns::after {
+	background-color: rgba(0,0,0,.2);
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 6;
+}
+
+.mepr-upgrade-table {
+	position: relative;
+}
+
+.mepr-upgrade-table .mepr-upgrade {
+	position: relative;
+	top: 100px;
+	z-index: 10;
+	background: rgba( 0,0,0,.2 );
+	width: 100%;
+	height: 100%;
+	max-width: 600px;
+	margin: 0 auto;
+	box-shadow: 0 0 30px #ccc;
+}
+
+.mepr-upgrade-content {
+	background-color: #fff;
+	padding: 20px;
+	text-align: center;
+}
+
+.mepr-upgrade-content h2 {
+	font-size: 24px;
+}
+
+.mepr-upgrade-content h4 {
+	font-size: 18px;
+}
+
+.mepr-upgrade-content .features {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	grid-column-gap: 30px;
+	grid-row-gap: 10px;
+	align-items: center;
+	justify-content: center;
+	text-align: left;
+	padding: 10px;
+}
+
+.features li:before {
+	content: "\f147";
+	font-family: dashicons;
+	color: green;
+	font-size: 20px;
+	position: relative;
+	top: 4px;
+	margin-right: 10px;
+}
+
+.mepr-upgrade-cta {
+	text-align: center;
+	background-color: #f2f2f2;
+	padding: 20px;
+}
+
+.mepr-upgrade-cta .mepr-cta-button {
+	display: block;
+	max-width: 300px;
+	margin: 0 auto 20px;
+	background-color: #FD9C27;
+	color: #fff;
+	padding: 15px;
+	font-size: 18px;
+	font-weight: bold;
+	text-decoration: none;
+	border-radius: 300px;
+}
+
+.members-plugin-card.plugin-card:nth-child(even) {
+	margin-right: inherit;
+}
+
+.members-plugin-card.plugin-card:nth-child(odd) {
+	clear: none;
+	margin-left: inherit;
+}
+
+.members-plugin-card.plugin-card .plugin-card-top {
+	min-height: 0;
+	padding: 30px 20px;
+}
+
+.members-plugin-card.plugin-card .plugin-icon {
+	top: 30px;
+}
+
+.members-plugin-card.plugin-card .plugin-card-bottom .column-status {
+	font-weight: bold;
+}
+
+.members-plugin-card.plugin-card .plugin-card-bottom .column-status .active {
+	color: #8CBD5A;
+}
+
+.members-plugin-card.plugin-card .plugin-card-bottom .column-status .inactive {
+	color: red;
+}
+
+.members-plugin-card.plugin-card .plugin-icon {
+	width: 64px;
+	height: auto;
+}
+
+.members-plugin-card.plugin-card .name,
+.members-plugin-card.plugin-card .desc {
+	margin-right: 0;
+	margin-left: 84px;
+}
+
+.memberpress-about .welcome-panel-column-container {
+	display: flex;
+}
+
+.memberpress-about .mp-logo {
+	max-width: 256px;
+	margin: 50px;
+}
+
+.members-about-addons {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	grid-column-gap: 20px;
+}
+
+.members-about-addons .members-plugin-card {
+	margin: 0;
+	width: 100%;
+}
+
+.members-about-addons .members-plugin-card .name h3 a {
+	text-decoration: none;
+}
+
+.members-about-addons .members-plugin-card .plugin-card-bottom {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
 /* ====== Manage Roles Screen. ====== */
 
 @media only screen and ( min-width: 783px ) {
 
-	.users_page_roles .column-users,
-	.users_page_roles .column-granted_caps,
-	.users_page_roles .column-denied_caps {
+	.members_page_roles .column-users,
+	.members_page_roles .column-granted_caps,
+	.members_page_roles .column-denied_caps {
 		width:      100px;
 		text-align: center;
 	}

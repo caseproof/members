@@ -126,3 +126,76 @@ function members_get_user_meta_keys() {
 
 	return $wpdb->get_col( "SELECT meta_key FROM $wpdb->usermeta GROUP BY meta_key ORDER BY meta_key" );
 }
+
+add_action( 'admin_enqueue_scripts', 'members_add_pointers' );
+/**
+ * Adds helper pointers to the admin
+ *
+ * @return void
+ */
+function members_add_pointers() {
+
+	$pointers = apply_filters( 'members_admin_pointers', array() );
+
+	if ( empty( $pointers ) ) {
+		return;
+	}
+
+	// Get dismissed pointers
+	$dismissed = explode( ',', (string) get_user_meta( get_current_user_id(), 'dismissed_wp_pointers', true ) );
+	$valid_pointers =array();
+ 
+	// Check pointers and remove dismissed ones.
+	foreach ( $pointers as $pointer_id => $pointer ) {
+ 
+		// Sanity check
+		if ( in_array( $pointer_id, $dismissed ) || empty( $pointer )  || empty( $pointer_id ) || empty( $pointer['target'] ) || empty( $pointer['options'] ) ) {
+			continue;
+		}
+ 
+		$pointer['pointer_id'] = $pointer_id;
+ 
+		$valid_pointers['pointers'][] =  $pointer;
+	}
+ 
+	if ( empty( $valid_pointers ) ) {
+		return;
+	}
+ 
+	wp_enqueue_style( 'wp-pointer' );
+	wp_enqueue_script( 'members-pointers', members_plugin()->uri . '/js/members-pointers.min.js', array( 'wp-pointer' ) );
+	wp_localize_script( 'members-pointers', 'membersPointers', $valid_pointers );
+}
+
+add_filter( 'members_admin_pointers', 'members_3_helper_pointer' );
+/**
+ * Adds a pointer for the Members 3.0 release
+ *
+ * @param  array 	$pointers 		Pointers
+ *
+ * @return array
+ */
+function members_3_helper_pointer( $pointers ) {
+	ob_start();
+	?>
+	<h3><?php _e( 'Welcome to Members 3.0!', 'members' ); ?></h3>
+	<p><?php _e( 'The new Members is here to deliver an easier experience and more advanced features.', 'members' ); ?></p>
+	<p><?php _e( 'Don\'t worry, it will work the same as it always has for you!  We\'ve just made the following changes:', 'members' ); ?></p>
+	<p><?php _e( '<strong>1.</strong> We\'ve centralized all of the main Members settings here. This will make things much easier to find and use.', 'members' ); ?></p>
+	<p><?php _e( '<strong>2.</strong> All of our Add-ons are now <strong>freely</strong> included in Members! Just visit the Add-ons menu item here to start using these premium features.', 'members' ); ?></p>
+	<p><?php _e( 'We\'re excited about these new changes and we hope they\'ll make your experience with Members even better!', 'members' ); ?></p>
+	<p><?php _e( '- The MemberPress team', 'members' ); ?></p>
+	<?php
+	$content = ob_get_clean();
+    $pointers['members_30'] = array(
+        'target' => '#toplevel_page_members',
+        'options' => array(
+            'content' => $content,
+            'position' => array( 
+            	'edge' => 'left', 
+            	'align' => 'center' 
+            )
+        )
+    );
+    return $pointers;
+}

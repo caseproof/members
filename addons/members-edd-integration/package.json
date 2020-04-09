@@ -1,0 +1,23 @@
+{
+	"name": "members-edd-integration",
+	"author": "Justin Tadlock",
+	"license": "GPL-2.0+",
+	"homepage": "https://themehybrid.com/plugins/members-edd-integration",
+	"main": "resources/js/app.js",
+	"scripts": {
+		"i18n": "npm run i18n:textdomain && npm run i18n:pot",
+		"i18n:textdomain": "npx wpi18n addtextdomain --exclude=vendor,node_modules",
+		"i18n:pot": "npx wpi18n makepot --domain-path=/resources/lang"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/justintadlock/members-edd-integration.git"
+	},
+	"bugs": {
+		"url": "https://github.com/justintadlock/members-edd-integration/issues"
+	},
+	"devDependencies": {
+		"node-wp-i18n": "^1.2.3"
+	},
+	"dependencies": {}
+}
