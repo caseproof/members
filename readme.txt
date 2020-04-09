@@ -1,9 +1,10 @@
-=== Members ===
+=== Members - Best Membership and User Role Management Plugin for WordPress ===
 
-Contributors: caseproof
-Tags: capabilities, roles, members, users
+Contributors: supercleanse
+Donate link: https://memberpress.com/plugins/members
+Tags: members, users, roles, editor, security, access, permission, capabilities
 Requires at least: 4.7
-Tested up to: 5.2
+Tested up to: 5.3
 Requires PHP: 5.6
 Stable tag: 3.0.0
 License: GPLv2 or later
@@ -29,7 +30,7 @@ It puts you in control over permissions on your site by providing a user interfa
 * **Private Site:** You can make your site and its feed completely private if you want.
 * **Plugin Integration:** Members is highly recommended by  other WordPress developers. Many existing plugins integrate their custom roles and caps directly into it.
 
-For more info, visit the [MemberPress plugin home page](https://memberpress.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=readme&utm_content=learn_more).
+For more info, visit the [Members plugin home page](https://memberpress.com/plugins/members/?utm_source=members_plugin&utm_medium=link&utm_campaign=readme&utm_content=learn_more).
 
 ### Like this plugin?
 
@@ -41,6 +42,10 @@ The Members plugin is a massive project with 1,000s of lines of code to maintain
 ### Professional Support
 
 If you need professional plugin support from us, you can [visit our support page](https://memberpress.com/plugins/members/support/?utm_source=members_plugin&utm_medium=link&utm_campaign=readme&utm_content=support_page).
+
+### Plugin Development
+
+If you're a theme author, plugin author, or just a code hobbyist, you can follow the development of this plugin on it's [GitHub repository](https://github.com/caseproof/members).
 
 == Installation ==
 

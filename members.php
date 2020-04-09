@@ -1,11 +1,11 @@
 <?php
 /**
  * Plugin Name: Members
- * Plugin URI:  https://themehybrid.com/plugins/members
+ * Plugin URI:  https://memberpress.com/plugins/members
  * Description: A user and role management plugin that puts you in full control of your site's permissions. This plugin allows you to edit your roles and their capabilities, clone existing roles, assign multiple roles per user, block post content, or even make your site completely private.
- * Version:     2.3.0
- * Author:      Justin Tadlock
- * Author URI:  https://themehybrid.com
+ * Version:     3.0.0
+ * Author:      MemberPress
+ * Author URI:  https://memberpress.com
  * Text Domain: members
  * Domain Path: /lang
  *
@@ -25,10 +25,10 @@
  * write to the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * @package   Members
- * @version   2.2.0
- * @author    Justin Tadlock <justintadlock@gmail.com>
- * @copyright Copyright (c) 2009 - 2018, Justin Tadlock
- * @link      https://themehybrid.com/plugins/members
+ * @version   3.0.0
+ * @author    MemberPress <support@memberpress.com>
+ * @copyright Copyright (c) 2004 - 2020, Caseproof
+ * @link      https://caseproof.com/plugins/members
  * @license   http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  */
 
