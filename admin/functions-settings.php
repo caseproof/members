@@ -58,10 +58,8 @@ function members_register_default_settings_views( $manager ) {
  * @return bool
  */
 function members_is_settings_page() {
-
 	$screen = get_current_screen();
-
-	return is_object( $screen ) && 'members_page_members-settings' === $screen->id;
+	return is_object( $screen ) && ( 'members_page_members-settings' === $screen->id || 'admin_page_members-settings' === $screen->id );
 }
 
 /**

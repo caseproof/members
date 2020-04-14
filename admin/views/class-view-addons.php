@@ -123,7 +123,7 @@ class View_Addons extends View {
 							<?php if ( file_exists( members_plugin()->dir . "img/{$addon->name}.svg" ) ) : ?>
 
 								<span class="plugin-icon members-svg-link">
-									<?php include members_plugin()->dir . "img/{$addon->name}.svg"; ?>
+									<?php echo file_get_contents( members_plugin()->dir . "img/{$addon->name}.svg" ); ?>
 								</span>
 
 							<?php elseif ( $addon->icon_url ) : ?>

@@ -94,9 +94,9 @@ final class Role_New {
 
 		// If the role manager is active.
 		if ( members_role_manager_enabled() ) {
-			add_action( 'admin_menu', array( $this, 'add_admin_page' ) );
 			add_action( 'admin_menu', array( $this, 'add_submenu_admin_page' ), 20 );
 		}
+		add_action( 'admin_menu', array( $this, 'add_admin_page' ) );
 	}
 
 	/**
