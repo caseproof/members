@@ -1,0 +1,36 @@
+{
+	"name": "members-block-permissions",
+	"version": "1.0.0",
+	"author": "WPTRT",
+	"license": "GPL-2.0+",
+	"homepage": "https://github.com/WPTRT/customize-section-button",
+	"main": "",
+	"scripts": {
+		"dev": "cross-env NODE_ENV=development node_modules/webpack/bin/webpack.js --progress --hide-modules --config=node_modules/laravel-mix/setup/webpack.config.js",
+		"watch": "cross-env NODE_ENV=development node_modules/webpack/bin/webpack.js --watch --progress --hide-modules --config=node_modules/laravel-mix/setup/webpack.config.js",
+		"prod": "cross-env NODE_ENV=production node_modules/webpack/bin/webpack.js --progress --hide-modules --config=node_modules/laravel-mix/setup/webpack.config.js",
+		"export": "cross-env export=1 NODE_ENV=production node_modules/webpack/bin/webpack.js --progress --hide-modules --config=node_modules/laravel-mix/setup/webpack.config.js",
+		"i18n": "npm run i18n:textdomain && npm run i18n:pot",
+		"i18n:textdomain": "npx wpi18n addtextdomain --exclude=vendor,node_modules",
+		"i18n:pot": "npx wpi18n makepot --domain-path=/resources/lang"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/WPTRT/customize-section-button.git"
+	},
+	"bugs": {
+		"url": "https://github.com/WPTRT/customize-section-button/issues"
+	},
+	"devDependencies": {
+		"@babel/preset-react": "^7.0.0",
+		"cross-env": "^5.2.0",
+		"laravel-mix": "^4.0.16",
+		"node-wp-i18n": "^1.2.3",
+		"postcss-preset-env": "^6.6.0",
+		"rimraf": "^3.0.0",
+		"sass": "^1.22.0",
+		"sass-loader": "^7.1.0",
+		"vue-template-compiler": "^2.6.10"
+	},
+	"dependencies": {}
+}

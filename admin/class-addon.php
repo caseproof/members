@@ -130,6 +130,8 @@ final class Addon {
 	 */
 	public $install_count = 0;
 
+	public $is_memberpress = false;
+
 	/**
 	 * Magic method to use in case someone tries to output the object as a string.
 	 * We'll just return the name.
@@ -161,13 +163,17 @@ final class Addon {
 
 		foreach ( array_keys( get_object_vars( $this ) ) as $key ) {
 
-			if ( isset( $args[ $key ] ) )
+			if ( isset( $args[ $key ] ) ) {
 				$this->$key = $args[ $key ];
+			}
 		}
 
 		$this->name = sanitize_key( $name );
 
-		if ( ! $this->icon_url )
+		$this->is_memberpress = isset( $args['is_memberpress'] ) && true === $args['is_memberpress'];
+
+		if ( ! $this->icon_url ) {
 			$this->icon_url = members_plugin()->uri . 'img/icon-addon.png';
+		}
 	}
 }

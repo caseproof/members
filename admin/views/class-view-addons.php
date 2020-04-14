@@ -29,6 +29,10 @@ class View_Addons extends View {
 	 */
 	public function enqueue() {
 		wp_enqueue_style( 'members-admin' );
+		wp_enqueue_script( 'members-settings' );
+		wp_localize_script( 'members-settings', 'membersAddons', array(
+			'nonce' => wp_create_nonce( 'mbrs_toggle_addon' )
+		) );
 	}
 
 	/**
@@ -42,6 +46,7 @@ class View_Addons extends View {
 
 		require_once( members_plugin()->dir . 'admin/class-addon.php'      );
 		require_once( members_plugin()->dir . 'admin/functions-addons.php' );
+		add_thickbox();
 
 		do_action( 'members_register_addons' );
 
@@ -49,57 +54,49 @@ class View_Addons extends View {
 
 		<div class="widefat">
 
-			<div class="welcome-panel">
+			<div class="members-addons">
+				
+				<?php if ( $addons ) : ?>
 
-				<div class="welcome-panel-content">
+					<?php foreach ( $addons as $addon ) : ?>
+						
+						<?php
+							if ( $addon->is_memberpress ) {
+								if ( ! is_plugin_active( 'memberpress/memberpress.php' ) ) {
+									$this->addon_card( $addon );
+								}
+							} else {
+								$this->addon_card( $addon );
+							}
+						?>
 
-					<div>
-						<div class="members-svg-wrap">
-							<a href="https://themehybrid.com/plugins/members" class="members-svg-link" target="_blank">
-								<?php include members_plugin()->dir . 'img/members.svg'; ?>
-							</a>
-						</div>
+					<?php endforeach; ?>
 
-						<div style="overflow: hidden;">
-							<h2>
-								<?php _e( 'Go Pro With Members Add-ons', 'members' ); ?>
-							</h2>
-							<p class="about-description" style="margin:20px 0 10px;">
-								<?php esc_html_e( 'Take your membership site to the next level with add-ons. Pro users also enjoy live chat support and support forum access.', 'members' ); ?>
-							</p>
-							<p>
-								<a class="button button-primary button-hero" href="https://themehybrid.com/plugins/members" target="_blank"><?php esc_html_e( 'Upgrade To Pro', 'members' ); ?></a>
-							</p>
-						</div>
+				<?php else : ?>
+
+					<div class="error notice">
+						<p>
+							<strong><?php esc_html_e( 'There are currently no add-ons to show. Please try again later.', 'members' ); ?></strong>
+						</p>
 					</div>
 
-				</div><!-- .welcome-panel-content -->
+				<?php endif; ?>
 
-			</div><!-- .welcome-panel -->
-
-		</div>
-
-		<div class="widefat">
-
-			<?php if ( $addons ) : ?>
-
-				<?php foreach ( $addons as $addon ) : ?>
-
-					<?php $this->addon_card( $addon ); ?>
-
-				<?php endforeach; ?>
-
-			<?php else : ?>
-
-				<div class="error notice">
-					<p>
-						<strong><?php esc_html_e( 'There are currently no add-ons to show. Please try again later.', 'members' ); ?></strong>
-					</p>
-				</div>
-
-			<?php endif; ?>
+			</div>
 
 		</div><!-- .widefat -->
+
+		<div id="mp_addon_modal" style="display: none;">
+			<?php members_memberpress_upgrade(); ?>
+		</div>
+		<script>
+			jQuery(document).ready(function($) {
+				$('.mepr-upgrade-activate-link').click(function(e){
+					var url = $(this).data('url');
+					$('#mepr_cta_upgrade_link').prop('href', url);
+				});
+			});
+		</script>
 	<?php }
 
 	/**
@@ -111,7 +108,7 @@ class View_Addons extends View {
 	 */
 	public function addon_card( $addon ) { ?>
 
-		<div class="plugin-card plugin-card-<?php echo esc_attr( $addon->name ); ?>">
+		<div class="plugin-card members-addon plugin-card-<?php echo esc_attr( $addon->name ); ?>">
 
 			<div class="plugin-card-top">
 
@@ -126,7 +123,7 @@ class View_Addons extends View {
 							<?php if ( file_exists( members_plugin()->dir . "img/{$addon->name}.svg" ) ) : ?>
 
 								<span class="plugin-icon members-svg-link">
-									<?php include members_plugin()->dir . "img/{$addon->name}.svg"; ?>
+									<?php echo file_get_contents( members_plugin()->dir . "img/{$addon->name}.svg" ); ?>
 								</span>
 
 							<?php elseif ( $addon->icon_url ) : ?>
@@ -143,6 +140,22 @@ class View_Addons extends View {
 
 				<div class="desc column-description" style="margin-right:0;">
 					<?php echo wpautop( wp_kses_post( $addon->excerpt ) ); ?>
+				</div>
+
+				<div class="addon-activate">
+					<?php if ( isset( $addon->is_memberpress ) && true === $addon->is_memberpress ) : ?>
+						<span class="activate-toggle" data-addon="<?php echo $addon->name; ?>">
+							<a href="#TB_inline?width=600&height=550&inlineId=mp_addon_modal" data-url="<?php echo esc_url( $addon->url ); ?>" class="thickbox mepr-upgrade-activate-link" target="_blank">
+								<svg aria-hidden="true" class="" focusable="false" data-prefix="fas" data-icon="toggle-on" class="svg-inline--fa fa-toggle-on fa-w-18" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><path d="M384 64H192C86 64 0 150 0 256s86 192 192 192h192c106 0 192-86 192-192S490 64 384 64zm0 320c-70.8 0-128-57.3-128-128 0-70.8 57.3-128 128-128 70.8 0 128 57.3 128 128 0 70.8-57.3 128-128 128z"></path></svg>
+								<span class="action-label"><?php echo esc_html__( 'Activate', 'members' ); ?></span>
+							</a>
+						</span>
+					<?php else : ?>
+						<span class="activate-toggle activate-addon" data-addon="<?php echo $addon->name; ?>">
+							<svg aria-hidden="true" class="<?php echo members_is_addon_active( $addon->name ) ? 'active' : ''; ?>" focusable="false" data-prefix="fas" data-icon="toggle-on" class="svg-inline--fa fa-toggle-on fa-w-18" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><path d="M384 64H192C86 64 0 150 0 256s86 192 192 192h192c106 0 192-86 192-192S490 64 384 64zm0 320c-70.8 0-128-57.3-128-128 0-70.8 57.3-128 128-128 70.8 0 128 57.3 128 128 0 70.8-57.3 128-128 128z"></path></svg>
+							<span class="action-label"><?php echo members_is_addon_active( $addon->name ) ? esc_html__( 'Active', 'members' ) : esc_html__( 'Activate', 'members' ); ?></span>
+						</span>
+					<?php endif; ?>
 				</div>
 
 			</div><!-- .plugin-card-top -->

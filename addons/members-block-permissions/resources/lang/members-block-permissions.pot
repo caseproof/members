@@ -1,0 +1,109 @@
+# Copyright (C) 2019 Justin Tadlock
+# This file is distributed under the same license as the Members - Block Permissions package.
+msgid ""
+msgstr ""
+"Project-Id-Version: Members - Block Permissions 1.0.0-alpha\n"
+"Report-Msgid-Bugs-To: "
+"https://wordpress.org/support/plugin/members-block-permissions\n"
+"POT-Creation-Date: 2019-08-20 17:02:06+00:00\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2019-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"X-Generator: node-wp-i18n 1.2.3\n"
+
+#: src/Editor.php:87
+msgid "Permissions"
+msgstr ""
+
+#: src/Editor.php:90 src/Editor.php:116
+msgid "Capability"
+msgstr ""
+
+#: src/Editor.php:94
+msgid "Condition"
+msgstr ""
+
+#: src/Editor.php:96
+msgid "Show block to everyone"
+msgstr ""
+
+#: src/Editor.php:97
+msgid "Show block to selected"
+msgstr ""
+
+#: src/Editor.php:98
+msgid "Hide block from selected"
+msgstr ""
+
+#: src/Editor.php:103
+msgid "Error Message"
+msgstr ""
+
+#: src/Editor.php:104
+msgid "Optionally display an error message for users who cannot see this block."
+msgstr ""
+
+#: src/Editor.php:108
+msgid "User Roles"
+msgstr ""
+
+#: src/Editor.php:112
+msgid "Type"
+msgstr ""
+
+#: src/Editor.php:114 src/Editor.php:121
+msgid "User Status"
+msgstr ""
+
+#: src/Editor.php:115
+msgid "User Role"
+msgstr ""
+
+#: src/Editor.php:123
+msgid "Logged In"
+msgstr ""
+
+#: src/Editor.php:124
+msgid "Logged Out"
+msgstr ""
+
+#: src/Editor.php:128
+msgid "Your user account does not have access to assign permissions to this block."
+msgstr ""
+
+#: src/Integration.php:49
+msgid "Assign Block Permissions"
+msgstr ""
+
+#: src/Integration.php:50
+msgid "Allows users to assign block permissions inside of the block editor."
+msgstr ""
+
+#: uninstall.php:15
+msgid "%s should only be called when uninstalling the plugin."
+msgstr ""
+
+#. Plugin Name of the plugin/theme
+msgid "Members - Block Permissions"
+msgstr ""
+
+#. Plugin URI of the plugin/theme
+msgid "https://themehybrid.com/plugins/members-block-permissions"
+msgstr ""
+
+#. Description of the plugin/theme
+msgid ""
+"Allows site owners to show or hide blocks based on user status, role, or "
+"capability on the front end of the site."
+msgstr ""
+
+#. Author of the plugin/theme
+msgid "Justin Tadlock"
+msgstr ""
+
+#. Author URI of the plugin/theme
+msgid "https://themehybrid.com"
+msgstr ""

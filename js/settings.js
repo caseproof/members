@@ -1,4 +1,4 @@
-jQuery( document ).ready( function() {
+jQuery( document ).ready( function($) {
 
 	/* ====== Plugin Settings ====== */
 
@@ -27,4 +27,32 @@ jQuery( document ).ready( function() {
 			}
 		}
 	);
+
+	$('.activate-addon').click(function(e) {
+		var $this = $(this);
+		var addon = $this.data('addon');
+		$this.addClass('processing');
+
+		$.ajax({
+			url: ajaxurl,
+			type: 'POST',
+			data: {
+				action: 'mbrs_toggle_addon',
+				nonce: membersAddons.nonce,
+				addon: addon
+			},
+		})
+		.done(function(response) {
+			$this.find('.action-label').html(response.data.action_label);
+			var svg = $this.find('svg');
+			svg.removeClass();
+			svg.addClass(response.data.status);
+		})
+		.fail(function(response) {
+			alert(response.data.msg);
+		})
+		.always(function(response) {
+			$this.removeClass('processing');
+		});
+	});
 } );

@@ -168,3 +168,40 @@ function members_edit_role_help_custom_cap_cb() { ?>
 		<?php esc_html_e( 'The custom capability box allows you to create a custom capability for the role. After hitting the Add New button, it will add the capability to the Custom tab in the Edit Capabilities box.', 'members' ); ?>
 	</p>
 <?php }
+
+/**
+ * Displays info for upgrading to MemberPress
+ *
+ * @since  2.3.0
+ * @access public
+ * @param  string $link Link for button
+ * @return void
+ */
+function members_memberpress_upgrade( $link = 'https://memberpress.com/plans/pricing' ) { ?>
+
+	<div class="mepr-upgrade">
+		<div class="mepr-upgrade-wrap">
+			<div class="mepr-upgrade-content">
+				<h2>Charge Members for Your Protected Content</h2>
+				<h4>Members Lite cannot access payments.</h4>
+				<p>Once you upgrade to MemberPress, you'll be able to charge your members for access to your content.</p>
+				<ul class="features">
+					<li>Charge for Access to Content</li>
+					<li>Create Memberships</li>
+					<li>Manage Members</li>
+					<li>Advanced Reports</li>
+					<li>Recurring Payments</li>
+					<li>Pro-rated Upgrades</li>
+					<li>Centralized Protected Content Management</li>
+					<li>Email Marketing Integrations</li>
+				</ul>
+			</div>
+			<div class="mepr-upgrade-cta">
+				<a href="<?php echo esc_url( $link ); ?>" id="mepr_cta_upgrade_link" class="mepr-cta-button">Upgrade to MemberPress Now</a>
+				and start charging for access!
+			</div>
+		</div>
+	</div>
+
+	<?php
+}
