@@ -1,5 +1,16 @@
 # Change Log
 
+## [3.0.3] - 2020-04-15
+
+### Fixed
+
+- PHP warnings being thrown
+- Make sure admin menu is always accessible
+
+### Changed
+
+- Display icons using file_get_contents() instead of include() to prevent executing them as PHP
+
 ## [3.0.2] - 2020-04-09
 
 ### Fixed
