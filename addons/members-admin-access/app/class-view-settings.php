@@ -79,7 +79,7 @@ class View_Settings extends View {
 		// Handle checkboxes.
 		$settings['disable_toolbar'] = ! empty( $settings['disable_toolbar'] ) ? true : false;
 
-		return $settings;
+		return apply_filters( app()->namespace . '/validate_settings', $settings );
 	}
 
 	/**
@@ -151,7 +151,7 @@ class View_Settings extends View {
 			<label>
 				<?php esc_html_e( 'Redirect users without access to:', 'members' ); ?>
 
-				<input type="url" name="members_admin_access_settings[redirect_url]" value="<?php echo esc_attr( get_redirect_url() ); ?>" />
+				<input type="text" name="members_admin_access_settings[redirect_url]" value="<?php echo esc_attr( get_redirect_url() ); ?>" />
 			</label>
 		</p>
 	<?php }

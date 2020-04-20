@@ -1,5 +1,13 @@
 # Change Log
 
+## [3.0.4] - 2020-04-20
+
+### Fixed
+- Inaccessible settings page in Admin Access
+
+### Added
+- Filter for applying custom validation to settings
+
 ## [3.0.3] - 2020-04-15
 
 ### Fixed

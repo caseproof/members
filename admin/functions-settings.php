@@ -83,7 +83,7 @@ function members_is_addon_active( $addon ) {
  */
 function members_get_settings_page_url() {
 
-	return add_query_arg( array( 'page' => 'members-settings' ), admin_url( 'options-general.php' ) );
+	return add_query_arg( array( 'page' => 'members-settings' ), admin_url( 'admin.php' ) );
 }
 
 /**

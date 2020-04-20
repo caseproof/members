@@ -79,6 +79,8 @@ class View_General extends View {
 		add_settings_field( 'private_rest_api',    esc_html__( 'REST API',            'members' ), array( $this, 'field_private_rest_api'    ), 'members-settings', 'private_site' );
 		add_settings_field( 'enable_private_feed', esc_html__( 'Disable Feed',        'members' ), array( $this, 'field_enable_private_feed' ), 'members-settings', 'private_site' );
 		add_settings_field( 'private_feed_error',  esc_html__( 'Feed Error Message',  'members' ), array( $this, 'field_private_feed_error'  ), 'members-settings', 'private_site' );
+
+		do_action( 'members_register_settings' );
 	}
 
 	/**
@@ -106,7 +108,7 @@ class View_General extends View {
 		$settings['private_feed_error']        = stripslashes( wp_filter_post_kses( addslashes( $settings['private_feed_error']        ) ) );
 
 		// Return the validated/sanitized settings.
-		return $settings;
+		return apply_filters( 'members_validate_settings', $settings );
 	}
 
 	/**

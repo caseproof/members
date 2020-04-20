@@ -77,6 +77,7 @@
 .members-addons {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
+	padding-right: 9px;
 }
 
 .members-addons .plugin-card-top {

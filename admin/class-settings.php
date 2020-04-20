@@ -321,9 +321,10 @@ final class Settings_Page {
 
 		<div class="wrap">
 			<h1><?php echo esc_html_x( 'Members', 'admin screen', 'members' ); ?></h1>
-
+			<div class="wp-filter">
+				<?php echo $this->filter_links(); ?>
+			</div>
 			<?php $this->get_view( members_get_current_settings_view() )->template(); ?>
-
 		</div><!-- wrap -->
 	<?php }
 
