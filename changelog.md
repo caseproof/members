@@ -1,5 +1,10 @@
 # Change Log
 
+## [3.0.5] - 2020-04-24
+
+### Changed
+- Collapse Permissions block editor section by default
+
 ## [3.0.4] - 2020-04-20
 
 ### Fixed
