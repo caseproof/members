@@ -1,5 +1,11 @@
 # Change Log
 
+## 3.0.6 - 2020-04-27
+
+### Fixed
+
+- Issue with settings page throwing error on non-English sites
+
 ## [3.0.5] - 2020-04-24
 
 ### Fixed
