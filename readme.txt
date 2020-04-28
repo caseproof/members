@@ -10,11 +10,11 @@ Stable tag: 3.0.8
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-The best WordPress membership and user role editor plugin. User Roles & Capabilities editor that helps you restrict content with just a few clicks.
+The best WordPress membership and user role editor plugin. User Roles & Capabilities editor helps you restrict content in just a few clicks.
 
 == Description ==
 
-Members is a roles and capabilities based WordPress membership plugin. It gives you the ultimate member experience by providing powerful tools to add roles and capabilities and assign them to your users--this makes WordPress a much more powerful CMS.
+Members is a roles and capabilities based WordPress membership plugin. It gives your users the ultimate member experience by giving you powerful tools to add roles and capabilities and assign them to your users.
 
 Members allows you to set permissions to restrict content on your site by providing a simple user interface (UI) for WordPress' powerful roles and capabilities system, which has traditionally only been available to developers who know how to code this by hand.
 
@@ -32,8 +32,7 @@ Members allows you to set permissions to restrict content on your site by provid
 
 #### Seamless MemberPress Integration
 
-If you're looking to build a business out of your membership site by creating paid memberships there's no better way than to [use MemberPress](https://memberpress.com/plugins/members/?utm_source=members_plugin&utm_medium=link&utm_campaign=readme&utm_content=integration_1). Members and [MemberPress](https://memberpress.com/plugins/members/?utm_source=members_plugin&utm_medium=link&utm_campaign=readme&utm_content=integration_2) work together to provide the ultimate member experience
-and will help you start and profit from your amazing WordPress membership sites!
+If you're looking to build a business out of your membership site by creating paid memberships there's no better way than to [use MemberPress](https://memberpress.com/plugins/members/?utm_source=members_plugin&utm_medium=link&utm_campaign=readme&utm_content=integration_1). Members and [MemberPress](https://memberpress.com/plugins/members/?utm_source=members_plugin&utm_medium=link&utm_campaign=readme&utm_content=integration_2) work together to provide the ultimate member experience and will help you start and profit from your amazing WordPress membership sites!
 
 #### All Add-ons are now included
 
