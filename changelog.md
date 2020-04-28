@@ -1,5 +1,11 @@
 # Change Log
 
+## 3.0.8 - 2020-04-28
+
+### Fixed
+
+- Settings page error
+
 ## 3.0.7 - 2020-04-28
 
 ### Fixed

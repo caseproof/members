@@ -59,7 +59,7 @@ function members_register_default_settings_views( $manager ) {
  */
 function members_is_settings_page() {
 	$screen = get_current_screen();
-	$prefix = sanitize_title( __( 'Members', 'members' ) );
+	$prefix = 'members';
 	return is_object( $screen ) && ( $prefix . '_page_members-settings' === $screen->id || 'admin_page_members-settings' === $screen->id );
 }
 
