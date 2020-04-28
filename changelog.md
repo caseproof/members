@@ -1,5 +1,11 @@
 # Change Log
 
+## 3.0.7 - 2020-04-28
+
+### Fixed
+
+- Issues related to translated admin menu slug
+
 ## 3.0.6 - 2020-04-27
 
 ### Fixed
