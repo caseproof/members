@@ -1,5 +1,11 @@
 # Change Log
 
+## 3.0.9 - 2020-06-22
+
+### Fixed 
+
+- Fixed issue with ACF integration trying to bump priority on ACF menu
+
 ## 3.0.8 - 2020-04-28
 
 ### Fixed

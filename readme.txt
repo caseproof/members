@@ -6,7 +6,7 @@ Tags: members, memberships, users, roles, capabilities, editor, security, access
 Requires at least: 4.7
 Tested up to: 5.4
 Requires PHP: 5.6
-Stable tag: 3.0.8
+Stable tag: 3.0.9
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
