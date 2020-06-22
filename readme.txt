@@ -39,11 +39,11 @@ If you're looking to build a business out of your membership site by creating pa
 Members now includes ALL of it's add-ons completely free of charge! Here are some of the awesome features they add to Members:
 
 * **Block Permissions:** Allows site owners to hide or show blocks based on user logged-in status, user role, or capability.
-* **Privacy Caps:** Creates additional capabilities for control over WordPress’ privacy and personal data features (GDPR).
+* **Privacy Caps:** Creates additional capabilities for control over WordPressâ€™ privacy and personal data features (GDPR).
 * **Admin Access:** Allows site administrators to control which users have access to the WordPress admin via role.
 * **Core Create Caps:** Adds the create_posts and create_pages caps to posts/pages to separate them from their edit_* counterparts, providing more flexible editing capabilities.
 * **Categories and Tag Caps:** The Category and Tag Caps add-on creates custom capabilities for the core category and post tag taxonomies. This allows site owners to have precise control over who can manage, edit, delete, or assign categories/tags.
-* **Role Levels:** Exposes the old user levels system, which fixes the WordPress author drop-down bug when users don’t have a role with one of the assigned levels.
+* **Role Levels:** Exposes the old user levels system, which fixes the WordPress author drop-down bug when users donâ€™t have a role with one of the assigned levels.
 * **Role Hierarchy:** Creates a hierarchical roles system.
 * **ACF Integration:** Creates custom capabilities for the Advanced Custom Fields (ACF) plugin for managing with the Members plugin.
 * **EDD Integration:** Integrates the Easy Digital Downloads plugin capabilities into the Members plugin's role manager.
@@ -55,10 +55,10 @@ For more info, visit the [Members plugin home page](https://memberpress.com/plug
 
 ### Like this plugin?
 
-The Members plugin is a massive project with 1,000s of lines of code to maintain. A major update can take weeks or months of work. We don’t make any money directly from this plugin while other, similar plugins charge substantial fees to even download them or get updates. Please consider helping the cause by:
+The Members plugin is a massive project with 1,000s of lines of code to maintain. A major update can take weeks or months of work. We donâ€™t make any money directly from this plugin while other, similar plugins charge substantial fees to even download them or get updates. Please consider helping the cause by:
 
 * [Upgrading to MemberPress](https://memberpress.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=readme&utm_content=memberpress_upgrade).
-* [Rating the plugin](https://wordpress.org/support/view/plugin-reviews/members?rate=5#postform).
+* [Rating the plugin](https://wordpress.org/support/plugin/members/reviews/?filter=5#new-post).
 
 ### Professional Support
 
