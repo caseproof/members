@@ -1,8 +1,8 @@
-=== Members - Best Membership and User Role Management Plugin for WordPress ===
+=== Members - Membership & User Role Editor Plugin ===
 
 Contributors: supercleanse
 Donate link: https://memberpress.com/plugins/members
-Tags: members, users, roles, capabilities, editor, security, access, permission
+Tags: members, memberships, users, roles, capabilities, editor, security, access, permission, protect, restrict content, blocks
 Requires at least: 4.7
 Tested up to: 5.4
 Requires PHP: 5.6
@@ -10,25 +10,46 @@ Stable tag: 3.0.8
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-The most powerful user, role, and capability management plugin for WordPress.
+The best WordPress membership and user role editor plugin. User Roles & Capabilities editor helps you restrict content in just a few clicks.
 
 == Description ==
 
-Members is a plugin that extends your control over your blog.  It's a user, role, and capability editor plugin that was created to make WordPress a more powerful CMS.
+Members is a roles and capabilities based WordPress membership plugin. It gives your users the ultimate member experience by giving you powerful tools to add roles and capabilities and assign them to your users.
 
-It puts you in control over permissions on your site by providing a user interface (UI) for WordPress' powerful role and cap system, which is traditionally only available to developers who know how to code this by hand.
+Members allows you to set permissions to restrict content on your site by providing a simple user interface (UI) for WordPress' powerful roles and capabilities system, which has traditionally only been available to developers who know how to code this by hand.
 
 ### Plugin Features
 
 * **Role Editor:** Allows you to edit, create, and delete roles as well as capabilities for these roles.
 * **Multiple User Roles:** Give one, two, or even more roles to any user.
-* **Explicitly Deny Capabilities:** Deny specific caps to specific user roles.
+* **Explicitly Deny Capabilities:** Deny specific capabilities to specific user roles.
 * **Clone Roles:** Build a new role by cloning an existing role.
-* **Content Permissions:** Gives you control over which users (by role) have access to post content.
+* **Content Permissions / Restricted Content:** Protect content to determine which users (by role) have access to post content.
 * **Shortcodes:** Shortcodes to control who has access to content.
-* **Widgets:**  A login form widget and users widget to show in your theme's sidebars.
+* **Widgets:** A login form widget and users widget to show in your theme's sidebars.
 * **Private Site:** You can make your site and its feed completely private if you want.
-* **Plugin Integration:** Members is highly recommended by  other WordPress developers. Many existing plugins integrate their custom roles and caps directly into it.
+* **Plugin Integration:** Members is highly recommended by other WordPress developers. Many existing plugins integrate their custom roles and capabilities directly into it.
+
+#### Seamless MemberPress Integration
+
+If you're looking to build a business out of your membership site by creating paid memberships there's no better way than to [use MemberPress](https://memberpress.com/plugins/members/?utm_source=members_plugin&utm_medium=link&utm_campaign=readme&utm_content=integration_1). Members and [MemberPress](https://memberpress.com/plugins/members/?utm_source=members_plugin&utm_medium=link&utm_campaign=readme&utm_content=integration_2) work together to provide the ultimate member experience and will help you start and profit from your amazing WordPress membership sites!
+
+#### All Add-ons are now included
+
+Members now includes ALL of it's add-ons completely free of charge! Here are some of the awesome features they add to Members:
+
+* **Block Permissions:** Allows site owners to hide or show blocks based on user logged-in status, user role, or capability.
+* **Privacy Caps:** Creates additional capabilities for control over WordPress’ privacy and personal data features (GDPR).
+* **Admin Access:** Allows site administrators to control which users have access to the WordPress admin via role.
+* **Core Create Caps:** Adds the create_posts and create_pages caps to posts/pages to separate them from their edit_* counterparts, providing more flexible editing capabilities.
+* **Categories and Tag Caps:** The Category and Tag Caps add-on creates custom capabilities for the core category and post tag taxonomies. This allows site owners to have precise control over who can manage, edit, delete, or assign categories/tags.
+* **Role Levels:** Exposes the old user levels system, which fixes the WordPress author drop-down bug when users don’t have a role with one of the assigned levels.
+* **Role Hierarchy:** Creates a hierarchical roles system.
+* **ACF Integration:** Creates custom capabilities for the Advanced Custom Fields (ACF) plugin for managing with the Members plugin.
+* **EDD Integration:** Integrates the Easy Digital Downloads plugin capabilities into the Members plugin's role manager.
+* **GiveWP Integration:** Integrates the GiveWP and GiveWP Recurring Donations plugin capabilities into the Members plugin's role manager.
+* **Meta Box Integration:** Integrates the Meta Box plugin capabilities into the Members plugin's role manager.
+* **WooCommerce Integration:** Integrates the WooCommerce plugin capabilities into the Members plugin's role manager.
 
 For more info, visit the [Members plugin home page](https://memberpress.com/plugins/members/?utm_source=members_plugin&utm_medium=link&utm_campaign=readme&utm_content=learn_more).
 
@@ -98,10 +119,6 @@ You'll need to stop by our [support forums](https://memberpress.com/plugins/memb
 3. Content permissions meta box (edit post/page screen)
 4. Plugin settings screen
 5. Select multiple roles per user (edit user screen)
-
-== Upgrade Notice ==
-
-If upgrading from a version prior to 2.0.0, please note that the plugin now requires PHP 5.3.0 or later.
 
 == Changelog ==
 

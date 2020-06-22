@@ -162,8 +162,10 @@ class Plugin {
 		global $acf_instances;
 		$admin = $acf_instances['ACF_Admin'];
 
-		remove_action( 'admin_menu', [ $admin, 'admin_menu' ]    );
-		add_action( 'admin_menu',    [ $admin, 'admin_menu' ], 8 );
+		if ( ! empty() ) {
+			remove_action( 'admin_menu', [ $admin, 'admin_menu' ]    );
+			add_action( 'admin_menu',    [ $admin, 'admin_menu' ], 8 );
+		}
 	}
 
 	/**
