@@ -1,5 +1,11 @@
 # Change Log
 
+## 3.0.10 - 2020-06-23
+
+### Fixed
+
+- Users who can promote should be able to assign roles to their own account.
+
 ## 3.0.9 - 2020-06-22
 
 ### Fixed 
