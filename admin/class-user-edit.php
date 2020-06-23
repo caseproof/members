@@ -44,6 +44,7 @@ final class User_Edit {
 
 		// Only run our customization on the 'user-edit.php' page in the admin.
 		add_action( 'load-user-edit.php', array( $this, 'load_user_edit' ) );
+		add_action( 'load-profile.php', array( $this, 'load_user_edit' ) );
 	}
 
 	/**
