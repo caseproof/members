@@ -13,7 +13,7 @@ const { createHigherOrderComponent } = wp.compose;
 const { Fragment }                   = wp.element;
 const { addFilter }                  = wp.hooks;
 const { PanelBody, Icon }            = wp.components;
-const { InspectorControls }          = wp.editor;
+const { InspectorControls }          = wp.blockEditor;
 const { title, message }         	 = membersUpsell;
 
 const PermissionsIconTitle = ( props ) => (
