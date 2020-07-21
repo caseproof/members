@@ -293,6 +293,8 @@ final class Settings_Page {
 
 		$view = $this->get_view( members_get_current_settings_view() );
 
+		wp_enqueue_style( 'members-admin' );
+
 		if ( $view )
 			$view->enqueue();
 	}

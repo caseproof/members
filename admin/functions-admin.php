@@ -199,3 +199,27 @@ function members_3_helper_pointer( $pointers ) {
     );
     return $pointers;
 }
+
+add_action( 'in_admin_header', 'members_admin_header', 0 );
+/**
+ * Branded header
+ *
+ * @return void
+ */
+function members_admin_header() {
+
+	if ( empty( $_GET['page'] ) || ! in_array( $_GET['page'], array( 'roles', 'members', 'members-settings', 'members-about' ) ) ) {
+		return;
+	}
+
+    ?>
+
+    <div class="members-upgrade-header">
+    	<span id="close-members-upgrade-header">X</span>
+      <?php _e( 'You\'re using Members. To unlock more features, consider <a href="#">upgrading to MemberPress.</a>' ); ?>
+    </div>
+
+    <div id="members-admin-header"><img class="members-logo" src="<?php echo members_plugin()->uri . 'img/Members-header.svg'; ?>" /></div>
+
+    <?php
+}

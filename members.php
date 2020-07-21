@@ -217,6 +217,7 @@ final class Members_Plugin {
 			// General admin functions.
 			require_once( $this->dir . 'admin/functions-admin.php' );
 			require_once( $this->dir . 'admin/functions-help.php'  );
+			require_once( $this->dir . 'admin/class-review-prompt.php'  );
 
 			// Plugin settings.
 			require_once( $this->dir . 'admin/class-settings.php' );
