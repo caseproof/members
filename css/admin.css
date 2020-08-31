@@ -1,3 +1,27 @@
+#members-cp-side h2.hndle {
+	border-bottom: none !important;
+	justify-content: flex-start;
+}
+
+#members-cp-side h2.hndle svg {
+	margin-right: 5px;
+}
+
+
+#members-cp-side .postbox-header {
+	border-bottom: none !important;
+}
+
+#members-cp-side .handle-actions .handle-order-higher,
+#members-cp-side .handle-actions .handle-order-lower {
+	display: none;
+}
+
+#members-cp-side .handle-actions .handlediv {
+	position: absolute;
+	right: 5px;
+}
+
 .members-upgrade-header {
   text-align: center;
   padding: 5px;
