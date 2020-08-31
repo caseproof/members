@@ -1,5 +1,15 @@
 # Change Log
 
+## 3.1.0 - 2020-08-31
+
+### Fixed
+
+- Issue with custom capabilities not saving to custom roles
+
+### Changed
+
+- Admin UI 
+
 ## 3.0.10 - 2020-06-23
 
 ### Fixed
