@@ -189,7 +189,7 @@ function members_admin_header() {
 
     <div class="members-upgrade-header" id="members-upgrade-header">
     	<span id="close-members-upgrade-header">X</span>
-    	<?php _e( 'You\'re using Members. To unlock more features, consider <a href="hhttps://memberpress.com/plans/pricing/?utm_source=members&utm_medium=link&utm_campaign=in_plugin&utm_content=pro_features">upgrading to MemberPress.</a>' ); ?>
+    	<?php _e( 'You\'re using Members. To unlock more features, consider <a href="https://memberpress.com/plans/pricing/?utm_source=members&utm_medium=link&utm_campaign=in_plugin&utm_content=pro_features">upgrading to MemberPress.</a>' ); ?>
     </div>
 
     <div id="members-admin-header"><img class="members-logo" src="<?php echo members_plugin()->uri . 'img/Members-header.svg'; ?>" /></div>
