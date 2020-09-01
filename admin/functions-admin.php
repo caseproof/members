@@ -167,39 +167,6 @@ function members_add_pointers() {
 	wp_localize_script( 'members-pointers', 'membersPointers', $valid_pointers );
 }
 
-add_filter( 'members_admin_pointers', 'members_3_helper_pointer' );
-/**
- * Adds a pointer for the Members 3.0 release
- *
- * @param  array 	$pointers 		Pointers
- *
- * @return array
- */
-function members_3_helper_pointer( $pointers ) {
-	ob_start();
-	?>
-	<h3><?php _e( 'Welcome to Members 3.0!', 'members' ); ?></h3>
-	<p><?php _e( 'The new Members is here to deliver an easier experience and more advanced features.', 'members' ); ?></p>
-	<p><?php _e( 'Don\'t worry, it will work the same as it always has for you!  We\'ve just made the following changes:', 'members' ); ?></p>
-	<p><?php _e( '<strong>1.</strong> We\'ve centralized all of the main Members settings here. This will make things much easier to find and use.', 'members' ); ?></p>
-	<p><?php _e( '<strong>2.</strong> All of our Add-ons are now <strong>freely</strong> included in Members! Just visit the Add-ons menu item here to start using these premium features.', 'members' ); ?></p>
-	<p><?php _e( 'We\'re excited about these new changes and we hope they\'ll make your experience with Members even better!', 'members' ); ?></p>
-	<p><?php _e( '- The MemberPress team', 'members' ); ?></p>
-	<?php
-	$content = ob_get_clean();
-    $pointers['members_30'] = array(
-        'target' => '#toplevel_page_members',
-        'options' => array(
-            'content' => $content,
-            'position' => array( 
-            	'edge' => 'left', 
-            	'align' => 'center' 
-            )
-        )
-    );
-    return $pointers;
-}
-
 add_action( 'in_admin_header', 'members_admin_header', 0 );
 /**
  * Branded header
@@ -208,18 +175,66 @@ add_action( 'in_admin_header', 'members_admin_header', 0 );
  */
 function members_admin_header() {
 
-	if ( empty( $_GET['page'] ) || ! in_array( $_GET['page'], array( 'roles', 'members', 'members-settings', 'members-about' ) ) ) {
+	if ( is_plugin_active( 'memberpress/memberpress.php' ) || empty( $_GET['page'] ) || ! in_array( $_GET['page'], array( 'roles', 'members', 'members-settings', 'members-about' ) ) ) {
+		return;
+	}
+
+	$dismissed = get_option( 'members_dismiss_upgrade_header', false );
+
+	if ( ! empty( $dismissed ) ) {
 		return;
 	}
 
     ?>
 
-    <div class="members-upgrade-header">
+    <div class="members-upgrade-header" id="members-upgrade-header">
     	<span id="close-members-upgrade-header">X</span>
-      <?php _e( 'You\'re using Members. To unlock more features, consider <a href="hhttps://memberpress.com/plans/pricing/?utm_source=members&utm_medium=link&utm_campaign=in_plugin&utm_content=pro_features">upgrading to MemberPress.</a>' ); ?>
+    	<?php _e( 'You\'re using Members. To unlock more features, consider <a href="hhttps://memberpress.com/plans/pricing/?utm_source=members&utm_medium=link&utm_campaign=in_plugin&utm_content=pro_features">upgrading to MemberPress.</a>' ); ?>
     </div>
 
     <div id="members-admin-header"><img class="members-logo" src="<?php echo members_plugin()->uri . 'img/Members-header.svg'; ?>" /></div>
 
+    <script>
+    	jQuery(document).ready(function($) {
+    		$('#close-members-upgrade-header').click(function(event) {
+    			var upgradeHeader = $('#members-upgrade-header');
+    			upgradeHeader.fadeOut();
+    			$.ajax({
+    				url: ajaxurl,
+    				type: 'POST',
+    				data: {
+    					action: 'members_dismiss_upgrade_header',
+    					nonce: "<?php echo wp_create_nonce( 'members_dismiss_upgrade_header' ); ?>"
+    				},
+    			})
+    			.done(function() {
+    				console.log("success");
+    			})
+    			.fail(function() {
+    				console.log("error");
+    			})
+    			.always(function() {
+    				console.log("complete");
+    			});
+    		});
+    	});
+    </script>
+
     <?php
+}
+
+add_action( 'wp_ajax_members_dismiss_upgrade_header', 'members_dismiss_upgrade_header' );
+/**
+ * Dismisses the Members upgrade header bar.
+ *
+ * @return void
+ */
+function members_dismiss_upgrade_header() {
+
+	// Security check
+	if ( empty( $_POST['nonce'] ) || ! wp_verify_nonce( $_POST['nonce'], 'members_dismiss_upgrade_header' ) ) {
+		die();
+	}
+
+	update_option( 'members_dismiss_upgrade_header', true );
 }

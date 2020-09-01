@@ -41,7 +41,10 @@ class ReviewPrompt {
 		}
 
 		// Don't bother if haven't been using long enough
-		
+		$transient = get_transient( 'members_30days_flag' );
+		if ( ! empty( $transient ) ) {
+			return;
+		}
 
 		?>
 		<div class="notice notice-info is-dismissible members-review-notice" id="members_review_notice">

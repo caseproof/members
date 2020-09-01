@@ -125,6 +125,7 @@
   background-repeat: repeat;
   background-size: 1200px 75px;
   min-height: 36px;
+  position: relative;
   /* border-bottom: 2px solid #00cee6; */
 }
 
@@ -133,7 +134,13 @@
 }
 
 .members-upgrade-header #close-members-upgrade-header {
-  float: right;
+  position: absolute;
+  right: 20px;
+  top: 3px;
+}
+
+.members-upgrade-header #close-members-upgrade-header:hover {
+	cursor: pointer;
 }
 
 /* ====== Members Settings Screen. ====== */

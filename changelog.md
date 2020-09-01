@@ -1,5 +1,11 @@
 # Change Log
 
+## 3.1.1 - 2020-09-01
+
+### Changed
+
+- Admin UI cleanup
+
 ## 3.1.0 - 2020-08-31
 
 ### Fixed

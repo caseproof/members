@@ -3,7 +3,7 @@
  * Plugin Name: Members
  * Plugin URI:  https://memberpress.com/plugins/members
  * Description: A user and role management plugin that puts you in full control of your site's permissions. This plugin allows you to edit your roles and their capabilities, clone existing roles, assign multiple roles per user, block post content, or even make your site completely private.
- * Version:     3.1.0
+ * Version:     3.1.1
  * Author:      MemberPress
  * Author URI:  https://memberpress.com
  * Text Domain: members
@@ -324,6 +324,11 @@ final class Members_Plugin {
 				$role->add_cap( 'delete_roles' ); // Delete existing roles.
 				$role->add_cap( 'edit_roles'   ); // Edit existing roles/caps.
 			}
+		}
+
+		$flag = get_transient( 'members_30days_flag' );
+		if ( empty( $flag ) ) {
+			set_transient( 'members_30days_flag', true, 30 * DAY_IN_SECONDS );
 		}
 	}
 
