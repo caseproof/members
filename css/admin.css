@@ -1,8 +1,10 @@
+#members-cp h2.hndle,
 #members-cp-side h2.hndle {
 	border-bottom: none !important;
 	justify-content: flex-start;
 }
 
+#members-cp h2.hndle svg,
 #members-cp-side h2.hndle svg {
 	margin-right: 5px;
 }

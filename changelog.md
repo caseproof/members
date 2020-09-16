@@ -1,5 +1,15 @@
 # Change Log
 
+## 3.1.3 - 
+
+### Changed
+
+- Disabled Content Permissions side meta box
+
+### Fixed
+
+- Issue with comma-separated roles that include spaces
+
 ## 3.1.2 - 2020-09-02
 
 ### Fixed
