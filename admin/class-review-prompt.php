@@ -9,6 +9,7 @@ class ReviewPrompt {
 
 	public function __construct() {
 		add_action( 'admin_notices', array( $this, 'review_notice' ) );
+		add_action( 'network_admin_notices', array( $this, 'review_notice' ) );
 		add_action( 'wp_ajax_members_dismiss_review_prompt', array( $this, 'dismiss_review_prompt' ) );
 	}
 
@@ -34,6 +35,11 @@ class ReviewPrompt {
 	}
 
 	public function review_notice() {
+
+		// Bail if in multisite and not in network admin
+		if ( is_multisite() && ! is_network_admin() ) {
+			return;
+		}
 
 		// Only show to admins
 		if ( ! current_user_can( 'manage_options' ) ) {
