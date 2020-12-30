@@ -57,13 +57,13 @@ class Registry {
 	private function __clone() {}
 
 	/**
-	 * Lock down `__wakeup()`.
+	 * Magic Method `__wakeup()`.
 	 *
 	 * @since  2.0.0
 	 * @access private
 	 * @return void
 	 */
-	private function __wakeup() {}
+	public function __wakeup() {}
 
 	/**
 	 * Register an item.
