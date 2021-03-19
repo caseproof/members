@@ -62,7 +62,7 @@ class View_Addons extends View {
 						
 						<?php
 							if ( $addon->is_memberpress ) {
-								if ( ! is_plugin_active( 'memberpress/memberpress.php' ) ) {
+								if ( ! defined( 'MEPR_PLUGIN_SLUG' ) ) {
 									$this->addon_card( $addon );
 								}
 							} else {

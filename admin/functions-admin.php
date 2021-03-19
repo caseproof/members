@@ -175,7 +175,7 @@ add_action( 'in_admin_header', 'members_admin_header', 0 );
  */
 function members_admin_header() {
 
-	if ( is_plugin_active( 'memberpress/memberpress.php' ) || empty( $_GET['page'] ) || ! in_array( $_GET['page'], array( 'roles', 'members', 'members-settings', 'members-about' ) ) ) {
+	if ( defined( 'MEPR_PLUGIN_SLUG' ) || empty( $_GET['page'] ) || ! in_array( $_GET['page'], array( 'roles', 'members', 'members-settings', 'members-about' ) ) ) {
 		return;
 	}
 

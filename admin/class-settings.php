@@ -221,7 +221,7 @@ final class Settings_Page {
 		// Create the settings page.
 		$this->settings_page = add_submenu_page( 'members', esc_html_x( 'Settings', 'admin screen', 'members' ), esc_html_x( 'Settings', 'admin screen', 'members' ), apply_filters( 'members_settings_capability', 'manage_options' ), 'members-settings', array( $this, 'settings_page' ) );
 		$this->addons_page = add_submenu_page( 'members', esc_html_x( 'Add-Ons', 'admin screen', 'members' ), _x( '<span style="color: #8CBD5A;">Add-Ons</span>', 'admin screen', 'members' ), apply_filters( 'members_settings_capability', 'manage_options' ), 'members-settings&view=add-ons', array( $this, 'settings_page' ) );
-		if ( ! is_plugin_active( 'memberpress/memberpress.php' ) ) {
+		if ( ! defined( 'MEPR_PLUGIN_SLUG' ) ) { // MemberPress not active
 			$this->payments_page = add_submenu_page( 'members', esc_html_x( 'Payments', 'admin screen', 'members' ), esc_html_x( 'Payments', 'admin screen', 'members' ), apply_filters( 'members_settings_capability', 'manage_options' ), 'members-payments', array( $this, 'payments_page' ) );
 		}
 		$this->about_page = add_submenu_page( 'members', esc_html_x( 'About Us', 'admin screen', 'members' ), esc_html_x( 'About Us', 'admin screen', 'members' ), apply_filters( 'members_settings_capability', 'manage_options' ), 'members-about', array( $this, 'about_page' ) );
@@ -635,7 +635,7 @@ final class Settings_Page {
 						</div>
 					</div>
 					<div class="plugin-card-bottom">
-						<?php if ( is_plugin_active( 'memberpress/memberpress.php' ) ) : // Installed and active ?>
+						<?php if ( defined( 'MEPR_PLUGIN_SLUG' ) ) : // Installed and active ?>
 							<div class="column-rating column-status">Status: <span class="active">Active</span></div>
 							<div class="column-updated"><a href="https://memberpress.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=memberpress_learn_more" target="_blank" class="button button-secondary">Learn More</a></div>
 						<?php elseif ( array_key_exists( 'memberpress/memberpress.php', $installed_plugins ) ) : // Installed but inactive ?>
