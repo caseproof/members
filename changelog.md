@@ -1,5 +1,11 @@
 # Change Log
 
+## 3.1.5 - 2021-03-25
+
+### Fixed
+
+- Block permissions not working for nested blocks (e.g. columns)
+
 ## 3.1.4 - 2021-03-11
 
 ### Changed
