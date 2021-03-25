@@ -31,7 +31,7 @@ class Block {
 	 * @return void
 	 */
 	public function boot() {
-		add_filter( 'pre_render_block', [ $this, 'preRenderBlock' ], PHP_INT_MAX, 2 );
+		add_filter( 'render_block', [ $this, 'renderBlock' ], PHP_INT_MAX, 2 );
 	}
 
 	/**
@@ -40,25 +40,32 @@ class Block {
 	 *
 	 * @since  1.0.0
 	 * @access public
-	 * @param  string|null  $pre_render  Returning anything other than null will short-circuit the block.
+	 * @param  string|null  $content  Returning anything other than null will short-circuit the block.
 	 * @param  array        $block       The block data.
 	 * @return mixed
 	 */
-	public function preRenderBlock( $pre_render, $block ) {
+	public function renderBlock( $content, $block ) {
+
+		// Check if we have nested blocks (e.g. columns)
+		if ( is_array( $block['innerBlocks'] ) && ! empty( $block['innerBlocks'] ) ) {
+			foreach ( $block['innerBlocks'] as $inner_block ) {
+				$this->renderBlock( $content, $inner_block );
+			}
+		}
 
 		// Bail if we're in the admin or there are no block attributes.
 		if ( is_admin() || ! isset( $block['attrs'] ) ) {
-			return $pre_render;
+			return $content;
 		}
 
 		// Bail if there isn't a condition set.
 		if ( ! isset( $block['attrs']['blockPermissionsCondition'] ) || ! $block['attrs']['blockPermissionsCondition'] ) {
-			return $pre_render;
+			return $content;
 		}
 
 		// Bail if there isn't a type set.
 		if ( ! isset( $block['attrs']['blockPermissionsType'] ) || ! $block['attrs']['blockPermissionsType'] ) {
-			return $pre_render;
+			return $content;
 		}
 
 		// Gets the permissions type.
@@ -79,47 +86,52 @@ class Block {
 
 		// If the block should not be rendered.
 		if ( ! $maybe_render ) {
+			$content = $this->get_block_replacement_content( $block );
+		}
 
-			// Set to an empty string by default, which will short-
-			// circuit the block output.
-			$pre_render = '';
+		return $content;
+	}
 
-			// Get the error message.
-			$message = isset( $block['attrs']['blockPermissionsMessage'] )
-			           ? $block['attrs']['blockPermissionsMessage']
-				   : '';
+	protected function get_block_replacement_content( $block ) {
+		// Set to an empty string by default, which will short-
+		// circuit the block output.
+		$replacement_content = '';
 
-			// Allow devs to overwrite the message.
-	   		$message = apply_filters(
-	   			'members/block/permissions/error/message',
-				$message,
+		// Get the error message.
+		$message = isset( $block['attrs']['blockPermissionsMessage'] )
+		           ? $block['attrs']['blockPermissionsMessage']
+			   : '';
+
+		// Allow devs to overwrite the message.
+   		$message = apply_filters(
+   			'members/block/permissions/error/message',
+			$message,
+			$block
+		);
+
+		// Check if there's an error message and use it if so.
+		if ( $message ) {
+
+			$class = apply_filters(
+				'members/block/permissions/error/class',
+				[ 'block-permissions-error' ],
 				$block
 			);
 
-			// Check if there's an error message and use it if so.
-			if ( $message ) {
+			$replacement_content = sprintf(
+				'<div class="%s">%s</div>',
+				esc_attr( join( ' ', $class ) ),
+				wpautop( $message )
+			);
 
-				$class = apply_filters(
-					'members/block/permissions/error/class',
-					[ 'block-permissions-error' ],
-					$block
-				);
-
-				$pre_render = sprintf(
-					'<div class="%s">%s</div>',
-					esc_attr( join( ' ', $class ) ),
-					wpautop( $message )
-				);
-
-				$pre_render = apply_filters(
-					'members/block/permissions/error',
-					$pre_render,
-					$block
-				);
-			}
+			$replacement_content = apply_filters(
+				'members/block/permissions/error',
+				$replacement_content,
+				$block
+			);
 		}
 
-		return $pre_render;
+		return $replacement_content;
 	}
 
 	/**
