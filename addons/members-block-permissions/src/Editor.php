@@ -29,7 +29,7 @@ class Editor {
 	 * @return void
 	 */
 	public function boot() {
-		add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue'] );
+		add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue'], 1 );
 	}
 
 	/**
