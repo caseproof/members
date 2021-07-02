@@ -47,7 +47,6 @@ function members_register_default_cap_groups() {
 
 	// Loop through every custom post type.
 	foreach ( get_post_types( array(), 'objects' ) as $type ) {
-
 		// Skip revisions and nave menu items.
 		if ( in_array( $type->name, array( 'revision', 'nav_menu_item', 'custom_css', 'customize_changeset' ) ) )
 			continue;

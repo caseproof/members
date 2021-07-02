@@ -185,7 +185,7 @@ final class Members_Plugin {
 			// Bail.
 			return;
 		}
-
+    
 		// Load class files.
 		require_once( $this->dir . 'inc/class-capability.php' );
 		require_once( $this->dir . 'inc/class-cap-group.php'  );
@@ -247,6 +247,7 @@ final class Members_Plugin {
 		$addons = get_option( 'members_active_addons', array() );
 
 		if ( ! empty( $addons ) ) {
+
 			foreach ( $addons as $addon ) {
 				if ( file_exists( __DIR__ . "/addons/{$addon}/addon.php" ) ) {
 					include "addons/{$addon}/addon.php";
@@ -431,7 +432,7 @@ final class Members_Plugin {
 	public function run_addon_activator( $addon ) {
 
 		if ( file_exists( trailingslashit( __DIR__ ) . "addons/{$addon}/src/Activator.php" ) ) {
-			
+
 			// Require the add-on file
 			include "addons/{$addon}/src/Activator.php";
 

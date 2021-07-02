@@ -74,6 +74,12 @@ return array(
 		'excerpt'     => '<p>The Members - WooCommerce Integration add-on more nicely integrates the <a href="https://woocommerce.com/" target="_blank">WooCommerce</a> plugin capabilities into the Members plugin\'s role manager.</p>'
 	),
 
+  'members-memberpress-integration' => array(
+		'url'         => '',
+		'title'       => 'Members - MemberPress Integration',
+		'excerpt'     => '<p>The Members - MemberPress Integration add-on more nicely integrates the <a href="https://memberpress.com/" target="_blank">MemberPress</a> plugin capabilities into the Members plugin\'s role manager.</p>'
+	),
+
 	'memberpress-payments' => array(
 		'url'         => 'https://memberpress.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=addons&utm_content=activate_payments',
 		'title'       => 'Payments',
