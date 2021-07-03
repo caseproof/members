@@ -1,12 +1,12 @@
 i.memberpress-icon::before {
-  content: '';
-  display: inline-block;
-  vertical-align: top;
-  text-align: center;
-  height:23px;
-  width:23px;
-  margin-right: 3%;
-  background-size: 23px 23px;
-  background-image: url('../img/mp-icon.svg');
-  background-repeat: no-repeat;
+	content: '';
+	display: inline-block;
+	vertical-align: top;
+	text-align: center;
+	height:23px;
+	width:23px;
+	margin-right: 3%;
+	background-size: 23px 23px;
+	background-image: url('../img/mp-icon.svg');
+	background-repeat: no-repeat;
 }
