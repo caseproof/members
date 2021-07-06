@@ -158,7 +158,7 @@ function memberpress_caps() {
 		],
 
 		//Groups
-		'edit_mepr_groups' => [
+		'edit_groups' => [
 			'label'			 => __( 'Groups: Edit', 'members' ),
 			'description' => __( 'Allows access to edit groups.', 'members' )
 		],
@@ -200,49 +200,49 @@ function memberpress_caps() {
 		],
 
 		//Products
-		'edit_mepr_products' => [
-			'label'			 => __( 'Products: Edit', 'members' ),
+		'edit_memberships' => [
+			'label'			 => __( 'Memberships: Edit', 'members' ),
 			'description' => __( 'Allows access to edit products.', 'members' )
 		],
-		'edit_others_products' => [
-			'label'			 => __( 'Products: Edit Others', 'members' ),
+		'edit_others_memberships' => [
+			'label'			 => __( 'Memberships: Edit Others', 'members' ),
 			'description' => __( 'Allows access to edit others\' products.', 'members' )
 		],
-		'delete_products' => [
-			'label'			 => __( 'Products: Delete', 'members' ),
+		'delete_memberships' => [
+			'label'			 => __( 'Memberships: Delete', 'members' ),
 			'description' => __( 'Allows access to delete products.', 'members' )
 		],
-		'publish_products' => [
-			'label'			 => __( 'Products: Publish', 'members' ),
+		'publish_memberships' => [
+			'label'			 => __( 'Memberships: Publish', 'members' ),
 			'description' => __( 'Allows access to publish products.', 'members' )
 		],
-		'read_private_products' => [
-			'label'			 => __( 'Products: Read Private', 'members' ),
+		'read_private_memberships' => [
+			'label'			 => __( 'Memberships: Read Private', 'members' ),
 			'description' => __( 'Allows access to view private products.', 'members' )
 		],
-		'delete_private_products' => [
-			'label'			 => __( 'Products: Delete Private', 'members' ),
+		'delete_private_memberships' => [
+			'label'			 => __( 'Memberships: Delete Private', 'members' ),
 			'description' => __( 'Allows access to delete private products.', 'members' )
 		],
-		'delete_published_products' => [
-			'label'			 => __( 'Products: Delete Published', 'members' ),
+		'delete_published_memberships' => [
+			'label'			 => __( 'Memberships: Delete Published', 'members' ),
 			'description' => __( 'Allows access to delete published products.', 'members' )
 		],
-		'delete_others_products' => [
-			'label'			 => __( 'Products: Delete Others', 'members' ),
+		'delete_others_memberships' => [
+			'label'			 => __( 'Memberships: Delete Others', 'members' ),
 			'description' => __( 'Allows access to delete others\' products.', 'members' )
 		],
-		'edit_private_products' => [
-			'label'			 => __( 'Products: Edit Private', 'members' ),
+		'edit_private_memberships' => [
+			'label'			 => __( 'Memberships: Edit Private', 'members' ),
 			'description' => __( 'Allows access to edit private products.', 'members' )
 		],
-		'edit_published_products' => [
-			'label'			 => __( 'Products: Edit Published', 'members' ),
+		'edit_published_memberships' => [
+			'label'			 => __( 'Memberships: Edit Published', 'members' ),
 			'description' => __( 'Allows access to edit published products.', 'members' )
 		],
 
 		//Coupons
-		'edit_mepr_coupons' => [
+		'edit_coupons' => [
 			'label'			 => __( 'Coupons: Edit', 'members' ),
 			'description' => __( 'Allows access to edit coupons.', 'members' )
 		],
@@ -284,7 +284,7 @@ function memberpress_caps() {
 		],
 
 		//Reminders
-		'edit_mepr_reminders' => [
+		'edit_reminders' => [
 			'label'			 => __( 'Reminders: Edit', 'members' ),
 			'description' => __( 'Allows access to edit reminders.', 'members' )
 		],
@@ -326,7 +326,7 @@ function memberpress_caps() {
 		],
 
 		//Rules
-		'edit_mepr_rules' => [
+		'edit_rules' => [
 			'label'			 => __( 'Rules: Edit', 'members' ),
 			'description' => __( 'Allows access to edit rules.', 'members' )
 		],
