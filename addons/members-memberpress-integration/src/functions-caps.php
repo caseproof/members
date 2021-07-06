@@ -157,7 +157,7 @@ function memberpress_caps() {
 			'description' => __( 'Allows access to delete Subscriptions.', 'members' )
 		],
 
-		//Groups
+		//Groups Custom Post Type
 		'edit_groups' => [
 			'label'			 => __( 'Groups: Edit', 'members' ),
 			'description' => __( 'Allows access to edit groups.', 'members' )
@@ -199,7 +199,7 @@ function memberpress_caps() {
 			'description' => __( 'Allows access to edit published groups.', 'members' )
 		],
 
-		//Products
+		//Memberships Custom Post Type
 		'edit_memberships' => [
 			'label'			 => __( 'Memberships: Edit', 'members' ),
 			'description' => __( 'Allows access to edit products.', 'members' )
@@ -241,7 +241,7 @@ function memberpress_caps() {
 			'description' => __( 'Allows access to edit published products.', 'members' )
 		],
 
-		//Coupons
+		//Coupons Custom Post Type
 		'edit_coupons' => [
 			'label'			 => __( 'Coupons: Edit', 'members' ),
 			'description' => __( 'Allows access to edit coupons.', 'members' )
@@ -283,7 +283,7 @@ function memberpress_caps() {
 			'description' => __( 'Allows access to edit published coupons.', 'members' )
 		],
 
-		//Reminders
+		//Reminders Custom Post Type
 		'edit_reminders' => [
 			'label'			 => __( 'Reminders: Edit', 'members' ),
 			'description' => __( 'Allows access to edit reminders.', 'members' )
@@ -325,7 +325,7 @@ function memberpress_caps() {
 			'description' => __( 'Allows access to edit published reminders.', 'members' )
 		],
 
-		//Rules
+		//Rules Custom Post Type
 		'edit_rules' => [
 			'label'			 => __( 'Rules: Edit', 'members' ),
 			'description' => __( 'Allows access to edit rules.', 'members' )
