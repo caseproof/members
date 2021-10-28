@@ -1,4 +1,4 @@
-name: Deploy to WordPress.org
+name: WordPress.org plugin asset/readme update
 on:
   push:
     paths:
