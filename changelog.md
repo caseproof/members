@@ -1,5 +1,22 @@
 # Change Log
 
+## 3.1.6 - 2021-10-28
+
+### Fixed
+
+- Using transients for review prompt causes the prompt to persist when dismissed; switched to using options instead
+- Users widget not working in new block-based widgets editor
+
+### Changed
+
+- WP Tested Up To version (5.8)
+
+### Added
+
+- "Miscellaneous" settings section
+- "Disable Review Prompt" setting to permanently remove the review prompt
+- `MEMBERS_DISABLE_REVIEW_PROMPT` constant to permanently remove the review prompt
+
 ## 3.1.5 - 2021-03-25
 
 ### Fixed

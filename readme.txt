@@ -2,11 +2,11 @@
 
 Contributors: supercleanse
 Donate link: https://memberpress.com/plugins/members
-Tags: members, memberships, users, roles, capabilities, editor, security, access, permission, protect, restrict content, blocks
+Tags: memberpress, security, access-control, permissions, members-only, membership-plan, memberships, roles, capabilities, editor, users, security, access, permission, protect, restrict content, blocks
 Requires at least: 4.7
-Tested up to: 5.6
+Tested up to: 5.8
 Requires PHP: 5.6
-Stable tag: 3.1.5
+Stable tag: 3.1.6
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 

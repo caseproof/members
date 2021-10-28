@@ -178,6 +178,13 @@ class Widget_Users extends \WP_Widget {
 	 */
 	function form( $instance ) {
 
+		// We need to load our admin functions file to support the new block-based Widgets editor.
+		// This is because is_admin() does not work in REST requests, so it won't work in this new editor.
+		// Since we load these functions globally using is_admin(), they won't load here, so we have to require them.
+		// @see https://github.com/WordPress/gutenberg/issues/33443
+		// @see https://make.wordpress.org/core/2021/06/29/block-based-widgets-editor-in-wordpress-5-8/
+		require_once( members_plugin()->dir . 'admin/functions-admin.php' );
+
 		// Merge the user-selected arguments with the defaults.
 		$instance = wp_parse_args( (array) $instance, $this->defaults );
 

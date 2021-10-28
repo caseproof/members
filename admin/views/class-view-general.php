@@ -62,6 +62,7 @@ class View_General extends View {
 		add_settings_section( 'roles_caps',          esc_html__( 'Roles and Capabilities', 'members' ), array( $this, 'section_roles_caps' ), 'members-settings' );
 		add_settings_section( 'content_permissions', esc_html__( 'Content Permissions',    'members' ), '__return_false',                     'members-settings' );
 		add_settings_section( 'private_site',        esc_html__( 'Private Site',           'members' ), '__return_false',                     'members-settings' );
+		add_settings_section( 'misc',        		 esc_html__( 'Miscellaneous',          'members' ), '__return_false',                     'members-settings' );
 
 		/* === Settings Fields === */
 
@@ -79,6 +80,9 @@ class View_General extends View {
 		add_settings_field( 'private_rest_api',    esc_html__( 'REST API',            'members' ), array( $this, 'field_private_rest_api'    ), 'members-settings', 'private_site' );
 		add_settings_field( 'enable_private_feed', esc_html__( 'Disable Feed',        'members' ), array( $this, 'field_enable_private_feed' ), 'members-settings', 'private_site' );
 		add_settings_field( 'private_feed_error',  esc_html__( 'Feed Error Message',  'members' ), array( $this, 'field_private_feed_error'  ), 'members-settings', 'private_site' );
+
+		// Misc fields.
+		add_settings_field( 'review_prompt_removed',  esc_html__( 'Disable Review Prompt',  'members' ), array( $this, 'field_remove_review_prompt'  ), 'members-settings', 'misc' );
 
 		do_action( 'members_register_settings' );
 	}
@@ -281,6 +285,23 @@ class View_General extends View {
 				'editor_height'    => 250
 			)
 		);
+	}
+
+	/**
+	 * Private feed error message field callback.
+	 *
+	 * @since  2.0.0
+	 * @access public
+	 * @return void
+	 */
+	public function field_remove_review_prompt() {
+
+		?>
+		<label>
+			<input type="checkbox" name="members_settings[review_prompt_removed]" value="1" <?php checked( members_get_setting( 'review_prompt_removed' ) ); ?> />
+			<?php esc_html_e( 'Permanently remove Members review prompt.', 'members' ); ?>
+		</label>
+		<?php
 	}
 
 	/**
