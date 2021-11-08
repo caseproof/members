@@ -47,7 +47,7 @@ class Block {
 	public function renderBlock( $content, $block ) {
 
 		// Check if we have nested blocks (e.g. columns)
-		if ( is_array( $block['innerBlocks'] ) && ! empty( $block['innerBlocks'] ) ) {
+		if ( ! empty( $block['innerBlocks'] ) && is_array( $block['innerBlocks'] ) ) {
 			foreach ( $block['innerBlocks'] as $inner_block ) {
 				$this->renderBlock( $content, $inner_block );
 			}
