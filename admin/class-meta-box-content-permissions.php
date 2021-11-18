@@ -189,12 +189,14 @@ final class Meta_Box_Content_Permissions {
 						<span class="label"><?php esc_html_e( 'Roles', 'members' ); ?></span>
 					</a>
 				</li>
-				<li class="members-tab-title">
-					<a href="#members-tab-paid-memberships">
-						<svg width="15px" clip-rule="evenodd" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="2" viewBox="0 0 640 512" xmlns="http://www.w3.org/2000/svg"><path d="m621.16 54.46c-38.79-16.27-77.61-22.46-116.41-22.46-123.17-.01-246.33 62.34-369.5 62.34-30.89 0-61.76-3.92-92.65-13.72-3.47-1.1-6.95-1.62-10.35-1.62-17.21 0-32.25 13.32-32.25 31.81v317.26c0 12.63 7.23 24.6 18.84 29.46 38.79 16.28 77.61 22.47 116.41 22.47 123.17 0 246.34-62.35 369.51-62.35 30.89 0 61.76 3.92 92.65 13.72 3.47 1.1 6.95 1.62 10.35 1.62 17.21 0 32.25-13.32 32.25-31.81v-317.25c-.01-12.64-7.24-24.6-18.85-29.47zm-573.16 77.76c20.12 5.04 41.12 7.57 62.72 8.93-5.88 29.39-31.72 51.54-62.72 51.54zm0 285v-47.78c34.37 0 62.18 27.27 63.71 61.4-22.53-1.81-43.59-6.31-63.71-13.62zm272-65.22c-44.19 0-80-42.99-80-96 0-53.02 35.82-96 80-96s80 42.98 80 96c0 53.03-35.83 96-80 96zm272 27.78c-17.52-4.39-35.71-6.85-54.32-8.44 5.87-26.08 27.5-45.88 54.32-49.28zm0-236.11c-30.89-3.91-54.86-29.7-55.81-61.55 19.54 2.17 38.09 6.23 55.81 12.66z" fill-rule="nonzero"/></svg>
-						<span class="label"><?php esc_html_e( 'Paid Memberships', 'members' ); ?></span>
-					</a>
-				</li>
+				<?php if ( ! members_is_memberpress_active() ) : ?>
+					<li class="members-tab-title">
+						<a href="#members-tab-paid-memberships">
+							<svg width="15px" clip-rule="evenodd" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="2" viewBox="0 0 640 512" xmlns="http://www.w3.org/2000/svg"><path d="m621.16 54.46c-38.79-16.27-77.61-22.46-116.41-22.46-123.17-.01-246.33 62.34-369.5 62.34-30.89 0-61.76-3.92-92.65-13.72-3.47-1.1-6.95-1.62-10.35-1.62-17.21 0-32.25 13.32-32.25 31.81v317.26c0 12.63 7.23 24.6 18.84 29.46 38.79 16.28 77.61 22.47 116.41 22.47 123.17 0 246.34-62.35 369.51-62.35 30.89 0 61.76 3.92 92.65 13.72 3.47 1.1 6.95 1.62 10.35 1.62 17.21 0 32.25-13.32 32.25-31.81v-317.25c-.01-12.64-7.24-24.6-18.85-29.47zm-573.16 77.76c20.12 5.04 41.12 7.57 62.72 8.93-5.88 29.39-31.72 51.54-62.72 51.54zm0 285v-47.78c34.37 0 62.18 27.27 63.71 61.4-22.53-1.81-43.59-6.31-63.71-13.62zm272-65.22c-44.19 0-80-42.99-80-96 0-53.02 35.82-96 80-96s80 42.98 80 96c0 53.03-35.83 96-80 96zm272 27.78c-17.52-4.39-35.71-6.85-54.32-8.44 5.87-26.08 27.5-45.88 54.32-49.28zm0-236.11c-30.89-3.91-54.86-29.7-55.81-61.55 19.54 2.17 38.09 6.23 55.81 12.66z" fill-rule="nonzero"/></svg>
+							<span class="label"><?php esc_html_e( 'Paid Memberships', 'members' ); ?></span>
+						</a>
+					</li>
+				<?php endif; ?>
 				<li class="members-tab-title">
 					<a href="#members-tab-cp-message">
 						<i class="dashicons dashicons-edit"></i>
@@ -233,14 +235,16 @@ final class Meta_Box_Content_Permissions {
 
 				</div>
 
-				<div id="members-tab-paid-memberships" class="members-tab-content">
+				<?php if ( ! members_is_memberpress_active() ) : ?>
+					<div id="members-tab-paid-memberships" class="members-tab-content">
 
-					<div class="memberpress-paid-memberships">
-						<p><?php _e( 'To protect this block by paid membership or centrally with <br> a content protection rule, upgrade to MemberPress.', 'members' ); ?></p>
-						<p><a href="https://memberpress.com/plans/pricing/?utm_source=members&utm_medium=link&utm_campaign=in_plugin&utm_content=content_protection"><?php esc_html_e( 'Upgrade to MemberPress', 'members' ); ?></a></p>
+						<div class="memberpress-paid-memberships">
+							<p><?php _e( 'To protect this block by paid membership or centrally with <br> a content protection rule, upgrade to MemberPress.', 'members' ); ?></p>
+							<p><a href="https://memberpress.com/plans/pricing/?utm_source=members&utm_medium=link&utm_campaign=in_plugin&utm_content=content_protection"><?php esc_html_e( 'Upgrade to MemberPress', 'members' ); ?></a></p>
+						</div>
+
 					</div>
-
-				</div>
+				<?php endif; ?>
 
 				<div id="members-tab-cp-message" class="members-tab-content">
 
@@ -304,12 +308,14 @@ final class Meta_Box_Content_Permissions {
 						<span class="label"><?php esc_html_e( 'Roles', 'members' ); ?></span>
 					</a>
 				</li>
-				<li class="members-tab-title">
-					<a href="#members-tab-paid-memberships">
-						<svg width="15px" clip-rule="evenodd" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="2" viewBox="0 0 640 512" xmlns="http://www.w3.org/2000/svg"><path d="m621.16 54.46c-38.79-16.27-77.61-22.46-116.41-22.46-123.17-.01-246.33 62.34-369.5 62.34-30.89 0-61.76-3.92-92.65-13.72-3.47-1.1-6.95-1.62-10.35-1.62-17.21 0-32.25 13.32-32.25 31.81v317.26c0 12.63 7.23 24.6 18.84 29.46 38.79 16.28 77.61 22.47 116.41 22.47 123.17 0 246.34-62.35 369.51-62.35 30.89 0 61.76 3.92 92.65 13.72 3.47 1.1 6.95 1.62 10.35 1.62 17.21 0 32.25-13.32 32.25-31.81v-317.25c-.01-12.64-7.24-24.6-18.85-29.47zm-573.16 77.76c20.12 5.04 41.12 7.57 62.72 8.93-5.88 29.39-31.72 51.54-62.72 51.54zm0 285v-47.78c34.37 0 62.18 27.27 63.71 61.4-22.53-1.81-43.59-6.31-63.71-13.62zm272-65.22c-44.19 0-80-42.99-80-96 0-53.02 35.82-96 80-96s80 42.98 80 96c0 53.03-35.83 96-80 96zm272 27.78c-17.52-4.39-35.71-6.85-54.32-8.44 5.87-26.08 27.5-45.88 54.32-49.28zm0-236.11c-30.89-3.91-54.86-29.7-55.81-61.55 19.54 2.17 38.09 6.23 55.81 12.66z" fill-rule="nonzero"/></svg>
-						<span class="label"><?php esc_html_e( 'Paid Memberships', 'members' ); ?></span>
-					</a>
-				</li>
+				<?php if ( ! members_is_memberpress_active() ) : ?>
+					<li class="members-tab-title">
+						<a href="#members-tab-paid-memberships">
+							<svg width="15px" clip-rule="evenodd" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="2" viewBox="0 0 640 512" xmlns="http://www.w3.org/2000/svg"><path d="m621.16 54.46c-38.79-16.27-77.61-22.46-116.41-22.46-123.17-.01-246.33 62.34-369.5 62.34-30.89 0-61.76-3.92-92.65-13.72-3.47-1.1-6.95-1.62-10.35-1.62-17.21 0-32.25 13.32-32.25 31.81v317.26c0 12.63 7.23 24.6 18.84 29.46 38.79 16.28 77.61 22.47 116.41 22.47 123.17 0 246.34-62.35 369.51-62.35 30.89 0 61.76 3.92 92.65 13.72 3.47 1.1 6.95 1.62 10.35 1.62 17.21 0 32.25-13.32 32.25-31.81v-317.25c-.01-12.64-7.24-24.6-18.85-29.47zm-573.16 77.76c20.12 5.04 41.12 7.57 62.72 8.93-5.88 29.39-31.72 51.54-62.72 51.54zm0 285v-47.78c34.37 0 62.18 27.27 63.71 61.4-22.53-1.81-43.59-6.31-63.71-13.62zm272-65.22c-44.19 0-80-42.99-80-96 0-53.02 35.82-96 80-96s80 42.98 80 96c0 53.03-35.83 96-80 96zm272 27.78c-17.52-4.39-35.71-6.85-54.32-8.44 5.87-26.08 27.5-45.88 54.32-49.28zm0-236.11c-30.89-3.91-54.86-29.7-55.81-61.55 19.54 2.17 38.09 6.23 55.81 12.66z" fill-rule="nonzero"/></svg>
+							<span class="label"><?php esc_html_e( 'Paid Memberships', 'members' ); ?></span>
+						</a>
+					</li>
+				<?php endif; ?>
 				<li class="members-tab-title">
 					<a href="#members-tab-cp-message">
 						<i class="dashicons dashicons-edit"></i>
@@ -349,15 +355,17 @@ final class Meta_Box_Content_Permissions {
 
 				</div>
 
-				<div id="members-tab-paid-memberships" class="members-tab-content">
-					<h3><?php esc_html_e( 'Paid Memberships', 'members' ); ?></h3>
+				<?php if ( ! members_is_memberpress_active() ) : ?>
+					<div id="members-tab-paid-memberships" class="members-tab-content">
+						<h3><?php esc_html_e( 'Paid Memberships', 'members' ); ?></h3>
 
-					<div class="memberpress-paid-memberships">
-						<p><?php _e( 'To protect this block by paid membership or centrally with <br> a content protection rule, upgrade to MemberPress.', 'members' ); ?></p>
-						<p><a href="https://memberpress.com/plans/pricing/?utm_source=members&utm_medium=link&utm_campaign=in_plugin&utm_content=paid_memberships"><?php esc_html_e( 'Upgrade to MemberPress', 'members' ); ?></a></p>
+						<div class="memberpress-paid-memberships">
+							<p><?php _e( 'To protect this block by paid membership or centrally with <br> a content protection rule, upgrade to MemberPress.', 'members' ); ?></p>
+							<p><a href="https://memberpress.com/plans/pricing/?utm_source=members&utm_medium=link&utm_campaign=in_plugin&utm_content=paid_memberships"><?php esc_html_e( 'Upgrade to MemberPress', 'members' ); ?></a></p>
+						</div>
+
 					</div>
-
-				</div>
+				<?php endif; ?>
 
 				<div id="members-tab-cp-message" class="members-tab-content">
 					<h3><?php esc_html_e( 'Error Message', 'members' ); ?></h3>

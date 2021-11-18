@@ -1,5 +1,12 @@
 # Change Log
 
+## 3.1.7 - Dev
+
+### Changed
+
+- Refactored checks for whether MemberPress is active; added `members_is_memberpress_active()`
+- "Paid Memberships" section of Content Permissions meta box should not show when MemberPress is active
+
 ## 3.1.6 - 2021-10-28
 
 ### Fixed

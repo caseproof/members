@@ -127,6 +127,15 @@ function members_get_user_meta_keys() {
 	return $wpdb->get_col( "SELECT meta_key FROM $wpdb->usermeta GROUP BY meta_key ORDER BY meta_key" );
 }
 
+/**
+ * Check whether the MemberPress plugin is active.
+ *
+ * @return boolean
+ */
+function members_is_memberpress_active() {
+	return defined( 'MEPR_PLUGIN_SLUG' );
+}
+
 add_action( 'admin_enqueue_scripts', 'members_add_pointers' );
 /**
  * Adds helper pointers to the admin
@@ -175,7 +184,7 @@ add_action( 'in_admin_header', 'members_admin_header', 0 );
  */
 function members_admin_header() {
 
-	if ( defined( 'MEPR_PLUGIN_SLUG' ) || empty( $_GET['page'] ) || ! in_array( $_GET['page'], array( 'roles', 'members', 'members-settings', 'members-about' ) ) ) {
+	if ( members_is_memberpress_active() || empty( $_GET['page'] ) || ! in_array( $_GET['page'], array( 'roles', 'members', 'members-settings', 'members-about' ) ) ) {
 		return;
 	}
 
