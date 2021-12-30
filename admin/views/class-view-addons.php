@@ -55,11 +55,11 @@ class View_Addons extends View {
 		<div class="widefat">
 
 			<div class="members-addons">
-				
+
 				<?php if ( $addons ) : ?>
 
 					<?php foreach ( $addons as $addon ) : ?>
-						
+
 						<?php
 							if ( $addon->is_memberpress ) {
 								if ( ! members_is_memberpress_active() ) {
@@ -115,6 +115,9 @@ class View_Addons extends View {
 				<div class="name column-name">
 					<h3>
 						<?php if ( $addon->url ) : ?>
+              <?php if ($addon->is_memberpress) : ?>
+                <img src="<?php echo members_plugin()->uri . "img/mp-icon-RGB.jpg"; ?>" class="plugin-icon-small" alt="">
+              <?php endif; ?>
 							<a href="<?php echo esc_url( $addon->url ); ?>" target="_blank">
 						<?php endif; ?>
 

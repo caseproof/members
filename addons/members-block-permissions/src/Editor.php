@@ -128,8 +128,8 @@ class Editor {
 		];
 
 		$labels['notices']['notAllowed'] = __( 'Your user account does not have access to assign permissions to this block.', 'members' );
-		$labels['paidMembership'] = __( 'To protect this block by paid membership or centrally with a content protection rule, upgrade to MemberPress.', 'members' );
-		$labels['contentRule'] = __( 'To protect this block by paid membership or centrally with a content protection rule, upgrade to MemberPress.', 'members' );
+		$labels['paidMembership'] = __( 'To protect this block by paid membership or centrally with a content protection rule, add MemberPress.', 'members' );
+		$labels['contentRule'] = __( 'To protect this block by paid membership or centrally with a content protection rule, add MemberPress.', 'members' );
 
 		$data = [
 			'roles'                    => [],

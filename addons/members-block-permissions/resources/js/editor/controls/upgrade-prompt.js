@@ -21,7 +21,7 @@ class UpgradePrompt extends Component {
 					{this.props.message}
 				</div>
 				<div className="members-bp-memberpress-upgrade__cta">
-					<a href="https://memberpress.com/plans/pricing" target="_blank" className="members-bp-memberpress-upgrade__cta-button">Upgrade to MemberPress</a>
+					<a href="https://memberpress.com/plans/pricing" target="_blank" className="members-bp-memberpress-upgrade__cta-button">Add MemberPress</a>
 				</div>
 			</div>
 		);

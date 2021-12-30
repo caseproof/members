@@ -153,24 +153,24 @@ function members_add_pointers() {
 	// Get dismissed pointers
 	$dismissed = explode( ',', (string) get_user_meta( get_current_user_id(), 'dismissed_wp_pointers', true ) );
 	$valid_pointers =array();
- 
+
 	// Check pointers and remove dismissed ones.
 	foreach ( $pointers as $pointer_id => $pointer ) {
- 
+
 		// Sanity check
 		if ( in_array( $pointer_id, $dismissed ) || empty( $pointer )  || empty( $pointer_id ) || empty( $pointer['target'] ) || empty( $pointer['options'] ) ) {
 			continue;
 		}
- 
+
 		$pointer['pointer_id'] = $pointer_id;
- 
+
 		$valid_pointers['pointers'][] =  $pointer;
 	}
- 
+
 	if ( empty( $valid_pointers ) ) {
 		return;
 	}
- 
+
 	wp_enqueue_style( 'wp-pointer' );
 	wp_enqueue_script( 'members-pointers', members_plugin()->uri . '/js/members-pointers.min.js', array( 'wp-pointer' ) );
 	wp_localize_script( 'members-pointers', 'membersPointers', $valid_pointers );
@@ -198,7 +198,7 @@ function members_admin_header() {
 
     <div class="members-upgrade-header" id="members-upgrade-header">
     	<span id="close-members-upgrade-header">X</span>
-    	<?php _e( 'You\'re using Members. To unlock more features, consider <a href="https://memberpress.com/plans/pricing/?utm_source=members&utm_medium=link&utm_campaign=in_plugin&utm_content=pro_features">upgrading to MemberPress.</a>' ); ?>
+    	<?php _e( 'You\'re using Members. To unlock more features, consider <a href="https://memberpress.com/plans/pricing/?utm_source=members&utm_medium=link&utm_campaign=in_plugin&utm_content=pro_features">adding MemberPress.</a>' ); ?>
     </div>
 
     <div id="members-admin-header"><img class="members-logo" src="<?php echo members_plugin()->uri . 'img/Members-header.svg'; ?>" /></div>
