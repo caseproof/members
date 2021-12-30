@@ -1,6 +1,9 @@
 # Change Log
 
-## 3.1.7 - Dev
+## 3.1.7 - 2021-12-30
+
+### Fixed
+- Hierarchical roles missing settings
 
 ### Changed
 
