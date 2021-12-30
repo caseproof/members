@@ -33,7 +33,7 @@ msgid "Permissions"
 msgstr ""
 
 #: members.php:455, addons/members-block-permissions/src/Editor.php:131, addons/members-block-permissions/src/Editor.php:132
-msgid "To protect this block by paid membership or centrally with a content protection rule, upgrade to MemberPress."
+msgid "To protect this block by paid membership or centrally with a content protection rule, add MemberPress."
 msgstr ""
 
 #: admin/class-cap-control.php:118, admin/functions-admin.php:48

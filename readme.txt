@@ -57,7 +57,7 @@ For more info, visit the [Members plugin home page](https://memberpress.com/plug
 
 The Members plugin is a massive project with 1,000s of lines of code to maintain. A major update can take weeks or months of work. We donâ€™t make any money directly from this plugin while other, similar plugins charge substantial fees to even download them or get updates. Please consider helping the cause by:
 
-* [Upgrading to MemberPress](https://memberpress.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=readme&utm_content=memberpress_upgrade).
+* [Adding MemberPress](https://memberpress.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=readme&utm_content=memberpress_upgrade).
 * [Rating the plugin](https://wordpress.org/support/plugin/members/reviews/?filter=5#new-post).
 
 ### Professional Support

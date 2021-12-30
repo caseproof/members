@@ -77,28 +77,28 @@ return array(
 	'memberpress-payments' => array(
 		'url'         => 'https://memberpress.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=addons&utm_content=activate_payments',
 		'title'       => 'Payments',
-		'excerpt'     => '<p>Accept payments for your protected membership content.</p>',
+		'excerpt'     => '<p>Add MemberPress to accept payments for your protected membership content.</p>',
 		'is_memberpress' => true,
 	),
 
 	'memberpress-subscriptions' => array(
 		'url'         => 'https://memberpress.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=addons&utm_content=activate_subscriptions',
 		'title'       => 'Subscriptions',
-		'excerpt'     => '<p>Allows you to charge users on a recurring schedule.</p>',
+		'excerpt'     => '<p>MemberPress allows you to charge users on a recurring schedule.</p>',
 		'is_memberpress' => true,
 	),
 
 	'memberpress-email' => array(
 		'url'         => 'https://memberpress.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=addons&utm_content=activate_email_marketing',
 		'title'       => 'Email Marketing',
-		'excerpt'     => '<p>Connect with popular email marketing services, such as Mailchimp, to email your members.</p>',
+		'excerpt'     => '<p>MemberPress can connect with popular email marketing services, such as Mailchimp, to email your members.</p>',
 		'is_memberpress' => true,
 	),
 
 	'memberpress-advanced' => array(
 		'url'         => 'https://memberpress.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=addons&utm_content=activate_advanced_protection',
 		'title'       => 'Advanced Content Protection',
-		'excerpt'     => '<p>Allows you to create sophisticated rules to protect your membership content.</p>',
+		'excerpt'     => '<p>MemberPress allows you to create sophisticated rules to protect your membership content.</p>',
 		'is_memberpress' => true,
 	)
 );

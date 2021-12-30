@@ -6,6 +6,7 @@
 
 - Refactored checks for whether MemberPress is active; added `members_is_memberpress_active()`
 - "Paid Memberships" section of Content Permissions meta box should not show when MemberPress is active
+- Changed wording from "Upgrade to MemberPress" to "Add MemberPress"
 
 ## 3.1.6 - 2021-10-28
 
@@ -71,7 +72,7 @@
 
 ### Changed
 
-- Admin UI 
+- Admin UI
 
 ## 3.0.10 - 2020-06-23
 
@@ -81,7 +82,7 @@
 
 ## 3.0.9 - 2020-06-22
 
-### Fixed 
+### Fixed
 
 - Fixed issue with ACF integration trying to bump priority on ACF menu
 

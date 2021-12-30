@@ -184,7 +184,7 @@ function members_memberpress_upgrade( $link = 'https://memberpress.com/plans/pri
 			<div class="mepr-upgrade-content">
 				<h2>Charge Members for Your Protected Content</h2>
 				<h4>Members Lite cannot access payments.</h4>
-				<p>Once you upgrade to MemberPress, you'll be able to charge your members for access to your content.</p>
+				<p>Once you add MemberPress, you'll be able to charge your members for access to your content.</p>
 				<ul class="features">
 					<li>Charge for Access to Content</li>
 					<li>Create Memberships</li>
@@ -197,7 +197,7 @@ function members_memberpress_upgrade( $link = 'https://memberpress.com/plans/pri
 				</ul>
 			</div>
 			<div class="mepr-upgrade-cta">
-				<a href="<?php echo esc_url( $link ); ?>" id="mepr_cta_upgrade_link" class="mepr-cta-button">Upgrade to MemberPress Now</a>
+				<a href="<?php echo esc_url( $link ); ?>" id="mepr_cta_upgrade_link" class="mepr-cta-button">Add MemberPress Now</a>
 				and start charging for access!
 			</div>
 		</div>
