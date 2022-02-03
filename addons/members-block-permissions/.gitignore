@@ -2,3 +2,4 @@
 /vendor
 /composer.lock
 *.map
+/public/js/mix-manifest.json
