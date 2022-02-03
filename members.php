@@ -449,7 +449,7 @@ final class Members_Plugin {
 
 	public function block_editor_assets() {
 		$active_addons = get_option( 'members_active_addons', array() );
-		if ( ! in_array( 'members-block-permissions', $active_addons ) ) {
+		if ( ! in_array( 'members-block-permissions', $active_addons ) && ! members_is_memberpress_active() ) {
 			wp_enqueue_script( 'block-editor-mp-upsell', plugin_dir_url( __FILE__ ) . '/addons/members-block-permissions/public/js/upsell.js' , array(
 				'wp-compose',
 				'wp-element',
