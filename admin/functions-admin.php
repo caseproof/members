@@ -247,3 +247,13 @@ function members_dismiss_upgrade_header() {
 
 	update_option( 'members_dismiss_upgrade_header', true );
 }
+
+/**
+ * Conditional to check whether we're on a Members admin page.
+ *
+ * @return boolean
+ */
+function members_is_admin_page() {
+	$screen = get_current_screen();
+	return in_array( $screen->id, Members\Admin\Settings_Page::get_instance()->admin_pages );
+}

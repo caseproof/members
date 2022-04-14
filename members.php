@@ -222,6 +222,9 @@ final class Members_Plugin {
 			// Plugin settings.
 			require_once( $this->dir . 'admin/class-settings.php' );
 
+			// Notifications
+			require_once( $this->dir . 'admin/class-notifications.php' );
+
 			// User management.
 			require_once( $this->dir . 'admin/class-manage-users.php' );
 			require_once( $this->dir . 'admin/class-user-edit.php'    );
@@ -329,6 +332,9 @@ final class Members_Plugin {
 		$flag = get_transient( 'members_30days_flag' );
 		if ( empty( $flag ) ) {
 			set_transient( 'members_30days_flag', true, 30 * DAY_IN_SECONDS );
+		}
+		if ( empty( get_option( 'members_activated' ) ) ) {
+			update_option( 'members_activated', time() );
 		}
 	}
 

@@ -147,17 +147,26 @@
 
 /* ====== Members Settings Screen. ====== */
 
-.members_page_members-settings .welcome-panel {
+.memberpress-welcome-panel.welcome-panel {
 	margin-top: 0;
 	padding:    40px 20px;
+	background: #fff;
 }
 
-.members_page_members-settings .welcome-panel .about-description {
+.memberpress-welcome-panel.welcome-panel:before {
+	background: none;
+}
+
+.memberpress-welcome-panel.welcome-panel .about-description {
 	margin: 20px 0;
 }
 
-.members_page_members-settings .welcome-panel-content {
+.memberpress-welcome-panel.welcome-panel-content {
 	margin: 0;
+}
+
+.memberpress-welcome-panel.welcome-panel-content .mp-logo-wrap > a {
+	display: block;
 }
 
 @media screen and (min-width: 870px) {
