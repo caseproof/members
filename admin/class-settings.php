@@ -219,7 +219,7 @@ final class Settings_Page {
 	public function admin_menu() {
 
 		// Create the settings pages.
-		$this->admin_pages = array( 'toplevel_page_members' );
+		$this->admin_pages = array( 'toplevel_page_members', 'members_page_roles' );
 		$this->settings_page = add_submenu_page( 'members', esc_html_x( 'Settings', 'admin screen', 'members' ), esc_html_x( 'Settings', 'admin screen', 'members' ), apply_filters( 'members_settings_capability', 'manage_options' ), 'members-settings', array( $this, 'settings_page' ) );
 		$this->admin_pages[] = $this->settings_page;
 		$this->addons_page = add_submenu_page( 'members', esc_html_x( 'Add-Ons', 'admin screen', 'members' ), _x( '<span style="color: #8CBD5A;">Add-Ons</span>', 'admin screen', 'members' ), apply_filters( 'members_settings_capability', 'manage_options' ), 'members-settings&view=add-ons', array( $this, 'settings_page' ) );
