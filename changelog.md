@@ -1,5 +1,15 @@
 # Change Log
 
+## 3.2.0 - 2022-04-18
+
+### Added
+- Members Notifications
+
+### Changed
+- Converted `jQuery.fn.click()` (deprecated) to `jQuery.fn.on('click')`
+- Replaced references to Affiliate Royale with Easy Affiliate
+- WP Tested Up To version (5.9)
+
 ## 3.1.7 - 2021-12-30
 
 ### Fixed
