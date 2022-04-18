@@ -3,7 +3,8 @@ jQuery( document ).ready( function() {
 	/* ====== Delete Role Link (on Roles and Edit Role screens) ====== */
 
 	// When the delete role link is clicked, give a "AYS?" popup to confirm.
-	jQuery( '.members-delete-role-link' ).click(
+	jQuery( '.members-delete-role-link' ).on(
+		'click',
 		function() {
 			return window.confirm( members_i18n.ays_delete_role );
 		}
@@ -155,7 +156,8 @@ jQuery( document ).ready( function() {
 	jQuery( '.members-which-tab' ).text( jQuery( '.members-tab-nav :first-child a' ).text() );
 
 	// When a tab nav item is clicked.
-	jQuery( '.members-tab-nav li a' ).click(
+	jQuery( '.members-tab-nav li a' ).on(
+		'click',
 		function( j ) {
 
 			// Prevent the default browser action when a link is clicked.
@@ -351,7 +353,8 @@ jQuery( document ).ready( function() {
 	); // .keypress()
 
 	// When the new cap button is clicked.
-	jQuery( '#members-add-new-cap' ).click(
+	jQuery( '#members-add-new-cap' ).on(
+		'click',
 		function() {
 
 			// Get the new cap value.

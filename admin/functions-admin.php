@@ -205,7 +205,7 @@ function members_admin_header() {
 
     <script>
     	jQuery(document).ready(function($) {
-    		$('#close-members-upgrade-header').click(function(event) {
+    		$('#close-members-upgrade-header').on('click', function(event) {
     			var upgradeHeader = $('#members-upgrade-header');
     			upgradeHeader.fadeOut();
     			$.ajax({
