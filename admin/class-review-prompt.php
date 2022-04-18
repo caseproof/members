@@ -124,7 +124,7 @@ class ReviewPrompt {
 			}
 
 			jQuery(document).ready(function($) {
-				$('.members-review-selection').click(function(event) {
+				$('.members-review-selection').on('click', function(event) {
 					event.preventDefault();
 					var $this = $(this);
 					var selection = $this.data('review-selection');

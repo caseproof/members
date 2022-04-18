@@ -91,7 +91,7 @@ class View_Addons extends View {
 		</div>
 		<script>
 			jQuery(document).ready(function($) {
-				$('.mepr-upgrade-activate-link').click(function(e){
+				$('.mepr-upgrade-activate-link').on('click', function(e){
 					var url = $(this).data('url');
 					$('#mepr_cta_upgrade_link').prop('href', url);
 				});

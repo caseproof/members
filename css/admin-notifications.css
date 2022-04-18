@@ -1,0 +1,268 @@
+#members-notifications {
+  position: fixed;
+  min-height: 48px;
+  margin: 0 0 14px 0;
+  top: 0;
+  width: 100%;
+  max-width: 440px;
+  max-height: 100vh;
+  overflow-y: scroll;
+  background: #FFFFFF;
+  box-shadow: 0px 5px 15px #0000000D;
+  transform: translate3d(100%, 0, 0);
+  transition: transform .3s ease-in-out;
+  z-index: -9;
+  visibility: hidden;
+  right: -9999999999px;
+}
+
+#members-notifications.visible {
+  transform: translate3d(0, 0, 0);
+  z-index: 999999;
+  visibility: visible;
+  right: 0;
+}
+
+.admin-bar #members-notifications {
+  top: 32px;
+  max-height: calc( 100vh - 32px );
+}
+
+#members-notifications * {
+  box-sizing: border-box;
+}
+
+#members-notifications .members-notifications-top-title {
+  background-color: #2679c1;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+}
+
+#members-notifications .members-notifications-top-title h3 {
+  color: #fff;
+}
+
+#members-notifications .members-notifications-top-title > div {
+  flex-basis: 100%;
+  display: flex;
+  align-items: center;
+}
+
+#members-notifications .members-notifications-top-title svg {
+  margin-right: 10px;
+  margin-top: 5px;
+}
+
+#members-notifications .members-notifications-top-title .actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+#members-notifications .members-notifications-top-title .actions a {
+  color: #fff;
+  margin-right: 10px;
+  font-size: 14px;
+  text-decoration: underline;
+}
+
+#members-notifications .members-notifications-top-title .actions a.close {
+  text-decoration: none;
+  margin-right: 0;
+}
+
+#members-notifications .members-notifications-top-title .actions a.close svg {
+  margin-right: 0;
+}
+
+#members-notifications .members-notification-icon-title {
+  display: flex;
+  align-items: center;
+}
+
+#members-notifications .members-notification-icon-title img {
+  margin-right: 10px;
+  max-width: 32px;
+}
+
+#members-notifications .members-notification-icon-title time {
+  margin-left: auto;
+  font-size: 13px;
+  color: #7f899f;
+  min-width: 100px;
+  text-align: right;
+}
+
+#members-notifications .members-notifications-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  border-bottom: 1px solid rgba(204, 208, 212, 0.5);
+}
+
+#members-notifications .dismiss-all {
+  text-decoration: underline;
+  color: #99a1b3;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+#members-notifications .members-notifications-header-bell {
+  display: flex;
+  align-items: center;
+}
+
+#members-notifications .members-notifications-header .members-notifications-bell {
+  position: relative;
+  top: 2px;
+  margin-right: 10px;
+}
+
+#members-notifications .members-notifications-header .members-notifications-bell svg {
+  max-width: 30px;
+}
+
+#members-notifications .members-notifications-header .members-notifications-title {
+  font-style: normal;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 17px;
+  color: #23282D;
+}
+
+.members-notifications-button {
+  position: relative;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+.members-notifications-button:hover {
+  cursor: pointer;
+}
+
+.members-notifications-count {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background-color: #eb5757;
+  color: #fff;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 10px;
+}
+
+#members-notifications .dismissed-messages,
+#members-notifications #viewActive {
+  display: none;
+}
+
+#members-notifications .dismissed-messages .members-notice-dismiss {
+  display: none;
+}
+
+#members-notifications .members-notifications-header.single-digit .members-notifications-count {
+  font-size: 12px;
+}
+
+#members-notifications .members-notifications-body {
+  position: relative;
+  padding: 16px;
+}
+
+#members-notifications .members-notifications-messages {
+
+}
+
+#members-notifications .members-notifications-messages .members-notifications-message {
+  margin-bottom: 30px;
+  padding-bottom: 30px;
+  position: relative;
+  border-bottom: 1px solid rgba(204, 208, 212, 0.5);
+}
+
+#members-notifications .members-notifications-messages .active-messages .members-notifications-message:last-of-type,
+#members-notifications .members-notifications-messages .dismissed-messages .members-notifications-message:last-of-type {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+#members-notifications .members-notifications-messages .members-notifications-title {
+  font-weight: bold;
+  font-size: 17px;
+  line-height: 17px;
+  margin: 0;
+  color: #444;
+}
+
+#members-notifications .members-notifications-messages .members-notifications-content {
+  font-weight: normal;
+  font-size: 14px;
+  line-height: 18px;
+  margin: 8px 0 41px 0;
+  color: #777777;
+}
+
+#members-notifications .members-notifications-messages .members-notifications-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+#members-notifications .members-notifications-messages .members-notifications-buttons {
+  margin: -30px 80px 0 0;
+  display: flex;
+  align-items: center;
+}
+
+#members-notifications .members-notifications-messages .members-notifications-buttons a {
+  margin: 0 10px 0 0;
+  min-height: unset;
+}
+
+.members-notifications-buttons button.members-notice-dismiss {
+  font-size: 13px;
+  color: #7f899f;
+  background: none;
+  padding: 0;
+  border: 0;
+}
+
+#members-notifications .members-notifications-messages .members-notifications-buttons button.members-notice-dismiss:hover {
+  cursor: pointer;
+}
+
+#members-notifications .members-notifications-messages .members-notifications-buttons button.members-notice-dismiss[disabled] {
+  cursor: not-allowed;
+}
+
+@media screen and (max-width: 768px) {
+  #members-notifications .members-notifications-messages {
+    padding: 15px 50px 20px 16px;
+  }
+  #members-notifications .members-notifications-messages .members-notifications-message .members-notifications-title {
+    margin: 0 30px 0 0;
+    line-height: 22px;
+  }
+  #members-notifications .members-notifications-messages .members-notifications-message .members-notifications-content {
+    font-size: 16px;
+    line-height: 22px;
+  }
+  #members-notifications .members-notifications-messages .members-notifications-message .members-notifications-buttons {
+    margin: -30px 80px 0 0;
+  }
+  #members-notifications .members-notifications-messages .members-notifications-message .members-notifications-buttons a {
+    margin: 0;
+    display: table;
+  }
+  #members-notifications .members-notifications-messages .members-notifications-message .members-notifications-buttons .button-secondary {
+    margin-top: 6px;
+  }
+}

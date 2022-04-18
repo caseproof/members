@@ -218,13 +218,18 @@ final class Settings_Page {
 	 */
 	public function admin_menu() {
 
-		// Create the settings page.
+		// Create the settings pages.
+		$this->admin_pages = array( 'toplevel_page_members', 'members_page_roles' );
 		$this->settings_page = add_submenu_page( 'members', esc_html_x( 'Settings', 'admin screen', 'members' ), esc_html_x( 'Settings', 'admin screen', 'members' ), apply_filters( 'members_settings_capability', 'manage_options' ), 'members-settings', array( $this, 'settings_page' ) );
+		$this->admin_pages[] = $this->settings_page;
 		$this->addons_page = add_submenu_page( 'members', esc_html_x( 'Add-Ons', 'admin screen', 'members' ), _x( '<span style="color: #8CBD5A;">Add-Ons</span>', 'admin screen', 'members' ), apply_filters( 'members_settings_capability', 'manage_options' ), 'members-settings&view=add-ons', array( $this, 'settings_page' ) );
+		$this->admin_pages[] = $this->addons_page;
 		if ( ! members_is_memberpress_active() ) { // MemberPress not active
 			$this->payments_page = add_submenu_page( 'members', esc_html_x( 'Payments', 'admin screen', 'members' ), esc_html_x( 'Payments', 'admin screen', 'members' ), apply_filters( 'members_settings_capability', 'manage_options' ), 'members-payments', array( $this, 'payments_page' ) );
+			$this->admin_pages[] = $this->payments_page;
 		}
 		$this->about_page = add_submenu_page( 'members', esc_html_x( 'About Us', 'admin screen', 'members' ), esc_html_x( 'About Us', 'admin screen', 'members' ), apply_filters( 'members_settings_capability', 'manage_options' ), 'members-about', array( $this, 'about_page' ) );
+		$this->admin_pages[] = $this->about_page;
 
 		if ( $this->settings_page ) {
 
@@ -288,7 +293,7 @@ final class Settings_Page {
 	 */
 	public function enqueue( $hook_suffix ) {
 
-		if ( $this->settings_page !== $hook_suffix )
+		if ( ! members_is_admin_page() )
 			return;
 
 		$view = $this->get_view( members_get_current_settings_view() );
@@ -602,14 +607,14 @@ final class Settings_Page {
 
 		<div class="wrap">
 			<h1><?php echo esc_html_x( 'About Us', 'admin screen', 'members' ); ?></h1>
-			<div class="welcome-panel">
+			<div class="welcome-panel memberpress-welcome-panel">
 				<div class="welcome-panel-content memberpress-about">
 					<div class="welcome-panel-column-container">
 						<div class="mp-desc">
 							<p style="font-weight: bold;">Hello and welcome to Members by <a href="https://memberpress.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=link_1" target="_blank">MemberPress</a>, the simplest WordPress membership and role editor plugin. Our team here at MemberPress builds software that helps you to easily add powerful membership features to your website in minutes.</p>
 							<p>Over the years, we found that most WordPress membership plugins were bloated, buggy, slow, very hard to use and expensive. So, we started with a simple goal: build a WordPress membership plugin that’s both easy and powerful.</p>
 							<p>Our goal is to take the pain out of creating membership sites and make it easy.</p>
-							<p>Members is brought to you by the same team that’s behind the most powerful, full-featured membership plugin, <a href="https://memberpress.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=link_2" target="_blank">MemberPress</a>, the best Affiliate Program plugin, <a href="https://affiliateroyale.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=link_3" target="_blank">Affiliate Royale</a>, and the best Affiliate Link Management plugin on the market, <a href="https://prettylinks.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=link_4" target="_blank">Pretty Links</a>.</p>
+							<p>Members is brought to you by the same team that’s behind the most powerful, full-featured membership plugin, <a href="https://memberpress.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=link_2" target="_blank">MemberPress</a>, the best Affiliate Program plugin, <a href="https://easyaffiliate.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=link_3" target="_blank">Easy Affiliate</a>, and the best Affiliate Link Management plugin on the market, <a href="https://prettylinks.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=link_4" target="_blank">Pretty Links</a>.</p>
 							<p>So, you can see that we know a thing or two about building great products that customers love.</p>
 						</div>
 						<div class="mp-logo-wrap">
@@ -675,29 +680,29 @@ final class Settings_Page {
 					</div>
 				</div>
 
-				<div class="members-plugin-card plugin-card plugin-card-affiliate-royale" style="margin-right: 0;">
+				<div class="members-plugin-card plugin-card plugin-card-easy-affiliate" style="margin-right: 0;">
 					<div class="plugin-card-top">
 						<div class="name column-name">
 							<h3>
-								<a href="https://affiliateroyale.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=affiliateroyale_icon_title" target="_blank" rel="noopener noreferrer">
-									Affiliate Royale <img src="<?php echo members_plugin()->uri . "img/affiliate_blue-01.png"; ?>" class="plugin-icon" alt="">
+								<a href="https://easyaffiliate.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=easyaffiliate_icon_title" target="_blank" rel="noopener noreferrer">
+									Easy Affiliate <img src="<?php echo members_plugin()->uri . "img/bee.png"; ?>" class="plugin-icon" alt="">
 								</a>
 							</h3>
 						</div>
 						<div class="desc column-description">
-							<p>Affiliate Royale is a full-featured Affiliate Program plugin for WordPress. Use it to start an Affiliate Program for your products to dramatically increase traffic, attention and sales.</p>
+							<p>Easy Affiliate is a full-featured Affiliate Program plugin for WordPress. Use it to start an Affiliate Program for your products to dramatically increase traffic, attention and sales.</p>
 						</div>
 					</div>
 					<div class="plugin-card-bottom">
 						<?php if ( is_plugin_active( 'affiliate-royale/affiliate-royale.php' ) ) : // Installed and active ?>
 							<div class="column-rating column-status">Status: <span class="active">Active</span></div>
-							<div class="column-updated"><a href="https://affiliateroyale.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=affiliateroyale_learn_more" target="_blank" class="button button-secondary">Learn More</a></div>
+							<div class="column-updated"><a href="https://easyaffiliate.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=easyaffiliate_learn_more" target="_blank" class="button button-secondary">Learn More</a></div>
 						<?php elseif ( array_key_exists( 'affiliate-royale/affiliate-royale.php', $installed_plugins ) ) : // Installed but inactive ?>
 							<div class="column-rating column-status">Status: <span class="inactive">Inactive</span></div>
 							<div class="column-updated"><a href="<?php echo wp_nonce_url( admin_url( 'plugins.php?action=activate&plugin=affiliate-royale/affiliate-royale.php' ), 'activate-plugin_affiliate-royale/affiliate-royale.php' ); ?>" class="button button-secondary">Activate</a></div>
 						<?php else : // Not installed ?>
 							<div class="column-rating column-status">Status: Not Installed</div>
-							<div class="column-updated"><a href="https://affiliateroyale.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=affiliateroyale_install" target="_blank" class="button button-primary">Install Plugin</a></div>
+							<div class="column-updated"><a href="https://easyaffiliate.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=easyaffiliate_install" target="_blank" class="button button-primary">Install Plugin</a></div>
 						<?php endif; ?>
 					</div>
 				</div>

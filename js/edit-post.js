@@ -12,7 +12,8 @@
 	jQuery( '.members-tab-nav :first-child' ).attr( 'aria-selected', 'true' );
 
 	// When a tab nav item is clicked.
-	jQuery( '.members-tab-nav li a' ).click(
+	jQuery( '.members-tab-nav li a' ).on(
+		'click',
 		function( j ) {
 
 			// Prevent the default browser action when a link is clicked.

@@ -4,7 +4,7 @@ Contributors: supercleanse
 Donate link: https://memberpress.com/plugins/members
 Tags: memberpress, member-type, access-control, permissions, members-only, security, membership-plan, memberships, roles, capabilities, editor, users, security, access, permission, protect, restrict content, blocks
 Requires at least: 4.7
-Tested up to: 5.8
+Tested up to: 5.9
 Requires PHP: 5.6
 Stable tag: 3.1.7
 License: GPLv2 or later

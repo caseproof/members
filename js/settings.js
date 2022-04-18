@@ -28,7 +28,7 @@ jQuery( document ).ready( function($) {
 		}
 	);
 
-	$('.activate-addon').click(function(e) {
+	$('.activate-addon').on('click', function(e) {
 		var $this = $(this);
 		var addon = $this.data('addon');
 		$this.addClass('processing');
