@@ -255,5 +255,5 @@ function members_dismiss_upgrade_header() {
  */
 function members_is_admin_page() {
 	$screen = get_current_screen();
-	return in_array( $screen->id, Members\Admin\Settings_Page::get_instance()->admin_pages );
+	return ! empty( $screen->id ) && ! empty( Members\Admin\Settings_Page::get_instance()->admin_pages ) && in_array( $screen->id, Members\Admin\Settings_Page::get_instance()->admin_pages );
 }
