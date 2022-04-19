@@ -1,5 +1,10 @@
 # Change Log
 
+## 3.2.1 - 2022-04-19
+
+### Fixed
+- Fixed Uncaught TypeError: in_array()
+
 ## 3.2.0 - 2022-04-18
 
 ### Added
