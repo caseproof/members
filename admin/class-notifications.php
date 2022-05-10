@@ -411,7 +411,7 @@ class Notifications {
 
     $option = get_option( 'members_notifications' );
     $notifications = ! empty( $option['feed'] ) ? $option['feed'] : array();
-    $active_notifications = $this->get()['active'];
+    $active_notifications = isset( $this->get()['active'] ) ? $this->get()['active'] : array();
 
     if ( ! empty( $active_notifications ) && count( $active_notifications ) > 0 ) {
       ob_start();
