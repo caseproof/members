@@ -17,7 +17,7 @@
   },
   "homepage": "https://github.com/caseproof/members#readme",
   "devDependencies": {
-    "gulp": "^3.9.1",
+    "gulp": "^4.0.2",
     "gulp-autoprefixer": "^5.0.0",
     "gulp-line-ending-corrector": "^1.0.2",
     "gulp-notify": "^3.2.0",
