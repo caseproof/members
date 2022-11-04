@@ -1,5 +1,10 @@
 # Change Log
 
+## 3.2.2 - 2022-10-24
+
+### Fixed
+- Fixed undefined index notice
+
 ## 3.2.1 - 2022-04-19
 
 ### Fixed
