@@ -232,6 +232,42 @@ function members_admin_header() {
     <?php
 }
 
+add_action( 'in_admin_footer', 'members_admin_promote_links' );
+/**
+ * Promotional links footer
+ *
+ * @return void
+ */
+function members_admin_promote_links() {
+  global $current_screen, $plp_update;
+
+  if( empty( $current_screen->id ) || ! members_is_admin_page() ) {
+    return;
+  }
+
+  $links = array(
+    array(
+      'url' => 'https://wordpress.org/support/plugin/members/',
+      'text' => __('Support', 'members'),
+      'target' => '_blank'
+    ),
+    array(
+      'url' => 'https://members-plugin.com/',
+      'text' => __( 'Docs', 'members' ),
+      'target' => '_blank'
+    ),
+    array(
+      'url' => '/admin.php?page=members-about',
+      'text' => __( 'About Us', 'members' ),
+      'target' => '_blank'
+    )
+  );
+
+  $title = __( 'Made with ♥ by the Members Team', 'members' );
+
+  require_once( members_plugin()->dir . 'admin/views/promotion.php' );
+}
+
 add_action( 'wp_ajax_members_dismiss_upgrade_header', 'members_dismiss_upgrade_header' );
 /**
  * Dismisses the Members upgrade header bar.
