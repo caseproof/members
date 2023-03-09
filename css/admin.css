@@ -818,3 +818,53 @@
 	border:           solid 1px rgb(223, 223, 223);
 	background-color: rgb(253, 253, 253);
 }
+
+/* Promotional Footer */
+
+#wpbody-content {
+	padding-bottom: 200px;
+}
+
+.members-footer-promotion {
+	text-align: center;
+	font-weight: 400;
+	font-size: 13px;
+	line-height: 16px;
+	color: #787c82;
+	padding: 20px 0 30px 0;
+	margin-bottom: 20px;
+}
+
+.members-footer-promotion p {
+	font-weight: 600;
+}
+
+.members-footer-promotion-links,
+.members-footer-promotion-social {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.members-footer-promotion-links {
+	margin: 9px 0 0;
+}
+
+.members-footer-promotion-links span {
+	color: #c3c4c7;
+	padding: 0 7px;
+}
+
+.members-footer-promotion-social {
+	margin: 10px 0 0 0;
+	gap: 10px;
+}
+
+.members-footer-promotion-social li {
+	margin-bottom: 0;
+}
+
+.members-footer-promotion-social a {
+	display: block;
+	height: 16px;
+}
