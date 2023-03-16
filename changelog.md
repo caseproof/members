@@ -1,5 +1,9 @@
 # Change Log
 
+## 3.2.4 - 2023-03-16
+### Fixed
+ - More package deployment fixes
+
 ## 3.2.3 - 2023-03-16
 
 ### Added
