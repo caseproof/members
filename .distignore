@@ -1,5 +1,5 @@
-*/.git
-*/.github
+/.git
+/.github
 *.gitignore
 .distignore
 /assets
