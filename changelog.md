@@ -1,5 +1,9 @@
 # Change Log
 
+## 3.2.5 - 2023-04-28
+### Fixed
+- Fixed WP Cron task for in-plugin notifications running unnecessarily.
+
 ## 3.2.4 - 2023-03-16
 ### Fixed
  - More package deployment fixes
