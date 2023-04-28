@@ -211,6 +211,9 @@ final class Members_Plugin {
 		// Load template files.
 		require_once( $this->dir . 'inc/template.php' );
 
+		// Notifications (cannot be included inside is_admin() check or cron won't work)
+		require_once( $this->dir . 'admin/class-notifications.php' );
+
 		// Load admin files.
 		if ( is_admin() ) {
 
@@ -221,9 +224,6 @@ final class Members_Plugin {
 
 			// Plugin settings.
 			require_once( $this->dir . 'admin/class-settings.php' );
-
-			// Notifications
-			require_once( $this->dir . 'admin/class-notifications.php' );
 
 			// User management.
 			require_once( $this->dir . 'admin/class-manage-users.php' );
