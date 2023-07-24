@@ -180,7 +180,7 @@ final class Settings_Page {
 	public function unregister_view( $name ) {
 
 		if ( $this->view_exists( $name ) )
-			unset( $this->view[ $name ] );
+			unset( $this->views[ $name ] );
 	}
 
 	/**
