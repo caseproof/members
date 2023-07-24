@@ -30,6 +30,42 @@ final class Settings_Page {
 	public $name = 'members-settings';
 
 	/**
+	 * Admin page names.
+	 *
+	 * @since  1.0.0
+	 * @access public
+	 * @var    array
+	 */
+	public $admin_pages = array();
+
+	/**
+	 * About page name.
+	 *
+	 * @since  1.0.0
+	 * @access public
+	 * @var    string
+	 */
+	public $about_page = '';
+
+	/**
+	 * Addons page name.
+	 *
+	 * @since  1.0.0
+	 * @access public
+	 * @var    string
+	 */
+	public $addons_page = '';
+
+	/**
+	 * Payments page name.
+	 *
+	 * @since  1.0.0
+	 * @access public
+	 * @var    string
+	 */
+	public $payments_page = '';
+
+	/**
 	 * Settings page name.
 	 *
 	 * @since  1.0.0
