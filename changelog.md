@@ -1,5 +1,11 @@
 # Change Log
 
+## 3.2.6 - 2023-08-08
+### Fixed
+- PHP 8+ Compatibility
+- members_show_roles_page_cap filter added for edit_roles_cap
+- Fix improperly named variable
+
 ## 3.2.5 - 2023-04-28
 ### Fixed
 - Fixed WP Cron task for in-plugin notifications running unnecessarily.
