@@ -1,6 +1,6 @@
 # Change Log
 
-## 3.2.6 - 2023-08-08
+## 3.2.6-7 - 2023-08-08
 ### Fixed
 - PHP 8+ Compatibility
 - members_show_roles_page_cap filter added for edit_roles_cap
