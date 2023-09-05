@@ -197,7 +197,9 @@ class Plugin {
 			$type->labels->all_items,
 			$type->labels->all_items,
 			$type->cap->edit_posts,
-			$parent
+			$parent,
+			'',
+			0
 		);
 
 		add_submenu_page(
