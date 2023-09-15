@@ -161,7 +161,7 @@ final class Meta_Box_Content_Permissions {
 		global $wp_roles;
 
 		// Get roles and sort.
-		 $_wp_roles = $wp_roles->role_names;
+		 $_wp_roles = apply_filters( 'members_wp_roles', $wp_roles->role_names, $post );
 		asort( $_wp_roles );
 
 		// Get the roles saved for the post.
