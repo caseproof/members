@@ -1,5 +1,13 @@
 # Change Log
 
+## 3.2.8 - 2023-09-20
+### Added
+- Add members_wp_roles filter to WP roles in Content Permission box
+
+### Fixed
+- Fix Content Permission icon in Panel block
+- Fix position of Field Group menu item in ACF
+
 ## 3.2.6-7 - 2023-08-08
 ### Fixed
 - PHP 8+ Compatibility
