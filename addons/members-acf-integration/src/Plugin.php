@@ -243,7 +243,7 @@ class Plugin {
 
 			// Adds support for an author field so that the `*_others_*`
 			// caps actually have some meaning.
-			if ( is_array( $args['support'] ) ) {
+			if ( is_array( $args['supports'] ) ) {
 				$args['supports'][] = 'author';
 			} else {
 				$args['supports'] = array( 'author' );
