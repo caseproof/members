@@ -243,7 +243,11 @@ class Plugin {
 
 			// Adds support for an author field so that the `*_others_*`
 			// caps actually have some meaning.
-			$args['supports'][] = 'author';
+			if ( is_array( $args['supports'] ) ) {
+				$args['supports'][] = 'author';
+			} else {
+				$args['supports'] = array( 'author' );
+			}
 
 			// Change the capability type to tie it to the CPT.
 			$args['capability_type'] = 'acf_field_group';
