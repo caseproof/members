@@ -48,7 +48,7 @@ class AddonInstallSkin extends \WP_Upgrader_Skin
      *
      * @param array $errors Array of errors with the install process.
      */
-    public function error(array $errors)
+    public function error($errors)
     {
         if (!empty($errors)) {
             wp_send_json_error($errors);
@@ -62,7 +62,7 @@ class AddonInstallSkin extends \WP_Upgrader_Skin
      * @param string $string  The feedback string.
      * @param mixed  ...$args Optional text replacements.
      */
-    public function feedback(string $string, ...$args)
+    public function feedback( $feedback, ...$args ) {
     {
     }
 
@@ -72,7 +72,7 @@ class AddonInstallSkin extends \WP_Upgrader_Skin
      * @param string $type Type of update count to decrement.
      */
     /** @codingStandardsIgnoreStart */
-    public function decrement_update_count(string $type)
+    public function decrement_update_count($type)
     {
         /** @codingStandardsIgnoreEnd */
     }

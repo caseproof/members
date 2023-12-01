@@ -111,7 +111,7 @@ final class Members_Plugin {
 		if (class_exists('\Members\Caseproof\GrowthTools\App')) {
 			$config = new \Members\Caseproof\GrowthTools\Config([
 				'parentMenuSlug' => 'members',
-				'instanceId' => 'memberpress', // Show plugins from memberpress config
+				'instanceId' => 'members', // Show plugins from memberpress config
 				'menuSlug' => 'members-growth-tools',
 			]);
 			new \Members\Caseproof\GrowthTools\App($config);
