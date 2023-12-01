@@ -105,7 +105,18 @@ final class Members_Plugin {
 	 * @access private
 	 * @return void
 	 */
-	private function __construct() {}
+	private function __construct() {
+		require_once('vendor-prefixed/autoload.php');
+
+		if (class_exists('\Members\Caseproof\GrowthTools\App')) {
+			$config = new \Members\Caseproof\GrowthTools\Config([
+				'parentMenuSlug' => 'members',
+				'instanceId' => 'memberpress', // Show plugins from memberpress config
+				'menuSlug' => 'members-growth-tools',
+			]);
+			new \Members\Caseproof\GrowthTools\App($config);
+		}
+	}
 
 	/**
 	 * Magic method to output a string if trying to use the object as a string.
