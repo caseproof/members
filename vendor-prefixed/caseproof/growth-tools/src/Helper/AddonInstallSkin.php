@@ -2,7 +2,7 @@
 /**
  * @license GPL-3.0
  *
- * Modified by Justin Tadlock on 01-December-2023 using Strauss.
+ * Modified by Justin Tadlock on 05-December-2023 using Strauss.
  * @see https://github.com/BrianHenryIE/strauss
  */
 
@@ -18,10 +18,8 @@ class AddonInstallSkin extends \WP_Upgrader_Skin
      *
      * @param \WP_Upgrader $upgrader Upgrader object.
      */
-    /** @codingStandardsIgnoreStart  */
-    public function set_upgrader(&$upgrader)
+    public function set_upgrader(&$upgrader) // phpcs:ignore Squiz.Commenting.FunctionComment.TypeHintMissing, PSR1.Methods.CamelCapsMethodName.NotCamelCaps, Generic.Files.LineLength.TooLong
     {
-        /** @codingStandardsIgnoreEnd */
         if (is_object($upgrader)) {
             $this->upgrader =& $upgrader;
         }
@@ -48,12 +46,13 @@ class AddonInstallSkin extends \WP_Upgrader_Skin
      *
      * @param array $errors Array of errors with the install process.
      */
-    public function error($errors)
+    public function error($errors) // phpcs:ignore Squiz.Commenting.FunctionComment.TypeHintMissing, Generic.Files.LineLength.TooLong
     {
         if (!empty($errors)) {
             wp_send_json_error($errors);
         }
     }
+
 
     /**
      * Empty out the feedback method to prevent outputting HTML strings as the install
@@ -62,7 +61,7 @@ class AddonInstallSkin extends \WP_Upgrader_Skin
      * @param string $string  The feedback string.
      * @param mixed  ...$args Optional text replacements.
      */
-    public function feedback( $feedback, ...$args ) {
+    public function feedback($string, ...$args) // phpcs:ignore Squiz.Commenting.FunctionComment.TypeHintMissing, Squiz.Commenting.FunctionComment.ScalarTypeHintMissing, Generic.Files.LineLength.TooLong
     {
     }
 
@@ -71,9 +70,7 @@ class AddonInstallSkin extends \WP_Upgrader_Skin
      *
      * @param string $type Type of update count to decrement.
      */
-    /** @codingStandardsIgnoreStart */
-    public function decrement_update_count($type)
+    public function decrement_update_count($type) // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps, Squiz.Commenting.FunctionComment.ScalarTypeHintMissing, Generic.Files.LineLength.TooLong
     {
-        /** @codingStandardsIgnoreEnd */
     }
 }

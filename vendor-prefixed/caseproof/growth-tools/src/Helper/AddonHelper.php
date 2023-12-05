@@ -2,7 +2,7 @@
 /**
  * @license GPL-3.0
  *
- * Modified by Justin Tadlock on 01-December-2023 using Strauss.
+ * Modified by Justin Tadlock on 05-December-2023 using Strauss.
  * @see https://github.com/BrianHenryIE/strauss
  */
 
