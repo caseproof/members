@@ -269,3 +269,4 @@ The arguments for the array are:
 _Note that custom post types are automatically registered as groups with Members. So, if you want to do something custom with that, you simply need to unregister the group before registering your own._
 
     members_unregister_cap_group( "type-{$post_type}" );
+ 
