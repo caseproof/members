@@ -281,7 +281,11 @@ function members_dismiss_upgrade_header() {
 		die();
 	}
 	if ( ! current_user_can( 'manage_options' ) ) {
-		die( 'You are not allowed to make these changes' );
+		wp_send_json_error(
+			array(
+				'msg' => esc_html__( 'You are not allowed to make these changes.', 'members' ),
+			)
+		);
 	}
 	update_option( 'members_dismiss_upgrade_header', true );
 }
