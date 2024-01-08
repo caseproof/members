@@ -48,8 +48,10 @@ jQuery( document ).ready( function($) {
 				var svg = $this.find('svg');
 				svg.removeClass();
 				svg.addClass(response.data.status);
-			} else {
+			} else if ( response.success == false ) {
 				alert(response.data.msg);
+			} else {
+				console.log(response);
 			}
 			
 		})
