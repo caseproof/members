@@ -155,7 +155,7 @@ final class Settings_Page {
 		}
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( array(
-					'msg' => esc_html__( 'You are not allowed to make these changes.', 'members' )
+				'msg' => esc_html__( 'You are not allowed to make these changes.', 'members' )
 			) );
 		}
 		$addon = ! empty( $_POST['addon'] ) ? sanitize_text_field( $_POST['addon'] ) : false;
