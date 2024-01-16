@@ -43,10 +43,14 @@ jQuery( document ).ready( function($) {
 			},
 		})
 		.done(function(response) {
-			$this.find('.action-label').html(response.data.action_label);
-			var svg = $this.find('svg');
-			svg.removeClass();
-			svg.addClass(response.data.status);
+			if ( response.success == true ) {
+				$this.find('.action-label').html(response.data.action_label);
+				var svg = $this.find('svg');
+				svg.removeClass();
+				svg.addClass(response.data.status);
+			} else {
+				alert(response.data.msg);
+			}
 		})
 		.fail(function(response) {
 			alert(response.data.msg);
