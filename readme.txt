@@ -1,6 +1,6 @@
 === Members - Membership & User Role Editor Plugin ===
 
-Contributors: supercleanse
+Contributors: supercleanse, cartpauj, omarelhawary
 Donate link: https://memberpress.com/plugins/members
 Tags: memberpress, member-type, access-control, permissions, members-only, security, membership-plan, memberships, roles, capabilities, editor, users, security, access, permission, protect, restrict content, blocks
 Requires at least: 6.0
