@@ -1,5 +1,11 @@
 # Change Log
 
+## 3.2.10 - 2024-09-09
+### Fixed
+- Capability checks on AJAX calls
+- PHP warning for $wp_embed
+- Requiring PHP 7.4 min now
+
 ## 3.2.9 - 2023-11-28
 ### Fixed
 - Fix PHP 8.1 deprecation notice on ACF integration (props @DSGND)
