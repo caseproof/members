@@ -95,7 +95,7 @@ jobs:
           echo "PRIMARY_CODEOWNER=${PRIMARY_CODEOWNER#?}" >> $GITHUB_ENV
 
       - name: Assign issue
-        uses: pozil/auto-assign-issue@v1
+        uses: pozil/auto-assign-issue@v2
         with:
           repo-token: ${{ env.ISSUE_MANAGE_PAT }}
           assignees: ${{ env.PRIMARY_CODEOWNER }}
