@@ -5,8 +5,8 @@
 # Direct edits to this file are at risk of being overwritten by the next sync. All edits should be made
 # to the source file.
 #
-# @see Sync workflow {@link https://github.com/caseproof/.github/workflows/workflow-project-automation-sync.yml}
-# @see Workflow template {@link https://github.com/caseproof/.github/blob/main/.github/workflow-templates/project-automation.yml}
+# @see Sync workflow {@link https://github.com/caseproof/org-admin/blob/main/.github/workflows/workflow-project-automation-sync.yml}
+# @see Workflow template {@link https://github.com/caseproof/org-admin/blob/main/.github/workflow-templates/project-automation.yml}
 #
 ###
 name: Project Automation
