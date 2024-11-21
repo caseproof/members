@@ -269,7 +269,7 @@ final class Members_Plugin {
 	private function setup_actions() {
 
 		// Internationalize the text strings used.
-		add_action( 'plugins_loaded', array( $this, 'i18n' ), 2 );
+		add_action( 'after_setup_theme', array( $this, 'i18n' ), 2 );
 
 		// Migrate add-ons
 		add_action( 'plugins_loaded', array( $this, 'migrate_addons' ) );
