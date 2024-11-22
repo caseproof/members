@@ -47,7 +47,7 @@ class Plugin {
 		}
 
 		// Load translations.
-		add_action( 'plugins_loaded', [ $this, 'loadTextdomain' ] );
+		add_action( 'after_setup_theme', [ $this, 'loadTextdomain' ] );
 
 		// Filter the ACF settings capability.
 		add_filter( 'acf/settings/capability', [ $this, 'acfSettingsCapability' ] );
