@@ -35,6 +35,9 @@ add_filter( 'members_feed_error_message',                              'shortcod
 # Authenticate when accessing the REST API.
 add_filter( 'rest_authentication_errors', 'members_private_rest_api', 95 );
 
+# Filter protected posts from being returned in the REST API.
+add_filter( 'posts_results', 'members_filter_protected_posts_for_rest', 10, 2 );
+
 /**
  * Conditional tag to see if we have a private blog.
  *
@@ -45,6 +48,18 @@ add_filter( 'rest_authentication_errors', 'members_private_rest_api', 95 );
 function members_is_private_blog() {
 
 	return apply_filters( 'members_is_private_blog', members_get_setting( 'private_blog' ) );
+}
+
+/**
+ * Conditional tag to see if we hide protected posts in REST API.
+ *
+ * @since  3.2.11
+ * @access public
+ * @return bool
+ */
+function members_is_hidden_protected_posts() {
+
+    return apply_filters( 'members_is_hidden_protected_posts', members_get_setting( 'hide_posts_rest_api' ) );
 }
 
 /**
@@ -174,6 +189,49 @@ function members_private_rest_api( $result ) {
 	}
 
 	return $result;
+}
+
+/**
+ * Filters protected posts from being returned in the REST API.
+ *
+ * @since 3.2.11
+ * @access public
+ * @param array     $posts  The array of posts.
+ * @param WP_Query  $query  The WP_Query object.
+ * @return array
+ */
+function members_filter_protected_posts_for_rest( $posts, $query ) {
+    // If private blog is not enabled, bail.
+    if ( ! members_is_private_blog() ) {
+        return $posts;
+    }
+
+    // If hide protected posts from REST API is not enabled, bail.
+    if ( ! members_is_hidden_protected_posts() ) {
+        return $posts;
+    }
+
+    // Check if the current request is a REST API request
+    if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+        // Loop through the posts
+        foreach ( $posts as $key => $post ) {
+            // Get the roles for this post
+            $roles = members_get_post_roles( $post->ID );
+            // Check if there are any old roles with the '_role' meta key.
+            if ( empty( $roles ) ) {
+                $roles = members_convert_old_post_meta( $post->ID );
+            }
+            // Check if the post has any role in Content Permissions
+            if ( ! empty( $roles ) && is_array( $roles ) ) {
+                // Remove the protected post from the results
+                unset( $posts[$key] );
+            }
+        }
+        // Re-index the array to prevent issues with keys
+        $posts = array_values( $posts );
+    }
+
+    return $posts;
 }
 
 /**

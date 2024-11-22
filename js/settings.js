@@ -14,8 +14,15 @@ jQuery( document ).ready( function($) {
 		jQuery( '[name="members_settings[private_feed]"]' ).parents( 'tr' ).next( 'tr' ).hide();
 	}
 
-	// Show above hidden items if feature becomes enabled.
-	jQuery( '[name="members_settings[content_permissions]"], [name="members_settings[private_feed]"]' ).on( 'change',
+	// Hide protected posts from REST API field if private site enabled.
+	if ( false === jQuery( '[name="members_settings[private_blog]"]' ).prop( 'checked' ) ) {
+		console.log('ola');
+
+		jQuery( '[name="members_settings[hide_posts_rest_api]"]' ).parents( 'tr' ).hide();
+	}
+
+	// Show above hidden items if feature becomes disabled.
+	jQuery( '[name="members_settings[content_permissions]"], [name="members_settings[private_feed]"], [name="members_settings[private_blog]"]' ).on( 'change',
 		function() {
 
 			if ( jQuery( this ).prop( 'checked' ) ) {

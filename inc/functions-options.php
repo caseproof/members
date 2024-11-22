@@ -139,5 +139,8 @@ function members_get_default_settings() {
 		// @since 2.0.0
 		'show_human_caps'      => true,
 		'private_rest_api'     => false,
+
+        // @since 3.2.11
+        'hide_posts_rest_api'  => true,
 	);
 }
