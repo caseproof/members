@@ -1,0 +1,135 @@
+<?php if (!defined('ABSPATH')) {
+    die('You are not allowed to call this page directly.');
+} ?>
+<script>
+    window.CPGrowthToolsHelpers = {
+        nonce: '<?php echo wp_create_nonce( "caseproof_growth_tools_install_addon" ); ?>',
+        plugins: <?php echo json_encode($pluginsStatus); ?>,
+        loading_plugins: [],
+        labels:  <?php echo json_encode($labels); ?>,
+        ajax_url:  '<?php echo esc_url_raw(admin_url( 'admin-ajax.php' )); ?>',
+        buttonTitle: (status, labels) => {
+            switch (status) {
+                case 'notinstalled':
+                    return labels['install'];
+                case 'installed':
+                    return labels['active'];
+                case 'activated':
+                    return labels['deactive'];
+            }
+        },
+        pluginAction: (currentStatus, plugin, ajax_url, nonce, plugins, loadingPlugins) => {
+            loadingPlugins[plugin] = true;
+            switch (currentStatus) {
+                case 'notinstalled':
+                    var data = new FormData();
+                    data.append( "type", 'install' );
+                    data.append( "plugin", plugin );
+                    data.append( "nonce", nonce );
+                    fetch(ajax_url + '?action=<?php echo esc_attr($ajaxAction) ?>' , {
+                        method: "POST",
+                        credentials: 'same-origin',
+                        body: data
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.hasOwnProperty('plugin')) {
+                                plugins[plugin] = 'installed';
+                            }
+                            loadingPlugins[plugin] = false;
+                        });
+                    break;
+                case 'installed':
+                    var data = new FormData();
+                    data.append( "type", 'activate' );
+                    data.append( "plugin", plugin );
+                    data.append( "nonce", nonce );
+                    fetch(ajax_url + '?action=<?php echo esc_attr($ajaxAction) ?>', {
+                        method: "POST",
+                        credentials: 'same-origin',
+                        body: data
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success == true) {
+                                plugins[plugin] = 'activated';
+                            }
+                            loadingPlugins[plugin] = false;
+                        });
+                    break;
+                case 'activated':
+
+                    var data = new FormData();
+                    data.append( "type", 'deactivate' );
+                    data.append( "plugin", plugin );
+                    data.append( "nonce", nonce );
+                    fetch(ajax_url + '?action=<?php echo esc_attr($ajaxAction) ?>', {
+                        method: "POST",
+                        credentials: 'same-origin',
+                        body: data
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success == true) {
+                                plugins[plugin] = 'installed';
+                            }
+                            loadingPlugins[plugin] = false;
+                        });
+                    break;
+            }
+        }
+    };
+</script>
+<div id="caseproof-growth-tools" x-data="window.CPGrowthToolsHelpers">
+    <h1 class="cpgt-support-heading"><?php _e('Growth Tools', 'members'); ?></h1>
+    <div id="cpgt-growth-tools-grid" class="cpgt-pr-8 cpgt-pl-2">
+        <div
+            class="cpgt-grid cpgt-grid-cols-1 lg:cpgt-grid-cols-2 xl:cpgt-grid-cols-3 cpgt-gap-6 cpgt-mt-10 ">
+            <?php
+            foreach ($growthToolsData['plugins'] as $plugin) {
+                ?>
+                <div
+                    class="cpgt-text-main-text cpgt-rounded-lg cpgt-w-full cpgt-box-border  cpgt-bg-white cpgt-border-main-border-color cpgt-border cpgt-border-solid cpgt-py-10 cpgt-px-8 cpgt-flex cpgt-justify-between cpgt-flex-col">
+                    <div class="cspf-growth-tools-plugin-recommendations-block cpgt-flex cpgt-flex-col">
+                        <div class="cpgt-flex cpgt-items-center cpgt-flex-col">
+                            <div><img src="<?php echo esc_url($baseLogoUrl . '/' . $plugin['img']); ?>"
+                                      class="cpgt-w-16"></div>
+                            <div class="cpgt-text-center cpgt-text-neutral-80">
+                                <h3
+                                    class="cpgt-text-main-text cpgt-text-xl">
+                                    <?php echo esc_html(__($plugin['title'], 'cspf-growth-tools')); ?>
+                                </h3>
+                                <p class="cpgt-text-sm"><?php echo esc_html(__($plugin['description'], 'cspf-growth-tools')); ?></p></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="cpgt-flex cpgt-flex-col cpgt-items-center">
+                            <div class="cpgt-flex cpgt-flex-col cpgt-items-center">
+                                <div class="cpgt-mb-1.5"><strong><?php echo esc_html(__('Status', 'members')); ?>:</strong>
+                                    <span x-text="labels[plugins['<?php echo $plugin['main']; ?>']]"></span>
+                                </div>
+                                <img src="<?php echo admin_url('images/loading.gif'); ?>" alt="<?php _e('Loading...', 'members'); ?>" x-show="loading_plugins['<?php echo $plugin['main']; ?>']" class="mepr-loading-gif" />
+                                <?php if (isset($plugin['website']) && $pluginsStatus[$plugin['main']] === 'notinstalled') { ?>
+                                    <a
+                                        href="<?php echo esc_url_raw($plugin['website']); ?>"
+                                        class="cpgt-border-none cpgt-mt-1 cpgt-inline-block cpgt-bg-gradient-to-r cpgt-rounded-full cpgt-from-primary cpgt-to-primary-lighter cpgt-px-5 cpgt-py-3 cpgt-rounded cpgt-leading-none cpgt-text-white hover:cpgt-text-white cpgt-no-underline cpgt-text-base hover:cpgt-bg-primary-lighter cpgt-cursor-pointer cpgt-font-semibold">
+                                        <span><?php echo esc_html(__('Get It', 'members')); ?></span>
+                                    </a>
+                                <?php } else { ?>
+                                    <button
+                                        x-show="!loading_plugins['<?php echo $plugin['main']; ?>']"
+                                        @click="pluginAction(plugins['<?php echo $plugin['main']; ?>'], '<?php echo $plugin['main']; ?>', ajax_url, nonce, plugins, loading_plugins)"
+                                        class="cpgt-border-none cpgt-mt-1 cpgt-inline-block cpgt-bg-gradient-to-r cpgt-rounded-full cpgt-from-primary cpgt-to-primary-lighter cpgt-px-5 cpgt-py-3 cpgt-rounded cpgt-leading-none cpgt-text-white cpgt-no-underline cpgt-text-base hover:cpgt-bg-primary-lighter cpgt-cursor-pointer cpgt-font-semibold">
+                                        <span x-text="buttonTitle(plugins['<?php echo $plugin['main']; ?>'], labels)"></span>
+                                    </button>
+                                <?php } ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+    </div>
+</div>
