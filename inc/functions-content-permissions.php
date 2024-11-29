@@ -320,13 +320,8 @@ function members_convert_old_post_meta( $post_id ) {
  * @return array
  */
 function members_filter_protected_posts_for_rest( $posts, $query ) {
-    // If not content permissions enabled, bail.
-    if ( ! members_content_permissions_enabled() ) {
-        return $posts;
-    }
-
-    // If hide protected posts via REST API is disabled, bail.
-    if ( ! members_is_hidden_protected_posts_enabled() ) {
+    // If not content permissions enabled, or it is enabled but not protected, bail.
+    if ( ! members_content_permissions_enabled() && ! members_is_hidden_protected_posts_enabled() ) {
         return $posts;
     }
 
