@@ -187,7 +187,7 @@ function members_memberpress_upgrade( $link = 'https://memberpress.com/plans/pri
 				<p>Once you add MemberPress, you'll be able to charge your members for access to your content.</p>
 				<ul class="features">
 					<li>Charge for Access to Content</li>
-					<li>Create Memberships, Courses, and Coachking Programs</li>
+					<li>Create Memberships, Courses, and Coaching Programs</li>
 					<li>Manage Members</li>
 					<li>Advanced Reports</li>
 					<li>Recurring Payments</li>
