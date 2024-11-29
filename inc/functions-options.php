@@ -72,6 +72,18 @@ function members_content_permissions_enabled() {
 }
 
 /**
+ * Conditional check to see if hide protected posts in REST API is enabled.
+ *
+ * @since  3.2.11
+ * @access public
+ * @return bool
+ */
+function members_is_hidden_protected_posts_enabled() {
+
+    return apply_filters( 'members_is_hidden_protected_posts', members_get_setting( 'hide_posts_rest_api' ) );
+}
+
+/**
  * Conditional check to see if login widget is enabled.
  *
  * @since  1.0.0

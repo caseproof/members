@@ -2,22 +2,16 @@ jQuery( document ).ready( function($) {
 
 	/* ====== Plugin Settings ====== */
 
-	// Hide content permissions message if disabled.
+	// Hide content permissions message and hide protected posts if content permissions is disabled.
 	if ( false === jQuery( '[name="members_settings[content_permissions]"]' ).prop( 'checked' ) ) {
 
 		jQuery( '[name="members_settings[content_permissions]"]' ).parents( 'tr' ).next( 'tr' ).hide();
-	}
-
-	// Hide private feed message if private feed disabled.
-	if ( false === jQuery( '[name="members_settings[private_feed]"]' ).prop( 'checked' ) ) {
 
 		jQuery( '[name="members_settings[private_feed]"]' ).parents( 'tr' ).next( 'tr' ).hide();
 	}
 
-	// Hide protected posts from REST API field if private site enabled.
-	if ( false === jQuery( '[name="members_settings[private_blog]"]' ).prop( 'checked' ) ) {
-		console.log('ola');
-
+	// Hide protected posts from REST API field if content permissions is enabled.
+	if ( false === jQuery( '[name="members_settings[content_permissions]"]' ).prop( 'checked' ) ) {
 		jQuery( '[name="members_settings[hide_posts_rest_api]"]' ).parents( 'tr' ).hide();
 	}
 

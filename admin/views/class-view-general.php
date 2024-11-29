@@ -73,11 +73,11 @@ class View_General extends View {
 
 		// Content permissions fields.
 		add_settings_field( 'enable_content_permissions', esc_html__( 'Enable Permissions', 'members' ), array( $this, 'field_enable_content_permissions' ), 'members-settings', 'content_permissions' );
+		add_settings_field( 'hide_protected_posts_rest_api', esc_html__( 'Hide Protected Posts from WP REST API', 'members' ), array( $this, 'field_hide_protected_posts_rest_api' ), 'members-settings', 'content_permissions' );
 		add_settings_field( 'content_permissions_error',  esc_html__( 'Error Message',      'members' ), array( $this, 'field_content_permissions_error'  ), 'members-settings', 'content_permissions' );
 
 		// Private site fields.
 		add_settings_field( 'enable_private_site', esc_html__( 'Enable Private Site', 'members' ), array( $this, 'field_enable_private_site' ), 'members-settings', 'private_site' );
-		add_settings_field( 'hide_protected_posts_rest_api', esc_html__( 'Hide Protected Posts from WP REST API', 'members' ), array( $this, 'field_hide_protected_posts_rest_api' ), 'members-settings', 'private_site' );
 		add_settings_field( 'private_rest_api', esc_html__( 'REST API', 'members' ), array( $this, 'field_private_rest_api'    ), 'members-settings', 'private_site' );
 		add_settings_field( 'enable_private_feed', esc_html__( 'Disable Feed', 'members' ), array( $this, 'field_enable_private_feed' ), 'members-settings', 'private_site' );
 		add_settings_field( 'private_feed_error', esc_html__( 'Feed Error Message', 'members' ), array( $this, 'field_private_feed_error'  ), 'members-settings', 'private_site' );
@@ -249,7 +249,7 @@ class View_General extends View {
     public function field_hide_protected_posts_rest_api() { ?>
 
       <label>
-        <input type="checkbox" name="members_settings[hide_posts_rest_api]" value="true" <?php checked( members_is_hidden_protected_posts() ); ?> />
+        <input type="checkbox" name="members_settings[hide_posts_rest_api]" value="true" <?php checked( members_is_hidden_protected_posts_enabled() ); ?> />
           <?php esc_html_e( 'Block protected posts from showing in the REST API requests.', 'members' ); ?>
       </label>
     <?php }
