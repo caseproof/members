@@ -5,7 +5,7 @@
  * Handles block editor functionality.
  *
  * @package   MembersBlockPermissions
- * @author    The MemberPress Team <justintadlock@gmail.com>
+ * @author    The MemberPress Team 
  * @copyright 2019, The MemberPress Team
  * @link      https://themehybrid.com/plugins/members-block-permissions
  * @license   https://www.gnu.org/licenses/gpl-2.0.html GPL-2.0-or-later

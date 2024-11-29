@@ -3,7 +3,7 @@
  * Plugin functions.
  *
  * @package   MembersAdminAccess
- * @author    The MemberPress Team <justintadlock@gmail.com>
+ * @author    The MemberPress Team 
  * @copyright Copyright (c) 2018, The MemberPress Team
  * @link      https://themehybrid.com/plugins/members-admin-access
  * @license   http://www.gnu.org/licenses/old-licenses/gpl-2.0.html

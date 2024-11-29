@@ -4,7 +4,7 @@
  *
  * @package    MembersRoleLevels
  * @subpackage Admin
- * @author     The MemberPress Team <justin@justintadlock.com>
+ * @author     The MemberPress Team 
  * @copyright  Copyright (c) 2015, The MemberPress Team
  * @link       http://themehybrid.com/plugins/members-role-levels
  * @license    http://www.gnu.org/licenses/old-licenses/gpl-2.0.html

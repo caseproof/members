@@ -3,7 +3,7 @@
  * Custom filters to make the plugin work.
  *
  * @package   MembersRoleHierarchy
- * @author    The MemberPress Team <justin@justintadlock.com>
+ * @author    The MemberPress Team 
  * @copyright Copyright (c) 2017, The MemberPress Team
  * @link      http://themehybrid.com/plugins/members-role-hierarchy
  * @license   http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
