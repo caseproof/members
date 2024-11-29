@@ -2,8 +2,8 @@
  * Not allowed notice component.
  *
  * @package   MembersBlockPermissions
- * @author    Justin Tadlock <justintadlock@gmail.com>
- * @copyright 2019 Justin Tadlock
+ * @author    The MemberPress Team <justintadlock@gmail.com>
+ * @copyright 2019 The MemberPress Team
  * @license   https://www.gnu.org/licenses/gpl-2.0.html GPL-2.0-or-later
  * @link      https://themehybrid.com/plugins/members-block-permissions
  */

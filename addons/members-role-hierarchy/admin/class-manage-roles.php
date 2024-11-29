@@ -3,8 +3,8 @@
  * Class for handling extras on the Manage Roles screen.
  *
  * @package   MembersRoleHierarchy
- * @author    Justin Tadlock <justin@justintadlock.com>
- * @copyright Copyright (c) 2017, Justin Tadlock
+ * @author    The MemberPress Team <justin@justintadlock.com>
+ * @copyright Copyright (c) 2017, The MemberPress Team
  * @link      http://themehybrid.com/plugins/members-role-hierarchy
  * @license   http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  */

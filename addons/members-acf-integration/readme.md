@@ -16,4 +16,4 @@ When editing or creating a new role in Members, this add-on creates a new "Custo
 
 This project is licensed under the [GNU GPL](http://www.gnu.org/licenses/old-licenses/gpl-2.0.html), version 2 or later.
 
-2019 &copy; [Justin Tadlock](http://justintadlock.com).
+2019 &copy; [The MemberPress Team](http://justintadlock.com).

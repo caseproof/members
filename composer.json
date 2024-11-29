@@ -7,7 +7,7 @@
 	"type"        : "wordpress-plugin",
 	"authors"     : [
 		{
-			"name"     : "Justin Tadlock",
+			"name"     : "The MemberPress Team",
 			"email"    : "justintadlock@gmail.com",
 			"homepage" : "http://justintadlock.com"
 		}

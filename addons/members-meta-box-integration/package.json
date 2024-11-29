@@ -1,6 +1,6 @@
 {
 	"name": "members-meta-box-integration",
-	"author": "Justin Tadlock",
+	"author": "The MemberPress Team",
 	"license": "GPL-2.0+",
 	"homepage": "https://themehybrid.com/plugins/members-meta-box-integration",
 	"main": "resources/js/app.js",

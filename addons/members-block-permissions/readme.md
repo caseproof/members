@@ -58,4 +58,4 @@ If this is a concern for you, such as on a client site or a site with many contr
 
 This project is licensed under the [GNU GPL](http://www.gnu.org/licenses/old-licenses/gpl-2.0.html), version 2 or later.
 
-2019 &copy; [Justin Tadlock](http://justintadlock.com).
+2019 &copy; [The MemberPress Team](http://justintadlock.com).

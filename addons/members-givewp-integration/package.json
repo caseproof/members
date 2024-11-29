@@ -1,6 +1,6 @@
 {
 	"name": "members-givewp-integration",
-	"author": "Justin Tadlock",
+	"author": "The MemberPress Team",
 	"license": "GPL-2.0+",
 	"homepage": "https://themehybrid.com/plugins/members-givewp-integration",
 	"main": "resources/js/app.js",

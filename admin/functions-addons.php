@@ -5,8 +5,8 @@
  *
  * @package    Members
  * @subpackage Includes
- * @author     Justin Tadlock <justintadlock@gmail.com>
- * @copyright  Copyright (c) 2009 - 2018, Justin Tadlock
+ * @author     The MemberPress Team <justintadlock@gmail.com>
+ * @copyright  Copyright (c) 2009 - 2018, The MemberPress Team
  * @link       https://themehybrid.com/plugins/members
  * @license    http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  */
