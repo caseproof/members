@@ -257,13 +257,13 @@ function members_admin_promote_links() {
       'target' => '_blank'
     ),
     array(
-      'url' => '/admin.php?page=members-about',
+      'url' => '/wp-admin/admin.php?page=members-about',
       'text' => __( 'About Us', 'members' ),
       'target' => '_blank'
     )
   );
 
-  $title = __( 'Made with ♥ by the Members Team', 'members' );
+  $title = __( 'Made with ♥ by the MemberPress Team', 'members' );
 
   require_once( members_plugin()->dir . 'admin/views/promotion.php' );
 }
