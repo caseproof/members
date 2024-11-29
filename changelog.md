@@ -1,5 +1,11 @@
 # Change Log
 
+## 3.2.11 - 2024-11-29
+### Fixed
+- Translation warnings after WP 6.7
+- Add option to hide protected content from REST API searches
+- Add support for Loco Translate plugin (via new loco.xml file)
+
 ## 3.2.10 - 2024-09-09
 ### Fixed
 - Capability checks on AJAX calls
