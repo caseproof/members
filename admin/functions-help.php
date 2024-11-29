@@ -20,8 +20,8 @@
 function members_get_help_sidebar_text() {
 
 	// Get docs and help links.
-	$docs_link = sprintf( '<li><a href="https://github.com/justintadlock/members/blob/master/readme.md">%s</a></li>', esc_html__( 'Documentation',  'members' ) );
-	$help_link = sprintf( '<li><a href="https://themehybrid.com/board/topics">%s</a></li>',                            esc_html__( 'Support Forums', 'members' ) );
+	$docs_link = sprintf( '<li><a href="https://members-plugin.com/docs/">%s</a></li>', esc_html__( 'Documentation',  'members' ) );
+	$help_link = sprintf( '<li><a href="https://wordpress.org/support/plugin/members/">%s</a></li>', esc_html__( 'Support Forums', 'members' ) );
 
 	// Return the text.
 	return sprintf(
@@ -187,7 +187,7 @@ function members_memberpress_upgrade( $link = 'https://memberpress.com/plans/pri
 				<p>Once you add MemberPress, you'll be able to charge your members for access to your content.</p>
 				<ul class="features">
 					<li>Charge for Access to Content</li>
-					<li>Create Memberships</li>
+					<li>Create Memberships, Courses, and Coachking Programs</li>
 					<li>Manage Members</li>
 					<li>Advanced Reports</li>
 					<li>Recurring Payments</li>
