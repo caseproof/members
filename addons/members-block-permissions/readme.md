@@ -6,7 +6,7 @@ A plugin for hiding/showing blocks on the front end based on the given user.  Bl
 - User Role
 - Capability
 
-While this plugin is within the [Members](https://themehybrid.com/plugins/members) "family" of plugins, it can be used as a standalone plugin if desired.
+While this plugin is within the [Members](https://members-plugin.com/) "family" of plugins, it can be used as a standalone plugin if desired.
 
 ## Usage
 
@@ -36,7 +36,7 @@ Depending on which options are selected, other options will appear or disappear.
 
 By default, only administrators can assign block permissions.  They are given the `assign_block_permissions` capability when the plugin is first activated.
 
-If you want to provide this capability to other users, you can do so using a role manager such as [Members](https://themehybrid.com/plugins/members).
+If you want to provide this capability to other users, you can do so using a role manager such as [Members](https://members-plugin.com/).
 
 ## Important Notes
 
@@ -58,4 +58,4 @@ If this is a concern for you, such as on a client site or a site with many contr
 
 This project is licensed under the [GNU GPL](http://www.gnu.org/licenses/old-licenses/gpl-2.0.html), version 2 or later.
 
-2019 &copy; [The MemberPress Team](http://justintadlock.com).
+2019 &copy; [The MemberPress Team](https://memberpress.com/).

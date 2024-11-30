@@ -7,7 +7,7 @@
  * @package   MembersCategoryAndTagCaps
  * @author    The MemberPress Team 
  * @copyright 2019, The MemberPress Team
- * @link      https://themehybrid.com/plugins/members-category-and-tag-caps
+ * @link      https://members-plugin.com/-category-and-tag-caps
  * @license   https://www.gnu.org/licenses/gpl-2.0.html GPL-2.0-or-later
  */
 

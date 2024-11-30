@@ -5,7 +5,7 @@
  * @package   MembersIntegrationWooCommerce
  * @author    The MemberPress Team 
  * @copyright 2019, The MemberPress Team
- * @link      https://themehybrid.com/plugins/members-woocommerce-integration
+ * @link      https://members-plugin.com/-woocommerce-integration
  * @license   https://www.gnu.org/licenses/gpl-2.0.html GPL-2.0-or-later
  */
 

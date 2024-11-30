@@ -6,7 +6,7 @@
  * @package   MembersAdminAccess
  * @author    The MemberPress Team 
  * @copyright Copyright (c) 2018, The MemberPress Team
- * @link      https://themehybrid.com/plugins/members-admin-access
+ * @link      https://members-plugin.com/-admin-access
  * @license   http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  */
 

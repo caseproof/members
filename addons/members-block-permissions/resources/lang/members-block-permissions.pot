@@ -91,7 +91,7 @@ msgid "Members - Block Permissions"
 msgstr ""
 
 #. Plugin URI of the plugin/theme
-msgid "https://themehybrid.com/plugins/members-block-permissions"
+msgid "https://members-plugin.com/-block-permissions"
 msgstr ""
 
 #. Description of the plugin/theme

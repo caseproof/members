@@ -7,7 +7,7 @@
  * @subpackage Includes
  * @author     The MemberPress Team 
  * @copyright  Copyright (c) 2009 - 2018, The MemberPress Team
- * @link       https://themehybrid.com/plugins/members
+ * @link       https://members-plugin.com/
  * @license    http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  */
 
