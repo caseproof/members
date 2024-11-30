@@ -1,5 +1,14 @@
 # Change Log
 
+## 3.2.12 - 2024-11-29
+### Fixed
+- Cleaned up prior author name and links
+- Cleaned up broken or incorrect links
+- Removed some unnecessary files
+- Fixed incorrect gettext calls
+- Removed unneeded load_plugin_textdomain calls
+- Updated POT translation file
+
 ## 3.2.11 - 2024-11-29
 ### Fixed
 - Translation warnings after WP 6.7

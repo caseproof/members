@@ -1,9 +1,9 @@
 <?php
 /**
  * Plugin Name: Members
- * Plugin URI:  https://memberpress.com/plugins/members
+ * Plugin URI:  https://members-plugin.com/
  * Description: A user and role management plugin that puts you in full control of your site's permissions. This plugin allows you to edit your roles and their capabilities, clone existing roles, assign multiple roles per user, block post content, or even make your site completely private.
- * Version:     3.2.11
+ * Version:     3.2.12
  * Requires PHP: 7.4
  * Author:      MemberPress
  * Author URI:  https://memberpress.com
@@ -26,10 +26,10 @@
  * write to the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  * @package   Members
- * @version   3.0.2
+ * @version   3.2.12
  * @author    MemberPress <support@memberpress.com>
  * @copyright Copyright (c) 2004 - 2024, Caseproof
- * @link      https://memberpress.com/plugins/members
+ * @link      https://members-plugin.com/
  * @license   http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  */
 
