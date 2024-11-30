@@ -1,1157 +1,37 @@
-# Copyright (C) 2020 members
-# This file is distributed under the same license as the members package.
+# Copyright (C) 2024 MemberPress
+# This file is distributed under the same license as the Members plugin.
 msgid ""
 msgstr ""
-"Project-Id-Version: members\n"
+"Project-Id-Version: Members 3.2.12\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/members\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language-Team: Caseproof LLC <support@memberpress.com>\n"
-"Last-Translator: Caseproof LLC <support@memberpress.com>\n"
-"Report-Msgid-Bugs-To: https://memberpress.com\n"
-"X-Poedit-Basepath: ..\n"
-"X-Poedit-KeywordsList: __;_e;_ex:1,2c;_n:1,2;_n_noop:1,2;_nx:1,2,4c;_nx_noop:1,2,3c;_x:1,2c;esc_attr__;esc_attr_e;esc_attr_x:1,2c;esc_html__;esc_html_e;esc_html_x:1,2c\n"
-"X-Poedit-SearchPath-0: .\n"
-"X-Poedit-SearchPathExcluded-0: *.js\n"
-"X-Poedit-SourceCharset: UTF-8\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"POT-Creation-Date: 2024-11-30T01:27:04+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.9.0\n"
+"X-Domain: members\n"
 
-#: members.php:129, members.php:140, admin/class-manage-users.php:161, admin/class-manage-users.php:236, admin/class-role-edit.php:92
-msgid "Whoah, partner!"
-msgstr ""
-
-#: members.php:151
-msgid "Method does not exist."
-msgstr ""
-
-#: members.php:339
-msgid "Members requires PHP version %1$s. You are running version %2$s. Please upgrade and try again."
-msgstr ""
-
-#: members.php:454, addons/members-block-permissions/src/Editor.php:87
-msgid "Permissions"
-msgstr ""
-
-#: members.php:455, addons/members-block-permissions/src/Editor.php:131, addons/members-block-permissions/src/Editor.php:132
-msgid "To protect this block by paid membership or centrally with a content protection rule, add MemberPress."
-msgstr ""
-
-#: admin/class-cap-control.php:118, admin/functions-admin.php:48
-msgid "Grant %s capability"
-msgstr ""
-
-#: admin/class-cap-control.php:119, admin/functions-admin.php:49
-msgid "Deny %s capability"
-msgstr ""
-
-#: admin/class-cap-tabs.php:165
-msgid "All"
-msgstr ""
-
-#: admin/class-cap-tabs.php:194
-msgid "Edit Capabilities: %s"
-msgstr ""
-
-#: admin/class-manage-roles.php:87, admin/class-manage-roles.php:93, admin/class-manage-users.php:360, admin/class-meta-box-content-permissions.php:174, admin/class-roles.php:170, admin/class-user-edit.php:92
-msgid "Roles"
-msgstr ""
-
-#: admin/class-manage-roles.php:90, admin/class-role-edit.php:298
-msgid "Edit Role"
-msgstr ""
-
-#: admin/class-manage-users.php:97
-msgid "Role added to selected users."
-msgstr ""
-
-#: admin/class-manage-users.php:102
-msgid "Role removed from selected users."
-msgstr ""
-
-#: admin/class-manage-users.php:106
-msgid "The current user&#8217;s role must have user editing capabilities."
-msgstr ""
-
-#: admin/class-manage-users.php:107
-msgid "Role removed from other selected users."
-msgstr ""
-
-#: admin/class-manage-users.php:162, admin/class-manage-users.php:237
-msgid "One of the selected users is not a member of this site."
-msgstr ""
-
-#: admin/class-manage-users.php:326, admin/class-manage-users.php:330
-msgid "Add role&hellip;"
-msgstr ""
-
-#: admin/class-manage-users.php:334
-msgid "Add"
-msgstr ""
-
-#: admin/class-manage-users.php:337, admin/class-manage-users.php:341
-msgid "Remove role&hellip;"
-msgstr ""
-
-#: admin/class-manage-users.php:345
-msgid "Remove"
-msgstr ""
-
-#: admin/class-manage-users.php:382
-msgid "None"
-msgstr ""
-
-#: admin/class-meta-box-content-permissions.php:115, admin/views/class-view-general.php:63, admin/views/class-view-general.php:326
-msgid "Content Permissions"
-msgstr ""
-
-#: admin/class-meta-box-content-permissions.php:180, admin/views/class-view-general.php:75, addons/members-block-permissions/src/Editor.php:103
-msgid "Error Message"
-msgstr ""
-
-#: admin/class-meta-box-content-permissions.php:190
-msgid "Limit access to the content to users of the selected roles."
-msgstr ""
-
-#: admin/class-meta-box-content-permissions.php:210
-msgid "If no roles are selected, everyone can view the content. The author, any users who can edit the content, and users with the %s capability can view the content regardless of role."
-msgstr ""
-
-#: admin/class-meta-box-custom-cap.php:73, admin/functions-help.php:94
-msgid "Custom Capability"
-msgstr ""
-
-#: admin/class-meta-box-custom-cap.php:90
-msgctxt "capability"
-msgid "Add New"
-msgstr ""
-
-#: admin/class-meta-box-publish-role.php:67, admin/class-roles.php:68, inc/functions-admin-bar.php:35
-msgid "Role"
-msgstr ""
-
-#: admin/class-meta-box-publish-role.php:104
-msgid "%s User"
-msgid_plural "%s Users"
-msgstr[0] ""
-msgstr[1] ""
-
-#: admin/class-meta-box-publish-role.php:110
-msgid "Users:"
-msgstr ""
-
-#: admin/class-meta-box-publish-role.php:117
-msgid "Granted:"
-msgstr ""
-
-#: admin/class-meta-box-publish-role.php:123
-msgid "Denied:"
-msgstr ""
-
-#: admin/class-meta-box-publish-role.php:134
-msgctxt "delete role"
-msgid "Delete"
-msgstr ""
-
-#: admin/class-meta-box-publish-role.php:141
-msgid "Update"
-msgstr ""
-
-#: admin/class-meta-box-publish-role.php:141
-msgid "Add Role"
-msgstr ""
-
-#: admin/class-role-edit.php:99
-msgid "The requested role to edit does not exist."
-msgstr ""
-
-#: admin/class-role-edit.php:226
-msgid "%s role updated."
-msgstr ""
-
-#: admin/class-role-edit.php:230
-msgid "The %s role is not editable. This means that it is most likely added via another plugin for a special use or that you do not have permission to edit it."
-msgstr ""
-
-#: admin/class-role-edit.php:234
-msgid "The %s role is typically the most important role on the site. Please take extreme caution that you do not inadvertently remove necessary capabilities."
-msgstr ""
-
-#: admin/class-role-edit.php:238, admin/class-role-new.php:243
-msgid "The %s role has been created."
-msgstr ""
-
-#: admin/class-role-edit.php:301, admin/class-roles.php:173
-msgctxt "role"
-msgid "Add New"
-msgstr ""
-
-#: admin/class-role-edit.php:320, admin/class-role-new.php:344, admin/class-roles.php:67, admin/functions-help.php:62
-msgid "Role Name"
-msgstr ""
-
-#: admin/class-role-edit.php:326, admin/class-role-new.php:350, inc/class-widget-users.php:228
-msgid "Role:"
-msgstr ""
-
-#: admin/class-role-list-table.php:232
-msgid "Default Role"
-msgstr ""
-
-#: admin/class-role-list-table.php:236
-msgid "Your Role"
-msgstr ""
-
-#: admin/class-role-list-table.php:355, admin/class-role-new.php:352, admin/functions-admin.php:46
-msgid "Edit"
-msgstr ""
-
-#: admin/class-role-list-table.php:359, admin/class-role-list-table.php:508
-msgid "Delete"
-msgstr ""
-
-#: admin/class-role-list-table.php:365
-msgid "View"
-msgstr ""
-
-#: admin/class-role-list-table.php:370
-msgid "Clone"
-msgstr ""
-
-#: admin/class-role-list-table.php:374
-msgid "Change Default"
-msgstr ""
-
-#: admin/class-role-list-table.php:378, admin/class-roles.php:69, inc/class-widget-users.php:59, inc/functions-cap-groups.php:121
-msgid "Users"
-msgstr ""
-
-#: admin/class-role-list-table.php:418
-msgid "All %s"
-msgid_plural "All %s"
-msgstr[0] ""
-msgstr[1] ""
-
-#: admin/class-role-list-table.php:423
-msgid "Mine %s"
-msgid_plural "Mine %s"
-msgstr[0] ""
-msgstr[1] ""
-
-#: admin/class-role-list-table.php:428
-msgid "Has Users %s"
-msgid_plural "Has Users %s"
-msgstr[0] ""
-msgstr[1] ""
-
-#: admin/class-role-list-table.php:433
-msgid "No Users %s"
-msgid_plural "No Users %s"
-msgstr[0] ""
-msgstr[1] ""
-
-#: admin/class-role-list-table.php:438
-msgid "Editable %s"
-msgid_plural "Editable %s"
-msgstr[0] ""
-msgstr[1] ""
-
-#: admin/class-role-list-table.php:443
-msgid "Uneditable %s"
-msgid_plural "Uneditable %s"
-msgstr[0] ""
-msgstr[1] ""
-
-#: admin/class-role-new.php:111, admin/class-role-new.php:111
+#. Plugin Name of the plugin
 msgid "Members"
 msgstr ""
 
-#: admin/class-role-new.php:133, admin/class-role-new.php:133
-msgctxt "admin screen"
-msgid "Add New Role"
+#. Plugin URI of the plugin
+msgid "https://members-plugin.com/"
 msgstr ""
 
-#: admin/class-role-new.php:252
-msgid "You must enter a valid role."
+#. Description of the plugin
+msgid "A user and role management plugin that puts you in full control of your site's permissions. This plugin allows you to edit your roles and their capabilities, clone existing roles, assign multiple roles per user, block post content, or even make your site completely private."
 msgstr ""
 
-#: admin/class-role-new.php:256
-msgid "The %s role already exists."
+#. Author of the plugin
+msgid "MemberPress"
 msgstr ""
 
-#: admin/class-role-new.php:260
-msgid "You must enter a valid role name."
-msgstr ""
-
-#: admin/class-role-new.php:327
-msgid "Add New Role"
-msgstr ""
-
-#: admin/class-role-new.php:327
-msgid "Clone Role"
-msgstr ""
-
-#: admin/class-role-new.php:345
-msgid "%s Clone"
-msgstr ""
-
-#: admin/class-role-new.php:345
-msgid "Enter role name"
-msgstr ""
-
-#: admin/class-roles.php:70
-msgid "Granted"
-msgstr ""
-
-#: admin/class-roles.php:71
-msgid "Denied"
-msgstr ""
-
-#: admin/class-roles.php:112
-msgid "Selected roles deleted."
-msgstr ""
-
-#: admin/class-roles.php:131
-msgid "%s role deleted."
-msgstr ""
-
-#: admin/class-roles.php:210, admin/functions-help.php:46, admin/views/class-view-addons.php:183
-msgid "Overview"
-msgstr ""
-
-#: admin/class-roles.php:219
-msgid "Screen Content"
-msgstr ""
-
-#: admin/class-roles.php:228
-msgid "Available Actions"
-msgstr ""
-
-#: admin/class-roles.php:237
-msgid "Bulk Actions"
-msgstr ""
-
-#: admin/class-roles.php:270
-msgid "You can customize the display of this screen&#8216;s contents in a number of ways:"
-msgstr ""
-
-#: admin/class-roles.php:274
-msgid "You can hide/display columns based on your needs and decide how many roles to list per screen using the Screen Options tab."
-msgstr ""
-
-#: admin/class-roles.php:275
-msgid "You can filter the list of roles by types using the text links in the upper left. The default view is to show all roles."
-msgstr ""
-
-#: admin/class-roles.php:289
-msgid "Hovering over a row in the roles list will display action links that allow you to manage your role. You can perform the following actions:"
-msgstr ""
-
-#: admin/class-roles.php:293
-msgid "<strong>Edit</strong> takes you to the editing screen for that role. You can also reach that screen by clicking on the role name."
-msgstr ""
-
-#: admin/class-roles.php:294
-msgid "<strong>Delete</strong> removes your role from this list and permanently deletes it."
-msgstr ""
-
-#: admin/class-roles.php:295
-msgid "<strong>Clone</strong> copies the role and takes you to the new role screen to further edit it."
-msgstr ""
-
-#: admin/class-roles.php:296
-msgid "<strong>Users</strong> takes you to the users screen and lists the users that have that role."
-msgstr ""
-
-#: admin/class-roles.php:310
-msgid "You can permanently delete multiple roles at once. Select the roles you want to act on using the checkboxes, then select the action you want to take from the Bulk Actions menu and click Apply."
-msgstr ""
-
-#: admin/class-settings.php:125
-msgid "No add-on provided."
-msgstr ""
-
-#: admin/class-settings.php:136, admin/views/class-view-addons.php:156
-msgid "Active"
-msgstr ""
-
-#: admin/class-settings.php:137
-msgid "Add-on activated"
-msgstr ""
-
-#: admin/class-settings.php:148, admin/views/class-view-addons.php:150, admin/views/class-view-addons.php:156
-msgid "Activate"
-msgstr ""
-
-#: admin/class-settings.php:149
-msgid "Add-on deactivated"
-msgstr ""
-
-#: admin/class-settings.php:222, admin/class-settings.php:222
-msgctxt "admin screen"
-msgid "Settings"
-msgstr ""
-
-#: admin/class-settings.php:223
-msgctxt "admin screen"
-msgid "Add-Ons"
-msgstr ""
-
-#: admin/class-settings.php:223
-msgctxt "admin screen"
-msgid "<span style=\"color: #8CBD5A;\">Add-Ons</span>"
-msgstr ""
-
-#: admin/class-settings.php:225, admin/class-settings.php:225, admin/class-settings.php:345
-msgctxt "admin screen"
-msgid "Payments"
-msgstr ""
-
-#: admin/class-settings.php:227, admin/class-settings.php:227, admin/class-settings.php:601
-msgctxt "admin screen"
-msgid "About Us"
-msgstr ""
-
-#: admin/class-settings.php:323
-msgctxt "admin screen"
-msgid "Members"
-msgstr ""
-
-#: admin/class-user-edit.php:97, admin/class-user-new.php:109, addons/members-block-permissions/src/Editor.php:108
-msgid "User Roles"
-msgstr ""
-
-#: admin/functions-admin.php:47
-msgid "OK"
-msgstr ""
-
-#: admin/functions-admin.php:50
-msgid "Are you sure you want to delete this role? This is a permanent action and cannot be undone."
-msgstr ""
-
-#: admin/functions-admin.php:181
-msgid "Welcome to Members 3.0!"
-msgstr ""
-
-#: admin/functions-admin.php:182
-msgid "The new Members is here to deliver an easier experience and more advanced features."
-msgstr ""
-
-#: admin/functions-admin.php:183
-msgid "Don't worry, it will work the same as it always has for you!  We've just made the following changes:"
-msgstr ""
-
-#: admin/functions-admin.php:184
-msgid "<strong>1.</strong> We've centralized all of the main Members settings here. This will make things much easier to find and use."
-msgstr ""
-
-#: admin/functions-admin.php:185
-msgid "<strong>2.</strong> All of our Add-ons are now <strong>freely</strong> included in Members! Just visit the Add-ons menu item here to start using these premium features."
-msgstr ""
-
-#: admin/functions-admin.php:186
-msgid "We're excited about these new changes and we hope they'll make your experience with Members even better!"
-msgstr ""
-
-#: admin/functions-admin.php:187
-msgid "- The MemberPress team"
-msgstr ""
-
-#: admin/functions-help.php:23
-msgid "Documentation"
-msgstr ""
-
-#: admin/functions-help.php:24
-msgid "Support Forums"
-msgstr ""
-
-#: admin/functions-help.php:29
-msgid "For more information:"
-msgstr ""
-
-#: admin/functions-help.php:78
-msgid "Edit Capabilities"
-msgstr ""
-
-#: admin/functions-help.php:109
-msgid "This screen allows you to edit an individual role and its capabilities."
-msgstr ""
-
-#: admin/functions-help.php:114
-msgid "Visit the %s page in the WordPress Codex to see a complete list of roles, capabilities, and their definitions."
-msgstr ""
-
-#: admin/functions-help.php:115, admin/views/class-view-general.php:62
-msgid "Roles and Capabilities"
-msgstr ""
-
-#: admin/functions-help.php:130
-msgid "The role name field allows you to enter a human-readable name for your role."
-msgstr ""
-
-#: admin/functions-help.php:134
-msgid "The machine-readable version of the role appears below the name field, which you can edit. This can only have lowercase letters, numbers, or underscores."
-msgstr ""
-
-#: admin/functions-help.php:148
-msgid "The capabilities edit box is made up of tabs that separate capabilities into groups. You may take the following actions for each capability:"
-msgstr ""
-
-#: admin/functions-help.php:152
-msgid "<strong>Grant</strong> allows you to grant the role a capability."
-msgstr ""
-
-#: admin/functions-help.php:153
-msgid "<strong>Deny</strong> allows you to explicitly deny the role a capability."
-msgstr ""
-
-#: admin/functions-help.php:154
-msgid "You may also opt to neither grant nor deny the role a capability."
-msgstr ""
-
-#: admin/functions-help.php:168
-msgid "The custom capability box allows you to create a custom capability for the role. After hitting the Add New button, it will add the capability to the Custom tab in the Edit Capabilities box."
-msgstr ""
-
-#: admin/functions-settings.php:35, inc/functions-cap-groups.php:42
-msgid "General"
-msgstr ""
-
-#: admin/functions-settings.php:46
-msgid "Add-Ons"
-msgstr ""
-
-#: inc/class-widget-login.php:44
-msgid "A widget that allows users to log into your site."
-msgstr ""
-
-#: inc/class-widget-login.php:55
-msgid "Members: Login Form"
-msgstr ""
-
-#: inc/class-widget-login.php:59, inc/class-widget-login.php:62
-msgid "Log In"
-msgstr ""
-
-#: inc/class-widget-login.php:60
-msgid "Username"
-msgstr ""
-
-#: inc/class-widget-login.php:61
-msgid "Password"
-msgstr ""
-
-#: inc/class-widget-login.php:63
-msgid "Remember Me"
-msgstr ""
-
-#: inc/class-widget-login.php:73
-msgid "Please log into the site."
-msgstr ""
-
-#: inc/class-widget-login.php:74
-msgid "You are currently logged in."
-msgstr ""
-
-#: inc/class-widget-login.php:209, inc/class-widget-users.php:208
-msgid "Title:"
-msgstr ""
-
-#: inc/class-widget-login.php:213
-msgid "Username Label:"
-msgstr ""
-
-#: inc/class-widget-login.php:217
-msgid "Password Label:"
-msgstr ""
-
-#: inc/class-widget-login.php:221
-msgid "Log In Label:"
-msgstr ""
-
-#: inc/class-widget-login.php:225
-msgid "Remember Me Label:"
-msgstr ""
-
-#: inc/class-widget-login.php:233
-msgid "Username Value:"
-msgstr ""
-
-#: inc/class-widget-login.php:237
-msgid "Username Field ID:"
-msgstr ""
-
-#: inc/class-widget-login.php:241
-msgid "Remember Me Field ID:"
-msgstr ""
-
-#: inc/class-widget-login.php:245
-msgid "Password Field ID:"
-msgstr ""
-
-#: inc/class-widget-login.php:249
-msgid "Submit Button ID:"
-msgstr ""
-
-#: inc/class-widget-login.php:260
-msgid "\"Remember me\" checkbox?"
-msgstr ""
-
-#: inc/class-widget-login.php:266
-msgid "Check \"remember me\"?"
-msgstr ""
-
-#: inc/class-widget-login.php:272
-msgid "Display avatar?"
-msgstr ""
-
-#: inc/class-widget-login.php:276
-msgid "Logged out text:"
-msgstr ""
-
-#: inc/class-widget-login.php:281
-msgid "Logged in text:"
-msgstr ""
-
-#: inc/class-widget-users.php:44
-msgid "Provides the ability to list the users of the site."
-msgstr ""
-
-#: inc/class-widget-users.php:55
-msgid "Members: Users"
-msgstr ""
-
-#: inc/class-widget-users.php:185
-msgid "Ascending"
-msgstr ""
-
-#: inc/class-widget-users.php:186
-msgid "Descending"
-msgstr ""
-
-#: inc/class-widget-users.php:190
-msgid "Display Name"
-msgstr ""
-
-#: inc/class-widget-users.php:191
-msgid "Email"
-msgstr ""
-
-#: inc/class-widget-users.php:192
-msgid "ID"
-msgstr ""
-
-#: inc/class-widget-users.php:193
-msgid "Nice Name"
-msgstr ""
-
-#: inc/class-widget-users.php:194
-msgid "Post Count"
-msgstr ""
-
-#: inc/class-widget-users.php:195
-msgid "Registered"
-msgstr ""
-
-#: inc/class-widget-users.php:196
-msgid "URL"
-msgstr ""
-
-#: inc/class-widget-users.php:197
-msgid "Login"
-msgstr ""
-
-#: inc/class-widget-users.php:212
-msgid "Order By:"
-msgstr ""
-
-#: inc/class-widget-users.php:220
-msgid "Order:"
-msgstr ""
-
-#: inc/class-widget-users.php:237
-msgid "Limit:"
-msgstr ""
-
-#: inc/class-widget-users.php:241
-msgid "Offset:"
-msgstr ""
-
-#: inc/class-widget-users.php:249
-msgid "Include:"
-msgstr ""
-
-#: inc/class-widget-users.php:253
-msgid "Exclude:"
-msgstr ""
-
-#: inc/class-widget-users.php:257
-msgid "Search:"
-msgstr ""
-
-#: inc/class-widget-users.php:261
-msgid "Meta Key:"
-msgstr ""
-
-#: inc/class-widget-users.php:269
-msgid "Meta Value:"
-msgstr ""
-
-#: inc/functions-cap-groups.php:92
-msgid "Taxonomies"
-msgstr ""
-
-#: inc/functions-cap-groups.php:103
-msgid "Appearance"
-msgstr ""
-
-#: inc/functions-cap-groups.php:112
-msgid "Plugins"
-msgstr ""
-
-#: inc/functions-cap-groups.php:130
-msgid "Custom"
-msgstr ""
-
-#: inc/functions-capabilities.php:57
-msgid "Edit Dashboard"
-msgstr ""
-
-#: inc/functions-capabilities.php:58
-msgid "Edit Files"
-msgstr ""
-
-#: inc/functions-capabilities.php:59
-msgid "Export"
-msgstr ""
-
-#: inc/functions-capabilities.php:60
-msgid "Import"
-msgstr ""
-
-#: inc/functions-capabilities.php:61
-msgid "Manage Links"
-msgstr ""
-
-#: inc/functions-capabilities.php:62
-msgid "Manage Options"
-msgstr ""
-
-#: inc/functions-capabilities.php:63
-msgid "Moderate Comments"
-msgstr ""
-
-#: inc/functions-capabilities.php:64
-msgid "Read"
-msgstr ""
-
-#: inc/functions-capabilities.php:65
-msgid "Unfiltered HTML"
-msgstr ""
-
-#: inc/functions-capabilities.php:66
-msgid "Update Core"
-msgstr ""
-
-#: inc/functions-capabilities.php:69
-msgid "Delete Others' Posts"
-msgstr ""
-
-#: inc/functions-capabilities.php:70
-msgid "Delete Posts"
-msgstr ""
-
-#: inc/functions-capabilities.php:71
-msgid "Delete Private Posts"
-msgstr ""
-
-#: inc/functions-capabilities.php:72
-msgid "Delete Published Posts"
-msgstr ""
-
-#: inc/functions-capabilities.php:73
-msgid "Edit Others' Posts"
-msgstr ""
-
-#: inc/functions-capabilities.php:74
-msgid "Edit Posts"
-msgstr ""
-
-#: inc/functions-capabilities.php:75
-msgid "Edit Private Posts"
-msgstr ""
-
-#: inc/functions-capabilities.php:76
-msgid "Edit Published Posts"
-msgstr ""
-
-#: inc/functions-capabilities.php:77
-msgid "Publish Posts"
-msgstr ""
-
-#: inc/functions-capabilities.php:78
-msgid "Read Private Posts"
-msgstr ""
-
-#: inc/functions-capabilities.php:81
-msgid "Delete Others' Pages"
-msgstr ""
-
-#: inc/functions-capabilities.php:82
-msgid "Delete Pages"
-msgstr ""
-
-#: inc/functions-capabilities.php:83
-msgid "Delete Private Pages"
-msgstr ""
-
-#: inc/functions-capabilities.php:84
-msgid "Delete Published Pages"
-msgstr ""
-
-#: inc/functions-capabilities.php:85
-msgid "Edit Others' Pages"
-msgstr ""
-
-#: inc/functions-capabilities.php:86
-msgid "Edit Pages"
-msgstr ""
-
-#: inc/functions-capabilities.php:87
-msgid "Edit Private Pages"
-msgstr ""
-
-#: inc/functions-capabilities.php:88
-msgid "Edit Published Pages"
-msgstr ""
-
-#: inc/functions-capabilities.php:89
-msgid "Publish Pages"
-msgstr ""
-
-#: inc/functions-capabilities.php:90
-msgid "Read Private Pages"
-msgstr ""
-
-#: inc/functions-capabilities.php:93
-msgid "Upload Files"
-msgstr ""
-
-#: inc/functions-capabilities.php:96
-msgid "Manage Categories"
-msgstr ""
-
-#: inc/functions-capabilities.php:99
-msgid "Delete Themes"
-msgstr ""
-
-#: inc/functions-capabilities.php:100
-msgid "Edit Theme Options"
-msgstr ""
-
-#: inc/functions-capabilities.php:101
-msgid "Edit Themes"
-msgstr ""
-
-#: inc/functions-capabilities.php:102
-msgid "Install Themes"
-msgstr ""
-
-#: inc/functions-capabilities.php:103
-msgid "Switch Themes"
-msgstr ""
-
-#: inc/functions-capabilities.php:104
-msgid "Update Themes"
-msgstr ""
-
-#: inc/functions-capabilities.php:107
-msgid "Activate Plugins"
-msgstr ""
-
-#: inc/functions-capabilities.php:108
-msgid "Delete Plugins"
-msgstr ""
-
-#: inc/functions-capabilities.php:109
-msgid "Edit Plugins"
-msgstr ""
-
-#: inc/functions-capabilities.php:110
-msgid "Install Plugins"
-msgstr ""
-
-#: inc/functions-capabilities.php:111
-msgid "Update Plugins"
-msgstr ""
-
-#: inc/functions-capabilities.php:114
-msgid "Create Roles"
-msgstr ""
-
-#: inc/functions-capabilities.php:115
-msgid "Create Users"
-msgstr ""
-
-#: inc/functions-capabilities.php:116
-msgid "Delete Roles"
-msgstr ""
-
-#: inc/functions-capabilities.php:117
-msgid "Delete Users"
-msgstr ""
-
-#: inc/functions-capabilities.php:118
-msgid "Edit Roles"
-msgstr ""
-
-#: inc/functions-capabilities.php:119
-msgid "Edit Users"
-msgstr ""
-
-#: inc/functions-capabilities.php:120
-msgid "List Roles"
-msgstr ""
-
-#: inc/functions-capabilities.php:121
-msgid "List Users"
-msgstr ""
-
-#: inc/functions-capabilities.php:122
-msgid "Promote Users"
-msgstr ""
-
-#: inc/functions-capabilities.php:123
-msgid "Remove Users"
-msgstr ""
-
-#: inc/functions-capabilities.php:126
-msgid "Restrict Content"
-msgstr ""
-
-#: inc/functions-capabilities.php:141
-msgid "Assign Categories"
-msgstr ""
-
-#: inc/functions-capabilities.php:142
-msgid "Edit Categories"
-msgstr ""
-
-#: inc/functions-capabilities.php:143
-msgid "Delete Categories"
-msgstr ""
-
-#: inc/functions-capabilities.php:144
-msgid "Assign Post Tags"
-msgstr ""
-
-#: inc/functions-capabilities.php:145
-msgid "Edit Post Tags"
-msgstr ""
-
-#: inc/functions-capabilities.php:146
-msgid "Delete Post Tags"
-msgstr ""
-
-#: inc/functions-capabilities.php:147
-msgid "Manage Post Tags"
-msgstr ""
-
-#: inc/functions-options.php:132
-msgid "Sorry, but you do not have permission to view this content."
-msgstr ""
-
-#: inc/functions-options.php:133
-msgid "You must be logged into the site to view this content."
-msgstr ""
-
-#: inc/functions-private-site.php:167
-msgid "You are not currently logged in."
-msgstr ""
-
-#: inc/functions-private-site.php:191
-msgid "You do not currently have access to the \"%s\" site. If you believe you should have access, please contact your network administrator."
-msgstr ""
-
-#: inc/functions-private-site.php:198
-msgid "If you reached this page by accident and meant to visit one of your own sites, try one of the following links."
-msgstr ""
-
-#: inc/functions-role-groups.php:42
-msgid "WordPress"
-msgstr ""
-
-#: inc/functions-role-groups.php:43
-msgid "WordPress %s"
-msgid_plural "WordPress %s"
-msgstr[0] ""
-msgstr[1] ""
-
-#: addons/members-core-create-caps/addon.php:25
-msgid "Create Posts"
-msgstr ""
-
-#: addons/members-core-create-caps/addon.php:30
-msgid "Create Pages"
-msgstr ""
-
-#: addons/members-privacy-caps/addon.php:51
-msgid "Manage Privacy Options"
-msgstr ""
-
-#: addons/members-privacy-caps/addon.php:56
-msgid "Erase Others' Personal Data"
-msgstr ""
-
-#: addons/members-privacy-caps/addon.php:61
-msgid "Export Others' Personal Data"
-msgstr ""
-
-#: admin/tmpl/cap-section.php:19, admin/tmpl/cap-section.php:27, addons/members-block-permissions/src/Editor.php:90, addons/members-block-permissions/src/Editor.php:116
-msgid "Capability"
-msgstr ""
-
-#: admin/tmpl/cap-section.php:20, admin/tmpl/cap-section.php:28
-msgid "Grant"
-msgstr ""
-
-#: admin/tmpl/cap-section.php:21, admin/tmpl/cap-section.php:29
-msgid "Deny"
-msgstr ""
-
-#: admin/views/class-view-addons.php:79
-msgid "There are currently no add-ons to show. Please try again later."
-msgstr ""
-
-#: admin/views/class-view-addons.php:192
-msgid "Download"
-msgstr ""
-
-#: admin/views/class-view-addons.php:201
-msgid "Purchase"
-msgstr ""
-
-#: admin/views/class-view-addons.php:220
-msgid "The Add-Ons screen allows you to view available add-ons for the Members plugin. You can download some plugins directly. Others may be available to purchase."
-msgstr ""
-
-#: admin/views/class-view-addons.php:234
-msgid "Some plugins may be available for direct download. In such cases, you can click the download button to get a ZIP file of the plugin."
-msgstr ""
-
-#: admin/views/class-view-addons.php:248
-msgid "Some add-ons may require purchase before downloading them. Clicking the purchase button will take you off-site to view the add-on in more detail."
-msgstr ""
-
-#: admin/views/class-view-general.php:64, admin/views/class-view-general.php:344
-msgid "Private Site"
-msgstr ""
-
-#: admin/views/class-view-general.php:69
-msgid "Role Manager"
-msgstr ""
-
-#: admin/views/class-view-general.php:70
-msgid "Multiple User Roles"
-msgstr ""
-
-#: admin/views/class-view-general.php:71
-msgid "Capabilities"
-msgstr ""
-
-#: admin/views/class-view-general.php:74
-msgid "Enable Permissions"
-msgstr ""
-
-#: admin/views/class-view-general.php:78
-msgid "Enable Private Site"
-msgstr ""
-
-#: admin/views/class-view-general.php:79
-msgid "REST API"
-msgstr ""
-
-#: admin/views/class-view-general.php:80
-msgid "Disable Feed"
-msgstr ""
-
-#: admin/views/class-view-general.php:81
-msgid "Feed Error Message"
-msgstr ""
-
-#: admin/views/class-view-general.php:122
-msgid "Your roles and capabilities will not revert back to their previous settings after deactivating or uninstalling this plugin, so use this feature wisely."
-msgstr ""
-
-#: admin/views/class-view-general.php:137
-msgid "Enable the role manager."
-msgstr ""
-
-#: admin/views/class-view-general.php:155
-msgid "Denied capabilities should always overrule granted capabilities."
-msgstr ""
-
-#: admin/views/class-view-general.php:162
-msgid "Show human-readable capabilities when possible."
-msgstr ""
-
-#: admin/views/class-view-general.php:180
-msgid "Allow users to be assigned more than a single role."
-msgstr ""
-
-#: admin/views/class-view-general.php:195
-msgid "Enable the content permissions feature."
-msgstr ""
-
-#: admin/views/class-view-general.php:230
-msgid "Redirect all logged-out users to the login page before allowing them to view the site."
-msgstr ""
-
-#: admin/views/class-view-general.php:245
-msgid "Require authentication for access to the REST API."
-msgstr ""
-
-#: admin/views/class-view-general.php:260
-msgid "Show error message for feed items."
-msgstr ""
-
-#: admin/views/class-view-general.php:296, addons/members-admin-access/app/class-view-settings.php:189
-msgid "Update Settings"
-msgstr ""
-
-#: admin/views/class-view-general.php:317
-msgid "Role and Capabilities"
-msgstr ""
-
-#: admin/views/class-view-general.php:335
-msgid "Sidebar Widgets"
-msgstr ""
-
-#: admin/views/class-view-general.php:363
-msgid "The role manager allows you to manage roles on your site by giving you the ability to create, edit, and delete any role. Note that changes to roles do not change settings for the Members plugin. You are literally changing data in your WordPress database. This plugin feature merely provides an interface for you to make these changes."
-msgstr ""
-
-#: admin/views/class-view-general.php:367
-msgid "The multiple user roles feature allows you to assign more than one role to each user from the edit user screen."
-msgstr ""
-
-#: admin/views/class-view-general.php:371
-msgid "Tick the checkbox for denied capabilities to always take precedence over granted capabilities when there is a conflict. This is only relevant when using multiple roles per user."
-msgstr ""
-
-#: admin/views/class-view-general.php:375
-msgid "Tick the checkbox to show human-readable capabilities when possible. Note that custom capabilities and capabilities from third-party plugins will show the machine-readable capability name unless they are registered."
-msgstr ""
-
-#: admin/views/class-view-general.php:389
-msgid "The content permissions features adds a meta box to the edit post screen that allows you to grant permissions for who can read the post content based on the user's role. Only users of roles with the %s capability will be able to use this component."
-msgstr ""
-
-#: admin/views/class-view-general.php:403
-msgid "The sidebar widgets feature adds additional widgets for use in your theme's sidebars."
-msgstr ""
-
-#: admin/views/class-view-general.php:417
-msgid "The private site feature redirects all users who are not logged into the site to the login page, creating an entirely private site. You may also replace your feed content with a custom error message."
+#. Author URI of the plugin
+msgid "https://memberpress.com"
 msgstr ""
 
 #: addons/members-acf-integration/src/functions-caps.php:28
@@ -1162,13 +42,14 @@ msgstr ""
 msgid "Allows access to settings and tools for the Advanced Custom Fields plugin and may be required to access some third-party add-ons."
 msgstr ""
 
-#: addons/members-acf-integration/src/functions-caps.php:33, addons/members-meta-box-integration/src/functions-caps.php:33
+#: addons/members-acf-integration/src/functions-caps.php:33
+#: addons/members-meta-box-integration/src/functions-caps.php:33
 msgid "Edit Field Groups"
 msgstr ""
 
-#. translators: %s is a capability name.
-#. translators: %s is a capability name.
-#: addons/members-acf-integration/src/functions-caps.php:36, addons/members-meta-box-integration/src/functions-caps.php:36
+#. Translators: %s is a capability name.
+#: addons/members-acf-integration/src/functions-caps.php:36
+#: addons/members-meta-box-integration/src/functions-caps.php:36
 msgid "Allows users to edit field groups. May need to be combined with other %s capabilities, depending on the scenario."
 msgstr ""
 
@@ -1180,13 +61,14 @@ msgstr ""
 msgid "Allows users to edit others user's field groups."
 msgstr ""
 
-#: addons/members-acf-integration/src/functions-caps.php:47, addons/members-meta-box-integration/src/functions-caps.php:42
+#: addons/members-acf-integration/src/functions-caps.php:47
+#: addons/members-meta-box-integration/src/functions-caps.php:42
 msgid "Delete Field Groups"
 msgstr ""
 
-#. translators: %s is a capability name.
-#. translators: %s is a capability name.
-#: addons/members-acf-integration/src/functions-caps.php:50, addons/members-meta-box-integration/src/functions-caps.php:45
+#. Translators: %s is a capability name.
+#: addons/members-acf-integration/src/functions-caps.php:50
+#: addons/members-meta-box-integration/src/functions-caps.php:45
 msgid "Allows users to delete field groups. May need to be combined with other %s capabilities, depending on the scenario."
 msgstr ""
 
@@ -1198,7 +80,22 @@ msgstr ""
 msgid "Allows users to delete other user's field groups."
 msgstr ""
 
-#: addons/members-admin-access/app/class-view-settings.php:39, addons/members-admin-access/app/functions-admin.php:59
+#: addons/members-acf-integration/src/Plugin.php:320
+msgid "Advanced Custom Fields"
+msgstr ""
+
+#: addons/members-acf-integration/src/Plugin.php:321
+msgid "Advanced Custom Fields %s"
+msgid_plural "Advanced Custom Fields %s"
+msgstr[0] ""
+msgstr[1] ""
+
+#: addons/members-acf-integration/src/Plugin.php:352
+msgid "Custom Fields"
+msgstr ""
+
+#: addons/members-admin-access/app/class-view-settings.php:39
+#: addons/members-admin-access/app/functions-admin.php:59
 msgid "Admin Access"
 msgstr ""
 
@@ -1230,6 +127,23 @@ msgstr ""
 msgid "Disable toolbar on the front end for users without admin access."
 msgstr ""
 
+#: addons/members-admin-access/app/class-view-settings.php:189
+#: admin/views/class-view-general.php:336
+msgid "Update Settings"
+msgstr ""
+
+#: addons/members-block-permissions/src/Editor.php:87
+#: members.php:451
+msgid "Permissions"
+msgstr ""
+
+#: addons/members-block-permissions/src/Editor.php:90
+#: addons/members-block-permissions/src/Editor.php:116
+#: admin/tmpl/cap-section.php:19
+#: admin/tmpl/cap-section.php:27
+msgid "Capability"
+msgstr ""
+
 #: addons/members-block-permissions/src/Editor.php:94
 msgid "Condition"
 msgstr ""
@@ -1246,15 +160,30 @@ msgstr ""
 msgid "Hide block from selected"
 msgstr ""
 
+#: addons/members-block-permissions/src/Editor.php:103
+#: admin/class-meta-box-content-permissions.php:202
+#: admin/class-meta-box-content-permissions.php:321
+#: admin/class-meta-box-content-permissions.php:370
+#: admin/views/class-view-general.php:77
+msgid "Error Message"
+msgstr ""
+
 #: addons/members-block-permissions/src/Editor.php:104
 msgid "Optionally display an error message for users who cannot see this block."
+msgstr ""
+
+#: addons/members-block-permissions/src/Editor.php:108
+#: admin/class-user-edit.php:98
+#: admin/class-user-new.php:108
+msgid "User Roles"
 msgstr ""
 
 #: addons/members-block-permissions/src/Editor.php:112
 msgid "Type"
 msgstr ""
 
-#: addons/members-block-permissions/src/Editor.php:114, addons/members-block-permissions/src/Editor.php:123
+#: addons/members-block-permissions/src/Editor.php:114
+#: addons/members-block-permissions/src/Editor.php:123
 msgid "User Status"
 msgstr ""
 
@@ -1282,12 +211,30 @@ msgstr ""
 msgid "Your user account does not have access to assign permissions to this block."
 msgstr ""
 
+#: addons/members-block-permissions/src/Editor.php:131
+#: addons/members-block-permissions/src/Editor.php:132
+#: members.php:452
+msgid "To protect this block by paid membership or centrally with a content protection rule, add MemberPress."
+msgstr ""
+
 #: addons/members-block-permissions/src/Integration.php:49
 msgid "Assign Block Permissions"
 msgstr ""
 
 #: addons/members-block-permissions/src/Integration.php:50
 msgid "Allows users to assign block permissions inside of the block editor."
+msgstr ""
+
+#: addons/members-category-and-tag-caps/uninstall.php:15
+msgid "%s should only be called when uninstalling the plugin."
+msgstr ""
+
+#: addons/members-core-create-caps/addon.php:25
+msgid "Create Posts"
+msgstr ""
+
+#: addons/members-core-create-caps/addon.php:30
+msgid "Create Pages"
 msgstr ""
 
 #: addons/members-edd-integration/src/functions-caps.php:33
@@ -1306,7 +253,9 @@ msgstr ""
 msgid "Allows access to sensitive user data."
 msgstr ""
 
-#: addons/members-edd-integration/src/functions-caps.php:47, addons/members-givewp-integration/src/functions-caps.php:45, addons/members-woocommerce-integration/src/functions-caps.php:35
+#: addons/members-edd-integration/src/functions-caps.php:47
+#: addons/members-givewp-integration/src/functions-caps.php:45
+#: addons/members-woocommerce-integration/src/functions-caps.php:35
 msgid "Reports: View"
 msgstr ""
 
@@ -1314,7 +263,8 @@ msgstr ""
 msgid "Allows users to view shop reports."
 msgstr ""
 
-#: addons/members-edd-integration/src/functions-caps.php:52, addons/members-givewp-integration/src/functions-caps.php:40
+#: addons/members-edd-integration/src/functions-caps.php:52
+#: addons/members-givewp-integration/src/functions-caps.php:40
 msgid "Reports: Export"
 msgstr ""
 
@@ -1748,7 +698,8 @@ msgstr ""
 msgid "Allows access to export reports."
 msgstr ""
 
-#: addons/members-givewp-integration/src/functions-caps.php:46, addons/members-woocommerce-integration/src/functions-caps.php:36
+#: addons/members-givewp-integration/src/functions-caps.php:46
+#: addons/members-woocommerce-integration/src/functions-caps.php:36
 msgid "Allows access to view reports."
 msgstr ""
 
@@ -2016,7 +967,8 @@ msgstr ""
 msgid "Allows access to taxonomy management screens."
 msgstr ""
 
-#: addons/members-givewp-integration/src/functions-filters.php:37, addons/members-givewp-integration/src/functions-filters.php:69
+#: addons/members-givewp-integration/src/functions-filters.php:37
+#: addons/members-givewp-integration/src/functions-filters.php:69
 msgid "GiveWP"
 msgstr ""
 
@@ -2034,7 +986,8 @@ msgstr ""
 msgid "Allows users to create new field groups."
 msgstr ""
 
-#: addons/members-meta-box-integration/src/Plugin.php:121, addons/members-meta-box-integration/src/Plugin.php:146
+#: addons/members-meta-box-integration/src/Plugin.php:121
+#: addons/members-meta-box-integration/src/Plugin.php:146
 msgid "Meta Box"
 msgstr ""
 
@@ -2043,6 +996,18 @@ msgid "Meta Box %s"
 msgid_plural "MetaBox %s"
 msgstr[0] ""
 msgstr[1] ""
+
+#: addons/members-privacy-caps/addon.php:51
+msgid "Manage Privacy Options"
+msgstr ""
+
+#: addons/members-privacy-caps/addon.php:56
+msgid "Erase Others' Personal Data"
+msgstr ""
+
+#: addons/members-privacy-caps/addon.php:61
+msgid "Export Others' Personal Data"
+msgstr ""
 
 #: addons/members-role-hierarchy/admin/class-edit-role.php:97
 msgid "Role Position"
@@ -2072,7 +1037,8 @@ msgstr ""
 msgid "Lower or equal."
 msgstr ""
 
-#: addons/members-role-levels/admin/class-column-level.php:83, addons/members-role-levels/admin/class-meta-box-level.php:71
+#: addons/members-role-levels/admin/class-column-level.php:83
+#: addons/members-role-levels/admin/class-meta-box-level.php:71
 msgid "Level"
 msgstr ""
 
@@ -2464,7 +1430,8 @@ msgstr ""
 msgid "Allows access to coupon taxonomy management screens."
 msgstr ""
 
-#: addons/members-woocommerce-integration/src/functions-filters.php:37, addons/members-woocommerce-integration/src/functions-filters.php:72
+#: addons/members-woocommerce-integration/src/functions-filters.php:37
+#: addons/members-woocommerce-integration/src/functions-filters.php:72
 msgid "WooCommerce"
 msgstr ""
 
@@ -2473,3 +1440,1259 @@ msgid "WooCommerce %s"
 msgid_plural "WooCommerce %s"
 msgstr[0] ""
 msgstr[1] ""
+
+#: admin/class-cap-control.php:118
+#: admin/functions-admin.php:48
+msgid "Grant %s capability"
+msgstr ""
+
+#: admin/class-cap-control.php:119
+#: admin/functions-admin.php:49
+msgid "Deny %s capability"
+msgstr ""
+
+#: admin/class-cap-tabs.php:165
+msgid "All"
+msgstr ""
+
+#: admin/class-cap-tabs.php:194
+msgid "Edit Capabilities: %s"
+msgstr ""
+
+#: admin/class-manage-roles.php:88
+#: admin/class-manage-roles.php:94
+#: admin/class-manage-users.php:360
+#: admin/class-meta-box-content-permissions.php:188
+#: admin/class-meta-box-content-permissions.php:307
+#: admin/class-meta-box-content-permissions.php:329
+#: admin/class-roles.php:170
+#: admin/class-user-edit.php:93
+msgid "Roles"
+msgstr ""
+
+#: admin/class-manage-roles.php:91
+#: admin/class-role-edit.php:298
+msgid "Edit Role"
+msgstr ""
+
+#: admin/class-manage-users.php:97
+msgid "Role added to selected users."
+msgstr ""
+
+#: admin/class-manage-users.php:102
+msgid "Role removed from selected users."
+msgstr ""
+
+#: admin/class-manage-users.php:106
+msgid "The current user&#8217;s role must have user editing capabilities."
+msgstr ""
+
+#: admin/class-manage-users.php:107
+msgid "Role removed from other selected users."
+msgstr ""
+
+#: admin/class-manage-users.php:161
+#: admin/class-manage-users.php:236
+#: admin/class-role-edit.php:92
+#: members.php:130
+#: members.php:141
+msgid "Whoah, partner!"
+msgstr ""
+
+#: admin/class-manage-users.php:162
+#: admin/class-manage-users.php:237
+msgid "One of the selected users is not a member of this site."
+msgstr ""
+
+#: admin/class-manage-users.php:326
+#: admin/class-manage-users.php:330
+msgid "Add role&hellip;"
+msgstr ""
+
+#: admin/class-manage-users.php:334
+msgid "Add"
+msgstr ""
+
+#: admin/class-manage-users.php:337
+#: admin/class-manage-users.php:341
+msgid "Remove role&hellip;"
+msgstr ""
+
+#: admin/class-manage-users.php:345
+msgid "Remove"
+msgstr ""
+
+#: admin/class-manage-users.php:382
+msgid "None"
+msgstr ""
+
+#: admin/class-meta-box-content-permissions.php:115
+msgid "Content Permissions (Members)"
+msgstr ""
+
+#: admin/class-meta-box-content-permissions.php:195
+#: admin/class-meta-box-content-permissions.php:314
+#: admin/class-meta-box-content-permissions.php:359
+msgid "Paid Memberships"
+msgstr ""
+
+#: admin/class-meta-box-content-permissions.php:212
+#: admin/class-meta-box-content-permissions.php:332
+msgid "Limit access to the content to users of the selected roles."
+msgstr ""
+
+#: admin/class-meta-box-content-permissions.php:232
+#: admin/class-meta-box-content-permissions.php:352
+msgid "If no roles are selected, everyone can view the content. The author, any users who can edit the content, and users with the %s capability can view the content regardless of role."
+msgstr ""
+
+#: admin/class-meta-box-content-permissions.php:241
+#: admin/class-meta-box-content-permissions.php:362
+msgid "To protect this block by paid membership or centrally with <br> a content protection rule, add MemberPress."
+msgstr ""
+
+#: admin/class-meta-box-content-permissions.php:242
+#: admin/class-meta-box-content-permissions.php:363
+msgid "Add MemberPress"
+msgstr ""
+
+#: admin/class-meta-box-custom-cap.php:73
+#: admin/functions-help.php:94
+msgid "Custom Capability"
+msgstr ""
+
+#: admin/class-meta-box-custom-cap.php:90
+msgctxt "capability"
+msgid "Add New"
+msgstr ""
+
+#: admin/class-meta-box-publish-role.php:67
+#: admin/class-roles.php:68
+#: inc/functions-admin-bar.php:35
+msgid "Role"
+msgstr ""
+
+#: admin/class-meta-box-publish-role.php:104
+msgid "%s User"
+msgid_plural "%s Users"
+msgstr[0] ""
+msgstr[1] ""
+
+#: admin/class-meta-box-publish-role.php:110
+msgid "Users:"
+msgstr ""
+
+#: admin/class-meta-box-publish-role.php:117
+msgid "Granted:"
+msgstr ""
+
+#: admin/class-meta-box-publish-role.php:123
+msgid "Denied:"
+msgstr ""
+
+#: admin/class-meta-box-publish-role.php:134
+msgctxt "delete role"
+msgid "Delete"
+msgstr ""
+
+#: admin/class-meta-box-publish-role.php:141
+msgid "Update"
+msgstr ""
+
+#: admin/class-meta-box-publish-role.php:141
+msgid "Add Role"
+msgstr ""
+
+#. Translators: Readable time to display
+#: admin/class-notifications.php:290
+msgid "%1$s ago"
+msgstr ""
+
+#: admin/class-notifications.php:423
+msgid "%s unread message"
+msgid_plural "%s unread messages"
+msgstr[0] ""
+msgstr[1] ""
+
+#: admin/class-notifications.php:494
+#: admin/class-notifications.php:559
+msgid "Dismiss"
+msgstr ""
+
+#: admin/class-notifications.php:501
+#: admin/class-notifications.php:566
+msgid "%s second ago"
+msgid_plural "%s seconds ago"
+msgstr[0] ""
+msgstr[1] ""
+
+#: admin/class-notifications.php:537
+msgid "You're all caught up!"
+msgstr ""
+
+#: admin/class-notifications.php:612
+msgid "Inbox"
+msgstr ""
+
+#: admin/class-notifications.php:615
+msgid "View Dismissed"
+msgstr ""
+
+#: admin/class-notifications.php:616
+msgid "View Active"
+msgstr ""
+
+#: admin/class-notifications.php:617
+msgid "Close"
+msgstr ""
+
+#: admin/class-notifications.php:630
+msgid "Notifications"
+msgstr ""
+
+#: admin/class-notifications.php:633
+msgid "Dismiss All"
+msgstr ""
+
+#: admin/class-review-prompt.php:81
+msgid "Are you enjoying using Members?"
+msgstr ""
+
+#: admin/class-review-prompt.php:85
+msgid "That's awesome! Could you please do me a BIG favor and give it a 5-star rating on WordPress to help us spread the word and boost our motivation?"
+msgstr ""
+
+#: admin/class-review-prompt.php:88
+msgid "Okay, you deserve it"
+msgstr ""
+
+#: admin/class-review-prompt.php:89
+msgid "Nope, maybe later"
+msgstr ""
+
+#: admin/class-review-prompt.php:90
+msgid "I already did"
+msgstr ""
+
+#: admin/class-review-prompt.php:94
+msgid "We're sorry to hear you aren't enjoying Members. We would love a chance to improve. Could you take a minute and let us know what we can do better?"
+msgstr ""
+
+#: admin/class-review-prompt.php:96
+msgid "Give Feedback"
+msgstr ""
+
+#: admin/class-review-prompt.php:97
+msgid "No thanks"
+msgstr ""
+
+#: admin/class-role-edit.php:99
+msgid "The requested role to edit does not exist."
+msgstr ""
+
+#: admin/class-role-edit.php:226
+msgid "%s role updated."
+msgstr ""
+
+#: admin/class-role-edit.php:230
+msgid "The %s role is not editable. This means that it is most likely added via another plugin for a special use or that you do not have permission to edit it."
+msgstr ""
+
+#: admin/class-role-edit.php:234
+msgid "The %s role is typically the most important role on the site. Please take extreme caution that you do not inadvertently remove necessary capabilities."
+msgstr ""
+
+#: admin/class-role-edit.php:238
+#: admin/class-role-new.php:243
+msgid "The %s role has been created."
+msgstr ""
+
+#: admin/class-role-edit.php:301
+#: admin/class-roles.php:173
+msgctxt "role"
+msgid "Add New"
+msgstr ""
+
+#: admin/class-role-edit.php:320
+#: admin/class-role-new.php:344
+#: admin/class-roles.php:67
+#: admin/functions-help.php:62
+msgid "Role Name"
+msgstr ""
+
+#: admin/class-role-edit.php:326
+#: admin/class-role-new.php:350
+#: inc/class-widget-users.php:235
+msgid "Role:"
+msgstr ""
+
+#: admin/class-role-list-table.php:232
+msgid "Default Role"
+msgstr ""
+
+#: admin/class-role-list-table.php:236
+msgid "Your Role"
+msgstr ""
+
+#: admin/class-role-list-table.php:355
+#: admin/class-role-new.php:352
+#: admin/functions-admin.php:46
+msgid "Edit"
+msgstr ""
+
+#: admin/class-role-list-table.php:359
+#: admin/class-role-list-table.php:508
+msgid "Delete"
+msgstr ""
+
+#: admin/class-role-list-table.php:365
+msgid "View"
+msgstr ""
+
+#: admin/class-role-list-table.php:370
+msgid "Clone"
+msgstr ""
+
+#: admin/class-role-list-table.php:374
+msgid "Change Default"
+msgstr ""
+
+#: admin/class-role-list-table.php:378
+#: admin/class-roles.php:69
+#: inc/class-widget-users.php:59
+#: inc/functions-cap-groups.php:121
+msgid "Users"
+msgstr ""
+
+#: admin/class-role-list-table.php:418
+msgid "All %s"
+msgid_plural "All %s"
+msgstr[0] ""
+msgstr[1] ""
+
+#: admin/class-role-list-table.php:423
+msgid "Mine %s"
+msgid_plural "Mine %s"
+msgstr[0] ""
+msgstr[1] ""
+
+#: admin/class-role-list-table.php:428
+msgid "Has Users %s"
+msgid_plural "Has Users %s"
+msgstr[0] ""
+msgstr[1] ""
+
+#: admin/class-role-list-table.php:433
+msgid "No Users %s"
+msgid_plural "No Users %s"
+msgstr[0] ""
+msgstr[1] ""
+
+#: admin/class-role-list-table.php:438
+msgid "Editable %s"
+msgid_plural "Editable %s"
+msgstr[0] ""
+msgstr[1] ""
+
+#: admin/class-role-list-table.php:443
+msgid "Uneditable %s"
+msgid_plural "Uneditable %s"
+msgstr[0] ""
+msgstr[1] ""
+
+#: admin/class-role-new.php:133
+msgctxt "admin screen"
+msgid "Add New Role"
+msgstr ""
+
+#: admin/class-role-new.php:252
+msgid "You must enter a valid role."
+msgstr ""
+
+#: admin/class-role-new.php:256
+msgid "The %s role already exists."
+msgstr ""
+
+#: admin/class-role-new.php:260
+msgid "You must enter a valid role name."
+msgstr ""
+
+#: admin/class-role-new.php:327
+msgid "Add New Role"
+msgstr ""
+
+#: admin/class-role-new.php:327
+msgid "Clone Role"
+msgstr ""
+
+#: admin/class-role-new.php:345
+msgid "%s Clone"
+msgstr ""
+
+#: admin/class-role-new.php:345
+msgid "Enter role name"
+msgstr ""
+
+#: admin/class-roles.php:70
+msgid "Granted"
+msgstr ""
+
+#: admin/class-roles.php:71
+msgid "Denied"
+msgstr ""
+
+#: admin/class-roles.php:112
+msgid "Selected roles deleted."
+msgstr ""
+
+#: admin/class-roles.php:131
+msgid "%s role deleted."
+msgstr ""
+
+#: admin/class-roles.php:210
+#: admin/functions-help.php:46
+#: admin/views/class-view-addons.php:186
+msgid "Overview"
+msgstr ""
+
+#: admin/class-roles.php:219
+msgid "Screen Content"
+msgstr ""
+
+#: admin/class-roles.php:228
+msgid "Available Actions"
+msgstr ""
+
+#: admin/class-roles.php:237
+msgid "Bulk Actions"
+msgstr ""
+
+#: admin/class-roles.php:270
+msgid "You can customize the display of this screen&#8216;s contents in a number of ways:"
+msgstr ""
+
+#: admin/class-roles.php:274
+msgid "You can hide/display columns based on your needs and decide how many roles to list per screen using the Screen Options tab."
+msgstr ""
+
+#: admin/class-roles.php:275
+msgid "You can filter the list of roles by types using the text links in the upper left. The default view is to show all roles."
+msgstr ""
+
+#: admin/class-roles.php:289
+msgid "Hovering over a row in the roles list will display action links that allow you to manage your role. You can perform the following actions:"
+msgstr ""
+
+#: admin/class-roles.php:293
+msgid "<strong>Edit</strong> takes you to the editing screen for that role. You can also reach that screen by clicking on the role name."
+msgstr ""
+
+#: admin/class-roles.php:294
+msgid "<strong>Delete</strong> removes your role from this list and permanently deletes it."
+msgstr ""
+
+#: admin/class-roles.php:295
+msgid "<strong>Clone</strong> copies the role and takes you to the new role screen to further edit it."
+msgstr ""
+
+#: admin/class-roles.php:296
+msgid "<strong>Users</strong> takes you to the users screen and lists the users that have that role."
+msgstr ""
+
+#: admin/class-roles.php:310
+msgid "You can permanently delete multiple roles at once. Select the roles you want to act on using the checkboxes, then select the action you want to take from the Bulk Actions menu and click Apply."
+msgstr ""
+
+#: admin/class-settings.php:158
+#: admin/functions-admin.php:285
+msgid "You are not allowed to make these changes."
+msgstr ""
+
+#: admin/class-settings.php:165
+msgid "No add-on provided."
+msgstr ""
+
+#: admin/class-settings.php:176
+#: admin/views/class-view-addons.php:159
+msgid "Active"
+msgstr ""
+
+#: admin/class-settings.php:177
+msgid "Add-on activated"
+msgstr ""
+
+#: admin/class-settings.php:188
+#: admin/views/class-view-addons.php:153
+#: admin/views/class-view-addons.php:159
+msgid "Activate"
+msgstr ""
+
+#: admin/class-settings.php:189
+msgid "Add-on deactivated"
+msgstr ""
+
+#: admin/class-settings.php:263
+msgctxt "admin screen"
+msgid "Settings"
+msgstr ""
+
+#: admin/class-settings.php:265
+msgctxt "admin screen"
+msgid "Add-Ons"
+msgstr ""
+
+#: admin/class-settings.php:265
+msgctxt "admin screen"
+msgid "<span style=\"color: #8CBD5A;\">Add-Ons</span>"
+msgstr ""
+
+#: admin/class-settings.php:268
+#: admin/class-settings.php:393
+msgctxt "admin screen"
+msgid "Payments"
+msgstr ""
+
+#: admin/class-settings.php:271
+#: admin/class-settings.php:649
+msgctxt "admin screen"
+msgid "About Us"
+msgstr ""
+
+#: admin/class-settings.php:370
+msgctxt "admin screen"
+msgid "Members"
+msgstr ""
+
+#: admin/functions-admin.php:47
+msgid "OK"
+msgstr ""
+
+#: admin/functions-admin.php:50
+msgid "Are you sure you want to delete this role? This is a permanent action and cannot be undone."
+msgstr ""
+
+#: admin/functions-admin.php:251
+msgid "Support"
+msgstr ""
+
+#: admin/functions-admin.php:256
+msgid "Docs"
+msgstr ""
+
+#: admin/functions-admin.php:261
+msgid "About Us"
+msgstr ""
+
+#: admin/functions-admin.php:266
+msgid "Made with ♥ by the MemberPress Team"
+msgstr ""
+
+#: admin/functions-help.php:23
+msgid "Documentation"
+msgstr ""
+
+#: admin/functions-help.php:24
+msgid "Support Forums"
+msgstr ""
+
+#: admin/functions-help.php:29
+msgid "For more information:"
+msgstr ""
+
+#: admin/functions-help.php:78
+msgid "Edit Capabilities"
+msgstr ""
+
+#: admin/functions-help.php:109
+msgid "This screen allows you to edit an individual role and its capabilities."
+msgstr ""
+
+#: admin/functions-help.php:114
+msgid "Visit the %s page in the WordPress Codex to see a complete list of roles, capabilities, and their definitions."
+msgstr ""
+
+#: admin/functions-help.php:115
+#: admin/views/class-view-general.php:62
+msgid "Roles and Capabilities"
+msgstr ""
+
+#: admin/functions-help.php:130
+msgid "The role name field allows you to enter a human-readable name for your role."
+msgstr ""
+
+#: admin/functions-help.php:134
+msgid "The machine-readable version of the role appears below the name field, which you can edit. This can only have lowercase letters, numbers, or underscores."
+msgstr ""
+
+#: admin/functions-help.php:148
+msgid "The capabilities edit box is made up of tabs that separate capabilities into groups. You may take the following actions for each capability:"
+msgstr ""
+
+#: admin/functions-help.php:152
+msgid "<strong>Grant</strong> allows you to grant the role a capability."
+msgstr ""
+
+#: admin/functions-help.php:153
+msgid "<strong>Deny</strong> allows you to explicitly deny the role a capability."
+msgstr ""
+
+#: admin/functions-help.php:154
+msgid "You may also opt to neither grant nor deny the role a capability."
+msgstr ""
+
+#: admin/functions-help.php:168
+msgid "The custom capability box allows you to create a custom capability for the role. After hitting the Add New button, it will add the capability to the Custom tab in the Edit Capabilities box."
+msgstr ""
+
+#: admin/functions-settings.php:35
+#: inc/functions-cap-groups.php:42
+msgid "General"
+msgstr ""
+
+#: admin/functions-settings.php:46
+msgid "Add-Ons"
+msgstr ""
+
+#: admin/tmpl/cap-section.php:20
+#: admin/tmpl/cap-section.php:28
+msgid "Grant"
+msgstr ""
+
+#: admin/tmpl/cap-section.php:21
+#: admin/tmpl/cap-section.php:29
+msgid "Deny"
+msgstr ""
+
+#: admin/views/class-view-addons.php:79
+msgid "There are currently no add-ons to show. Please try again later."
+msgstr ""
+
+#: admin/views/class-view-addons.php:195
+msgid "Download"
+msgstr ""
+
+#: admin/views/class-view-addons.php:204
+msgid "Purchase"
+msgstr ""
+
+#: admin/views/class-view-addons.php:223
+msgid "The Add-Ons screen allows you to view available add-ons for the Members plugin. You can download some plugins directly. Others may be available to purchase."
+msgstr ""
+
+#: admin/views/class-view-addons.php:237
+msgid "Some plugins may be available for direct download. In such cases, you can click the download button to get a ZIP file of the plugin."
+msgstr ""
+
+#: admin/views/class-view-addons.php:251
+msgid "Some add-ons may require purchase before downloading them. Clicking the purchase button will take you off-site to view the add-on in more detail."
+msgstr ""
+
+#: admin/views/class-view-general.php:63
+#: admin/views/class-view-general.php:366
+msgid "Content Permissions"
+msgstr ""
+
+#: admin/views/class-view-general.php:64
+#: admin/views/class-view-general.php:384
+msgid "Private Site"
+msgstr ""
+
+#: admin/views/class-view-general.php:65
+msgid "Miscellaneous"
+msgstr ""
+
+#: admin/views/class-view-general.php:70
+msgid "Role Manager"
+msgstr ""
+
+#: admin/views/class-view-general.php:71
+msgid "Multiple User Roles"
+msgstr ""
+
+#: admin/views/class-view-general.php:72
+msgid "Capabilities"
+msgstr ""
+
+#: admin/views/class-view-general.php:75
+msgid "Enable Permissions"
+msgstr ""
+
+#: admin/views/class-view-general.php:76
+msgid "Hide Protected Posts from WP REST API"
+msgstr ""
+
+#: admin/views/class-view-general.php:80
+msgid "Enable Private Site"
+msgstr ""
+
+#: admin/views/class-view-general.php:81
+msgid "REST API"
+msgstr ""
+
+#: admin/views/class-view-general.php:82
+msgid "Disable Feed"
+msgstr ""
+
+#: admin/views/class-view-general.php:83
+msgid "Feed Error Message"
+msgstr ""
+
+#: admin/views/class-view-general.php:86
+msgid "Disable Review Prompt"
+msgstr ""
+
+#: admin/views/class-view-general.php:130
+msgid "Your roles and capabilities will not revert back to their previous settings after deactivating or uninstalling this plugin, so use this feature wisely."
+msgstr ""
+
+#: admin/views/class-view-general.php:145
+msgid "Enable the role manager."
+msgstr ""
+
+#: admin/views/class-view-general.php:163
+msgid "Denied capabilities should always overrule granted capabilities."
+msgstr ""
+
+#: admin/views/class-view-general.php:170
+msgid "Show human-readable capabilities when possible."
+msgstr ""
+
+#: admin/views/class-view-general.php:188
+msgid "Allow users to be assigned more than a single role."
+msgstr ""
+
+#: admin/views/class-view-general.php:203
+msgid "Enable the content permissions feature."
+msgstr ""
+
+#: admin/views/class-view-general.php:238
+msgid "Redirect all logged-out users to the login page before allowing them to view the site."
+msgstr ""
+
+#: admin/views/class-view-general.php:253
+msgid "Block protected posts from showing in the REST API requests."
+msgstr ""
+
+#: admin/views/class-view-general.php:268
+msgid "Require authentication for access to the REST API."
+msgstr ""
+
+#: admin/views/class-view-general.php:283
+msgid "Show error message for feed items."
+msgstr ""
+
+#: admin/views/class-view-general.php:319
+msgid "Permanently remove Members review prompt."
+msgstr ""
+
+#: admin/views/class-view-general.php:357
+msgid "Role and Capabilities"
+msgstr ""
+
+#: admin/views/class-view-general.php:375
+msgid "Sidebar Widgets"
+msgstr ""
+
+#: admin/views/class-view-general.php:403
+msgid "The role manager allows you to manage roles on your site by giving you the ability to create, edit, and delete any role. Note that changes to roles do not change settings for the Members plugin. You are literally changing data in your WordPress database. This plugin feature merely provides an interface for you to make these changes."
+msgstr ""
+
+#: admin/views/class-view-general.php:407
+msgid "The multiple user roles feature allows you to assign more than one role to each user from the edit user screen."
+msgstr ""
+
+#: admin/views/class-view-general.php:411
+msgid "Tick the checkbox for denied capabilities to always take precedence over granted capabilities when there is a conflict. This is only relevant when using multiple roles per user."
+msgstr ""
+
+#: admin/views/class-view-general.php:415
+msgid "Tick the checkbox to show human-readable capabilities when possible. Note that custom capabilities and capabilities from third-party plugins will show the machine-readable capability name unless they are registered."
+msgstr ""
+
+#: admin/views/class-view-general.php:429
+msgid "The content permissions features adds a meta box to the edit post screen that allows you to grant permissions for who can read the post content based on the user's role. Only users of roles with the %s capability will be able to use this component."
+msgstr ""
+
+#: admin/views/class-view-general.php:443
+msgid "The sidebar widgets feature adds additional widgets for use in your theme's sidebars."
+msgstr ""
+
+#: admin/views/class-view-general.php:457
+msgid "The private site feature redirects all users who are not logged into the site to the login page, creating an entirely private site. You may also replace your feed content with a custom error message."
+msgstr ""
+
+#: inc/class-widget-login.php:44
+msgid "A widget that allows users to log into your site."
+msgstr ""
+
+#: inc/class-widget-login.php:55
+msgid "Members: Login Form"
+msgstr ""
+
+#: inc/class-widget-login.php:59
+#: inc/class-widget-login.php:62
+msgid "Log In"
+msgstr ""
+
+#: inc/class-widget-login.php:60
+msgid "Username"
+msgstr ""
+
+#: inc/class-widget-login.php:61
+msgid "Password"
+msgstr ""
+
+#: inc/class-widget-login.php:63
+msgid "Remember Me"
+msgstr ""
+
+#: inc/class-widget-login.php:73
+msgid "Please log into the site."
+msgstr ""
+
+#: inc/class-widget-login.php:74
+msgid "You are currently logged in."
+msgstr ""
+
+#: inc/class-widget-login.php:209
+#: inc/class-widget-users.php:215
+msgid "Title:"
+msgstr ""
+
+#: inc/class-widget-login.php:213
+msgid "Username Label:"
+msgstr ""
+
+#: inc/class-widget-login.php:217
+msgid "Password Label:"
+msgstr ""
+
+#: inc/class-widget-login.php:221
+msgid "Log In Label:"
+msgstr ""
+
+#: inc/class-widget-login.php:225
+msgid "Remember Me Label:"
+msgstr ""
+
+#: inc/class-widget-login.php:233
+msgid "Username Value:"
+msgstr ""
+
+#: inc/class-widget-login.php:237
+msgid "Username Field ID:"
+msgstr ""
+
+#: inc/class-widget-login.php:241
+msgid "Remember Me Field ID:"
+msgstr ""
+
+#: inc/class-widget-login.php:245
+msgid "Password Field ID:"
+msgstr ""
+
+#: inc/class-widget-login.php:249
+msgid "Submit Button ID:"
+msgstr ""
+
+#: inc/class-widget-login.php:260
+msgid "\"Remember me\" checkbox?"
+msgstr ""
+
+#: inc/class-widget-login.php:266
+msgid "Check \"remember me\"?"
+msgstr ""
+
+#: inc/class-widget-login.php:272
+msgid "Display avatar?"
+msgstr ""
+
+#: inc/class-widget-login.php:276
+msgid "Logged out text:"
+msgstr ""
+
+#: inc/class-widget-login.php:281
+msgid "Logged in text:"
+msgstr ""
+
+#: inc/class-widget-users.php:44
+msgid "Provides the ability to list the users of the site."
+msgstr ""
+
+#: inc/class-widget-users.php:55
+msgid "Members: Users"
+msgstr ""
+
+#: inc/class-widget-users.php:192
+msgid "Ascending"
+msgstr ""
+
+#: inc/class-widget-users.php:193
+msgid "Descending"
+msgstr ""
+
+#: inc/class-widget-users.php:197
+msgid "Display Name"
+msgstr ""
+
+#: inc/class-widget-users.php:198
+msgid "Email"
+msgstr ""
+
+#: inc/class-widget-users.php:199
+msgid "ID"
+msgstr ""
+
+#: inc/class-widget-users.php:200
+msgid "Nice Name"
+msgstr ""
+
+#: inc/class-widget-users.php:201
+msgid "Post Count"
+msgstr ""
+
+#: inc/class-widget-users.php:202
+msgid "Registered"
+msgstr ""
+
+#: inc/class-widget-users.php:203
+msgid "URL"
+msgstr ""
+
+#: inc/class-widget-users.php:204
+msgid "Login"
+msgstr ""
+
+#: inc/class-widget-users.php:219
+msgid "Order By:"
+msgstr ""
+
+#: inc/class-widget-users.php:227
+msgid "Order:"
+msgstr ""
+
+#: inc/class-widget-users.php:244
+msgid "Limit:"
+msgstr ""
+
+#: inc/class-widget-users.php:248
+msgid "Offset:"
+msgstr ""
+
+#: inc/class-widget-users.php:256
+msgid "Include:"
+msgstr ""
+
+#: inc/class-widget-users.php:260
+msgid "Exclude:"
+msgstr ""
+
+#: inc/class-widget-users.php:264
+msgid "Search:"
+msgstr ""
+
+#: inc/class-widget-users.php:268
+msgid "Meta Key:"
+msgstr ""
+
+#: inc/class-widget-users.php:276
+msgid "Meta Value:"
+msgstr ""
+
+#: inc/functions-cap-groups.php:92
+msgid "Taxonomies"
+msgstr ""
+
+#: inc/functions-cap-groups.php:103
+msgid "Appearance"
+msgstr ""
+
+#: inc/functions-cap-groups.php:112
+msgid "Plugins"
+msgstr ""
+
+#: inc/functions-cap-groups.php:130
+msgid "Custom"
+msgstr ""
+
+#: inc/functions-capabilities.php:57
+msgid "Edit Dashboard"
+msgstr ""
+
+#: inc/functions-capabilities.php:58
+msgid "Edit Files"
+msgstr ""
+
+#: inc/functions-capabilities.php:59
+msgid "Export"
+msgstr ""
+
+#: inc/functions-capabilities.php:60
+msgid "Import"
+msgstr ""
+
+#: inc/functions-capabilities.php:61
+msgid "Manage Links"
+msgstr ""
+
+#: inc/functions-capabilities.php:62
+msgid "Manage Options"
+msgstr ""
+
+#: inc/functions-capabilities.php:63
+msgid "Moderate Comments"
+msgstr ""
+
+#: inc/functions-capabilities.php:64
+msgid "Read"
+msgstr ""
+
+#: inc/functions-capabilities.php:65
+msgid "Unfiltered HTML"
+msgstr ""
+
+#: inc/functions-capabilities.php:66
+msgid "Update Core"
+msgstr ""
+
+#: inc/functions-capabilities.php:69
+msgid "Delete Others' Posts"
+msgstr ""
+
+#: inc/functions-capabilities.php:70
+msgid "Delete Posts"
+msgstr ""
+
+#: inc/functions-capabilities.php:71
+msgid "Delete Private Posts"
+msgstr ""
+
+#: inc/functions-capabilities.php:72
+msgid "Delete Published Posts"
+msgstr ""
+
+#: inc/functions-capabilities.php:73
+msgid "Edit Others' Posts"
+msgstr ""
+
+#: inc/functions-capabilities.php:74
+msgid "Edit Posts"
+msgstr ""
+
+#: inc/functions-capabilities.php:75
+msgid "Edit Private Posts"
+msgstr ""
+
+#: inc/functions-capabilities.php:76
+msgid "Edit Published Posts"
+msgstr ""
+
+#: inc/functions-capabilities.php:77
+msgid "Publish Posts"
+msgstr ""
+
+#: inc/functions-capabilities.php:78
+msgid "Read Private Posts"
+msgstr ""
+
+#: inc/functions-capabilities.php:81
+msgid "Delete Others' Pages"
+msgstr ""
+
+#: inc/functions-capabilities.php:82
+msgid "Delete Pages"
+msgstr ""
+
+#: inc/functions-capabilities.php:83
+msgid "Delete Private Pages"
+msgstr ""
+
+#: inc/functions-capabilities.php:84
+msgid "Delete Published Pages"
+msgstr ""
+
+#: inc/functions-capabilities.php:85
+msgid "Edit Others' Pages"
+msgstr ""
+
+#: inc/functions-capabilities.php:86
+msgid "Edit Pages"
+msgstr ""
+
+#: inc/functions-capabilities.php:87
+msgid "Edit Private Pages"
+msgstr ""
+
+#: inc/functions-capabilities.php:88
+msgid "Edit Published Pages"
+msgstr ""
+
+#: inc/functions-capabilities.php:89
+msgid "Publish Pages"
+msgstr ""
+
+#: inc/functions-capabilities.php:90
+msgid "Read Private Pages"
+msgstr ""
+
+#: inc/functions-capabilities.php:93
+msgid "Upload Files"
+msgstr ""
+
+#: inc/functions-capabilities.php:96
+msgid "Manage Categories"
+msgstr ""
+
+#: inc/functions-capabilities.php:99
+msgid "Delete Themes"
+msgstr ""
+
+#: inc/functions-capabilities.php:100
+msgid "Edit Theme Options"
+msgstr ""
+
+#: inc/functions-capabilities.php:101
+msgid "Edit Themes"
+msgstr ""
+
+#: inc/functions-capabilities.php:102
+msgid "Install Themes"
+msgstr ""
+
+#: inc/functions-capabilities.php:103
+msgid "Switch Themes"
+msgstr ""
+
+#: inc/functions-capabilities.php:104
+msgid "Update Themes"
+msgstr ""
+
+#: inc/functions-capabilities.php:107
+msgid "Activate Plugins"
+msgstr ""
+
+#: inc/functions-capabilities.php:108
+msgid "Delete Plugins"
+msgstr ""
+
+#: inc/functions-capabilities.php:109
+msgid "Edit Plugins"
+msgstr ""
+
+#: inc/functions-capabilities.php:110
+msgid "Install Plugins"
+msgstr ""
+
+#: inc/functions-capabilities.php:111
+msgid "Update Plugins"
+msgstr ""
+
+#: inc/functions-capabilities.php:114
+msgid "Create Roles"
+msgstr ""
+
+#: inc/functions-capabilities.php:115
+msgid "Create Users"
+msgstr ""
+
+#: inc/functions-capabilities.php:116
+msgid "Delete Roles"
+msgstr ""
+
+#: inc/functions-capabilities.php:117
+msgid "Delete Users"
+msgstr ""
+
+#: inc/functions-capabilities.php:118
+msgid "Edit Roles"
+msgstr ""
+
+#: inc/functions-capabilities.php:119
+msgid "Edit Users"
+msgstr ""
+
+#: inc/functions-capabilities.php:120
+msgid "List Roles"
+msgstr ""
+
+#: inc/functions-capabilities.php:121
+msgid "List Users"
+msgstr ""
+
+#: inc/functions-capabilities.php:122
+msgid "Promote Users"
+msgstr ""
+
+#: inc/functions-capabilities.php:123
+msgid "Remove Users"
+msgstr ""
+
+#: inc/functions-capabilities.php:126
+msgid "Restrict Content"
+msgstr ""
+
+#: inc/functions-capabilities.php:141
+msgid "Assign Categories"
+msgstr ""
+
+#: inc/functions-capabilities.php:142
+msgid "Edit Categories"
+msgstr ""
+
+#: inc/functions-capabilities.php:143
+msgid "Delete Categories"
+msgstr ""
+
+#: inc/functions-capabilities.php:144
+msgid "Assign Post Tags"
+msgstr ""
+
+#: inc/functions-capabilities.php:145
+msgid "Edit Post Tags"
+msgstr ""
+
+#: inc/functions-capabilities.php:146
+msgid "Delete Post Tags"
+msgstr ""
+
+#: inc/functions-capabilities.php:147
+msgid "Manage Post Tags"
+msgstr ""
+
+#: inc/functions-options.php:144
+msgid "Sorry, but you do not have permission to view this content."
+msgstr ""
+
+#: inc/functions-options.php:145
+msgid "You must be logged into the site to view this content."
+msgstr ""
+
+#: inc/functions-private-site.php:172
+msgid "You are not currently logged in."
+msgstr ""
+
+#: inc/functions-private-site.php:196
+msgid "You do not currently have access to the \"%s\" site. If you believe you should have access, please contact your network administrator."
+msgstr ""
+
+#: inc/functions-private-site.php:203
+msgid "If you reached this page by accident and meant to visit one of your own sites, try one of the following links."
+msgstr ""
+
+#: inc/functions-role-groups.php:42
+msgid "WordPress"
+msgstr ""
+
+#: inc/functions-role-groups.php:43
+msgid "WordPress %s"
+msgid_plural "WordPress %s"
+msgstr[0] ""
+msgstr[1] ""
+
+#: members.php:152
+msgid "Method does not exist."
+msgstr ""
+
+#: members.php:336
+msgid "Members requires PHP version %1$s. You are running version %2$s. Please upgrade and try again."
+msgstr ""
