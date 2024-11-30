@@ -239,7 +239,7 @@ final class Meta_Box_Content_Permissions {
 
 						<div class="memberpress-paid-memberships">
 							<p><?php _e( 'To protect this block by paid membership or centrally with <br> a content protection rule, add MemberPress.', 'members' ); ?></p>
-							<p><a href="https://memberpress.com/plans/pricing/?utm_source=members&utm_medium=link&utm_campaign=in_plugin&utm_content=content_protection" target="_blank"><?php esc_html_e( 'Add MemberPress', 'members' ); ?></a></p>
+							<p><a href="https://memberpress.com/plans/pricing/?utm_source=members_plugin&utm_medium=link&utm_campaign=in_plugin&utm_content=content_protection" target="_blank"><?php esc_html_e( 'Add MemberPress', 'members' ); ?></a></p>
 						</div>
 
 					</div>
@@ -360,7 +360,7 @@ final class Meta_Box_Content_Permissions {
 
 						<div class="memberpress-paid-memberships">
 							<p><?php _e( 'To protect this block by paid membership or centrally with <br> a content protection rule, add MemberPress.', 'members' ); ?></p>
-							<p><a href="https://memberpress.com/plans/pricing/?utm_source=members&utm_medium=link&utm_campaign=in_plugin&utm_content=paid_memberships" target="_blank"><?php esc_html_e( 'Add MemberPress', 'members' ); ?></a></p>
+							<p><a href="https://memberpress.com/plans/pricing/?utm_source=members_plugin&utm_medium=link&utm_campaign=in_plugin&utm_content=paid_memberships" target="_blank"><?php esc_html_e( 'Add MemberPress', 'members' ); ?></a></p>
 						</div>
 
 					</div>
