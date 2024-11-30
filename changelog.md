@@ -1,5 +1,9 @@
 # Change Log
 
+## 3.2.14 - 2024-11-30
+### Fixed
+- Error in REST API calls when posts results not an array
+
 ## 3.2.12 - 2024-11-29
 ### Fixed
 - Cleaned up prior author name and links
