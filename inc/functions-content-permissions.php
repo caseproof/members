@@ -325,8 +325,8 @@ function members_filter_protected_posts_for_rest( $posts, $query ) {
         return $posts;
     }
 
-    // Check if the current request is a REST API request
-    if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+    // Check if the current request is a REST API request and $posts is valid array
+    if ( defined( 'REST_REQUEST' ) && REST_REQUEST && is_array($posts) ) {
         // Loop through the posts
         foreach ( $posts as $key => $post ) {
             if ( ! members_can_current_user_view_post( $post->ID ) ) {
