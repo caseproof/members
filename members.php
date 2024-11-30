@@ -27,8 +27,8 @@
  *
  * @package   Members
  * @version   3.2.12
- * @author    MemberPress <support@memberpress.com>
- * @copyright Copyright (c) 2004 - 2024, Caseproof
+ * @author    MemberPress <outreach@memberpress.com>
+ * @copyright Copyright (c) 2004 - 2025, The MemberPress Team
  * @link      https://members-plugin.com/
  * @license   http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  */
