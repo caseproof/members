@@ -12,7 +12,7 @@
 // Make sure we're actually uninstalling the plugin.
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	wp_die( sprintf(
-		__( '%s should only be called when uninstalling the plugin.', 'members-category-and-tag-caps' ),
+		__( '%s should only be called when uninstalling the plugin.', 'members' ),
 		'<code>' . __FILE__ . '</code>'
 	) );
 	exit;

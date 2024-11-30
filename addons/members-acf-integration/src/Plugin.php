@@ -46,9 +46,6 @@ class Plugin {
 			return;
 		}
 
-		// Load translations.
-		add_action( 'after_setup_theme', [ $this, 'loadTextdomain' ] );
-
 		// Filter the ACF settings capability.
 		add_filter( 'acf/settings/capability', [ $this, 'acfSettingsCapability' ] );
 
@@ -67,22 +64,6 @@ class Plugin {
 		add_action( 'members_register_role_groups', [ $this, 'registerRoleGroups' ] );
 		add_action( 'members_register_cap_groups',  [ $this, 'registerCapGroups'  ] );
 		add_action( 'members_register_caps',        [ $this, 'registerCaps'       ] );
-	}
-
-	/**
-	 * Load the plugin textdomain.
-	 *
-	 * @since  1.0.0
-	 * @access public
-	 * @return void
-	 */
-	public function loadTextdomain() {
-
-		load_plugin_textdomain(
-			'members-acf-integration',
-			false,
-			plugin_basename( realpath( __DIR__ . '/../public/lang' ) )
-		);
 	}
 
 	/**
@@ -336,8 +317,8 @@ class Plugin {
 		// and there are existing roles with plugin-specific caps.
 		if ( $roles ) {
 			members_register_role_group( 'plugin-acf', [
-				'label'       => esc_html__( 'Advanced Custom Fields', 'members-acf-integration' ),
-				'label_count' => _n_noop( 'Advanced Custom Fields %s', 'Advanced Custom Fields %s', 'members-acf-integration' ),
+				'label'       => esc_html__( 'Advanced Custom Fields', 'members' ),
+				'label_count' => _n_noop( 'Advanced Custom Fields %s', 'Advanced Custom Fields %s', 'members' ),
 				'roles'       => $roles,
 			] );
 		}
@@ -368,7 +349,7 @@ class Plugin {
 
 			// Register a cap group for the ACF plugin.
 			members_register_cap_group( 'plugin-acf', [
-				'label'    => esc_html__( 'Custom Fields', 'members-acf-integration' ),
+				'label'    => esc_html__( 'Custom Fields', 'members' ),
 				'icon'     => 'dashicons-welcome-widgets-menus',
 				'priority' => 11
 			] );

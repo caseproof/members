@@ -267,10 +267,6 @@ final class Members_Plugin {
 	 * @return void
 	 */
 	private function setup_actions() {
-
-		// Internationalize the text strings used.
-		add_action( 'after_setup_theme', array( $this, 'i18n' ), 2 );
-
 		// Migrate add-ons
 		add_action( 'plugins_loaded', array( $this, 'migrate_addons' ) );
 
@@ -279,18 +275,6 @@ final class Members_Plugin {
 
 		// Register activation hook.
 		register_activation_hook( __FILE__, array( $this, 'activation' ) );
-	}
-
-	/**
-	 * Loads the translation files.
-	 *
-	 * @since  1.0.0
-	 * @access public
-	 * @return void
-	 */
-	public function i18n() {
-
-		load_plugin_textdomain( 'members', false, trailingslashit( dirname( plugin_basename( __FILE__ ) ) ) . 'lang' );
 	}
 
 	/**
