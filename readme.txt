@@ -43,7 +43,7 @@ Members now includes ALL of it's add-ons completely free of charge! Here are som
 * **Admin Access:** Allows site administrators to control which users have access to the WordPress admin via role.
 * **Core Create Caps:** Adds the create_posts and create_pages caps to posts/pages to separate them from their edit_* counterparts, providing more flexible editing capabilities.
 * **Categories and Tag Caps:** The Category and Tag Caps add-on creates custom capabilities for the core category and post tag taxonomies. This allows site owners to have precise control over who can manage, edit, delete, or assign categories/tags.
-* **Role Levels:** Exposes the old user levels system, which fixes the WordPress author drop-down bug when users donâ€™t have a role with one of the assigned levels.
+* **Role Levels:** Exposes the old user levels system, which fixes the WordPress author drop-down bug when users don't have a role with one of the assigned levels.
 * **Role Hierarchy:** Creates a hierarchical roles system.
 * **ACF Integration:** Creates custom capabilities for the Advanced Custom Fields (ACF) plugin for managing with the Members plugin.
 * **EDD Integration:** Integrates the Easy Digital Downloads plugin capabilities into the Members plugin's role manager.
