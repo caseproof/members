@@ -233,7 +233,13 @@
 .members-addons {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
+	grid-row-gap: 20px;
+	grid-column-gap: 20px;
 	padding-right: 9px;
+}
+
+.members-addons .plugin-card {
+	margin: 0;
 }
 
 .members-addons .plugin-card-top {
