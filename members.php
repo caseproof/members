@@ -9,8 +9,6 @@
  * Author URI:  https://memberpress.com
  * Text Domain: members
  * Domain Path: /lang
- * License:     GPL v2 or later
- * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  *
  * The members plugin was created because the WordPress community is lacking a solid permissions
  * plugin that is both open source and works completely within the confines of the APIs in WordPress.
