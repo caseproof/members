@@ -501,7 +501,7 @@
 
 .members-about-addons {
 	display: grid;
-	grid-template-columns: repeat(3, 1fr);
+	grid-template-columns: repeat(3, minmax(0, 1fr));
 	grid-column-gap: 20px;
 }
 
@@ -518,6 +518,59 @@
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
+}
+
+@media only screen and (max-width: 1099px) {
+	.members-about-addons {
+		grid-template-columns: 1fr;
+		grid-row-gap: 20px;
+	}
+}
+
+@media screen and (min-width: 1100px) and (max-width: 1600px) {
+	.members-about-addons .members-plugin-card {
+		float: none;
+		width: auto;
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+	}
+
+	.members-plugin-card.plugin-card .desc {
+		margin-left: 0;
+		margin-top: 50px;
+	}
+
+	.members-plugin-card.plugin-card .desc p {
+		margin-left: 0;
+		margin-right: 0;
+	}
+
+	.members-plugin-card.plugin-card .plugin-card-bottom .column-status {
+		float: none;
+	}
+
+	.members-plugin-card.plugin-card .plugin-card-bottom .column-updated {
+		float: none;
+		width: auto;
+	}
+}
+
+@media screen and (max-width: 1200px)  {
+	.welcome-panel .welcome-panel-column-container {
+		flex-direction: column-reverse;
+		gap: 0;
+		padding: 0;
+	}
+
+	.memberpress-about .mp-logo {
+		margin: 0 0 20px;
+	}
+}
+
+.members-plugin-card.plugin-card .desc p {
+	margin-left: 0;
+	margin-right: 0;
 }
 
 /* ====== Manage Roles Screen. ====== */
