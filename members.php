@@ -468,4 +468,4 @@ function members_plugin() {
 }
 
 // Let's roll!
-members_plugin();
+add_action('after_setup_theme', 'members_plugin');
