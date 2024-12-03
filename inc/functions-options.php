@@ -140,9 +140,10 @@ function members_get_default_settings() {
 		'private_blog'        => 0,
 
 		// @since 0.2.0
+		// Do not use gettext here, or it will cause translation error in WP 6.7+
 		'private_feed'              => 0,
-		'content_permissions_error' => esc_html__( 'Sorry, but you do not have permission to view this content.', 'members' ),
-		'private_feed_error'        => esc_html__( 'You must be logged into the site to view this content.',      'members' ),
+		'content_permissions_error' => 'Sorry, but you do not have permission to view this content.',
+		'private_feed_error'        => 'You must be logged into the site to view this content.',
 
 		// @since 1.0.0
 		'explicit_denied_caps' => true,
