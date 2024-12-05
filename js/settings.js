@@ -2,20 +2,21 @@ jQuery( document ).ready( function($) {
 
 	/* ====== Plugin Settings ====== */
 
-	// Hide content permissions message if disabled.
+	// Hide content permissions message and hide protected posts if content permissions is disabled.
 	if ( false === jQuery( '[name="members_settings[content_permissions]"]' ).prop( 'checked' ) ) {
 
 		jQuery( '[name="members_settings[content_permissions]"]' ).parents( 'tr' ).next( 'tr' ).hide();
-	}
-
-	// Hide private feed message if private feed disabled.
-	if ( false === jQuery( '[name="members_settings[private_feed]"]' ).prop( 'checked' ) ) {
 
 		jQuery( '[name="members_settings[private_feed]"]' ).parents( 'tr' ).next( 'tr' ).hide();
 	}
 
-	// Show above hidden items if feature becomes enabled.
-	jQuery( '[name="members_settings[content_permissions]"], [name="members_settings[private_feed]"]' ).on( 'change',
+	// Hide protected posts from REST API field if content permissions is enabled.
+	if ( false === jQuery( '[name="members_settings[content_permissions]"]' ).prop( 'checked' ) ) {
+		jQuery( '[name="members_settings[hide_posts_rest_api]"]' ).parents( 'tr' ).hide();
+	}
+
+	// Show above hidden items if feature becomes disabled.
+	jQuery( '[name="members_settings[content_permissions]"], [name="members_settings[private_feed]"], [name="members_settings[private_blog]"]' ).on( 'change',
 		function() {
 
 			if ( jQuery( this ).prop( 'checked' ) ) {
@@ -43,10 +44,14 @@ jQuery( document ).ready( function($) {
 			},
 		})
 		.done(function(response) {
-			$this.find('.action-label').html(response.data.action_label);
-			var svg = $this.find('svg');
-			svg.removeClass();
-			svg.addClass(response.data.status);
+			if ( response.success == true ) {
+				$this.find('.action-label').html(response.data.action_label);
+				var svg = $this.find('svg');
+				svg.removeClass();
+				svg.addClass(response.data.status);
+			} else {
+				alert(response.data.msg);
+			}
 		})
 		.fail(function(response) {
 			alert(response.data.msg);

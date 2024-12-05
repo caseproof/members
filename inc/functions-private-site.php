@@ -6,9 +6,9 @@
  *
  * @package    Members
  * @subpackage Includes
- * @author     Justin Tadlock <justintadlock@gmail.com>
- * @copyright  Copyright (c) 2009 - 2018, Justin Tadlock
- * @link       https://themehybrid.com/plugins/members
+ * @author     The MemberPress Team 
+ * @copyright  Copyright (c) 2009 - 2018, The MemberPress Team
+ * @link       https://members-plugin.com/
  * @license    http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  */
 
@@ -21,8 +21,10 @@ add_filter( 'the_excerpt_rss',  'members_private_feed', 95 );
 add_filter( 'comment_text_rss', 'members_private_feed', 95 );
 
 # Filters for the feed error message.
-add_filter( 'members_feed_error_message', array( $GLOBALS['wp_embed'], 'run_shortcode' ),   5 );
-add_filter( 'members_feed_error_message', array( $GLOBALS['wp_embed'], 'autoembed'     ),   5 );
+if ( isset( $GLOBALS['wp_embed'] ) && $GLOBALS['wp_embed'] instanceof \WP_Embed ) {
+	add_filter( 'members_feed_error_message', array( $GLOBALS['wp_embed'], 'run_shortcode' ),   5 );
+	add_filter( 'members_feed_error_message', array( $GLOBALS['wp_embed'], 'autoembed'     ),   5 );
+}
 add_filter( 'members_feed_error_message',                              'wptexturize',       10 );
 add_filter( 'members_feed_error_message',                              'convert_smilies',   15 );
 add_filter( 'members_feed_error_message',                              'convert_chars',     20 );
@@ -32,6 +34,9 @@ add_filter( 'members_feed_error_message',                              'shortcod
 
 # Authenticate when accessing the REST API.
 add_filter( 'rest_authentication_errors', 'members_private_rest_api', 95 );
+
+# Filter protected posts from being returned in the REST API.
+add_filter( 'posts_results', 'members_filter_protected_posts_for_rest', 10, 2 );
 
 /**
  * Conditional tag to see if we have a private blog.

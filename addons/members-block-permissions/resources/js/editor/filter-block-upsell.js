@@ -2,8 +2,8 @@
  * Block edit filter.
  *
  * @package   MembersBlockPermissions
- * @author    Caseproof LLC
- * @copyright 2019 Caseproof LLC
+ * @author    The MemberPress Team
+ * @copyright 2025 The MemberPress Team
  * @license   https://www.gnu.org/licenses/gpl-2.0.html GPL-2.0-or-later
  */
  import UpgradePrompt    from './controls/upgrade-prompt';

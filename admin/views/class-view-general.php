@@ -4,9 +4,9 @@
  *
  * @package    Members
  * @subpackage Admin
- * @author     Justin Tadlock <justintadlock@gmail.com>
- * @copyright  Copyright (c) 2009 - 2018, Justin Tadlock
- * @link       https://themehybrid.com/plugins/members
+ * @author     The MemberPress Team 
+ * @copyright  Copyright (c) 2009 - 2018, The MemberPress Team
+ * @link       https://members-plugin.com/
  * @license    http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  */
 
@@ -73,13 +73,14 @@ class View_General extends View {
 
 		// Content permissions fields.
 		add_settings_field( 'enable_content_permissions', esc_html__( 'Enable Permissions', 'members' ), array( $this, 'field_enable_content_permissions' ), 'members-settings', 'content_permissions' );
+		add_settings_field( 'hide_protected_posts_rest_api', esc_html__( 'Hide Protected Posts from WP REST API', 'members' ), array( $this, 'field_hide_protected_posts_rest_api' ), 'members-settings', 'content_permissions' );
 		add_settings_field( 'content_permissions_error',  esc_html__( 'Error Message',      'members' ), array( $this, 'field_content_permissions_error'  ), 'members-settings', 'content_permissions' );
 
 		// Private site fields.
 		add_settings_field( 'enable_private_site', esc_html__( 'Enable Private Site', 'members' ), array( $this, 'field_enable_private_site' ), 'members-settings', 'private_site' );
-		add_settings_field( 'private_rest_api',    esc_html__( 'REST API',            'members' ), array( $this, 'field_private_rest_api'    ), 'members-settings', 'private_site' );
-		add_settings_field( 'enable_private_feed', esc_html__( 'Disable Feed',        'members' ), array( $this, 'field_enable_private_feed' ), 'members-settings', 'private_site' );
-		add_settings_field( 'private_feed_error',  esc_html__( 'Feed Error Message',  'members' ), array( $this, 'field_private_feed_error'  ), 'members-settings', 'private_site' );
+		add_settings_field( 'private_rest_api', esc_html__( 'REST API', 'members' ), array( $this, 'field_private_rest_api'    ), 'members-settings', 'private_site' );
+		add_settings_field( 'enable_private_feed', esc_html__( 'Disable Feed', 'members' ), array( $this, 'field_enable_private_feed' ), 'members-settings', 'private_site' );
+		add_settings_field( 'private_feed_error', esc_html__( 'Feed Error Message', 'members' ), array( $this, 'field_private_feed_error'  ), 'members-settings', 'private_site' );
 
 		// Misc fields.
 		add_settings_field( 'review_prompt_removed',  esc_html__( 'Disable Review Prompt',  'members' ), array( $this, 'field_remove_review_prompt'  ), 'members-settings', 'misc' );
@@ -105,6 +106,7 @@ class View_General extends View {
 		$settings['content_permissions']  = ! empty( $settings['content_permissions'] )  ? true : false;
 		$settings['private_blog']         = ! empty( $settings['private_blog'] )         ? true : false;
 		$settings['private_rest_api']     = ! empty( $settings['private_rest_api'] )     ? true : false;
+		$settings['hide_posts_rest_api']  = ! empty( $settings['hide_posts_rest_api'] )  ? true : false;
 		$settings['private_feed']         = ! empty( $settings['private_feed'] )         ? true : false;
 
 		// Kill evil scripts.
@@ -236,6 +238,21 @@ class View_General extends View {
 			<?php esc_html_e( 'Redirect all logged-out users to the login page before allowing them to view the site.', 'members' ); ?>
 		</label>
 	<?php }
+
+    /**
+     * Hide protected posts REST API field callback.
+     *
+     * @since  3.2.11
+     * @access public
+     * @return void
+     */
+    public function field_hide_protected_posts_rest_api() { ?>
+
+      <label>
+        <input type="checkbox" name="members_settings[hide_posts_rest_api]" value="true" <?php checked( members_is_hidden_protected_posts_enabled() ); ?> />
+          <?php esc_html_e( 'Block protected posts from showing in the REST API requests.', 'members' ); ?>
+      </label>
+    <?php }
 
 	/**
 	 * Enable private REST API field callback.

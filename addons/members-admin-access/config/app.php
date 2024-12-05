@@ -3,9 +3,9 @@
  * Some basic configuration for the plugin.
  *
  * @package   MembersAdminAccess
- * @author    Justin Tadlock <justintadlock@gmail.com>
- * @copyright Copyright (c) 2018, Justin Tadlock
- * @link      https://themehybrid.com/plugins/members-admin-access
+ * @author    The MemberPress Team 
+ * @copyright Copyright (c) 2018, The MemberPress Team
+ * @link      https://members-plugin.com/-admin-access
  * @license   http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  */
 

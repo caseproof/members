@@ -1,4 +1,4 @@
-# Copyright (C) 2019 Justin Tadlock
+# Copyright (C) 2019 The MemberPress Team
 # This file is distributed under the same license as the Members - Block Permissions package.
 msgid ""
 msgstr ""
@@ -91,7 +91,7 @@ msgid "Members - Block Permissions"
 msgstr ""
 
 #. Plugin URI of the plugin/theme
-msgid "https://themehybrid.com/plugins/members-block-permissions"
+msgid "https://members-plugin.com/-block-permissions"
 msgstr ""
 
 #. Description of the plugin/theme
@@ -101,7 +101,7 @@ msgid ""
 msgstr ""
 
 #. Author of the plugin/theme
-msgid "Justin Tadlock"
+msgid "The MemberPress Team"
 msgstr ""
 
 #. Author URI of the plugin/theme

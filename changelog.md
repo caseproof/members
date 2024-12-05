@@ -1,5 +1,30 @@
 # Change Log
 
+## 3.2.14 - 2024-11-30
+### Fixed
+- Error in REST API calls when posts results not an array
+
+## 3.2.12 - 2024-11-29
+### Fixed
+- Cleaned up prior author name and links
+- Cleaned up broken or incorrect links
+- Removed some unnecessary files
+- Fixed incorrect gettext calls
+- Removed unneeded load_plugin_textdomain calls
+- Updated POT translation file
+
+## 3.2.11 - 2024-11-29
+### Fixed
+- Translation warnings after WP 6.7
+- Add option to hide protected content from REST API searches
+- Add support for Loco Translate plugin (via new loco.xml file)
+
+## 3.2.10 - 2024-09-09
+### Fixed
+- Capability checks on AJAX calls
+- PHP warning for $wp_embed
+- Requiring PHP 7.4 min now
+
 ## 3.2.9 - 2023-11-28
 ### Fixed
 - Fix PHP 8.1 deprecation notice on ACF integration (props @DSGND)

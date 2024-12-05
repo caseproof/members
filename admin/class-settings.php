@@ -4,9 +4,9 @@
  *
  * @package    Members
  * @subpackage Admin
- * @author     Justin Tadlock <justintadlock@gmail.com>
- * @copyright  Copyright (c) 2009 - 2018, Justin Tadlock
- * @link       https://themehybrid.com/plugins/members
+ * @author     The MemberPress Team 
+ * @copyright  Copyright (c) 2009 - 2018, The MemberPress Team
+ * @link       https://members-plugin.com/
  * @license    http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  */
 
@@ -153,7 +153,11 @@ final class Settings_Page {
 		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( $_POST['nonce'], 'mbrs_toggle_addon' ) ) {
 			die();
 		}
-
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array(
+				'msg' => esc_html__( 'You are not allowed to make these changes.', 'members' )
+			) );
+		}
 		$addon = ! empty( $_POST['addon'] ) ? sanitize_text_field( $_POST['addon'] ) : false;
 
 		if ( false === $addon ) {

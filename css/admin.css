@@ -233,7 +233,12 @@
 .members-addons {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
-	padding-right: 9px;
+	grid-row-gap: 20px;
+	grid-column-gap: 20px;
+}
+
+.members-addons .plugin-card {
+	margin: 0;
 }
 
 .members-addons .plugin-card-top {
@@ -438,6 +443,53 @@
 	margin-left: 84px;
 }
 
+.members-addons .plugin-card .name,
+.members-addons .plugin-card .desc p {
+	margin-right: 0;
+}
+
+@media screen and (max-width: 1100px) {
+	.members-addons {
+		display: flex;
+		flex-direction: column;
+	}
+}
+
+@media screen and (max-width: 600px) {
+	.members_page_members-settings .members-svg-link {
+		width: 64px;
+		height: 64px;
+	}
+
+	.members_page_members-settings .members-svg-link svg {
+		position: absolute;
+		top: 14px;
+		left: 15px;
+		max-width: 30px;
+		max-height: 30px;
+	}
+
+	.members_page_members-settings .plugin-card-members-edd-integration .members-svg-link svg,
+	.members_page_members-settings .plugin-card-members-acf-integration .members-svg-link svg,
+	.members_page_members-settings .plugin-card-members-givewp-integration .members-svg-link svg,
+	.members_page_members-settings .plugin-card-members-meta-box-integration .members-svg-link svg,
+	.members_page_members-settings .plugin-card-members-woocommerce-integration .members-svg-link svg {
+		top: 10px;
+		left: 8px;
+		max-width: 40px;
+		max-height: 40px;
+	}
+
+	.members_page_members-settings .plugin-card-members-block-permissions .members-svg-link svg,
+	.members_page_members-settings .plugin-card-members-role-hierarchy .members-svg-link svg {
+		left: 14px
+	}
+
+	.members-addons .plugin-card .desc>p, .members-addons .plugin-card .name {
+		margin-left: 84px;
+	}
+}
+
 .memberpress-about .welcome-panel-column-container {
 	display: flex;
 }
@@ -449,7 +501,7 @@
 
 .members-about-addons {
 	display: grid;
-	grid-template-columns: repeat(3, 1fr);
+	grid-template-columns: repeat(3, minmax(0, 1fr));
 	grid-column-gap: 20px;
 }
 
@@ -466,6 +518,59 @@
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
+}
+
+@media only screen and (max-width: 1099px) {
+	.members-about-addons {
+		grid-template-columns: 1fr;
+		grid-row-gap: 20px;
+	}
+}
+
+@media screen and (min-width: 1100px) and (max-width: 1600px) {
+	.members-about-addons .members-plugin-card {
+		float: none;
+		width: auto;
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+	}
+
+	.members-plugin-card.plugin-card .desc {
+		margin-left: 0;
+		margin-top: 50px;
+	}
+
+	.members-plugin-card.plugin-card .desc p {
+		margin-left: 0;
+		margin-right: 0;
+	}
+
+	.members-plugin-card.plugin-card .plugin-card-bottom .column-status {
+		float: none;
+	}
+
+	.members-plugin-card.plugin-card .plugin-card-bottom .column-updated {
+		float: none;
+		width: auto;
+	}
+}
+
+@media screen and (max-width: 1200px)  {
+	.welcome-panel .welcome-panel-column-container {
+		flex-direction: column-reverse;
+		gap: 0;
+		padding: 0;
+	}
+
+	.memberpress-about .mp-logo {
+		margin: 0 0 20px;
+	}
+}
+
+.members-plugin-card.plugin-card .desc p {
+	margin-left: 0;
+	margin-right: 0;
 }
 
 /* ====== Manage Roles Screen. ====== */

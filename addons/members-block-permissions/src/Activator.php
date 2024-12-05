@@ -5,9 +5,9 @@
  * Runs the plugin activation routine.
  *
  * @package   MembersBlockPermissions
- * @author    Justin Tadlock <justintadlock@gmail.com>
- * @copyright 2019, Justin Tadlock
- * @link      https://themehybrid.com/plugins/members-block-permissions
+ * @author    The MemberPress Team 
+ * @copyright 2019, The MemberPress Team
+ * @link      https://members-plugin.com/-block-permissions
  * @license   https://www.gnu.org/licenses/gpl-2.0.html GPL-2.0-or-later
  */
 

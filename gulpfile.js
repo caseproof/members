@@ -12,8 +12,8 @@ var translationFile = 'members.pot'; // Name of the transalation file.
 var translationDestination = './lang'; // Where to save the translation files.
 var packageName = 'members'; // Package name.
 var bugReport = 'https://memberpress.com'; // Where can users report bugs.
-var lastTranslator = 'Caseproof LLC <support@memberpress.com>'; // Last translator Email ID.
-var team = 'Caseproof LLC <support@memberpress.com>'; // Team's Email ID.
+var lastTranslator = 'The MemberPress Team <outreach@memberpress.com>'; // Last translator Email ID.
+var team = 'The MemberPress Team <outreach@memberpress.com>'; // Team's Email ID.
 
 // Files to watch
 var stylesWatchFiles = './css/*.css'; // Path to all Sass partials.

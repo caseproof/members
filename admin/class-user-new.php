@@ -4,9 +4,9 @@
  *
  * @package    Members
  * @subpackage Admin
- * @author     Justin Tadlock <justintadlock@gmail.com>
- * @copyright  Copyright (c) 2009 - 2018, Justin Tadlock
- * @link       https://themehybrid.com/plugins/members
+ * @author     The MemberPress Team 
+ * @copyright  Copyright (c) 2009 - 2018, The MemberPress Team
+ * @link       https://members-plugin.com/
  * @license    http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  */
 
@@ -50,7 +50,6 @@ final class User_New {
 		// If multiple roles per user is not enabled, bail.
 		//
 		// @since 2.0.1 Added a check to not run on multisite.
-		// @link https://github.com/justintadlock/members/issues/153
 		if ( ! members_multiple_user_roles_enabled() || is_multisite() )
 			return;
 

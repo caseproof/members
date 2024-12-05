@@ -309,3 +309,34 @@ function members_convert_old_post_meta( $post_id ) {
 	// Return false if we get to this point.
 	return false;
 }
+
+/**
+ * Filters protected posts from being returned in the REST API.
+ *
+ * @since 3.2.11
+ * @access public
+ * @param array     $posts  The array of posts.
+ * @param WP_Query  $query  The WP_Query object.
+ * @return array
+ */
+function members_filter_protected_posts_for_rest( $posts, $query ) {
+    // If not content permissions enabled, or it is enabled but not protected, bail.
+    if ( ! members_content_permissions_enabled() && ! members_is_hidden_protected_posts_enabled() ) {
+        return $posts;
+    }
+
+    // Check if the current request is a REST API request and $posts is valid array
+    if ( defined( 'REST_REQUEST' ) && REST_REQUEST && is_array($posts) ) {
+        // Loop through the posts
+        foreach ( $posts as $key => $post ) {
+            if ( ! members_can_current_user_view_post( $post->ID ) ) {
+                // Remove the protected post from the results
+                unset( $posts[$key] );
+            }
+        }
+        // Re-index the array to prevent issues with keys
+        $posts = array_values( $posts );
+    }
+
+    return $posts;
+}

@@ -3,16 +3,16 @@
  * Uninstall routine.
  *
  * @package   MembersCategoryAndTagCaps
- * @author    Justin Tadlock <justintadlock@gmail.com>
- * @copyright 2019, Justin Tadlock
- * @link      https://themehybrid.com/plugins/members-category-and-tag-caps
+ * @author    The MemberPress Team 
+ * @copyright 2019, The MemberPress Team
+ * @link      https://members-plugin.com/-category-and-tag-caps
  * @license   https://www.gnu.org/licenses/gpl-2.0.html GPL-2.0-or-later
  */
 
 // Make sure we're actually uninstalling the plugin.
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	wp_die( sprintf(
-		__( '%s should only be called when uninstalling the plugin.', 'members-category-and-tag-caps' ),
+		__( '%s should only be called when uninstalling the plugin.', 'members' ),
 		'<code>' . __FILE__ . '</code>'
 	) );
 	exit;

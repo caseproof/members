@@ -93,7 +93,7 @@ class ReviewPrompt {
 			<div id="members_review_no" style="display: none;">
 				<p><?php _e( 'We\'re sorry to hear you aren\'t enjoying Members. We would love a chance to improve. Could you take a minute and let us know what we can do better?', 'members' ); ?></p>
 				<p>
-					<a style="display: inline-block; margin-right: 10px;" href="https://memberpress.com/plugins/members/plugin-feedback/?utm_source=members&utm_medium=link&utm_campaign=in_plugin&utm_content=request_review" onclick="delayReviewPrompt(event, 'remove', true, true)" target="_blank"><?php esc_html_e( 'Give Feedback', 'members' ); ?></a>
+					<a style="display: inline-block; margin-right: 10px;" href="https://wordpress.org/support/plugin/members/" onclick="delayReviewPrompt(event, 'remove', true, true)" target="_blank"><?php esc_html_e( 'Give Feedback', 'members' ); ?></a>
 					<a href="#" onclick="delayReviewPrompt(event, 'remove', true, false)"><?php esc_html_e( 'No thanks', 'members' ); ?></a>
 				</p>
 			</div>

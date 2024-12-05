@@ -3,9 +3,9 @@
  * Role Functions.
  *
  * @package   MembersIntegrationWooCommerce
- * @author    Justin Tadlock <justintadlock@gmail.com>
- * @copyright 2019, Justin Tadlock
- * @link      https://themehybrid.com/plugins/members-woocommerce-integration
+ * @author    The MemberPress Team 
+ * @copyright 2019, The MemberPress Team
+ * @link      https://members-plugin.com/-woocommerce-integration
  * @license   https://www.gnu.org/licenses/gpl-2.0.html GPL-2.0-or-later
  */
 
