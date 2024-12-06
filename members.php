@@ -109,7 +109,7 @@ final class Members_Plugin {
 	private function __construct() {
 		require_once('vendor-prefixed/autoload.php');
 
-		if (class_exists('\Members\Caseproof\GrowthTools\App')) {
+		if (version_compare(phpversion(), '7.4', '>=') && class_exists('\Members\Caseproof\GrowthTools\App')) {
 			$config = new \Members\Caseproof\GrowthTools\Config([
 				'parentMenuSlug' => 'members',
 				'instanceId' => 'members',
