@@ -106,7 +106,18 @@ final class Members_Plugin {
 	 * @access private
 	 * @return void
 	 */
-	private function __construct() {}
+	private function __construct() {
+		require_once(__DIR__ . '/vendor-prefixed/autoload.php');
+
+		if (version_compare(phpversion(), '7.4', '>=') && class_exists('\Members\Caseproof\GrowthTools\App')) {
+			$config = new \Members\Caseproof\GrowthTools\Config([
+				'parentMenuSlug' => 'members',
+				'instanceId' => 'members',
+				'menuSlug' => 'members-growth-tools',
+			]);
+			new \Members\Caseproof\GrowthTools\App($config);
+		}
+	}
 
 	/**
 	 * Magic method to output a string if trying to use the object as a string.

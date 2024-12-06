@@ -1,0 +1,145 @@
+<?php if (!defined('ABSPATH')) {
+    die('You are not allowed to call this page directly.');
+} ?>
+<script>
+    window.CPGrowthToolsHelpers = {
+        nonce: '<?php echo wp_create_nonce( "caseproof_growth_tools_install_addon" ); ?>',
+        plugins: <?php echo json_encode($pluginsStatus); ?>,
+        loading_plugins: [],
+        labels:  <?php echo json_encode($labels); ?>,
+        ajax_url:  '<?php echo esc_url_raw(admin_url( 'admin-ajax.php' )); ?>',
+        buttonTitle: (status, labels) => {
+            switch (status) {
+                case 'notinstalled':
+                    return labels['install'];
+                case 'installed':
+                    return labels['active'];
+                case 'activated':
+                    return labels['deactive'];
+            }
+        },
+        pluginAction: (currentStatus, plugin, ajax_url, nonce, plugins, loadingPlugins) => {
+            loadingPlugins[plugin] = true;
+            switch (currentStatus) {
+                case 'notinstalled':
+                    var data = new FormData();
+                    data.append( "type", 'install' );
+                    data.append( "plugin", plugin );
+                    data.append( "nonce", nonce );
+                    fetch(ajax_url + '?action=<?php echo esc_attr($ajaxAction) ?>' , {
+                        method: "POST",
+                        credentials: 'same-origin',
+                        body: data
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.hasOwnProperty('plugin')) {
+                                plugins[plugin] = 'installed';
+                            }
+                            loadingPlugins[plugin] = false;
+                        });
+                    break;
+                case 'installed':
+                    var data = new FormData();
+                    data.append( "type", 'activate' );
+                    data.append( "plugin", plugin );
+                    data.append( "nonce", nonce );
+                    fetch(ajax_url + '?action=<?php echo esc_attr($ajaxAction) ?>', {
+                        method: "POST",
+                        credentials: 'same-origin',
+                        body: data
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success == true) {
+                                plugins[plugin] = 'activated';
+                            }
+                            loadingPlugins[plugin] = false;
+                        });
+                    break;
+                case 'activated':
+
+                    var data = new FormData();
+                    data.append( "type", 'deactivate' );
+                    data.append( "plugin", plugin );
+                    data.append( "nonce", nonce );
+                    fetch(ajax_url + '?action=<?php echo esc_attr($ajaxAction) ?>', {
+                        method: "POST",
+                        credentials: 'same-origin',
+                        body: data
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success == true) {
+                                plugins[plugin] = 'installed';
+                            }
+                            loadingPlugins[plugin] = false;
+                        });
+                    break;
+            }
+        }
+    };
+</script>
+<div id="caseproof-growth-tools" class="wrap" x-data="window.CPGrowthToolsHelpers">
+    <?php echo $headerHTML(); ?>
+    <?php if (empty($growthToolsData)) { ?>
+        <p class="cpgt-error"><?php esc_html_e('An error has occurred while retrieving the list of Growth Tools. Please try again later.', 'members'); ?></p>
+    <?php } else { ?>
+        <div id="cpgt-growth-tools-grid">
+            <div
+                class="cpgt-grid cpgt-grid-cols-1 lg:cpgt-grid-cols-2 xl:cpgt-grid-cols-3 cpgt-gap-6 cpgt-mt-10 ">
+                <?php
+                foreach ($growthToolsData['plugins'] as $plugin) {
+                    ?>
+                    <div
+                        class="cpgt-text-main-text cpgt-rounded-lg cpgt-w-full cpgt-box-border  cpgt-bg-white cpgt-border-main-border-color cpgt-border cpgt-border-solid cpgt-py-10 cpgt-px-8 cpgt-flex cpgt-justify-between cpgt-flex-col">
+                        <div class="cspf-growth-tools-plugin-recommendations-block cpgt-flex cpgt-flex-col">
+                            <div class="cpgt-flex cpgt-items-center cpgt-flex-col">
+                                <div><img src="<?php echo esc_url($baseLogoUrl . '/' . $plugin['img']); ?>"
+                                        class="cpgt-w-16"></div>
+                                <div class="cpgt-text-center cpgt-text-neutral-80">
+                                    <h3
+                                        class="cpgt-text-main-text cpgt-text-xl">
+                                        <?php echo esc_html($plugin['title']); ?>
+                                    </h3>
+                                    <p class="cpgt-text-sm"><?php esc_html_e($plugin['description'], 'cspf-growth-tools'); ?></p></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="cpgt-flex cpgt-flex-col cpgt-items-center">
+                                <div class="cpgt-flex cpgt-flex-col cpgt-items-center">
+                                    <div class="cpgt-mb-1.5"><strong><?php esc_html_e('Status', 'members'); ?>:</strong>
+                                        <span x-text="labels[plugins['<?php echo esc_attr($plugin['plugin_file']); ?>']]"></span>
+                                    </div>
+                                    <img src="<?php echo esc_url(admin_url('images/loading.gif')); ?>" alt="<?php esc_attr_e('Loading...', 'members'); ?>" x-show="loading_plugins['<?php echo esc_attr($plugin['plugin_file']); ?>']" class="mepr-loading-gif" />
+                                    <?php if (!empty($plugin['website']) && $pluginsStatus[$plugin['plugin_file']] === 'notinstalled') { ?>
+                                        <a
+                                            href="<?php echo esc_url_raw($plugin['website']); ?>"
+                                            class="<?php echo esc_attr(implode(' ', $buttonCSS)); ?>">
+                                            <span><?php esc_html_e('Get It', 'members'); ?></span>
+                                        </a>
+                                    <?php } else { ?>
+                                        <a
+                                            x-show="plugins['<?php echo esc_attr($plugin['plugin_file']); ?>'] === 'activated'"
+                                            href="<?php echo esc_url_raw($plugin['settings_url']); ?>"
+                                            class="<?php echo esc_attr(implode(' ', $buttonCSS)); ?>">
+                                            <span><?php esc_html_e('Open', 'members'); ?></span>
+                                        </a>
+                                        <button
+                                            x-show="!loading_plugins['<?php echo esc_attr($plugin['plugin_file']); ?>'] && plugins['<?php echo esc_attr($plugin['plugin_file']); ?>'] !== 'activated'"
+                                            @click="pluginAction(plugins['<?php echo esc_attr($plugin['plugin_file']); ?>'], '<?php echo esc_attr($plugin['plugin_file']); ?>', ajax_url, nonce, plugins, loading_plugins)"
+                                            class="<?php echo esc_attr(implode(' ', $buttonCSS)); ?>">
+                                            <span x-text="buttonTitle(plugins['<?php echo esc_attr($plugin['plugin_file']); ?>'], labels)"></span>
+                                        </button>
+                                    <?php } ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <?php
+                    }
+                ?>
+            </div>
+        <?php } ?>
+    </div>
+</div>
