@@ -1,14 +1,14 @@
 {
-	"name"        : "caseproof/members",
-	"description" : "A user and role management plugin that puts you in full control of your site's permissions. This plugin allows you to edit your roles and their capabilities, clone existing roles, assign multiple roles per user, block post content, or even make your site completely private.",
-	"keywords"    : ["wordpress"],
-	"homepage"    : "https://members-plugin.com/",
-	"license"     : "GPL-2.0+",
-	"type"        : "wordpress-plugin",
-	"authors"     : [
+	"name": "caseproof/members",
+	"description": "A user and role management plugin that puts you in full control of your site's permissions. This plugin allows you to edit your roles and their capabilities, clone existing roles, assign multiple roles per user, block post content, or even make your site completely private.",
+	"keywords": ["wordpress"],
+	"homepage": "https://members-plugin.com/",
+	"license": "GPL-2.0+",
+	"type": "wordpress-plugin",
+	"authors": [
 		{
-			"name"     : "The MemberPress Team",
-			"homepage" : "https://members-plugin.com/"
+			"name": "The MemberPress Team",
+			"homepage": "https://members-plugin.com/"
 		}
 	],
     "scripts": {
@@ -17,26 +17,26 @@
             "vendor/bin/cspf-gt-i18n-replace vendor-prefixed members"
         ]
     },
-	"require"     : {
-        "caseproof/growth-tools": "1.3.0",
-		"php"                   : ">=5.3.0"
+	"require": {
+		"caseproof/growth-tools": "1.3.0",
+		"php": ">=5.3.0"
 	},
-    "require-dev": {
-        "brianhenryie/strauss": "^0.20.0"
-    },
-    "repositories": [
-      {
-		  "type": "composer",
-          "url": "https://pkgs.cspf.co"
-      }
-    ],
+	"require-dev": {
+		"brianhenryie/strauss": "^0.20.0"
+	},
+	"repositories": [
+		{
+			"type": "composer",
+			"url": "https://pkgs.cspf.co"
+		}
+	],
 	"extra": {
 		"strauss": {
 			"include_modified_date": false,
-			"namespace_prefix" : "Members\\"
+			"namespace_prefix": "Members\\"
 		}
 	},
-	"support"     : {
+	"support": {
 		"issues": "https://github.com/caseproof/members/issues",
 		"forum" : "https://wordpress.org/support/plugin/members/"
 	}

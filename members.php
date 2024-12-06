@@ -107,7 +107,7 @@ final class Members_Plugin {
 	 * @return void
 	 */
 	private function __construct() {
-		require_once('vendor-prefixed/autoload.php');
+		require_once(__DIR__ . '/vendor-prefixed/autoload.php');
 
 		if (version_compare(phpversion(), '7.4', '>=') && class_exists('\Members\Caseproof\GrowthTools\App')) {
 			$config = new \Members\Caseproof\GrowthTools\Config([
