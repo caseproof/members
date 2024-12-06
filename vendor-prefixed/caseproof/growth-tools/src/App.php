@@ -1,10 +1,4 @@
 <?php
-/**
- * @license GPL-3.0
- *
- * Modified by Justin Tadlock on 05-December-2023 using Strauss.
- * @see https://github.com/BrianHenryIE/strauss
- */
 
 namespace Members\Caseproof\GrowthTools;
 
@@ -51,29 +45,23 @@ class App
     public function addMenu()
     {
         add_submenu_page(
-            $this->config->parentMenuSlug,
+            $this->config->parentMenuSlug ?? 'tools.php',
             __('Growth Tools', 'members'),
             __('Growth Tools', 'members'),
             'install_plugins',
-            $this->config->menuSlug,
+            $this->config->menuSlug ?? 'growth-tools',
             [$this, 'renderPage']
         );
     }
 
     /**
-     * Getter for config
+     * Add inline CSS.
      *
-     * @return array
+     * @param string $inlineCSS CSS styles as string.
      */
-    protected function getConfig()
+    protected function addInlineCSS(string $inlineCSS)
     {
-        if (false === ($config = get_transient('caseproof_growth_tools_configuration_data'))) {
-            $response = wp_remote_get($this->config->configFileUrl);
-            $config = json_decode($response['body'], true);
-            set_transient('caseproof_growth_tools_configuration_data', $config, 24 * HOUR_IN_SECONDS);
-        }
-
-        return $config;
+        wp_add_inline_style('caseproof_grtl-growth-tools-style', $inlineCSS);
     }
 
     /**
@@ -85,25 +73,10 @@ class App
     {
         wp_enqueue_script('caseproof_grtl-growth-tools-script', $this->config->assetsUrl . '/main.min.js', []);
         wp_enqueue_style('caseproof_grtl-growth-tools-style', $this->config->assetsUrl . '/main.min.css', []);
-        $growthToolsData = $this->getConfig();
-        $active  = get_option('active_plugins', []);
-        $pluginsStatus = [];
-
-        foreach ($growthToolsData['plugins'] as $k => $plugin) {
-            if (!in_array($this->config->instanceId, $plugin['target'], true)) {
-                unset($growthToolsData['plugins'][$k]);
-                continue;
-            }
-
-            $pluginsStatus[$plugin['main']] = 'notinstalled';
-            if (is_file(WP_PLUGIN_DIR . '/' . $plugin['main'])) {
-                $pluginsStatus[$plugin['main']] = 'installed';
-
-                if (in_array($plugin['main'], $active)) {
-                    $pluginsStatus[$plugin['main']] = 'activated';
-                }
-            }
-        }
+        $inlineCSS = $this->config->customInlineCSS;
+        $this->addInlineCSS(is_callable($inlineCSS) ? $inlineCSS() : $inlineCSS);
+        $growthToolsData = $this->config->getPluginsConfig();
+        $pluginsStatus = $this->config->getPluginsStatus();
 
         $labels = [
             'notinstalled' => esc_html(__('Not Installed', 'members')),
@@ -115,6 +88,9 @@ class App
         ];
         $ajaxAction = 'caseproof_growth_tool_plugin_action_' . $this->config->instanceId;
         $baseLogoUrl = $this->config->imageBaseUrl;
+        $buttonCSS = $this->config->buttonCSSClasses;
+        $headerHTML = $this->config->headerHtmlCallback;
+
         require "views/list.phtml";
     }
 
@@ -123,22 +99,64 @@ class App
      */
     public function pluginAction()
     {
-        $growth_tools_data = $this->getConfig();
+        $growth_tools_data = $this->config->getPluginsConfig();
+        if (empty($growth_tools_data)) {
+            return;
+        }
+
         $type = sanitize_text_field($_REQUEST['type']);
         $pluginMain = sanitize_text_field($_REQUEST['plugin']);
 
-        if ($type == 'install') {
+        if ($type === 'install') {
             foreach ($growth_tools_data['plugins'] as $plugin) {
-                if ($plugin['main'] == $pluginMain) {
-                    AddonHelper::installAddon($plugin['download_url']);
+                if ($plugin['main']['free'] === $pluginMain) {
+                    $this->installAddon($plugin['download_url']);
                 }
             }
-        } elseif ($type == 'activate') {
-            AddonHelper::activateAddon($pluginMain);
-        } elseif ($type == 'deactivate') {
-            AddonHelper::deactivateAddon($pluginMain);
+        } elseif ($type === 'activate') {
+            $this->activateAddon($pluginMain);
+        } elseif ($type === 'deactivate') {
+            $this->deactivateAddon($pluginMain);
         }
+    }
 
-        exit;
+    /**
+     * Install plugin.
+     *
+     * @param string $link Download link.
+     */
+    protected function installAddon(string $link)
+    {
+        AddonHelper::installAddon($link);
+    }
+
+    /**
+     * Activate plugin.
+     *
+     * @param string $file Name of the plugin.
+     */
+    protected function activateAddon(string $file)
+    {
+        AddonHelper::activateAddon($file);
+    }
+
+    /**
+     * Deactivate plugin.
+     *
+     * @param string $file Name of the plugin.
+     */
+    protected function deactivateAddon(string $file)
+    {
+        AddonHelper::deactivateAddon($file);
+    }
+
+  /**
+   * Render header contents.
+   *
+   * @return string
+   */
+    public static function getHeaderHtml(): string
+    {
+        return '<h1 class="wp-heading-inline">' . esc_html__('Growth Tools', 'members') . '</h1>';
     }
 }

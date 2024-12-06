@@ -1,10 +1,4 @@
 <?php
-/**
- * @license GPL-3.0
- *
- * Modified by Justin Tadlock on 05-December-2023 using Strauss.
- * @see https://github.com/BrianHenryIE/strauss
- */
 
 namespace Members\Caseproof\GrowthTools\Helper;
 
@@ -128,7 +122,7 @@ class AddonHelper
             wp_cache_flush();
             if ($installer->plugin_info()) {
                 $plugin_basename = $installer->plugin_info();
-                echo wp_json_encode([ 'plugin' => $plugin_basename ]);
+                echo wp_json_encode(['plugin' => $plugin_basename]);
                 wp_die();
             }
         }
