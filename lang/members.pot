@@ -2,14 +2,14 @@
 # This file is distributed under the same license as the Members plugin.
 msgid ""
 msgstr ""
-"Project-Id-Version: Members 3.2.14\n"
+"Project-Id-Version: Members 3.2.15\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/members\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2024-12-10T17:04:36+00:00\n"
+"POT-Creation-Date: 2024-12-10T17:10:06+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.9.0\n"
 "X-Domain: members\n"
@@ -133,7 +133,7 @@ msgid "Update Settings"
 msgstr ""
 
 #: addons/members-block-permissions/src/Editor.php:87
-#: members.php:462
+#: members.php:455
 msgid "Permissions"
 msgstr ""
 
@@ -213,7 +213,7 @@ msgstr ""
 
 #: addons/members-block-permissions/src/Editor.php:131
 #: addons/members-block-permissions/src/Editor.php:132
-#: members.php:463
+#: members.php:456
 msgid "To protect this block by paid membership or centrally with a content protection rule, add MemberPress."
 msgstr ""
 
@@ -1494,8 +1494,8 @@ msgstr ""
 #: admin/class-manage-users.php:161
 #: admin/class-manage-users.php:236
 #: admin/class-role-edit.php:92
-#: members.php:141
-#: members.php:152
+#: members.php:134
+#: members.php:145
 msgid "Whoah, partner!"
 msgstr ""
 
@@ -2683,11 +2683,11 @@ msgid_plural "WordPress %s"
 msgstr[0] ""
 msgstr[1] ""
 
-#: members.php:163
+#: members.php:156
 msgid "Method does not exist."
 msgstr ""
 
-#: members.php:347
+#: members.php:340
 msgid "Members requires PHP version %1$s. You are running version %2$s. Please upgrade and try again."
 msgstr ""
 
