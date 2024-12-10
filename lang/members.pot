@@ -2,14 +2,14 @@
 # This file is distributed under the same license as the Members plugin.
 msgid ""
 msgstr ""
-"Project-Id-Version: Members 3.2.12\n"
+"Project-Id-Version: Members 3.2.14\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/members\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2024-11-30T01:27:04+00:00\n"
+"POT-Creation-Date: 2024-12-10T17:04:36+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.9.0\n"
 "X-Domain: members\n"
@@ -133,7 +133,7 @@ msgid "Update Settings"
 msgstr ""
 
 #: addons/members-block-permissions/src/Editor.php:87
-#: members.php:451
+#: members.php:462
 msgid "Permissions"
 msgstr ""
 
@@ -213,7 +213,7 @@ msgstr ""
 
 #: addons/members-block-permissions/src/Editor.php:131
 #: addons/members-block-permissions/src/Editor.php:132
-#: members.php:452
+#: members.php:463
 msgid "To protect this block by paid membership or centrally with a content protection rule, add MemberPress."
 msgstr ""
 
@@ -1494,8 +1494,8 @@ msgstr ""
 #: admin/class-manage-users.php:161
 #: admin/class-manage-users.php:236
 #: admin/class-role-edit.php:92
-#: members.php:130
 #: members.php:141
+#: members.php:152
 msgid "Whoah, partner!"
 msgstr ""
 
@@ -1914,6 +1914,7 @@ msgstr ""
 
 #: admin/class-settings.php:176
 #: admin/views/class-view-addons.php:159
+#: vendor-prefixed/caseproof/growth-tools/src/App.php:84
 msgid "Active"
 msgstr ""
 
@@ -1924,6 +1925,7 @@ msgstr ""
 #: admin/class-settings.php:188
 #: admin/views/class-view-addons.php:153
 #: admin/views/class-view-addons.php:159
+#: vendor-prefixed/caseproof/growth-tools/src/App.php:85
 msgid "Activate"
 msgstr ""
 
@@ -2659,14 +2661,6 @@ msgstr ""
 msgid "Manage Post Tags"
 msgstr ""
 
-#: inc/functions-options.php:144
-msgid "Sorry, but you do not have permission to view this content."
-msgstr ""
-
-#: inc/functions-options.php:145
-msgid "You must be logged into the site to view this content."
-msgstr ""
-
 #: inc/functions-private-site.php:172
 msgid "You are not currently logged in."
 msgstr ""
@@ -2689,10 +2683,56 @@ msgid_plural "WordPress %s"
 msgstr[0] ""
 msgstr[1] ""
 
-#: members.php:152
+#: members.php:163
 msgid "Method does not exist."
 msgstr ""
 
-#: members.php:336
+#: members.php:347
 msgid "Members requires PHP version %1$s. You are running version %2$s. Please upgrade and try again."
+msgstr ""
+
+#: vendor-prefixed/caseproof/growth-tools/src/App.php:49
+#: vendor-prefixed/caseproof/growth-tools/src/App.php:50
+#: vendor-prefixed/caseproof/growth-tools/src/App.php:160
+msgid "Growth Tools"
+msgstr ""
+
+#: vendor-prefixed/caseproof/growth-tools/src/App.php:82
+msgid "Not Installed"
+msgstr ""
+
+#: vendor-prefixed/caseproof/growth-tools/src/App.php:83
+msgid "Installed"
+msgstr ""
+
+#: vendor-prefixed/caseproof/growth-tools/src/App.php:86
+msgid "Deactivate"
+msgstr ""
+
+#: vendor-prefixed/caseproof/growth-tools/src/App.php:87
+msgid "Install"
+msgstr ""
+
+#: vendor-prefixed/caseproof/growth-tools/src/Helper/AddonHelper.php:19
+msgid "Could not activate addon. Please check user permissions."
+msgstr ""
+
+#: vendor-prefixed/caseproof/growth-tools/src/Helper/AddonHelper.php:28
+msgid "Addon activated."
+msgstr ""
+
+#: vendor-prefixed/caseproof/growth-tools/src/Helper/AddonHelper.php:33
+msgid "Could not activate addon. Please activate from the Plugins page."
+msgstr ""
+
+#: vendor-prefixed/caseproof/growth-tools/src/Helper/AddonHelper.php:38
+msgid "Could not activate addon. Please refresh page and try again."
+msgstr ""
+
+#: vendor-prefixed/caseproof/growth-tools/src/Helper/AddonHelper.php:59
+msgid "Plugin deactivated."
+msgstr ""
+
+#: vendor-prefixed/caseproof/growth-tools/src/Helper/AddonHelper.php:61
+msgid "Could not deactivate the addon. Please deactivate from the Plugins page."
 msgstr ""

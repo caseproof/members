@@ -1,5 +1,12 @@
 # Change Log
 
+## 3.2.15 - 2024-12-10
+### Fixed
+- Translation errors
+- Fixed styles and formatting on add-ons and about pages
+### Added
+- Growth Tools menu item
+
 ## 3.2.14 - 2024-11-30
 ### Fixed
 - Error in REST API calls when posts results not an array
