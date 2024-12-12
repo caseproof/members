@@ -1,4 +1,7 @@
 # Change Log
+## 3.2.16 - 2024-12-12
+### Fixed
+- Protected posts being forced-hidden from API search even if setting was off
 
 ## 3.2.15 - 2024-12-10
 ### Fixed
