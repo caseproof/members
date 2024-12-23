@@ -30,7 +30,7 @@
 }
 
 .members-upgrade-header a {
-  color: #F59431;
+  	color: #F59431;
 }
 
 .memberpress-paid-memberships {
@@ -870,7 +870,7 @@
 
 .members-roles-select .column-grant input,
 .members-roles-select .column-deny input {
-    margin-left: 0;
+    	margin-left: 0;
 }
 
 /* Cap grant/deny button. */
