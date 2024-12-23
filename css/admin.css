@@ -868,9 +868,21 @@
 	clear:      none !important;
 }
 
+.members-roles-select thead .column-grant input,
+.members-roles-select thead .column-deny input,
+.members-roles-select thead .column-grant input,
+.members-roles-select thead .column-deny input {
+    	padding: 9px !important;
+}
+
 .members-roles-select .column-grant input,
 .members-roles-select .column-deny input {
-    	margin-left: 0;
+    	margin: 0 5px 0 0;
+	vertical-align: middle;
+}
+
+.members-roles-select tbody tr:nth-child(even) {
+    	background: #f2f2f2;
 }
 
 /* Cap grant/deny button. */
