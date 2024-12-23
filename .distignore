@@ -14,5 +14,6 @@ phpunit.xml.dist
 *README
 *readme.md
 /script
+*composer.lock
 *composer.json
 *webpack.config.js
