@@ -18,13 +18,13 @@
 			<tr>
 				<th class="column-cap"><?php esc_html_e( 'Capability', 'members' ); ?></th>
 				<th class="column-grant">
-                    <input type="checkbox" id="check-all-grant-{{ data.id }}" class="check-all-grant check-all-input" />
-                    <label for="check-all-grant-{{ data.id }}"><?php esc_html_e( 'Grant All', 'members' ); ?></label>
-                </th>
+                    			<input type="checkbox" id="check-all-grant-{{ data.id }}" class="check-all-grant check-all-input" />
+                    			<label for="check-all-grant-{{ data.id }}"><?php esc_html_e( 'Grant All', 'members' ); ?></label>
+                		</th>
 				<th class="column-deny">
-                    <input type="checkbox" id="check-all-deny-{{ data.id }}" class="check-all-deny check-all-input" />
-                    <label for="check-all-deny-{{ data.id }}"><?php esc_html_e( 'Deny All', 'members' ); ?></label>
-                </th>
+				    	<input type="checkbox" id="check-all-deny-{{ data.id }}" class="check-all-deny check-all-input" />
+				    	<label for="check-all-deny-{{ data.id }}"><?php esc_html_e( 'Deny All', 'members' ); ?></label>
+                		</th>
 			</tr>
 		</thead>
 
@@ -32,13 +32,13 @@
 			<tr>
 				<th class="column-cap"><?php esc_html_e( 'Capability', 'members' ); ?></th>
 				<th class="column-grant">
-                    <input type="checkbox" id="check-all-grant-{{ data.id }}" class="check-all-grant check-all-input" />
-                    <label for="check-all-grant-{{ data.id }}"><?php esc_html_e( 'Grant All', 'members' ); ?></label>
-                </th>
+                    			<input type="checkbox" id="check-all-grant-{{ data.id }}" class="check-all-grant check-all-input" />
+                    			<label for="check-all-grant-{{ data.id }}"><?php esc_html_e( 'Grant All', 'members' ); ?></label>
+                		</th>
 				<th class="column-deny">
-                    <input type="checkbox" id="check-all-deny-{{ data.id }}" class="check-all-deny check-all-input" />
-                    <label for="check-all-deny-{{ data.id }}"><?php esc_html_e( 'Deny All', 'members' ); ?></label>
-                </th>
+                    			<input type="checkbox" id="check-all-deny-{{ data.id }}" class="check-all-deny check-all-input" />
+                    			<label for="check-all-deny-{{ data.id }}"><?php esc_html_e( 'Deny All', 'members' ); ?></label>
+                		</th>
 			</tr>
 		</tfoot>
 
