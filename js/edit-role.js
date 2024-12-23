@@ -299,12 +299,12 @@ jQuery( document ).ready( function() {
 		                	denyCheckboxes.prop('checked', true);
 		                	grantCheckboxes.prop('checked', false);
 		            	}
-			    } else {
-                        if (isGrantCheckbox) {
-                            grantCheckboxes.prop('checked', false);
-                        } else {
-                            denyCheckboxes.prop('checked', false);
-                        }
+		    	} else {
+                        	if (isGrantCheckbox) {
+                            		grantCheckboxes.prop('checked', false);
+                        	} else {
+                            		denyCheckboxes.prop('checked', false);
+                        	}
 		        }
 
 		        // Count the granted and denied caps that are checked.
