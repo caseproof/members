@@ -266,6 +266,44 @@ jQuery( document ).ready( function() {
 		}
 	); // .on( 'change' )
 
+    // When a change is triggered for the grant/deny check all checkbox.
+    jQuery( document ).on( 'change', '.members-roles-select input.check-all-grant, .members-roles-select input.check-all-deny', function() {
+        var $this = jQuery( this );
+        var isChecked = $this.is(':checked');
+        var isGrantCheckbox = $this.hasClass('check-all-grant');
+        var membersRoleSelect = $this.closest( '.members-roles-select' );
+        var allGrantCheckboxes = membersRoleSelect.find( 'tbody input[data-grant-cap]' );
+        var allDenyCheckboxes = membersRoleSelect.find( 'tbody input[data-deny-cap]' );
+        var denyCheckbox = membersRoleSelect.find( 'input.check-all-deny' );
+        var grantCheckbox = membersRoleSelect.find( 'input.check-all-grant' );
+
+        if (isGrantCheckbox) {
+            _.each( allGrantCheckboxes, function( checkbox ) {
+                checkbox.checked = isChecked;
+                members_check_uncheck( checkbox );
+            });
+        } else {
+            _.each( allDenyCheckboxes, function( checkbox ) {
+                checkbox.checked = isChecked;
+                members_check_uncheck( checkbox );
+            });
+        }
+
+        if (isChecked) {
+            $this.next('label').text(members_i18n.uncheck_all);
+            if (isGrantCheckbox) {
+                denyCheckbox.prop('checked', false).next('label').text(members_i18n.check_all);
+            } else {
+                grantCheckbox.prop('checked', false).next('label').text(members_i18n.check_all);
+            }
+        } else {
+            $this.next().text(members_i18n.check_all);
+        }
+
+        // Count the granted and denied caps that are checked.
+        members_count_caps();
+    });
+
 	// When a cap button is clicked. Note that we're using `.on()` here because we're dealing
 	// with dynamically-generated HTML.
 	//

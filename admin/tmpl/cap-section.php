@@ -4,7 +4,7 @@
  *
  * @package    Members
  * @subpackage Admin
- * @author     The MemberPress Team 
+ * @author     The MemberPress Team
  * @copyright  Copyright (c) 2009 - 2018, The MemberPress Team
  * @link       https://members-plugin.com/
  * @license    http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
@@ -20,6 +20,17 @@
 				<th class="column-grant"><?php esc_html_e( 'Grant', 'members' ); ?></th>
 				<th class="column-deny"><?php esc_html_e( 'Deny', 'members' ); ?></th>
 			</tr>
+        <tr>
+            <th></th>
+            <th class="check-all-th">
+                <input type="checkbox" id="check-all-grant-{{ data.id }}" class="check-all-grant check-all-input" />
+                <label for="check-all-grant-{{ data.id }}">{{ members_i18n.check_all }}</label>
+            </th>
+            <th class="check-all-th">
+                <input type="checkbox" id="check-all-deny-{{ data.id }}" class="check-all-deny check-all-input" />
+                <label for="check-all-deny-{{ data.id }}">{{ members_i18n.check_all }}</label>
+            </th>
+        </tr>
 		</thead>
 
 		<tfoot>

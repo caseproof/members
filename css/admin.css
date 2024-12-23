@@ -742,6 +742,19 @@
 	border-left: 1px solid #e5e5e5;
 }
 
+.members-roles-select th, .members-roles-select td {
+    width: 190px;
+    overflow: hidden;
+}
+
+.members-roles-select .check-all-th {
+    text-align: center;
+}
+
+.members-roles-select .check-all-th label {
+    padding-left: 5px;
+}
+
 /* === Manager when in the side meta box. === */
 
 @media only screen and ( min-width: 850px ) {
