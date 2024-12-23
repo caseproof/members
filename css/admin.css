@@ -868,10 +868,8 @@
 	clear:      none !important;
 }
 
-.members-roles-select thead .column-grant input,
-.members-roles-select thead .column-deny input,
-.members-roles-select thead .column-grant input,
-.members-roles-select thead .column-deny input {
+.members-roles-select thead th,
+.members-roles-select tfoot th {
     	padding: 9px !important;
 }
 
