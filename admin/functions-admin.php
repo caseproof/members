@@ -48,8 +48,6 @@ function members_admin_register_scripts() {
 		'label_grant_cap'  => esc_html__( 'Grant %s capability', 'members' ),
 		'label_deny_cap'   => esc_html__( 'Deny %s capability',  'members' ),
 		'ays_delete_role'  => esc_html__( 'Are you sure you want to delete this role? This is a permanent action and cannot be undone.', 'members' ),
-        	'check_all'        => esc_html__( 'Check All', 'members' ),
-        	'uncheck_all'      => esc_html__( 'Uncheck All', 'members' ),
 		'hidden_caps'      => members_get_hidden_caps(),
 	);
 

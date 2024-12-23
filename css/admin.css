@@ -863,9 +863,14 @@
 .members-roles-select .column-grant,
 .members-roles-select .column-deny {
 	width:      70px !important;
-	text-align: center;
+	text-align: left;
 	display:    table-cell !important;
 	clear:      none !important;
+}
+
+.members-roles-select .column-grant input,
+.members-roles-select .column-deny input {
+    margin-left: 0;
 }
 
 /* Cap grant/deny button. */

@@ -267,8 +267,8 @@ jQuery( document ).ready( function() {
 	); // .on( 'change' )
 
     	// When a change is triggered for the grant/deny check all checkbox.
-    	jQuery( document ).on( 'change', 
-	      	'.members-roles-select input.check-all-grant, .members-roles-select input.check-all-deny', 
+    	jQuery( document ).on( 'change',
+	      	'.members-roles-select input.check-all-grant, .members-roles-select input.check-all-deny',
       		function() {
 		        var $this = jQuery( this );
 		        var isChecked = $this.is(':checked');
@@ -276,9 +276,9 @@ jQuery( document ).ready( function() {
 		        var membersRoleSelect = $this.closest( '.members-roles-select' );
 		        var allGrantCheckboxes = membersRoleSelect.find( 'tbody input[data-grant-cap]' );
 		        var allDenyCheckboxes = membersRoleSelect.find( 'tbody input[data-deny-cap]' );
-		        var denyCheckbox = membersRoleSelect.find( 'input.check-all-deny' );
-		        var grantCheckbox = membersRoleSelect.find( 'input.check-all-grant' );
-	
+		        var denyCheckboxes = membersRoleSelect.find( 'input.check-all-deny' );
+		        var grantCheckboxes = membersRoleSelect.find( 'input.check-all-grant' );
+
 		        if (isGrantCheckbox) {
 		            	_.each( allGrantCheckboxes, function( checkbox ) {
 		                	checkbox.checked = isChecked;
@@ -290,18 +290,23 @@ jQuery( document ).ready( function() {
 					members_check_uncheck( checkbox );
 			    	});
 			}
-	
+
 		        if (isChecked) {
-		            	$this.next('label').text(members_i18n.uncheck_all);
 		            	if (isGrantCheckbox) {
-		                	denyCheckbox.prop('checked', false).next('label').text(members_i18n.check_all);
+		                	grantCheckboxes.prop('checked', true);
+		                	denyCheckboxes.prop('checked', false);
 		            	} else {
-		                	grantCheckbox.prop('checked', false).next('label').text(members_i18n.check_all);
+		                	denyCheckboxes.prop('checked', true);
+		                	grantCheckboxes.prop('checked', false);
 		            	}
-			} else {
-		            	$this.next().text(members_i18n.check_all);
+			    } else {
+                        if (isGrantCheckbox) {
+                            grantCheckboxes.prop('checked', false);
+                        } else {
+                            denyCheckboxes.prop('checked', false);
+                        }
 		        }
-	
+
 		        // Count the granted and denied caps that are checked.
 		        members_count_caps();
     		}
