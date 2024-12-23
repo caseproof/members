@@ -1,4 +1,8 @@
 # Change Log
+## 3.2.17 - 2024-12-23
+### Added
+- Added bulk select/unselect checkboxes on Role capabilities
+
 ## 3.2.16 - 2024-12-12
 ### Fixed
 - Protected posts being forced-hidden from API search even if setting was off
