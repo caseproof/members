@@ -4,7 +4,7 @@
  *
  * @package    Members
  * @subpackage Admin
- * @author     The MemberPress Team 
+ * @author     The MemberPress Team
  * @copyright  Copyright (c) 2009 - 2018, The MemberPress Team
  * @link       https://members-plugin.com/
  * @license    http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
@@ -48,7 +48,7 @@ function members_admin_register_scripts() {
 		'label_grant_cap'  => esc_html__( 'Grant %s capability', 'members' ),
 		'label_deny_cap'   => esc_html__( 'Deny %s capability',  'members' ),
 		'ays_delete_role'  => esc_html__( 'Are you sure you want to delete this role? This is a permanent action and cannot be undone.', 'members' ),
-		'hidden_caps'      => members_get_hidden_caps()
+		'hidden_caps'      => members_get_hidden_caps(),
 	);
 
 	wp_localize_script( 'members-edit-role', 'members_i18n', $i18n );

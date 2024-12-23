@@ -25,12 +25,12 @@
 }
 
 .members-upgrade-header {
-  text-align: center;
-  padding: 5px;
+  	text-align: center;
+  	padding: 5px;
 }
 
 .members-upgrade-header a {
-  color: #F59431;
+  	color: #F59431;
 }
 
 .memberpress-paid-memberships {
@@ -120,25 +120,25 @@
 }
 
 #wpcontent #members-admin-header {
-  margin-left: -20px;
-  padding: 0;
-  padding-left: 22px;
-  background-color: #f9f9f9;
-  background-repeat: repeat;
-  background-size: 1200px 75px;
-  min-height: 36px;
-  position: relative;
-  /* border-bottom: 2px solid #00cee6; */
+  	margin-left: -20px;
+  	padding: 0;
+  	padding-left: 22px;
+  	background-color: #f9f9f9;
+  	background-repeat: repeat;
+  	background-size: 1200px 75px;
+  	min-height: 36px;
+  	position: relative;
+  	/* border-bottom: 2px solid #00cee6; */
 }
 
 #wpcontent #members-admin-header img.members-logo {
-  height: 90px;
+  	height: 90px;
 }
 
 .members-upgrade-header #close-members-upgrade-header {
-  position: absolute;
-  right: 20px;
-  top: 3px;
+  	position: absolute;
+  	right: 20px;
+  	top: 3px;
 }
 
 .members-upgrade-header #close-members-upgrade-header:hover {
@@ -633,113 +633,126 @@
 	background: linear-gradient( 90deg, #fafafa 0%, #fafafa 20%, #fff 20%, #fff 100% );
 }
 
-	@media only screen and ( max-width: 782px ) {
+@media only screen and ( max-width: 782px ) {
 
-		.members-cap-tabs,
-		.members-tabs {
-			background: linear-gradient( 90deg, #fafafa 0%, #fafafa 48px, #fff 48px, #fff 100% );
-		}
+	.members-cap-tabs,
+	.members-tabs {
+		background: linear-gradient( 90deg, #fafafa 0%, #fafafa 48px, #fff 48px, #fff 100% );
 	}
+}
 
 	/* Tab nav. */
 
+.members-cap-tabs .members-tab-nav,
+.members-tabs .members-tab-nav {
+	position:         relative;
+	float:            left;
+	list-style:       none;
+	width:            20%;
+	line-height:      1em;
+	margin:           0 0 -1px 0;
+	padding:          0;
+	background-color: #fafafa;
+	border-right:     1px solid #eee;
+	box-sizing:       border-box;
+}
+
+.members-cap-tabs .members-tab-nav li,
+.members-tabs .members-tab-nav li {
+	display:     block;
+	position:    relative;
+	margin:      0;
+	padding:     0;
+	line-height: 20px;
+}
+
+.members-cap-tabs .members-tab-nav li a,
+.members-tabs .members-tab-nav li a {
+	display:         block;
+	margin:          0;
+	padding:         10px;
+	line-height:     20px !important;
+	text-decoration: none;
+	border-bottom:   1px solid #eee;
+	box-shadow:      none;
+}
+
+.members-cap-tabs .members-tab-nav li a .dashicons,
+.members-tabs .members-tab-nav li a .dashicons {
+	line-height:  20px;
+	margin-right: 3px;
+}
+
+.members-cap-tabs .members-tab-nav li[aria-selected="true"] a,
+.members-tabs .members-tab-nav li[aria-selected="true"] a {
+	position:         relative;
+	font-weight:      bold;
+	color:            #555;
+	background-color: #e0e0e0;
+}
+
+@media only screen and ( max-width: 782px ) {
+
 	.members-cap-tabs .members-tab-nav,
-	.members-tabs .members-tab-nav {
-		position:         relative;
-		float:            left;
-		list-style:       none;
-		width:            20%;
-		line-height:      1em;
-		margin:           0 0 -1px 0;
-		padding:          0;
-		background-color: #fafafa;
-		border-right:     1px solid #eee;
-		box-sizing:       border-box;
+	.members-tabs .members-tab-nav { width: 48px; }
+
+	.members-cap-tabs .members-tab-nav li a .dashicons,
+	.members-tabs .members-tab-nav li a .dashicons {
+		width:       24px;
+		height:      24px;
+		font-size:   24px;
+		line-height: 24px;
 	}
 
-		.members-cap-tabs .members-tab-nav li,
-		.members-tabs .members-tab-nav li {
-			display:     block;
-			position:    relative;
-			margin:      0;
-			padding:     0;
-			line-height: 20px;
+		.members-tab-nav li .dashicons::before,
+		.members-tab-nav li .dashicons::before {
+			width:  24px;
+			height: 24px;
 		}
 
-			.members-cap-tabs .members-tab-nav li a,
-			.members-tabs .members-tab-nav li a {
-				display:         block;
-				margin:          0;
-				padding:         10px;
-				line-height:     20px !important;
-				text-decoration: none;
-				border-bottom:   1px solid #eee;
-				box-shadow:      none;
-			}
-
-				.members-cap-tabs .members-tab-nav li a .dashicons,
-				.members-tabs .members-tab-nav li a .dashicons {
-					line-height:  20px;
-					margin-right: 3px;
-				}
-
-			.members-cap-tabs .members-tab-nav li[aria-selected="true"] a,
-			.members-tabs .members-tab-nav li[aria-selected="true"] a {
-				position:         relative;
-				font-weight:      bold;
-				color:            #555;
-				background-color: #e0e0e0;
-			}
-
-	@media only screen and ( max-width: 782px ) {
-
-		.members-cap-tabs .members-tab-nav,
-		.members-tabs .members-tab-nav { width: 48px; }
-
-		.members-cap-tabs .members-tab-nav li a .dashicons,
-		.members-tabs .members-tab-nav li a .dashicons {
-			width:       24px;
-			height:      24px;
-			font-size:   24px;
-			line-height: 24px;
-		}
-
-			.members-tab-nav li .dashicons::before,
-			.members-tab-nav li .dashicons::before {
-				width:  24px;
-				height: 24px;
-			}
-
-		.members-tab-nav li .label {
-			overflow: hidden;
-			position: absolute;
-			top:      -1000em;
-			left:     -1000em;
-			width:    1px;
-			height:   1px;
-		}
+	.members-tab-nav li .label {
+		overflow: hidden;
+		position: absolute;
+		top:      -1000em;
+		left:     -1000em;
+		width:    1px;
+		height:   1px;
 	}
+}
 
-	/* Tab content wrapper */
+/* Tab content wrapper */
+
+.members-cap-tabs .members-tab-wrap,
+.members-tabs .members-tab-wrap {
+	float:       left;
+	width:       80%;
+	margin-left: -1px;
+}
+
+@media only screen and ( max-width: 782px ) {
 
 	.members-cap-tabs .members-tab-wrap,
 	.members-tabs .members-tab-wrap {
-		float:       left;
-		width:       80%;
-		margin-left: -1px;
+		width: calc( 100% - 48px );
 	}
-
-	@media only screen and ( max-width: 782px ) {
-
-		.members-cap-tabs .members-tab-wrap,
-		.members-tabs .members-tab-wrap {
-			width: calc( 100% - 48px );
-		}
-	}
+}
 
 #members-cp .members-tab-content {
 	padding: 10px;
 	border-left: 1px solid #e5e5e5;
+}
+
+.members-roles-select th, .members-roles-select td {
+	width: 190px;
+	overflow: hidden;
+}
+
+.members-roles-select .check-all-th {
+    	text-align: center;
+}
+
+.members-roles-select .check-all-th label {
+    	padding-left: 5px;
 }
 
 /* === Manager when in the side meta box. === */
@@ -755,62 +768,62 @@
 		width:   100%;
 	}
 
-		#side-sortables .members-tabs .members-tab-nav li {
-			display:      table-cell;
-			text-align:   center;
-			border-right: 1px solid #eee;
-		}
-
-			#side-sortables .members-tabs .members-tab-nav li:last-of-type { border-right: none; }
-
-		#side-sortables .members-tabs .members-tab-nav li a {
-			padding:     10px 0;
-		}
-
-		#side-sortables .members-tabs .members-tab-nav .dashicons {
-			width:       24px;
-			height:      24px;
-			font-size:   24px;
-			line-height: 24px;
-		}
-
-			#side-sortables .members-tabs .members-tab-nav .dashicons::before {
-				width:  24px;
-				height: 24px;
-			}
-
-			#side-sortables .members-tabs .members-tab-nav .label {
-				overflow: hidden;
-				position: absolute;
-				top:      -1000em;
-				left:     -1000em;
-				width:    1px;
-				height:   1px;
-			}
+	#side-sortables .members-tabs .members-tab-nav li {
+		display:      table-cell;
+		text-align:   center;
+		border-right: 1px solid #eee;
 	}
 
+	#side-sortables .members-tabs .members-tab-nav li:last-of-type { border-right: none; }
 
-	.members-tabs .members-tabs-label {
-		display       : block !important;
-		font-weight   : bold;
-		display       : inline-block;
-		margin-bottom : 4px;
+	#side-sortables .members-tabs .members-tab-nav li a {
+		padding:     10px 0;
 	}
 
-		.members-tabs .butterbean-control-checkbox .members-tabs-label {
-			display: inline !important;
-		}
-
-	.members-tabs .members-tabs-description {
-		display       : block;
-		font-style    : italic;
-		margin-top    : 4px;
+	#side-sortables .members-tabs .members-tab-nav .dashicons {
+		width:       24px;
+		height:      24px;
+		font-size:   24px;
+		line-height: 24px;
 	}
 
-		.members-tabs .members-tabs-label + .members-tabs-description {
-			margin-top    : 0;
-			margin-bottom : 4px;
-		}
+	#side-sortables .members-tabs .members-tab-nav .dashicons::before {
+		width:  24px;
+		height: 24px;
+	}
+
+	#side-sortables .members-tabs .members-tab-nav .label {
+		overflow: hidden;
+		position: absolute;
+		top:      -1000em;
+		left:     -1000em;
+		width:    1px;
+		height:   1px;
+	}
+}
+
+
+.members-tabs .members-tabs-label {
+	display       : block !important;
+	font-weight   : bold;
+	display       : inline-block;
+	margin-bottom : 4px;
+}
+
+.members-tabs .butterbean-control-checkbox .members-tabs-label {
+	display: inline !important;
+}
+
+.members-tabs .members-tabs-description {
+	display       : block;
+	font-style    : italic;
+	margin-top    : 4px;
+}
+
+.members-tabs .members-tabs-label + .members-tabs-description {
+	margin-top    : 0;
+	margin-bottom : 4px;
+}
 
 /* Tab tables. */
 
@@ -820,96 +833,111 @@
 	border-bottom: none;
 }
 
-	/* Tabs table columns. */
+/* Tabs table columns. */
+
+#tabcapsdiv table td,
+#tabcapsdiv table th {
+	padding: 10px;
+	padding-bottom: 10px;
+	border-bottom: 1px solid #eee;
+	font-size: 13px;
+	line-height: 20px;
+}
+
+#tabcapsdiv table td { padding: 9px; }
+
+#tabcapsdiv tbody tr:last-of-type td { border-bottom: none; }
+
+#tabcapsdiv tfoot th { border-color: #eee; }
+
+@media only screen and ( max-width: 782px ) {
 
 	#tabcapsdiv table td,
 	#tabcapsdiv table th {
-		padding: 10px;
-		padding-bottom: 10px;
-		border-bottom: 1px solid #eee;
-		font-size: 13px;
-		line-height: 20px;
+		line-height: 24px;
 	}
+}
 
-	#tabcapsdiv table td { padding: 9px; }
+/* Grant/Deny columns. */
 
-	#tabcapsdiv tbody tr:last-of-type td { border-bottom: none; }
+.members-roles-select .column-grant,
+.members-roles-select .column-deny {
+	width:      70px !important;
+	text-align: left;
+	display:    table-cell !important;
+	clear:      none !important;
+}
 
-	#tabcapsdiv tfoot th { border-color: #eee; }
+.members-roles-select thead th,
+.members-roles-select tfoot th {
+    	padding: 9px !important;
+}
 
-	@media only screen and ( max-width: 782px ) {
+.members-roles-select .column-grant input,
+.members-roles-select .column-deny input {
+    	margin: 0 5px 0 0;
+	vertical-align: middle;
+}
 
-		#tabcapsdiv table td,
-		#tabcapsdiv table th {
-			line-height: 24px;
-		}
-	}
+.members-roles-select tbody tr:nth-child(even) {
+    	background: #f2f2f2;
+}
 
-	/* Grant/Deny columns. */
+/* Cap grant/deny button. */
 
-	.members-roles-select .column-grant,
-	.members-roles-select .column-deny {
-		width:      70px !important;
-		text-align: center;
-		display:    table-cell !important;
-		clear:      none !important;
-	}
+.members-cap-tabs button {
+	display: inline;
+	margin:        -4px;
+	line-height:   inherit;
+	padding:       4px 8px;
+	border:        1px solid transparent;
+	background:    transparent;
+	border-radius: 0;
+	outline:       none;
 
-	/* Cap grant/deny button. */
+		-webkit-transition: all 0.25s ease-out;
+		   -moz-transition: all 0.25s ease-out;
+		      -o-transition:  all 0.25s ease-out;
+			transition: all 0.25s ease-out;
+}
 
-	.members-cap-tabs button {
-		display: inline;
-		margin:        -4px;
-		line-height:   inherit;
-		padding:       4px 8px;
-		border:        1px solid transparent;
-		background:    transparent;
-		border-radius: 0;
-		outline:       none;
+.members-cap-tabs button:hover,
+.members-cap-tabs button:focus {
+	border-color: #eee;
+	background:   #fafafa;
+	cursor:       pointer;
+}
 
-			-webkit-transition: all 0.25s ease-out;
-			   -moz-transition: all 0.25s ease-out;
-			      -o-transition:  all 0.25s ease-out;
-			        transition: all 0.25s ease-out;
-	}
+.members-cap-tabs button:active {
+	color:        #0073aa;
+	border-color: #0073aa;
+}
 
-		.members-cap-tabs button:hover,
-		.members-cap-tabs button:focus {
-			border-color: #eee;
-			background:   #fafafa;
-			cursor:       pointer;
-		}
+.members-cap-tabs button + .dashicons {
+	display:       none;
+	margin-top:    1px;
+	margin-bottom: -1px;
+	line-height:   inherit;
+}
 
-		.members-cap-tabs button:active {
-			color:        #0073aa;
-			border-color: #0073aa;
-		}
-
-		.members-cap-tabs button + .dashicons {
-			display:       none;
-			margin-top:    1px;
-			margin-bottom: -1px;
-			line-height:   inherit;
-		}
-
-			.members-cap-tabs button:hover + .dashicons,
-			.members-cap-tabs button:focus + .dashicons {
-				display: inline-block;
-			}
+.members-cap-tabs button:hover + .dashicons,
+.members-cap-tabs button:focus + .dashicons {
+	display: inline-block;
+}
 
 
-	/* New cap highlight */
+/* New cap highlight */
 
-	.members-tab-content .members-highlight {
-		background-color: rgba( 0, 115, 170, 0.05 );
-	}
+.members-tab-content .members-highlight {
+	background-color: rgba( 0, 115, 170, 0.05 );
+}
 
-	.members-tab-content tbody {
-		-webkit-transition: all 2s ease-in-out;
-		   -moz-transition: all 2s ease-in-out;
-		      -o-transition:  all 2s ease-in-out;
-			transition: all 2s ease-in-out;
-	}
+.members-tab-content tbody {
+	-webkit-transition: all 2s ease-in-out;
+	   -moz-transition: all 2s ease-in-out;
+	      -o-transition:  all 2s ease-in-out;
+		transition: all 2s ease-in-out;
+}
 
 /* ====== Edit Post ====== */
 

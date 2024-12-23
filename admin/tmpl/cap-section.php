@@ -4,7 +4,7 @@
  *
  * @package    Members
  * @subpackage Admin
- * @author     The MemberPress Team 
+ * @author     The MemberPress Team
  * @copyright  Copyright (c) 2009 - 2018, The MemberPress Team
  * @link       https://members-plugin.com/
  * @license    http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
@@ -17,16 +17,28 @@
 		<thead>
 			<tr>
 				<th class="column-cap"><?php esc_html_e( 'Capability', 'members' ); ?></th>
-				<th class="column-grant"><?php esc_html_e( 'Grant', 'members' ); ?></th>
-				<th class="column-deny"><?php esc_html_e( 'Deny', 'members' ); ?></th>
+				<th class="column-grant">
+                    			<input type="checkbox" id="check-all-grant-{{ data.id }}" class="check-all-grant check-all-input" />
+                    			<label for="check-all-grant-{{ data.id }}"><?php esc_html_e( 'Grant All', 'members' ); ?></label>
+                		</th>
+				<th class="column-deny">
+				    	<input type="checkbox" id="check-all-deny-{{ data.id }}" class="check-all-deny check-all-input" />
+				    	<label for="check-all-deny-{{ data.id }}"><?php esc_html_e( 'Deny All', 'members' ); ?></label>
+                		</th>
 			</tr>
 		</thead>
 
 		<tfoot>
 			<tr>
 				<th class="column-cap"><?php esc_html_e( 'Capability', 'members' ); ?></th>
-				<th class="column-grant"><?php esc_html_e( 'Grant', 'members' ); ?></th>
-				<th class="column-deny"><?php esc_html_e( 'Deny', 'members' ); ?></th>
+				<th class="column-grant">
+                    			<input type="checkbox" id="check-all-grant-{{ data.id }}" class="check-all-grant check-all-input" />
+                    			<label for="check-all-grant-{{ data.id }}"><?php esc_html_e( 'Grant All', 'members' ); ?></label>
+                		</th>
+				<th class="column-deny">
+                    			<input type="checkbox" id="check-all-deny-{{ data.id }}" class="check-all-deny check-all-input" />
+                    			<label for="check-all-deny-{{ data.id }}"><?php esc_html_e( 'Deny All', 'members' ); ?></label>
+                		</th>
 			</tr>
 		</tfoot>
 
