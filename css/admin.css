@@ -303,7 +303,7 @@
 
 .activate-toggle .action-label {
 	display: inline-block;
-	width: 50px;
+	padding-left: 3px;
 	text-align: left;
 }
 
