@@ -14,7 +14,7 @@
 add_action( 'init', 'members_register_shortcodes' );
 
 add_filter( 'login_form_bottom', 'members_login_form_bottom' );
-add_filter('login_redirect', 'members_login_redirect', 9, 3 );
+add_filter( 'login_redirect', 'members_login_redirect', 9, 3 );
 
 /**
  * Registers shortcodes.
