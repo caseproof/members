@@ -232,12 +232,7 @@ function members_login_form_shortcode() {
  */
 function members_login_redirect( $redirect_to, $request, $user ) {
     // If there's a valid referrer, and it's not the default log-in screen
-    if (
-        isset( $_SERVER['HTTP_REFERER'] ) &&
-        ! empty( $_SERVER['HTTP_REFERER'] ) &&
-        ( strstr( $_SERVER['HTTP_REFERER'],'wp-login' ) ||
-        strstr( $_SERVER['HTTP_REFERER'],'wp-admin' ) )
-    ) {
+    if ( ! isset( $_POST['members_redirect_to'] ) ) {
         return $redirect_to;
     } elseif ( empty( $user ) || is_wp_error( $user ) ) {
         wp_redirect( str_replace('?login=failed', '', $_SERVER['HTTP_REFERER']) . '?login=failed' );
@@ -256,13 +251,17 @@ function members_login_redirect( $redirect_to, $request, $user ) {
  */
 function members_login_form_bottom() {
     if (
-        isset( $_GET['login'] ) &&
-        $_GET['login'] == 'failed' &&
         isset( $_SERVER['HTTP_REFERER'] ) &&
         ! empty( $_SERVER['HTTP_REFERER'] ) &&
         ! strstr( $_SERVER['HTTP_REFERER'],'wp-login' ) &&
         ! strstr( $_SERVER['HTTP_REFERER'],'wp-admin' )
     ) {
-        return '<p class="members-login-error" style="background: #f1f1f1; padding: 10px; border-left: 3px solid #d63638">' . esc_html( 'Invalid username or password', 'members' ) . '</p>';
+        $output = '<input type="hidden" name="members_redirect_to" value="' . esc_attr( $_SERVER['HTTP_REFERER'] ) . '" />';
+
+        if ( isset( $_GET['login'] ) && $_GET['login'] == 'failed' ) {
+            $output .= '<p class="members-login-error" style="background: #f1f1f1; padding: 10px; border-left: 3px solid #d63638">' . esc_html( 'Invalid username or password', 'members' ) . '</p>';
+        }
+
+        return $output;
     }
 }
