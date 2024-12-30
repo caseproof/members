@@ -250,18 +250,11 @@ function members_login_redirect( $redirect_to, $request, $user ) {
  * @return string The HTML to output below the login form.
  */
 function members_login_form_bottom() {
-    if (
-        isset( $_SERVER['HTTP_REFERER'] ) &&
-        ! empty( $_SERVER['HTTP_REFERER'] ) &&
-        ! strstr( $_SERVER['HTTP_REFERER'],'wp-login' ) &&
-        ! strstr( $_SERVER['HTTP_REFERER'],'wp-admin' )
-    ) {
-        $output = '<input type="hidden" name="members_redirect_to" value="' . esc_attr( $_SERVER['HTTP_REFERER'] ) . '" />';
+    $output = '<input type="hidden" name="members_redirect_to" value="1" />';
 
-        if ( isset( $_GET['login'] ) && $_GET['login'] == 'failed' ) {
-            $output .= '<p class="members-login-error" style="background: #f1f1f1; padding: 10px; border-left: 3px solid #d63638">' . esc_html( 'Invalid username or password', 'members' ) . '</p>';
-        }
-
-        return $output;
+    if ( isset( $_GET['login'] ) && $_GET['login'] == 'failed' ) {
+        $output .= '<p class="members-login-error" style="background: #f1f1f1; padding: 10px; border-left: 3px solid #d63638">' . esc_html( 'Invalid username or password', 'members' ) . '</p>';
     }
+
+    return $output;
 }
