@@ -231,7 +231,6 @@ function members_login_form_shortcode() {
  * @return string                The redirect URL.
  */
 function members_login_redirect( $redirect_to, $request, $user ) {
-    // If there's a valid referrer, and it's not the default log-in screen
     if ( ! isset( $_POST['members_redirect_to'] ) ) {
         return $redirect_to;
     } elseif ( empty( $user ) || is_wp_error( $user ) ) {
