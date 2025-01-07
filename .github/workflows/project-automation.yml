@@ -99,3 +99,4 @@ jobs:
         with:
           repo-token: ${{ env.ISSUE_MANAGE_PAT }}
           assignees: ${{ env.PRIMARY_CODEOWNER }}
+          failsIfUsersCannotBeAssigned: true
