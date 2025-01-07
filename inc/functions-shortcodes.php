@@ -4,7 +4,7 @@
  *
  * @package    Members
  * @subpackage Includes
- * @author     The MemberPress Team 
+ * @author     The MemberPress Team
  * @copyright  Copyright (c) 2009 - 2018, The MemberPress Team
  * @link       https://members-plugin.com/
  * @license    http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
@@ -12,6 +12,9 @@
 
 # Add shortcodes.
 add_action( 'init', 'members_register_shortcodes' );
+
+add_filter( 'login_form_bottom', 'members_login_form_bottom' );
+add_filter( 'login_redirect', 'members_login_redirect', 9, 3 );
 
 /**
  * Registers shortcodes.
@@ -214,4 +217,43 @@ function members_access_check_shortcode( $attr, $content = null ) {
 function members_login_form_shortcode() {
 
 	return wp_login_form( array( 'echo' => false ) );
+}
+
+/**
+ * Filters the login redirect URL to send failed logins back to the
+ * referrer with a query arg of `login=failed`.
+ *
+ * @since 3.2.18
+ *
+ * @param string $redirect_to    The redirect destination URL.
+ * @param string $request        The request URL.
+ * @param object $user           The user object.
+ * @return string                The redirect URL.
+ */
+function members_login_redirect( $redirect_to, $request, $user ) {
+    if ( ! isset( $_POST['members_redirect_to'] ) ) {
+        return $redirect_to;
+    } elseif ( empty( $user ) || is_wp_error( $user ) ) {
+        wp_redirect( str_replace('?login=failed', '', $_SERVER['HTTP_REFERER']) . '?login=failed' );
+        die;
+    } else {
+        return str_replace('?login=failed', '', $_SERVER['HTTP_REFERER']);
+    }
+}
+
+/**
+ * Filters the login form bottom output to add an error message if the login has failed.
+ *
+ * @since 3.2.18
+ *
+ * @return string The HTML to output below the login form.
+ */
+function members_login_form_bottom() {
+    $output = '<input type="hidden" name="members_redirect_to" value="1" />';
+
+    if ( isset( $_GET['login'] ) && $_GET['login'] == 'failed' ) {
+        $output .= '<p class="members-login-error" style="background: #f1f1f1; padding: 10px; border-left: 3px solid #d63638">' . esc_html( 'Invalid username or password', 'members' ) . '</p>';
+    }
+
+    return $output;
 }
