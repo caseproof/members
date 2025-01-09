@@ -215,67 +215,82 @@ function members_access_check_shortcode( $attr, $content = null ) {
  * @return string
  */
 function members_login_form_shortcode() {
-    $css_classes = 'members-login-form';
-    if (is_user_logged_in()) {
-        $css_classes .= ' members-logged-in';
-    }
-
     ob_start();
-    ?>
-    <style>
-        .members-login-form * {
-            box-sizing: border-box;
-        }
-        .members-login-form label {
-            display: block;
-            margin-bottom: 4px;
-            font-size: 18px;
-            font-weight: 500;
-        }
-        .members-login-form input[type="text"],
-        .members-login-form input[type="password"] {
-            width: 100%;
-            max-width: 320px;
-            padding: 0.5rem 0.75rem;
-            border: 1px solid #64748b;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-        .members-login-form input[type="submit"] {
-            width: 100%;
-            max-width: 320px;
-            padding: 0.75rem;
-            cursor: pointer;
-            background: #64748b;
-            border: 0;
-            border-radius: 4px;
-            color: #fff;
-            font-size: 16px;
-            font-weight: 500;
-        }
-        .members-logged-in input[type="submit"] {
-            pointer-events: none;
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-        .members-login-notice {
-            display: block !important;
-            max-width: 320px;
-            padding: 10px;
-            background: #f1f1f1;
-            border-radius: 4px;
-            border-left: 3px solid #36d651;
-            font-size: 18px;
-            font-weight: 500;
-        }
-        .members-login-error {
-            border-left-color: #d63638;
-        }
-    </style>
+    if ( is_user_logged_in() ) { ?>
+        <div class="members-login-form">
+            <p class="members-login-notice members-login-notice-success">
+                <?php esc_html_e('You are already logged in.', 'members'); ?>
+            </p>
+        </div>
+        <style>
+            .members-login-notice {
+                display: block !important;
+                max-width: 320px;
+                padding: 10px;
+                background: #f1f1f1;
+                border-radius: 4px;
+                border-left: 3px solid #36d651;
+                font-size: 18px;
+                font-weight: 500;
+            }
+        </style>
+    <?php } else { ?>
+        <div class="members-login-form">
+            <?php echo wp_login_form( array( 'echo' => false ) ); ?>
+        </div>
+        <style>
+            .members-login-form * {
+                box-sizing: border-box;
+            }
+            .members-login-form label {
+                display: block;
+                margin-bottom: 4px;
+                font-size: 18px;
+                font-weight: 500;
+            }
+            .members-login-form input[type="text"],
+            .members-login-form input[type="password"] {
+                width: 100%;
+                max-width: 320px;
+                padding: 0.5rem 0.75rem;
+                border: 1px solid #64748b;
+                border-radius: 4px;
+                font-size: 16px;
+            }
+            .members-login-form input[type="submit"] {
+                width: 100%;
+                max-width: 320px;
+                padding: 0.75rem;
+                cursor: pointer;
+                background: #64748b;
+                border: 0;
+                border-radius: 4px;
+                color: #fff;
+                font-size: 16px;
+                font-weight: 500;
+            }
+            .members-logged-in input[type="submit"] {
+                pointer-events: none;
+                opacity: 0.4;
+                cursor: not-allowed;
+            }
+            .members-login-notice {
+                display: block !important;
+                max-width: 320px;
+                padding: 10px;
+                background: #f1f1f1;
+                border-radius: 4px;
+                border-left: 3px solid #36d651;
+                font-size: 18px;
+                font-weight: 500;
+            }
+            .members-login-error {
+                border-left-color: #d63638;
+            }
+        </style>
     <?php
-    $style = ob_get_clean();
-
-	return '<div class="' . $css_classes . '">' . wp_login_form( array( 'echo' => false ) ) . '</div>' .  $style;
+    }
+    return ob_get_clean();
 }
 
 /**
@@ -312,10 +327,6 @@ function members_login_form_bottom() {
 
     if ( isset( $_GET['login'] ) && $_GET['login'] == 'failed' ) {
         $output .= '<p class="members-login-notice members-login-error">' . esc_html( 'Invalid username or password.', 'members' ) . '</p>';
-    }
-
-    if (is_user_logged_in() ) {
-        $output .= '<p class="members-login-notice members-login-success" style="display:none">' . esc_html( 'You are logged in.', 'members' ) . '</p>';
     }
 
     return $output;
