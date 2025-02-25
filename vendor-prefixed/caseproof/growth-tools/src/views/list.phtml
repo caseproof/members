@@ -4,7 +4,7 @@
 <script>
     window.CPGrowthToolsHelpers = {
         nonce: '<?php echo wp_create_nonce( "caseproof_growth_tools_install_addon" ); ?>',
-        plugins: <?php echo json_encode($pluginsStatus); ?>,
+        plugins: <?php echo json_encode($addonsStatus); ?>,
         loading_plugins: [],
         labels:  <?php echo json_encode($labels); ?>,
         ajax_url:  '<?php echo esc_url_raw(admin_url( 'admin-ajax.php' )); ?>',
@@ -24,7 +24,7 @@
                 case 'notinstalled':
                     var data = new FormData();
                     data.append( "type", 'install' );
-                    data.append( "plugin", plugin );
+                    data.append( "addon", plugin );
                     data.append( "nonce", nonce );
                     fetch(ajax_url + '?action=<?php echo esc_attr($ajaxAction) ?>' , {
                         method: "POST",
@@ -33,7 +33,7 @@
                     })
                         .then(response => response.json())
                         .then(data => {
-                            if (data.hasOwnProperty('plugin')) {
+                            if (data.hasOwnProperty('addon')) {
                                 plugins[plugin] = 'installed';
                             }
                             loadingPlugins[plugin] = false;
@@ -42,7 +42,7 @@
                 case 'installed':
                     var data = new FormData();
                     data.append( "type", 'activate' );
-                    data.append( "plugin", plugin );
+                    data.append( "addon", plugin );
                     data.append( "nonce", nonce );
                     fetch(ajax_url + '?action=<?php echo esc_attr($ajaxAction) ?>', {
                         method: "POST",
@@ -61,7 +61,7 @@
 
                     var data = new FormData();
                     data.append( "type", 'deactivate' );
-                    data.append( "plugin", plugin );
+                    data.append( "addon", plugin );
                     data.append( "nonce", nonce );
                     fetch(ajax_url + '?action=<?php echo esc_attr($ajaxAction) ?>', {
                         method: "POST",
@@ -82,54 +82,58 @@
 </script>
 <div id="caseproof-growth-tools" class="wrap" x-data="window.CPGrowthToolsHelpers">
     <?php echo $headerHTML(); ?>
-    <?php if (empty($growthToolsData)) { ?>
+    <?php if (empty($addons)) { ?>
         <p class="cpgt-error"><?php esc_html_e('An error has occurred while retrieving the list of Growth Tools. Please try again later.', 'members'); ?></p>
     <?php } else { ?>
         <div id="cpgt-growth-tools-grid">
             <div
                 class="cpgt-grid cpgt-grid-cols-1 lg:cpgt-grid-cols-2 xl:cpgt-grid-cols-3 cpgt-gap-6 cpgt-mt-10 ">
                 <?php
-                foreach ($growthToolsData['plugins'] as $plugin) {
+                foreach ($addons as $addon) {
+                    $cap = 'plugin' === $addon['addon_type'] ? 'install_plugins' : 'install_themes';
                     ?>
                     <div
                         class="cpgt-text-main-text cpgt-rounded-lg cpgt-w-full cpgt-box-border  cpgt-bg-white cpgt-border-main-border-color cpgt-border cpgt-border-solid cpgt-py-10 cpgt-px-8 cpgt-flex cpgt-justify-between cpgt-flex-col">
                         <div class="cspf-growth-tools-plugin-recommendations-block cpgt-flex cpgt-flex-col">
                             <div class="cpgt-flex cpgt-items-center cpgt-flex-col">
-                                <div><img src="<?php echo esc_url($baseLogoUrl . '/' . $plugin['img']); ?>"
+                                <div><img src="<?php echo esc_url($baseLogoUrl . '/' . $addon['img']); ?>"
                                         class="cpgt-w-16"></div>
                                 <div class="cpgt-text-center cpgt-text-neutral-80">
                                     <h3
                                         class="cpgt-text-main-text cpgt-text-xl">
-                                        <?php echo esc_html($plugin['title']); ?>
+                                        <?php echo esc_html($addon['title']); ?>
                                     </h3>
-                                    <p class="cpgt-text-sm"><?php esc_html_e($plugin['description'], 'cspf-growth-tools'); ?></p></div>
+                                    <p class="cpgt-text-sm"><?php echo esc_html($addon['description']); ?></p>
+                                </div>
                             </div>
                         </div>
                         <div>
                             <div class="cpgt-flex cpgt-flex-col cpgt-items-center">
                                 <div class="cpgt-flex cpgt-flex-col cpgt-items-center">
                                     <div class="cpgt-mb-1.5"><strong><?php esc_html_e('Status', 'members'); ?>:</strong>
-                                        <span x-text="labels[plugins['<?php echo esc_attr($plugin['plugin_file']); ?>']]"></span>
+                                        <span x-text="labels[plugins['<?php echo esc_attr($addon['addon_file']); ?>']]"></span>
                                     </div>
-                                    <img src="<?php echo esc_url(admin_url('images/loading.gif')); ?>" alt="<?php esc_attr_e('Loading...', 'members'); ?>" x-show="loading_plugins['<?php echo esc_attr($plugin['plugin_file']); ?>']" class="mepr-loading-gif" />
-                                    <?php if (!empty($plugin['website']) && $pluginsStatus[$plugin['plugin_file']] === 'notinstalled') { ?>
+                                    <img src="<?php echo esc_url(admin_url('images/loading.gif')); ?>" alt="<?php esc_attr_e('Loading...', 'members'); ?>" x-show="loading_plugins['<?php echo esc_attr($addon['addon_file']); ?>']" class="mepr-loading-gif" />
+                                    <?php if (( !empty($addon['website']) || !current_user_can($cap) ) && $addonsStatus[$addon['addon_file']] === 'notinstalled') { ?>
+                                        <?php if (!empty($addon['website']) || !empty($addon['download_url'])) : ?>
                                         <a
-                                            href="<?php echo esc_url_raw($plugin['website']); ?>"
+                                            href="<?php echo esc_url_raw($addon['website'] ?? $addon['download_url']); ?>"
                                             class="<?php echo esc_attr(implode(' ', $buttonCSS)); ?>">
                                             <span><?php esc_html_e('Get It', 'members'); ?></span>
                                         </a>
+                                        <?php endif; ?>
                                     <?php } else { ?>
                                         <a
-                                            x-show="plugins['<?php echo esc_attr($plugin['plugin_file']); ?>'] === 'activated'"
-                                            href="<?php echo esc_url_raw($plugin['settings_url']); ?>"
+                                            x-show="plugins['<?php echo esc_attr($addon['addon_file']); ?>'] === 'activated'"
+                                            href="<?php echo esc_url_raw($addon['settings_url']); ?>"
                                             class="<?php echo esc_attr(implode(' ', $buttonCSS)); ?>">
                                             <span><?php esc_html_e('Open', 'members'); ?></span>
                                         </a>
                                         <button
-                                            x-show="!loading_plugins['<?php echo esc_attr($plugin['plugin_file']); ?>'] && plugins['<?php echo esc_attr($plugin['plugin_file']); ?>'] !== 'activated'"
-                                            @click="pluginAction(plugins['<?php echo esc_attr($plugin['plugin_file']); ?>'], '<?php echo esc_attr($plugin['plugin_file']); ?>', ajax_url, nonce, plugins, loading_plugins)"
+                                            x-show="!loading_plugins['<?php echo esc_attr($addon['addon_file']); ?>'] && plugins['<?php echo esc_attr($addon['addon_file']); ?>'] !== 'activated'"
+                                            @click="pluginAction(plugins['<?php echo esc_attr($addon['addon_file']); ?>'], '<?php echo esc_attr($addon['addon_file']); ?>', ajax_url, nonce, plugins, loading_plugins)"
                                             class="<?php echo esc_attr(implode(' ', $buttonCSS)); ?>">
-                                            <span x-text="buttonTitle(plugins['<?php echo esc_attr($plugin['plugin_file']); ?>'], labels)"></span>
+                                            <span x-text="buttonTitle(plugins['<?php echo esc_attr($addon['addon_file']); ?>'], labels)"></span>
                                         </button>
                                     <?php } ?>
                                 </div>

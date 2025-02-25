@@ -1,6 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Members\Caseproof\GrowthTools;
+
+use Members\Caseproof\GrowthTools\Helper\AddonHelper;
 
 class Config
 {
@@ -79,10 +83,10 @@ class Config
      *
      * @var array
      */
-    protected array $pluginsConfig = [];
+    protected array $addonsConfig = [];
 
     /**
-     * Extra inline css
+     * Extra inline css.
      *
      * @var string
      */
@@ -91,7 +95,7 @@ class Config
     /**
      * Constructor
      *
-     * @param array $params An array of configuration parameters {
+     * @param array $params An array of configuration parameters {.
      *
      * @type string $file Required. The path to the plugin main file.
      * @type string $path Optional. The plugin path. Defaults to dirname($file)
@@ -133,7 +137,31 @@ class Config
      */
     public function __get(string $key)
     {
-        return isset($this->$key) ? $this->$key : null;
+        if ($key === 'pluginsConfig' || $key === 'themesConfig') {
+            return $key === 'pluginsConfig' ? $this->getPluginsConfig() : $this->getThemesConfig();
+        }
+        return $this->$key ?? null;
+    }
+
+    /**
+     * Set a configuration value.
+     *
+     * @param  string $key   The configuration key.
+     * @param  mixed  $value Value.
+     * @return mixed Returns the configuration value if it exists or null if the
+     *               configuration value does not exist.
+     */
+    public function __set(string $key, $value) // phpcs:ignore Squiz.Commenting.FunctionComment.ScalarTypeHintMissing -- `mixed` type
+    {
+        if ($key === 'pluginsConfig' || $key === 'themesConfig') {
+            _doing_it_wrong(
+                __METHOD__,
+                'Direct modification of pluginsConfig and themesConfig is deprecated.',
+                '1.4.0'
+            );
+            return;
+        }
+        $this->$key = $value;
     }
 
     /**
@@ -141,10 +169,10 @@ class Config
      *
      * @return array
      */
-    public function getPluginsConfig(): array
+    public function getAddonsConfig(): array
     {
-        if (! empty($this->pluginsConfig)) {
-            return $this->pluginsConfig;
+        if (! empty($this->addonsConfig)) {
+            return $this->addonsConfig;
         }
 
         $config = get_transient('caseproof_growth_tools_configuration_data_v2');
@@ -159,32 +187,73 @@ class Config
 
         if (! empty($config)) {
             $existingPlugins = array_keys(get_plugins());
+            $existingThemes  = array_keys(wp_get_themes());
             // Check for which version the plugins are using free or premium.
-            foreach ($config['plugins'] as $k => &$plugin) {
-                if (! empty($this->instanceId) && ! in_array($this->instanceId, $plugin['target'], true)) {
-                    unset($config['plugins'][$k]);
-                    continue;
-                }
-                $premiumMainFile = $plugin['main']['premium'] ?? '';
-                $freeMainFile = $plugin['main']['free'] ?? '';
-                $bothInactive = !is_plugin_active($premiumMainFile) && !is_plugin_active($freeMainFile);
-                $premiumActive = is_plugin_active($premiumMainFile);
-                $plugin['settings_url'] = $plugin['settings_page']['free'] ?? '';
-                $plugin['plugin_file']  = $freeMainFile;
+            // Processing addon data.
+            $config['plugins'] = $this->processAddons($config['plugins'] ?? [], $existingPlugins);
+            $config['themes']  = $this->processAddons($config['themes'] ?? [], $existingThemes, true);
+        }
+        // The addonsConfig will have the plugin and theme both data.
+        $this->addonsConfig = $config;
+        return $config;
+    }
 
-                if (in_array($premiumMainFile, $existingPlugins, true) && ($premiumActive || $bothInactive)) {
-                    $plugin['plugin_file']  = $premiumMainFile;
-                    $plugin['settings_url'] = $plugin['settings_page']['premium'] ?? '';
-                }
+    /**
+     * Retrieve the plugins configuration from the addons configuration.
+     *
+     * @return array The configuration settings for plugins.
+     */
+    public function getPluginsConfig(): array
+    {
+        return $this->getAddonsConfig()['plugins'] ?? [];
+    }
 
-                if (!empty($plugin['settings_url'])) {
-                    $plugin['settings_url'] = get_admin_url() . $plugin['settings_url'];
-                }
-            }
+    /**
+     * Retrieve the themes configuration from the addons configuration.
+     *
+     * @return array The configuration settings for themes.
+     */
+    public function getThemesConfig(): array
+    {
+        return $this->getAddonsConfig()['themes'] ?? [];
+    }
+
+    /**
+     * Get Addons status.
+     *
+     * @return array
+     */
+    public function getAddonsStatus(): array
+    {
+        $growthToolsData = $this->getAddonsConfig();
+        $pluginsStatus   = [];
+        if (empty($growthToolsData)) {
+            return $pluginsStatus;
         }
 
-        $this->pluginsConfig = $config;
-        return $config;
+        $existingPlugins = array_keys(get_plugins());
+        $existingThemes  = array_keys(wp_get_themes());
+
+        // Process plugins.
+        $pluginsStatus = is_array($growthToolsData['plugins'] ?? false) ?
+            AddonHelper::processAddonStatus(
+                $growthToolsData['plugins'],
+                $existingPlugins,
+                'is_plugin_active'
+            ) : [];
+
+        // Process themes.
+        $themesStatus = is_array($growthToolsData['themes'] ?? false) ?
+            AddonHelper::processAddonStatus(
+                $growthToolsData['themes'],
+                $existingThemes,
+                [AddonHelper::class, 'isThemeActive']
+            ) : [];
+
+        $addonsStatus['plugins'] = $pluginsStatus;
+        $addonsStatus['themes']  = $themesStatus;
+
+        return $addonsStatus;
     }
 
     /**
@@ -194,24 +263,54 @@ class Config
      */
     public function getPluginsStatus(): array
     {
-        $growthToolsData = $this->getPluginsConfig();
-        $pluginsStatus = [];
-        if (empty($growthToolsData)) {
-            return $pluginsStatus;
-        }
+        return $this->getAddonsStatus()['plugins'];
+    }
 
-        $existingPlugins = array_keys(get_plugins());
-        foreach ($growthToolsData['plugins'] as $k => $plugin) {
-            $pluginsStatus[$plugin['plugin_file']] = 'notinstalled';
-            if (in_array($plugin['plugin_file'], $existingPlugins, true)) {
-                $pluginsStatus[$plugin['plugin_file']] = 'installed';
+    /**
+     * Process add-ons from configuration data.
+     *
+     * Processes the add-ons data from the configuration data.
+     * Filters out add-ons that are not targeted at the current site.
+     * and determines which version of the add-on is active (free or premium).
+     *
+     * @param  array   $addons         The add-ons to process.
+     * @param  array   $existingAddons An array of existing add-ons, with the main plugin file as the key.
+     * @param  boolean $isTheme        Whether the add-ons are themes or plugins.
+     * @return array The processed add-ons.
+     */
+    protected function processAddons(array $addons, array $existingAddons, bool $isTheme = false): array
+    {
+        foreach ($addons as $k => &$addon) {
+            if (! empty($this->instanceId) && ! in_array($this->instanceId, $addon['target'], true)) {
+                unset($addons[$k]);
+                continue;
+            }
+            $premiumMainFile = $addon['main']['premium'] ?? '';
+            $freeMainFile    = $addon['main']['free'] ?? '';
 
-                if (is_plugin_active($plugin['plugin_file'])) {
-                    $pluginsStatus[$plugin['plugin_file']] = 'activated';
-                }
+            $bothInactive = $isTheme ?
+                !AddonHelper::isThemeActive($premiumMainFile) && !AddonHelper::isThemeActive($freeMainFile)
+                : !is_plugin_active($premiumMainFile) && !is_plugin_active($freeMainFile);
+
+            $premiumActive = $bothInactive ? false :
+                ($isTheme ?
+                    AddonHelper::isThemeActive($premiumMainFile)
+                    : is_plugin_active($premiumMainFile)
+                );
+
+            $addon['settings_url'] = $addon['settings_page']['free'] ?? '';
+            $addon['addon_file']   = $freeMainFile;
+            $addon['addon_type']   = $isTheme ? 'theme' : 'plugin';
+
+            if (in_array($premiumMainFile, $existingAddons, true) && ($premiumActive || $bothInactive)) {
+                $addon['addon_file']   = $premiumMainFile;
+                $addon['settings_url'] = $addon['settings_page']['premium'] ?? '';
+            }
+
+            if (!empty($addon['settings_url'])) {
+                $addon['settings_url'] = get_admin_url() . $addon['settings_url'];
             }
         }
-
-        return $pluginsStatus;
+        return $addons;
     }
 }
