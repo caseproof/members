@@ -1,0 +1,105 @@
+name: Bug Report
+description: "A structured template for reporting customer-reported bugs or issues with complete details"
+labels:
+  - bug
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear description of what the bug is and how it affects the customer
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction-steps
+    attributes:
+      label: Steps to Reproduce
+      description: Provide the exact steps someone should follow to reproduce the issue
+      value: |
+        1. Go to...
+        2. Click on...
+        3. Fill out...
+        4. Observe...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected Behavior
+      description: What should happen when following the steps above?
+      value: |
+        Describe what the customer expected to happen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: Actual Behavior
+      description: What actually happens when following the steps above?
+      value: |
+        Describe what actually happened, including any error messages.
+    validations:
+      required: true
+
+  - type: input
+    id: hosting-environment
+    attributes:
+      label: Hosting Environment
+      description: Details about the customer's hosting environment
+      placeholder: "e.g., WP Engine, shared hosting, VPS, etc."
+
+  - type: dropdown
+    id: payment-gateway
+    attributes:
+      label: Payment Gateway (if applicable)
+      description: If this issue involves payments, which gateway is the customer using?
+      options:
+        - N/A
+        - Stripe
+        - PayPal
+        - Authorize.net
+        - Other
+
+  - type: input
+    id: transaction-id
+    attributes:
+      label: Transaction ID (if applicable)
+      description: If this is related to a specific transaction, provide the transaction ID (no sensitive data)
+
+  - type: textarea
+    id: api-logs
+    attributes:
+      label: API, Server, or Error Logs (if applicable)
+      description: If you have logs related to this issue, please include them here (with sensitive data removed)
+      render: shell
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots or Videos
+      description: If applicable, add screenshots or videos to help explain the problem (drag and drop supported)
+
+  - type: input
+    id: support-ticket
+    attributes:
+      label: Support Ticket Link
+      description: Link to the relevant Helpscout or Freescout conversation
+      placeholder: "https://help.caseproof.com/conversation/######"
+
+  - type: textarea
+    id: additional-information
+    attributes:
+      label: Additional Information
+      description: Any other context or details about the problem
+
+  - type: textarea
+    id: site-health-check
+    attributes:
+      label: Site Health Check Report
+      description: While logged into the customers site, visit /wp-admin/site-health.php?tab=debug and click "Copy site info to clipboard," then copy the report here
+      render: shell
+      value: |
+        Paste the entire Site Health Check report here. This will help us understand the customer's environment.
