@@ -1,0 +1,73 @@
+name: Feature Request
+description: "For suggesting new features or enhancements to existing functionality"
+labels:
+  - feature request
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Feature Description
+      description: Clearly describe the feature or enhancement you're suggesting
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem-solution
+    attributes:
+      label: Problem and Solution
+      description: What problem does this feature solve? How will it benefit customers?
+    validations:
+      required: true
+
+  - type: textarea
+    id: implementation-ideas
+    attributes:
+      label: Implementation Ideas
+      description: If you have specific ideas about how this should be implemented, share them here
+
+  - type: textarea
+    id: mockups
+    attributes:
+      label: Mockups or Examples
+      description: If applicable, provide visual mockups, examples, or references to similar features elsewhere
+
+  - type: dropdown
+    id: impact
+    attributes:
+      label: Potential Impact
+      description: How significant would this feature be for customers?
+      options:
+        - Critical (would unlock major use cases)
+        - High (would significantly improve experience)
+        - Medium (would be a helpful addition)
+        - Low (nice to have)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: request-source
+    attributes:
+      label: Request Source
+      description: Where did this feature request originate?
+      options:
+        - Customer Request
+        - Support Team Suggestion
+        - Development Team Idea
+        - Product Management Initiative
+        - Competitive Analysis
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: support-ticket
+    attributes:
+      label: Support Ticket Link (if applicable)
+      description: If this came from a customer request, provide the ticket link
+      placeholder: "https://help.caseproof.com/conversation/######"
+
+  - type: textarea
+    id: additional-information
+    attributes:
+      label: Additional Information
+      description: Any other context, details, or considerations for this feature request
