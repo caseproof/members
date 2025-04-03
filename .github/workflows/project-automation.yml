@@ -21,7 +21,7 @@ env:
   PROJECT_ORG: caseproof
   PRIMARY_CODEOWNER: "@cartpauj"
   PROJECT_ID: 8
-  ISSUE_MANAGE_PAT: ${{ secrets.MP_ISSUE_MANAGE_PAT_1 }}
+  ISSUE_MANAGE_PAT: ${{ secrets.MC_ISSUE_MANAGE_PAT_1 }}
 
 jobs:
 
