@@ -16,6 +16,13 @@
   - Improved product post type registration with better UI settings
   - Added CSS styling for product editing interface
   - Fixed function dependency between subscriptions and products modules
+  
+- Fixed activation and capability issues
+  - Fixed capability type definition to use correct singular/plural format
+  - Added proper capability management during activation
+  - Fixed activation hook registration
+  - Added rewrite rules flushing during activation
+  - Fixed "map_meta_cap called incorrectly" notice
 
 ## 1.0.1 - 2025-04-11
 

@@ -140,4 +140,7 @@ class Addon {
 }
 
 // Initialize the addon
-new Addon();
+$members_subscriptions_addon = new Addon();
+
+// Make sure the activation hook is properly registered
+register_activation_hook(__FILE__, [$members_subscriptions_addon, 'activate']);

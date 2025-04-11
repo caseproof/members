@@ -41,14 +41,21 @@ class Admin_Notifications {
         
         // If DB version is less than 1.0.2, show notification to run DB update
         if (version_compare($current_db_version, '1.0.2', '<')) {
-            self::add_notification(
-                'database_update',
-                __('Database Update Required: Members Subscriptions needs to update its database tables. This is required to use the product creation features.', 'members'),
-                'warning',
-                true,
-                'https://members-plugin.com/docs/subscriptions/database-updates/',
-                admin_url('admin.php?page=members-subscriptions&action=update_database')
-            );
+            // Check if products_meta table exists as an additional check
+            global $wpdb;
+            $table_name = $wpdb->prefix . 'members_products_meta';
+            $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
+            
+            if (!$table_exists) {
+                self::add_notification(
+                    'database_update',
+                    __('Database Update Required: Members Subscriptions needs to update its database tables. This is required to use the product creation features.', 'members'),
+                    'warning',
+                    true,
+                    'https://members-plugin.com/docs/subscriptions/database-updates/',
+                    admin_url('admin.php?page=members-subscriptions&action=update_database')
+                );
+            }
         }
     }
 
@@ -221,5 +228,5 @@ class Admin_Notifications {
     }
 }
 
-// Initialize notifications
-Admin_Notifications::init();
+// Initialize notifications on a later hook to ensure everything is loaded
+add_action('admin_init', [__NAMESPACE__ . '\Admin_Notifications', 'init'], 5);

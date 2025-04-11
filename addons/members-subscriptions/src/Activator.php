@@ -19,6 +19,27 @@ class Activator {
         self::setup_database_tables();
         self::setup_capabilities();
         self::setup_roles();
+        
+        // Register post types then flush rewrite rules
+        // This should only happen on activation to avoid performance issues
+        self::flush_rewrite_rules();
+    }
+    
+    /**
+     * Flush rewrite rules to ensure custom post type URLs work correctly
+     * Only called during activation
+     *
+     * @return void 
+     */
+    private static function flush_rewrite_rules() {
+        // Make sure post types are registered before flushing
+        if (class_exists('\\Members\\Subscriptions\\Plugin')) {
+            $plugin = \Members\Subscriptions\Plugin::get_instance();
+            $plugin->register_post_types();
+        }
+        
+        // Flush rewrite rules
+        flush_rewrite_rules();
     }
 
     /**
@@ -135,6 +156,16 @@ class Activator {
             
             // Product capabilities
             $role->add_cap('manage_subscription_products');
+            
+            // Make sure admin has all the required post type capabilities
+            $role->add_cap('edit_members_product');
+            $role->add_cap('read_members_product');
+            $role->add_cap('delete_members_product');
+            $role->add_cap('edit_members_products');
+            $role->add_cap('edit_others_members_products');
+            $role->add_cap('publish_members_products');
+            $role->add_cap('read_private_members_products');
+            $role->add_cap('delete_members_products');
             
             // Gateway capabilities
             $role->add_cap('manage_payment_gateways');

@@ -156,6 +156,13 @@ class Plugin {
                 wp_die(__('You do not have sufficient permissions to perform this action.', 'members'));
             }
             
+            // Make sure migration classes are loaded
+            require_once __DIR__ . '/migrations/class-migration.php';
+            require_once __DIR__ . '/migrations/class-migration-manager.php';
+            require_once __DIR__ . '/migrations/class-migration-1-0-0.php';
+            require_once __DIR__ . '/migrations/class-migration-1-0-1.php';
+            require_once __DIR__ . '/migrations/class-migration-1-0-2.php';
+            
             // Run migrations
             $migration_manager = new Migrations\Migration_Manager();
             $results = $migration_manager->migrate();
@@ -229,17 +236,18 @@ class Plugin {
             'publicly_queryable'  => true,
             'show_ui'             => true,
             'show_in_menu'        => false, // We'll add it as a submenu in register_admin_menu
-            'capability_type'     => 'post',
+            'capability_type'     => ['members_product', 'members_products'], // Correct singular/plural format
             'capabilities'        => [
                 'edit_post'              => 'manage_subscription_products',
                 'read_post'              => 'manage_subscription_products',
                 'delete_post'            => 'manage_subscription_products',
                 'edit_posts'             => 'manage_subscription_products',
                 'edit_others_posts'      => 'manage_subscription_products',
+                'delete_posts'           => 'manage_subscription_products', // Added this capability
                 'publish_posts'          => 'manage_subscription_products',
                 'read_private_posts'     => 'manage_subscription_products',
             ],
-            'map_meta_cap'        => true,
+            'map_meta_cap'        => true, // This is correct, but WordPress will do specific checks
             'hierarchical'        => false,
             'rewrite'             => [
                 'slug' => 'membership-products',
@@ -251,6 +259,9 @@ class Plugin {
             'show_in_rest'        => true,
             'menu_icon'           => 'dashicons-cart',
         ]);
+        
+        // Flush rewrite rules only on activation, not on every page load
+        // We'll handle this in the Activator class
     }
 
     /**
