@@ -33,6 +33,9 @@
 - Fixed syntax errors
   - Fixed unescaped apostrophe in Members add-ons configuration (addons.php)
   - Fixed unescaped apostrophe in Stripe gateway settings (class-stripe-gateway.php)
+  
+- Fixed PHP compatibility errors
+  - Fixed incompatible method declaration in Renewal_Reminder_Email class
 
 ## 1.0.0 - Initial Release
 
