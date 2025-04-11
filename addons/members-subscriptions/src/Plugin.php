@@ -119,11 +119,17 @@ class Plugin {
         // Load logging functions
         require_once __DIR__ . '/functions-logging.php';
         
+        // Load database functions
+        require_once __DIR__ . '/functions-db.php';
+        
         // Load email functions
         require_once __DIR__ . '/functions-emails.php';
         
         // Load renewal functions
         require_once __DIR__ . '/functions-renewals.php';
+        
+        // Load product functions
+        require_once __DIR__ . '/functions-products.php';
         
         // Load template loader
         require_once __DIR__ . '/class-template-loader.php';

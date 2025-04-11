@@ -60,21 +60,32 @@ $period_label = isset($period_options[$period_type]) ? $period_options[$period_t
                                 <?php printf(__(' every %d %s', 'members'), $period, $period_label); ?>
                             <?php endif; ?>
                         </div>
-                        
-                        <?php if (is_user_logged_in()) : ?>
-                            <div class="members-product-purchase">
-                                <a href="<?php echo esc_url(add_query_arg('product_id', get_the_ID(), site_url('/checkout/'))); ?>" class="button">
-                                    <?php _e('Subscribe Now', 'members'); ?>
-                                </a>
-                            </div>
-                        <?php else : ?>
-                            <div class="members-product-login-required">
-                                <p><?php _e('Please log in to purchase this membership.', 'members'); ?></p>
-                                <a href="<?php echo esc_url(wp_login_url(get_permalink())); ?>" class="button">
-                                    <?php _e('Log In', 'members'); ?>
-                                </a>
-                            </div>
-                        <?php endif; ?>
+                    </div>
+
+                    <div class="members-subscription-form-container">
+                        <h3><?php _e('Subscribe Now', 'members'); ?></h3>
+                        <?php 
+                        // Include the subscription form
+                        if (function_exists('\\Members\\Subscriptions\\Plugin::get_instance')) {
+                            $plugin = \Members\Subscriptions\Plugin::get_instance();
+                            echo $plugin->subscription_form_shortcode(['product_id' => get_the_ID()]);
+                        } else {
+                            // Fallback in case the plugin instance isn't available
+                            if (is_user_logged_in()) : ?>
+                                <div class="members-product-purchase">
+                                    <a href="<?php echo esc_url(add_query_arg('product_id', get_the_ID(), site_url('/checkout/'))); ?>" class="button">
+                                        <?php _e('Subscribe Now', 'members'); ?>
+                                    </a>
+                                </div>
+                            <?php else : ?>
+                                <div class="members-product-login-required">
+                                    <p><?php _e('Please log in to purchase this membership.', 'members'); ?></p>
+                                    <a href="<?php echo esc_url(wp_login_url(get_permalink())); ?>" class="button">
+                                        <?php _e('Log In', 'members'); ?>
+                                    </a>
+                                </div>
+                            <?php endif;
+                        } ?>
                     </div>
                 </div>
             </article>

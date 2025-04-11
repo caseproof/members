@@ -407,11 +407,22 @@ class Template_Loader {
         }
         
         echo '</p>';
+        echo '</div>';
         
-        if (is_user_logged_in()) {
-            echo '<p><a href="' . esc_url(add_query_arg('product_id', $post->ID, site_url('/checkout/'))) . '" class="button" style="display: inline-block; padding: 10px 20px; background: #0073aa; color: white; text-decoration: none; border-radius: 3px;">Subscribe Now</a></p>';
+        echo '<div style="margin-top: 30px;">';
+        echo '<h3>Subscribe Now</h3>';
+        
+        // Include the subscription form
+        if (class_exists('\\Members\\Subscriptions\\Plugin')) {
+            $plugin = Plugin::get_instance();
+            echo $plugin->subscription_form_shortcode(['product_id' => $post->ID]);
         } else {
-            echo '<p>Please <a href="' . wp_login_url(get_permalink()) . '" style="color: #0073aa;">login</a> to purchase this membership.</p>';
+            // Fallback in case the plugin instance isn't available
+            if (is_user_logged_in()) {
+                echo '<p><a href="' . esc_url(add_query_arg('product_id', $post->ID, site_url('/checkout/'))) . '" class="button" style="display: inline-block; padding: 10px 20px; background: #0073aa; color: white; text-decoration: none; border-radius: 3px;">Subscribe Now</a></p>';
+            } else {
+                echo '<p>Please <a href="' . wp_login_url(get_permalink()) . '" style="color: #0073aa;">login</a> to purchase this membership.</p>';
+            }
         }
         
         echo '</div>';

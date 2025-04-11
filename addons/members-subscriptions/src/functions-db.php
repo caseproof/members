@@ -523,12 +523,25 @@ function count_transactions($args = []) {
  * @return bool Whether the update was successful
  */
 function update_product_meta($product_id, $key, $value) {
+    // Always update regular post meta as a fallback
+    update_post_meta($product_id, $key, $value);
+    
     global $wpdb;
+    
+    // Check if the table exists
+    $table_name = get_products_meta_table_name();
+    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'");
+    
+    if (!$table_exists) {
+        // If the table doesn't exist, we can't update custom meta
+        // But the post meta is already updated above, so return true
+        return true;
+    }
     
     // Check if meta exists
     $meta_id = $wpdb->get_var(
         $wpdb->prepare(
-            "SELECT id FROM " . get_products_meta_table_name() . " WHERE product_id = %d AND meta_key = %s",
+            "SELECT id FROM " . $table_name . " WHERE product_id = %d AND meta_key = %s",
             $product_id,
             $key
         )
@@ -537,7 +550,7 @@ function update_product_meta($product_id, $key, $value) {
     if ($meta_id) {
         // Update existing meta
         return $wpdb->update(
-            get_products_meta_table_name(),
+            $table_name,
             ['meta_value' => maybe_serialize($value)],
             ['id' => $meta_id],
             ['%s'],
@@ -546,7 +559,7 @@ function update_product_meta($product_id, $key, $value) {
     } else {
         // Insert new meta
         return $wpdb->insert(
-            get_products_meta_table_name(),
+            $table_name,
             [
                 'product_id' => $product_id,
                 'meta_key'   => $key,
@@ -562,27 +575,41 @@ function update_product_meta($product_id, $key, $value) {
  *
  * @param int    $product_id Product ID
  * @param string $key        Meta key
- * @param bool   $single     Whether to return a single value
- * @return mixed Meta value(s)
+ * @param mixed  $default    Default value if meta doesn't exist
+ * @return mixed Meta value
  */
-function get_product_meta($product_id, $key, $single = true) {
+function get_product_meta($product_id, $key, $default = '') {
     global $wpdb;
     
-    $meta_values = $wpdb->get_col(
-        $wpdb->prepare(
-            "SELECT meta_value FROM " . get_products_meta_table_name() . " WHERE product_id = %d AND meta_key = %s",
-            $product_id,
-            $key
-        )
-    );
+    // Get meta from custom table
+    $table_name = get_products_meta_table_name();
     
-    if (empty($meta_values)) {
-        return $single ? '' : [];
+    // Check if table exists
+    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'");
+    
+    if ($table_exists) {
+        $value = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT meta_value FROM $table_name WHERE product_id = %d AND meta_key = %s",
+                $product_id,
+                $key
+            )
+        );
+        
+        if ($value !== null) {
+            $unserialized = maybe_unserialize($value);
+            return $unserialized;
+        }
     }
     
-    $meta_values = array_map('maybe_unserialize', $meta_values);
+    // Fallback to post meta if custom table doesn't exist or value not found
+    $value = get_post_meta($product_id, $key, true);
     
-    return $single ? $meta_values[0] : $meta_values;
+    if (empty($value) && $value !== '0' && $value !== 0) {
+        return $default;
+    }
+    
+    return $value;
 }
 
 /**

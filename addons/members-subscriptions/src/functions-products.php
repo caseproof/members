@@ -17,8 +17,75 @@ function init_product_hooks() {
     
     // Save product meta data
     add_action('save_post_members_product', __NAMESPACE__ . '\save_product_meta', 10, 3);
+    
+    // Update the meta table for existing products on access
+    add_action('the_post', __NAMESPACE__ . '\maybe_update_product_meta_table');
 }
 init_product_hooks();
+
+/**
+ * Update product meta table for existing products when viewed
+ * This ensures that meta data is properly stored
+ */
+function maybe_update_product_meta_table($post) {
+    if ($post->post_type !== 'members_product') {
+        return;
+    }
+    
+    // Basic product meta fields to ensure are stored in the meta table
+    $default_fields = [
+        '_price' => '0.00',
+        '_recurring' => '0', 
+        '_period' => '1',
+        '_period_type' => 'month',
+        '_has_trial' => '0',
+        '_trial_days' => '0',
+        '_trial_price' => '0.00',
+        '_membership_roles' => []
+    ];
+    
+    foreach ($default_fields as $key => $default) {
+        // Use get_post_meta directly to avoid infinite loop
+        $value = get_post_meta($post->ID, $key, true);
+        
+        // If meta exists in post meta but not in our table, add it
+        if (!empty($value) || $value === '0' || $value === 0) {
+            // Check if it exists in our custom table
+            global $wpdb;
+            $table_name = $wpdb->prefix . 'members_products_meta';
+            
+            // Check if table exists
+            $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'");
+            
+            if ($table_exists) {
+                $meta_exists = $wpdb->get_var(
+                    $wpdb->prepare(
+                        "SELECT COUNT(*) FROM $table_name WHERE product_id = %d AND meta_key = %s",
+                        $post->ID,
+                        $key
+                    )
+                );
+                
+                if (!$meta_exists) {
+                    // Add to meta table
+                    if (is_array($value)) {
+                        $value = maybe_serialize($value);
+                    }
+                    
+                    $wpdb->insert(
+                        $table_name,
+                        [
+                            'product_id' => $post->ID,
+                            'meta_key' => $key,
+                            'meta_value' => $value
+                        ],
+                        ['%d', '%s', '%s']
+                    );
+                }
+            }
+        }
+    }
+}
 
 // We use get_subscription_period_options() from functions-subscriptions.php
 
@@ -534,4 +601,130 @@ function save_product_meta($post_id, $post, $update) {
             update_product_meta($post_id, '_membership_role', '');
         }
     }
+}
+
+/**
+ * Get product meta data
+ *
+ * @param int    $product_id  The product ID
+ * @param string $meta_key    The meta key to retrieve
+ * @param mixed  $default     Default value if meta doesn't exist
+ * @return mixed The meta value
+ */
+function get_product_meta($product_id, $meta_key, $default = '') {
+    global $wpdb;
+    
+    // Get meta from custom table
+    $table_name = $wpdb->prefix . 'members_products_meta';
+    
+    // Check if table exists
+    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'");
+    
+    if ($table_exists) {
+        $value = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT meta_value FROM $table_name WHERE product_id = %d AND meta_key = %s",
+                $product_id,
+                $meta_key
+            )
+        );
+        
+        if ($value !== null) {
+            $unserialized = maybe_unserialize($value);
+            return $unserialized;
+        }
+    }
+    
+    // Fallback to post meta if custom table doesn't exist or value not found
+    $value = get_post_meta($product_id, $meta_key, true);
+    
+    if (empty($value) && $value !== '0' && $value !== 0) {
+        return $default;
+    }
+    
+    return $value;
+}
+
+/**
+ * Format subscription period
+ *
+ * @param int    $period      The period value
+ * @param string $period_type The period type (day, week, month, year)
+ * @return string Formatted period string
+ */
+function format_subscription_period($period, $period_type) {
+    $period = intval($period);
+    $period_options = array(
+        'day' => _n('daily', 'every %d days', $period, 'members'),
+        'week' => _n('weekly', 'every %d weeks', $period, 'members'),
+        'month' => _n('monthly', 'every %d months', $period, 'members'),
+        'year' => _n('yearly', 'every %d years', $period, 'members'),
+    );
+    
+    $format = isset($period_options[$period_type]) ? $period_options[$period_type] : '';
+    
+    if (empty($format)) {
+        return '';
+    }
+    
+    if ($period === 1) {
+        return $format; // Returns "daily", "weekly", etc.
+    }
+    
+    return sprintf($format, $period); // Returns "every X days", "every X weeks", etc.
+}
+
+/**
+ * Check if user has access to a product
+ *
+ * @param int $user_id    The user ID
+ * @param int $product_id The product ID
+ * @return bool True if user has access, false otherwise
+ */
+function user_has_access($user_id, $product_id) {
+    // Check if user is logged in
+    if (!$user_id) {
+        return false;
+    }
+    
+    // Check if user has an active subscription for this product
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'members_subscriptions';
+    
+    // Check if table exists
+    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'");
+    
+    if ($table_exists) {
+        $subscription = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT * FROM $table_name WHERE user_id = %d AND product_id = %d AND status = 'active'",
+                $user_id,
+                $product_id
+            )
+        );
+        
+        if ($subscription) {
+            return true;
+        }
+    }
+    
+    // Check if user has the required role
+    $user = get_userdata($user_id);
+    if (!$user) {
+        return false;
+    }
+    
+    $product_roles = get_product_meta($product_id, '_membership_roles', []);
+    
+    if (empty($product_roles)) {
+        return false;
+    }
+    
+    foreach ($product_roles as $role) {
+        if (in_array($role, (array) $user->roles)) {
+            return true;
+        }
+    }
+    
+    return false;
 }
