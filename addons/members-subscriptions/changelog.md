@@ -29,6 +29,10 @@
 - Fixed fatal error with duplicate function declaration
   - Removed duplicate `get_subscription()` function in functions-subscriptions.php
   - Fixed references to use the function from functions-db.php
+  
+- Fixed syntax errors
+  - Fixed unescaped apostrophe in Members add-ons configuration (addons.php)
+  - Fixed unescaped apostrophe in Stripe gateway settings (class-stripe-gateway.php)
 
 ## 1.0.0 - Initial Release
 

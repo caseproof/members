@@ -145,7 +145,7 @@ class Stripe_Gateway extends Gateway {
             'statement_descriptor' => [
                 'title'       => __('Statement Descriptor', 'members'),
                 'type'        => 'text',
-                'description' => __('Extra information about a charge. This will appear on your customer's credit card statement.', 'members'),
+                'description' => __('Extra information about a charge. This will appear on your customer\'s credit card statement.', 'members'),
                 'default'     => get_bloginfo('name'),
             ],
         ];
