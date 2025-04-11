@@ -20,19 +20,7 @@ function init_product_hooks() {
 }
 init_product_hooks();
 
-/**
- * Get subscription period options for dropdowns
- * 
- * @return array Array of period options
- */
-function get_subscription_period_options() {
-    return [
-        'day'   => __('Day(s)', 'members'),
-        'week'  => __('Week(s)', 'members'),
-        'month' => __('Month(s)', 'members'),
-        'year'  => __('Year(s)', 'members'),
-    ];
-}
+// We use get_subscription_period_options() from functions-subscriptions.php
 
 /**
  * Process subscription form submission

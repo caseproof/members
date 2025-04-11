@@ -82,8 +82,8 @@ class Addon {
         $files = array(
             'src/functions-capabilities.php',
             'src/functions-roles.php',
+            'src/functions-subscriptions.php', // Load this before products.php since it has dependencies
             'src/functions-products.php',
-            'src/functions-subscriptions.php',
             'src/functions-transactions.php',
             'src/functions-users.php',
             'src/functions-gateways.php',

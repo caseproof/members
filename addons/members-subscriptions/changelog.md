@@ -15,7 +15,7 @@
   - Added dedicated submenu page for managing products
   - Improved product post type registration with better UI settings
   - Added CSS styling for product editing interface
-  - Added helper function for subscription period options
+  - Fixed function dependency between subscriptions and products modules
 
 ## 1.0.1 - 2025-04-11
 
