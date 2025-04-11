@@ -10,6 +10,12 @@
   - Added admin notification system for database updates
   - Added database update utility
   - Updated version markers throughout codebase
+  
+- Added Subscription Products admin menu
+  - Added dedicated submenu page for managing products
+  - Improved product post type registration with better UI settings
+  - Added CSS styling for product editing interface
+  - Added helper function for subscription period options
 
 ## 1.0.1 - 2025-04-11
 

@@ -1,0 +1,98 @@
+/**
+ * Product admin styling
+ */
+
+/* Meta box styling */
+.members-product-section {
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.members-product-section:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.members-product-section h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 14px;
+    color: #23282d;
+}
+
+.members-product-field {
+    margin-bottom: 12px;
+}
+
+.members-product-field label {
+    display: inline-block;
+    min-width: 120px;
+    font-weight: 600;
+}
+
+.members-roles-list {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    padding: 8px 12px;
+    background: #f9f9f9;
+    margin: 5px 0 10px 0;
+}
+
+.members-roles-list p {
+    margin: 6px 0;
+}
+
+/* Price inputs */
+input.members-price-field {
+    width: 100px;
+}
+
+/* Input groups */
+.members-input-group {
+    display: flex;
+    align-items: center;
+}
+
+.members-input-group > * {
+    margin-right: 5px;
+}
+
+.members-input-group > *:last-child {
+    margin-right: 0;
+}
+
+/* Hidden options sections */
+#members-recurring-options,
+#members-trial-options,
+#members-one-time-options,
+#members-access-period-options {
+    margin-left: 20px;
+    padding: 10px;
+    background: #f9f9f9;
+    border-left: 3px solid #ccd0d4;
+}
+
+/* Description text */
+.members-product-description {
+    color: #666;
+    font-style: italic;
+    margin-top: 4px;
+    display: block;
+}
+
+/* Checkboxes */
+.members-checkbox-wrap {
+    margin-bottom: 10px;
+}
+
+.members-checkbox-wrap label {
+    font-weight: normal;
+}
+
+/* Select inputs */
+.members-select-field {
+    min-width: 150px;
+}

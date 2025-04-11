@@ -222,10 +222,13 @@ class Plugin {
                 'search_items'       => __('Search Subscription Products', 'members'),
                 'not_found'          => __('No subscription products found', 'members'),
                 'not_found_in_trash' => __('No subscription products found in Trash', 'members'),
+                'menu_name'          => __('Products', 'members'), // Shorter name for menu
+                'all_items'          => __('All Products', 'members'),
             ],
-            'public'              => false,
+            'public'              => true, // Changed to true to allow frontend viewing
+            'publicly_queryable'  => true,
             'show_ui'             => true,
-            'show_in_menu'        => 'members',
+            'show_in_menu'        => false, // We'll add it as a submenu in register_admin_menu
             'capability_type'     => 'post',
             'capabilities'        => [
                 'edit_post'              => 'manage_subscription_products',
@@ -238,11 +241,15 @@ class Plugin {
             ],
             'map_meta_cap'        => true,
             'hierarchical'        => false,
-            'rewrite'             => false,
+            'rewrite'             => [
+                'slug' => 'membership-products',
+                'with_front' => false
+            ],
             'menu_position'       => null,
             'supports'            => ['title', 'editor', 'thumbnail'],
             'has_archive'         => false,
             'show_in_rest'        => true,
+            'menu_icon'           => 'dashicons-cart',
         ]);
     }
 
@@ -250,6 +257,16 @@ class Plugin {
      * Register admin menu items
      */
     public function register_admin_menu() {
+        // Subscription Products page
+        add_submenu_page(
+            'members',
+            __('Subscription Products', 'members'),
+            __('Subscription Products', 'members'),
+            'manage_subscription_products',
+            'edit.php?post_type=members_product',
+            null
+        );
+        
         // Subscriptions page
         add_submenu_page(
             'members',
@@ -338,10 +355,22 @@ class Plugin {
      * Enqueue admin scripts and styles
      */
     public function enqueue_admin_scripts($hook) {
+        // Determine if this is the product edit or new screen
+        $is_product_page = (
+            get_current_screen() && 
+            get_current_screen()->post_type === 'members_product' && 
+            (get_current_screen()->base === 'post' || get_current_screen()->base === 'post-new')
+        );
+        
+        // Common Members plugin pages
+        $is_members_page = (
+            strpos($hook, 'members-subscriptions') !== false || 
+            strpos($hook, 'members-transactions') !== false || 
+            strpos($hook, 'members-gateways') !== false
+        );
+        
         // Only enqueue on our plugin pages
-        if (strpos($hook, 'members-subscriptions') === false && 
-            strpos($hook, 'members-transactions') === false && 
-            strpos($hook, 'members-gateways') === false) {
+        if (!$is_members_page && !$is_product_page) {
             return;
         }
         
@@ -352,6 +381,16 @@ class Plugin {
             [],
             self::VERSION
         );
+        
+        // Enqueue specific styles for product administration
+        if ($is_product_page) {
+            wp_enqueue_style(
+                'members-products-admin',
+                plugin_dir_url(dirname(__DIR__)) . 'css/admin/products-style.css',
+                [],
+                self::VERSION
+            );
+        }
         
         wp_enqueue_script(
             'members-subscriptions-admin',
