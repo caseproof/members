@@ -73,8 +73,15 @@ class Addon {
      * @return void
      */
     private function load_files() {
+        // Load core classes first
         require_once $this->dir . 'src/Activator.php';
         require_once $this->dir . 'src/Plugin.php';
+        
+        // Load logger-related files early
+        require_once $this->dir . 'src/class-logger.php';
+        require_once $this->dir . 'src/functions-logging.php';
+        
+        // Load other required files
         require_once $this->dir . 'src/functions-db.php';
         require_once $this->dir . 'src/class-admin-notifications.php';
         

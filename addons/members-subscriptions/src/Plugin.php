@@ -100,7 +100,16 @@ class Plugin {
      * Initialize database and run migrations
      */
     public function initialize_database() {
-        // Include migration manager
+        // Make sure required classes are loaded first
+        if (file_exists(__DIR__ . '/class-logger.php')) {
+            require_once __DIR__ . '/class-logger.php';
+        }
+        
+        if (file_exists(__DIR__ . '/functions-logging.php')) {
+            require_once __DIR__ . '/functions-logging.php';
+        }
+        
+        // Include migration manager and migrations
         require_once __DIR__ . '/migrations/class-migration.php';
         require_once __DIR__ . '/migrations/class-migration-manager.php';
         require_once __DIR__ . '/migrations/class-migration-1-0-0.php';
@@ -115,10 +124,12 @@ class Plugin {
         if (version_compare($current_version, $latest_version, '<')) {
             $results = $migration_manager->migrate();
             
-            // Log migration results
-            foreach ($results as $result) {
-                $log_level = $result['success'] ? 'info' : 'error';
-                log_message($result['message'], $log_level);
+            // Log migration results - only if logging functions are available
+            if (function_exists('\\Members\\Subscriptions\\log_message')) {
+                foreach ($results as $result) {
+                    $log_level = $result['success'] ? 'info' : 'error';
+                    log_message($result['message'], $log_level);
+                }
             }
         }
     }
@@ -156,7 +167,11 @@ class Plugin {
                 wp_die(__('You do not have sufficient permissions to perform this action.', 'members'));
             }
             
-            // Make sure migration classes are loaded
+            // Make sure required classes are loaded
+            require_once __DIR__ . '/class-logger.php'; // Load Logger class first
+            require_once __DIR__ . '/functions-logging.php'; // Load logging functions
+            
+            // Load migration classes
             require_once __DIR__ . '/migrations/class-migration.php';
             require_once __DIR__ . '/migrations/class-migration-manager.php';
             require_once __DIR__ . '/migrations/class-migration-1-0-0.php';
@@ -236,18 +251,21 @@ class Plugin {
             'publicly_queryable'  => true,
             'show_ui'             => true,
             'show_in_menu'        => false, // We'll add it as a submenu in register_admin_menu
-            'capability_type'     => ['members_product', 'members_products'], // Correct singular/plural format
+            // Define a custom capability type
+            'capability_type'     => 'post', // Using the standard post capabilities to avoid warnings
+            // Override specific capabilities without using map_meta_cap
             'capabilities'        => [
-                'edit_post'              => 'manage_subscription_products',
-                'read_post'              => 'manage_subscription_products',
-                'delete_post'            => 'manage_subscription_products',
+                'publish_posts'          => 'manage_subscription_products',
                 'edit_posts'             => 'manage_subscription_products',
                 'edit_others_posts'      => 'manage_subscription_products',
-                'delete_posts'           => 'manage_subscription_products', // Added this capability
-                'publish_posts'          => 'manage_subscription_products',
+                'delete_posts'           => 'manage_subscription_products',
+                'delete_others_posts'    => 'manage_subscription_products',
                 'read_private_posts'     => 'manage_subscription_products',
+                'edit_post'              => 'manage_subscription_products',
+                'delete_post'            => 'manage_subscription_products',
+                'read_post'              => 'manage_subscription_products',
             ],
-            'map_meta_cap'        => true, // This is correct, but WordPress will do specific checks
+            'map_meta_cap'        => false, // Disable meta cap mapping for this post type
             'hierarchical'        => false,
             'rewrite'             => [
                 'slug' => 'membership-products',

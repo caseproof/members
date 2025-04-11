@@ -279,7 +279,10 @@ class Migration_Manager {
      * @param Migration $migration
      */
     private function log_migration_start($migration) {
-        if (function_exists('\\Members\\Subscriptions\\log_message')) {
+        // Check if logging function exists and Logger class exists to avoid fatal errors
+        if (function_exists('\\Members\\Subscriptions\\log_message') && 
+            class_exists('\\Members\\Subscriptions\\Logger')) {
+            
             \Members\Subscriptions\log_message(
                 sprintf('Starting migration to version %s: %s', $migration->get_version(), $migration->get_description()),
                 'info'
@@ -293,7 +296,8 @@ class Migration_Manager {
      * @param Migration $migration
      */
     private function log_migration_success($migration) {
-        if (function_exists('\\Members\\Subscriptions\\log_message')) {
+        if (function_exists('\\Members\\Subscriptions\\log_message') && 
+            class_exists('\\Members\\Subscriptions\\Logger')) {
             \Members\Subscriptions\log_message(
                 sprintf('Successfully migrated to version %s', $migration->get_version()),
                 'info'
@@ -307,7 +311,8 @@ class Migration_Manager {
      * @param Migration $migration
      */
     private function log_migration_failure($migration) {
-        if (function_exists('\\Members\\Subscriptions\\log_message')) {
+        if (function_exists('\\Members\\Subscriptions\\log_message') && 
+            class_exists('\\Members\\Subscriptions\\Logger')) {
             \Members\Subscriptions\log_message(
                 sprintf('Failed to migrate to version %s', $migration->get_version()),
                 'error'
@@ -322,7 +327,8 @@ class Migration_Manager {
      * @param \Exception $exception
      */
     private function log_migration_exception($migration, $exception) {
-        if (function_exists('\\Members\\Subscriptions\\log_message')) {
+        if (function_exists('\\Members\\Subscriptions\\log_message') && 
+            class_exists('\\Members\\Subscriptions\\Logger')) {
             \Members\Subscriptions\log_message(
                 sprintf(
                     'Exception during migration to version %s: %s in %s on line %s',
@@ -342,7 +348,8 @@ class Migration_Manager {
      * @param Migration $migration
      */
     private function log_rollback_start($migration) {
-        if (function_exists('\\Members\\Subscriptions\\log_message')) {
+        if (function_exists('\\Members\\Subscriptions\\log_message') && 
+            class_exists('\\Members\\Subscriptions\\Logger')) {
             \Members\Subscriptions\log_message(
                 sprintf('Starting rollback from version %s', $migration->get_version()),
                 'info'
@@ -356,7 +363,8 @@ class Migration_Manager {
      * @param Migration $migration
      */
     private function log_rollback_success($migration) {
-        if (function_exists('\\Members\\Subscriptions\\log_message')) {
+        if (function_exists('\\Members\\Subscriptions\\log_message') && 
+            class_exists('\\Members\\Subscriptions\\Logger')) {
             \Members\Subscriptions\log_message(
                 sprintf('Successfully rolled back from version %s', $migration->get_version()),
                 'info'
@@ -370,7 +378,8 @@ class Migration_Manager {
      * @param Migration $migration
      */
     private function log_rollback_failure($migration) {
-        if (function_exists('\\Members\\Subscriptions\\log_message')) {
+        if (function_exists('\\Members\\Subscriptions\\log_message') && 
+            class_exists('\\Members\\Subscriptions\\Logger')) {
             \Members\Subscriptions\log_message(
                 sprintf('Failed to roll back from version %s', $migration->get_version()),
                 'error'
@@ -385,7 +394,8 @@ class Migration_Manager {
      * @param \Exception $exception
      */
     private function log_rollback_exception($migration, $exception) {
-        if (function_exists('\\Members\\Subscriptions\\log_message')) {
+        if (function_exists('\\Members\\Subscriptions\\log_message') && 
+            class_exists('\\Members\\Subscriptions\\Logger')) {
             \Members\Subscriptions\log_message(
                 sprintf(
                     'Exception during rollback from version %s: %s in %s on line %s',

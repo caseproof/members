@@ -23,6 +23,8 @@
   - Fixed activation hook registration
   - Added rewrite rules flushing during activation
   - Fixed "map_meta_cap called incorrectly" notice
+  - Fixed class loading order for Logger and Migration classes
+  - Improved error handling in migration process
 
 ## 1.0.1 - 2025-04-11
 
