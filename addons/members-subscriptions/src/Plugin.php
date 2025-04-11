@@ -122,6 +122,9 @@ class Plugin {
         // Load database functions
         require_once __DIR__ . '/functions-db.php';
         
+        // Load subscription functions
+        require_once __DIR__ . '/functions-subscriptions.php';
+        
         // Load email functions
         require_once __DIR__ . '/functions-emails.php';
         

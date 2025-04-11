@@ -604,35 +604,7 @@ function save_product_meta($post_id, $post, $update) {
 }
 
 // get_product_meta function is now defined in functions-db.php
-
-/**
- * Format subscription period
- *
- * @param int    $period      The period value
- * @param string $period_type The period type (day, week, month, year)
- * @return string Formatted period string
- */
-function format_subscription_period($period, $period_type) {
-    $period = intval($period);
-    $period_options = array(
-        'day' => _n('daily', 'every %d days', $period, 'members'),
-        'week' => _n('weekly', 'every %d weeks', $period, 'members'),
-        'month' => _n('monthly', 'every %d months', $period, 'members'),
-        'year' => _n('yearly', 'every %d years', $period, 'members'),
-    );
-    
-    $format = isset($period_options[$period_type]) ? $period_options[$period_type] : '';
-    
-    if (empty($format)) {
-        return '';
-    }
-    
-    if ($period === 1) {
-        return $format; // Returns "daily", "weekly", etc.
-    }
-    
-    return sprintf($format, $period); // Returns "every X days", "every X weeks", etc.
-}
+// format_subscription_period function is defined in functions-subscriptions.php
 
 /**
  * Check if user has access to a product

@@ -96,7 +96,11 @@ echo '</div>';
 // Billing period
 echo '<div class="members-subscription-plan-billing">';
 if ($is_recurring) {
-    echo esc_html(sprintf(__('Billed %s', 'members'), format_subscription_period($period, $period_type)));
+    if (function_exists('\\Members\\Subscriptions\\format_subscription_period')) {
+        echo esc_html(sprintf(__('Billed %s', 'members'), format_subscription_period($period, $period_type)));
+    } else {
+        echo esc_html(sprintf(__('Billed every %d %s', 'members'), $period, $period_type));
+    }
     
     if ($has_trial && $trial_days > 0) {
         echo '<div class="members-trial-details">';
