@@ -25,6 +25,8 @@
   - Fixed "map_meta_cap called incorrectly" notice
   - Fixed class loading order for Logger and Migration classes
   - Improved error handling in migration process
+  - Added fallbacks for missing Members plugin functions
+  - Enhanced dependency checking for robust plugin initialization
 
 ## 1.0.1 - 2025-04-11
 

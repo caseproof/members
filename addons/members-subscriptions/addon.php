@@ -112,7 +112,40 @@ class Addon {
      * @return bool
      */
     public function is_enabled() {
-        return members_is_addon_active( 'members-subscriptions' );
+        // Check if the members_is_addon_active function exists
+        if (function_exists('members_is_addon_active')) {
+            return members_is_addon_active('members-subscriptions');
+        }
+        
+        // Fallback: Check if the main Members plugin is active
+        return $this->is_members_active();
+    }
+    
+    /**
+     * Check if the main Members plugin is active.
+     *
+     * @return bool
+     */
+    private function is_members_active() {
+        // First check if get_plugins function exists
+        if (!function_exists('get_plugins')) {
+            require_once ABSPATH . 'wp-admin/includes/plugin.php';
+        }
+        
+        // Check for the Members plugin
+        $activated = false;
+        
+        // First try is_plugin_active, which is more reliable but only works after plugins_loaded hook at prio 0
+        if (function_exists('is_plugin_active')) {
+            $activated = is_plugin_active('members/members.php');
+        }
+        
+        // If that doesn't work, check if the class exists
+        if (!$activated && class_exists('\\Members\\Plugin')) {
+            $activated = true;
+        }
+        
+        return $activated;
     }
 
     /**
@@ -122,11 +155,16 @@ class Addon {
      * @return void
      */
     public function activate() {
-        // Set the addon to active
-        members_activate_addon( 'members-subscriptions' );
+        // Try to mark addon as active in the main Members plugin
+        if (function_exists('members_activate_addon')) {
+            members_activate_addon('members-subscriptions');
+        } else {
+            // Fallback: Store our own activation status
+            update_option('members_subscriptions_active', true);
+        }
         
-        // Run activator if needed
-        if ( class_exists( '\Members\Subscriptions\Activator' ) ) {
+        // Run activator 
+        if (class_exists('\Members\Subscriptions\Activator')) {
             Activator::activate();
         }
     }
@@ -138,11 +176,16 @@ class Addon {
      * @return void
      */
     public function deactivate() {
-        // Set the addon to inactive
-        members_deactivate_addon( 'members-subscriptions' );
+        // Try to mark addon as inactive in the main Members plugin
+        if (function_exists('members_deactivate_addon')) {
+            members_deactivate_addon('members-subscriptions');
+        } else {
+            // Fallback: Store our own activation status
+            update_option('members_subscriptions_active', false);
+        }
         
         // Run any deactivation tasks
-        do_action( 'members_subscriptions_deactivate' );
+        do_action('members_subscriptions_deactivate');
     }
 }
 
