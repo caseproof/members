@@ -316,6 +316,7 @@ class Plugin {
                 'with_front' => false,
                 'pages' => true,
                 'feeds' => true,
+                'ep_mask' => EP_PERMALINK | EP_PAGES, // Ensure endpoints work
             ],
             'menu_position'       => null,
             'supports'            => ['title', 'editor', 'thumbnail', 'excerpt', 'comments'],
@@ -323,6 +324,21 @@ class Plugin {
             'show_in_rest'        => true, // Support REST API
             'menu_icon'           => 'dashicons-cart',
             'query_var'           => true, // Allow querying with 'members_product' var
+            'register_meta_box_cb' => function($post) {
+                // Register product meta boxes
+                add_meta_box(
+                    'members-product-settings',
+                    __('Product Settings', 'members'),
+                    function($post) {
+                        // This would usually be in a separate function, but we're keeping it here for simplicity
+                        // Include settings templates
+                        require_once __DIR__ . '/views/product-settings.php';
+                    },
+                    'members_product',
+                    'normal',
+                    'high'
+                );
+            },
         ]);
         
         // Flush rewrite rules only on activation, not on every page load
