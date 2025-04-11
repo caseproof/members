@@ -5,7 +5,7 @@ return array(
 	'members-privacy-caps' => array(
 		'url'         => '',
 		'title'       => 'Members - Privacy Caps',
-		'excerpt'     => 'Creates additional capabilities for control over WordPress’ privacy and personal data features (GDPR).'
+		'excerpt'     => 'Creates additional capabilities for control over WordPress' privacy and personal data features (GDPR).'
 	),
 
 	'members-admin-access' => array(
@@ -29,7 +29,7 @@ return array(
 	'members-role-levels' => array(
 		'url'         => '',
 		'title'       => 'Members - Role Levels',
-		'excerpt'     => 'Exposes the old user levels system, which fixes the WordPress author drop-down bug when users don’t have a role with one of the assigned levels.'
+		'excerpt'     => 'Exposes the old user levels system, which fixes the WordPress author drop-down bug when users don't have a role with one of the assigned levels.'
 	),
 
 	'members-role-hierarchy' => array(
@@ -72,6 +72,12 @@ return array(
 		'url'         => '',
 		'title'       => 'Members - WooCommerce Integration',
 		'excerpt'     => '<p>The Members - WooCommerce Integration add-on more nicely integrates the <a href="https://woocommerce.com/" target="_blank">WooCommerce</a> plugin capabilities into the Members plugin\'s role manager.</p>'
+	),
+
+	'members-subscriptions' => array(
+		'url'         => '',
+		'title'       => 'Members - Subscriptions',
+		'excerpt'     => '<p>Adds subscription and payment functionality to Members. Create membership products with associated roles, process payments via Stripe, and manage user subscriptions.</p>'
 	),
 
 	'memberpress-payments' => array(

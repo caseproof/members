@@ -76,6 +76,40 @@ function members_is_addon_active( $addon ) {
 }
 
 /**
+ * Activates an add-on.
+ *
+ * @since  2.3.0
+ * @access public
+ * @param  string  $addon   Add-on name/key (e.g. members-block-permissions)
+ * @return void
+ */
+function members_activate_addon( $addon ) {
+	$active_addons = get_option( 'members_active_addons', array() );
+	
+	if ( ! in_array( $addon, $active_addons ) ) {
+		$active_addons[] = $addon;
+		update_option( 'members_active_addons', $active_addons );
+	}
+}
+
+/**
+ * Deactivates an add-on.
+ *
+ * @since  2.3.0
+ * @access public
+ * @param  string  $addon   Add-on name/key (e.g. members-block-permissions)
+ * @return void
+ */
+function members_deactivate_addon( $addon ) {
+	$active_addons = get_option( 'members_active_addons', array() );
+	
+	if ( in_array( $addon, $active_addons ) ) {
+		$active_addons = array_diff( $active_addons, array( $addon ) );
+		update_option( 'members_active_addons', $active_addons );
+	}
+}
+
+/**
  * Returns the URL to the settings page.
  *
  * @since  2.0.0
