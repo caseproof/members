@@ -49,6 +49,18 @@ This displays a simple subscription form for the specified product.
 
 This displays product details (title, description, price) and a subscription form.
 
+### User Registration & Checkout
+
+The plugin provides a seamless registration and checkout process:
+
+1. New users (not logged in) will see a registration form with payment details
+2. Existing users will see just the subscription form
+3. After submission:
+   - For new users, a WordPress account is created automatically 
+   - The user is assigned the appropriate roles
+   - A subscription record is created
+   - The user is redirected to the content or thank you page
+
 ### Payment Processing
 
 The plugin includes a basic manual payment gateway by default. Additional gateways can be configured in the Members > Payment Gateways section.

@@ -1,331 +1,113 @@
-# Members Subscriptions - Product Specification
+# Members Subscriptions Add-on
 
-## Overview
+A comprehensive subscription management add-on for the Members plugin that adds membership products, payment processing, and subscription management capabilities.
 
-Members Subscriptions is an advanced addon for the Members plugin that transforms it into a complete membership and subscription management solution. This document outlines the detailed specifications for the product's functionality, user flows, and implementation details.
+## Features
 
-## Core Components
+### Membership Products
 
-### 1. Subscription Products
+- **Custom Post Type**: Provides a 'members_product' post type for creating and managing membership offerings
+- **Product Configuration**: 
+  - One-time and recurring payment options
+  - Customizable billing cycles (days, weeks, months, years)
+  - Free and paid trial periods
+  - Limited-time access for one-time payments
 
-#### Functionality
-- Create subscription products with detailed settings
-- Set pricing (one-time or recurring)
-- Configure billing periods (daily, weekly, monthly, yearly)
-- Offer trial periods with custom pricing
-- Assign WordPress roles upon purchase
-- Set access expiration for non-recurring products
-- Redirect users after successful purchase
-- Display products on frontend with customizable templates
+### User Management
 
-#### Implementation Details
-- Custom post type: `members_product`
-- Meta boxes for product settings
-- Custom meta table for efficient data storage
-- Public or private visibility options
-- Comprehensive template system with multiple fallbacks:
-  - WordPress template hierarchy (single-members_product.php)
-  - Theme override templates
-  - Plugin templates directory
-  - Direct rendering as last resort
-- Shortcode for embedding product information: `[members_subscription_form]`
-- 404 error prevention with advanced URL handling
+- **Role-Based Access**: Automatically assigns and removes WordPress roles based on subscription status
+- **Registration Integration**: Combined user registration and subscription checkout in a single form
+- **Account Management**: Allows members to view and manage their subscriptions
 
-### 2. Payment Processing
+### Payment Processing
 
-#### Functionality
-- Multiple payment gateway support
-- Secure checkout process
-- Transaction recording and management
-- Subscription creation and activation
-- Trial period handling
-- Tax calculation and application
-- Receipt generation and distribution
-- Validation and error handling
+- **Manual Payments**: Built-in support for manual payment processing
+- **Gateway Support**: Framework for additional payment gateways
+- **Transaction Recording**: Maintains a record of all payment transactions
 
-#### Gateway Support
-- **Stripe**: Credit card processing with subscription support
-- **PayPal**: Support for PayPal Standard and PayPal Commerce
-- **Authorize.net**: Credit card processing with subscription support
-- **Manual**: Offline payment processing for manual verification
-- Extensible framework for additional gateways
+### Content Protection
 
-#### Implementation Details
-- Gateway manager with plugin architecture
-- Secure API communication
-- Webhook processing for external events
-- PCI-compliant design (no card data stored)
-- Comprehensive error handling
-- Secure token-based payment forms
-- Support for 3D Secure/SCA for European compliance
+- **Content Restriction**: Restricts access to content based on membership status
+- **Shortcodes**: Easy-to-use shortcodes for displaying products and subscription forms anywhere
 
-### 3. Subscription Management
+## Technical Details
 
-#### Functionality
-- Automated subscription renewals
-- Cancellation handling
-- Upgrade/downgrade processes
-- Status management (active, pending, cancelled, expired, failed, suspended)
-- Subscription metadata tracking
-- Member access control based on status
-- Renewal reminders and notifications
-- Dunning management for failed payments
+### Database Tables
 
-#### Implementation Details
-- Custom subscriptions table
-- Status transition system
-- Expiration calculation
-- Renewal triggering mechanisms
-- Integration with WordPress user roles
-- Event logging system
-- Retry mechanisms for failed payments
+The add-on creates and manages the following custom database tables:
 
-### 4. User Account Management
+1. `wp_members_transactions`
+   - Records all payment transactions
+   - Stores user ID, product ID, amount, status, gateway info, and timestamps
 
-#### Functionality
-- View active subscriptions
-- Cancel or update subscriptions
-- View transaction history
-- Update payment methods
-- Download receipts/invoices
-- Profile management
-- Subscription renewal
-- Password management
+2. `wp_members_subscriptions`
+   - Tracks active and past subscriptions
+   - Stores subscription details, period information, and status
 
-#### Implementation Details
-- Account dashboard (`[members_account]` shortcode)
-- Subscription management interface
-- Payment method management screen
-- Transaction history display
-- Access control based on subscription status
-- Shortcodes for embedding specific account sections
+3. `wp_members_products_meta`
+   - Stores product configuration details 
+   - Supplements the standard WordPress post meta
 
-### 5. Administrator Tools
+### Form Processing System
 
-#### Functionality
-- Member management
-- Subscription editing
-- Transaction tracking
-- Revenue reporting
-- Payment gateway configuration
-- Email notification templates
-- Subscription status updates
-- Manual payment recording
-- Refund processing
-- System status information
+- **User Registration**: Creates WordPress users, assigns roles, and logs users in automatically
+- **Subscription Processing**: Creates subscription records, processes payments, and manages access rights
+- **Admin Post Handlers**: Uses WordPress admin-post.php handlers for form submission
 
-#### Implementation Details
-- Admin dashboard with overview statistics
-- Members list with filtering options
-- Subscription management interface
-- Transaction management interface
-- Settings pages for configuration
-- Exportable reports in CSV format
-- Batch operations for subscription management
+### Template System
 
-### 6. Email Notifications
-
-#### Functionality
-- New subscription notifications
-- Renewal reminders
-- Payment receipts
-- Subscription status changes
-- Trial expiration notices
-- Credit card expiration reminders
-- Failed payment notifications
-- Admin notifications for important events
-
-#### Implementation Details
-- Email template system
-- Customizable content with merge tags
-- HTML and plain text formats
-- Scheduled delivery system
-- Admin notification options
-- Queueing system for reliable delivery
-- Email logging and tracking
-
-### 7. Content Restriction
-
-#### Functionality
-- Restrict content based on subscription status
-- Teaser content options
-- Redirect options for restricted content
-- Custom restriction messages
-- Override options at the post/page level
-- Category/tag level restrictions
-- Custom post type support
-
-#### Implementation Details
-- Integration with Members plugin restriction system
-- Enhanced restriction rules based on subscription status
-- Custom shortcodes for conditional content display
-- Template tag functions for theme integration
-- Admin UI for managing restriction rules
-
-## User Flows
-
-### 1. Purchasing a Subscription
-
-1. User visits the product page
-2. Views membership details and pricing
-3. Clicks "Subscribe Now"
-4. Enters payment information
-5. Completes purchase
-6. Receives confirmation and welcome email
-7. Gains access to restricted content
-8. Subscription status is set to active
-9. User is redirected to thank you page or account dashboard
-
-### 2. Managing a Subscription
-
-1. User logs into their account
-2. Views current subscriptions
-3. Can view transaction history
-4. Can update payment method
-5. Can cancel subscription
-6. Can upgrade/downgrade subscription
-7. Receives confirmation of any changes
-8. Access permissions are updated automatically
-
-### 3. Subscription Renewal Process
-
-1. System detects upcoming renewal
-2. Sends renewal reminder to member
-3. Processes renewal payment on due date
-4. On success:
-   - Updates subscription expiration date
-   - Sends receipt email
-   - Maintains user access
-5. On failure:
-   - Retries payment based on configured rules
-   - Sends failed payment notification
-   - Updates subscription status if retries fail
-
-### 4. Administrator Management
-
-1. Admin views subscriptions dashboard
-2. Can view all members and their subscription status
-3. Can edit subscription details (dates, status, etc.)
-4. Can process refunds or manual payments
-5. Can view transaction history
-6. Can generate reports on revenue and growth
-7. Can manage payment gateway settings
-8. Can customize email notifications
-
-## Data Architecture
-
-### Tables
-
-1. **members_subscriptions**
-   - Stores subscription data
-   - Links users to products
-   - Tracks renewal dates and status
-   - Stores gateway-specific subscription IDs
-   - Records billing information
-
-2. **members_transactions**
-   - Records all financial transactions
-   - Links to subscriptions
-   - Stores payment details and statuses
-   - Supports refund tracking
-   - Includes tax information
-
-3. **members_products_meta**
-   - Stores product configuration
-   - Pricing and access settings
-   - Trial and billing period information
-   - Redirection settings
-   - Role assignments
-
-4. **members_customer_data**
-   - Stores customer payment profiles
-   - Securely manages payment tokens
-   - Tracks billing information
-   - Links to WordPress user accounts
+- **Custom Templates**: Provides dedicated templates for product display and checkout
+- **Theme Override Support**: Allows theme customization while maintaining core functionality
+- **Fallback System**: Multi-layered template fallback to ensure display in any theme
 
 ## Integration Points
 
-### Members Plugin
-- Role assignment/removal
-- Content restriction system
-- User capabilities management
-- Admin interface integration
-
 ### WordPress Core
-- User management
-- Post type API
-- Admin interface
-- Scheduling system (for renewals)
-- Template hierarchy
 
-### Payment Gateways
-- API integration
-- Webhook processing
-- IPN/notification handling
-- Refund processing
-- Subscription management
+- Integrates with WordPress users and roles system
+- Uses WordPress custom post types for product management
+- Leverages WordPress rewrite rules for product URLs
 
-### Themes
-- Template overriding
-- Shortcode embedding
-- Template tag functions
-- CSS styling hooks
+### Members Plugin
 
-## Extensibility
+- Extends Members plugin role management capabilities
+- Adds subscription capabilities to the Members access control system
+- Maintains compatibility with the Members UI
 
-### Hooks and Filters
-- Gateway extension points
-- Template customization hooks
-- Process modification filters
-- Notification customization
-- Validation filters
-- Access control filters
+## Usage
 
-### Developer API
-- Programmatic subscription creation
-- Custom gateway development
-- Access control integration
-- Event listeners for subscription changes
-- Subscription status management
-- Transaction processing
+### Creating Products
 
-## Template System
+1. Go to Members > Subscription Products
+2. Add a new product with title, description, and pricing details
+3. Configure access control by selecting which roles to assign
+4. Optionally set a redirect URL for after purchase
 
-### Template Hierarchy
-1. WordPress template hierarchy files:
-   - `/single-members_product.php` - For single product display
-   - `/archive-members_product.php` - For product archives
+### Displaying Products
 
-2. Theme override locations:
-   - `members/subscriptions/single-product.php`
-   - `members/single-product.php`
-   - `members-subscriptions/single-product.php`
+Products can be displayed using:
 
-3. Plugin templates directory:
-   - `/templates/single-product.php`
-   - `/templates/archive-product.php`
+1. **Automatic Archives**: Visit /membership-products/ to see all products
+2. **Single Product Pages**: Each product has its own dedicated page
+3. **Shortcodes**: 
+   - `[members_subscription_form product_id="123"]` - Display just the subscription form
+   - `[members_product_details product_id="123"]` - Display product details with form
 
-4. Direct rendering fallback for maximum compatibility
+### User Registration & Checkout
 
-## Future Enhancements (Roadmap)
+The add-on provides a combined registration and checkout process:
 
-### Phase 2
-- Coupon/discount system
-- Bundle products
-- Group memberships
-- Advanced reporting
-- Multiple subscription management
-- Tiered pricing options
+1. New users see a registration form with checkout details
+2. Existing users see only the checkout form
+3. On form submission:
+   - New users are created
+   - Subscription records are generated
+   - WordPress roles are assigned
+   - Users are redirected to content or thank you page
 
-### Phase 3
-- Subscription plan switching
-- Pro-rating system
-- Member directory
-- Member communication tools
-- Advanced analytics
-- Affiliate system integration
-- Drip content delivery
+## Future Development
 
----
-
-*This specification is subject to change as the product evolves. Features may be added, modified, or removed based on user feedback and market demands.*
+- Additional payment gateway integrations (Stripe, PayPal)
+- Subscription management capabilities (pause, resume, upgrade)
+- More advanced content restriction options
+- Enhanced reporting and analytics

@@ -9,6 +9,107 @@ defined( 'ABSPATH' ) || exit;
  * Register necessary hooks for product processing
  */
 function init_product_hooks() {
+    // Define required functions if they don't exist
+    if (!function_exists('\\Members\\Subscriptions\\create_transaction')) {
+        /**
+         * Create transaction record in database
+         * Fallback implementation if the main function doesn't exist
+         *
+         * @param array $transaction_data Transaction data
+         * @return int Transaction ID
+         */
+        function create_transaction($transaction_data) {
+            error_log('Members Subscriptions: Using fallback create_transaction function');
+            global $wpdb;
+            
+            // Try to create a transaction record in the database table if it exists
+            $table_name = $wpdb->prefix . 'members_transactions';
+            $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'");
+            
+            if ($table_exists) {
+                $wpdb->insert(
+                    $table_name,
+                    [
+                        'user_id' => $transaction_data['user_id'],
+                        'product_id' => $transaction_data['product_id'],
+                        'amount' => $transaction_data['amount'],
+                        'status' => $transaction_data['status'],
+                        'gateway' => $transaction_data['gateway'],
+                        'transaction_id' => $transaction_data['transaction_id'],
+                        'created_at' => current_time('mysql'),
+                    ],
+                    ['%d', '%d', '%f', '%s', '%s', '%s', '%s']
+                );
+                
+                return $wpdb->insert_id;
+            }
+            
+            // Fallback to user meta
+            $user_id = $transaction_data['user_id'];
+            $user_transactions = get_user_meta($user_id, '_members_transactions', true);
+            if (!is_array($user_transactions)) {
+                $user_transactions = [];
+            }
+            
+            $transaction_data['created_at'] = current_time('mysql');
+            $user_transactions[] = $transaction_data;
+            update_user_meta($user_id, '_members_transactions', $user_transactions);
+            
+            return time(); // Return current timestamp as a fake ID
+        }
+    }
+    
+    if (!function_exists('\\Members\\Subscriptions\\create_subscription')) {
+        /**
+         * Create subscription record in database
+         * Fallback implementation if the main function doesn't exist
+         *
+         * @param array $subscription_data Subscription data
+         * @return int Subscription ID
+         */
+        function create_subscription($subscription_data) {
+            error_log('Members Subscriptions: Using fallback create_subscription function');
+            global $wpdb;
+            
+            // Try to create a subscription record in the database table if it exists
+            $table_name = $wpdb->prefix . 'members_subscriptions';
+            $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'");
+            
+            if ($table_exists) {
+                $wpdb->insert(
+                    $table_name,
+                    [
+                        'user_id' => $subscription_data['user_id'],
+                        'product_id' => $subscription_data['product_id'],
+                        'amount' => $subscription_data['amount'],
+                        'status' => $subscription_data['status'],
+                        'gateway' => $subscription_data['gateway'],
+                        'subscription_id' => $subscription_data['subscription_id'],
+                        'period' => $subscription_data['period'],
+                        'period_type' => $subscription_data['period_type'],
+                        'created_at' => current_time('mysql'),
+                    ],
+                    ['%d', '%d', '%f', '%s', '%s', '%s', '%d', '%s', '%s']
+                );
+                
+                return $wpdb->insert_id;
+            }
+            
+            // Fallback to user meta
+            $user_id = $subscription_data['user_id'];
+            $user_subscriptions = get_user_meta($user_id, '_members_subscriptions', true);
+            if (!is_array($user_subscriptions)) {
+                $user_subscriptions = [];
+            }
+            
+            $subscription_data['created_at'] = current_time('mysql');
+            $user_subscriptions[] = $subscription_data;
+            update_user_meta($user_id, '_members_subscriptions', $user_subscriptions);
+            
+            return time(); // Return current timestamp as a fake ID
+        }
+    }
+    
     // Process subscription form for logged-in users
     add_action('init', __NAMESPACE__ . '\process_subscription_form');
     
@@ -886,104 +987,204 @@ function handle_registration_and_subscription() {
         error_log('Members Subscriptions: No membership roles to assign or roles not in array format');
     }
     
-    // Create a transaction record
-    if (function_exists('\\Members\\Subscriptions\\create_transaction')) {
-        try {
-            $transaction_data = [
-                'user_id' => $user_id,
-                'product_id' => $product_id,
-                'amount' => $price,
-                'status' => 'completed',
-                'gateway' => 'manual',
-                'transaction_id' => 'manual_' . time(),
-            ];
-            
-            error_log('Members Subscriptions: Creating transaction with data: ' . print_r($transaction_data, true));
-            $transaction_id = \Members\Subscriptions\create_transaction($transaction_data);
-            error_log('Members Subscriptions: Transaction created with ID: ' . $transaction_id);
-        } catch (\Exception $e) {
-            error_log('Members Subscriptions: Error creating transaction: ' . $e->getMessage());
-        }
-    } else {
-        error_log('Members Subscriptions: create_transaction function not found');
+    // Create a transaction record - direct implementation to ensure it works
+    try {
+        error_log('Members Subscriptions: Attempting to create transaction directly in database');
         
-        // Fallback - store the transaction data as user meta
-        try {
-            $transaction_data = [
-                'product_id' => $product_id,
-                'product_name' => $product->post_title,
-                'amount' => $price,
-                'status' => 'completed',
-                'gateway' => 'manual',
-                'transaction_id' => 'manual_' . time(),
-                'created_at' => current_time('mysql')
-            ];
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'members_transactions';
+        
+        // Check if table exists
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'");
+        error_log('Members Subscriptions: Transactions table exists? ' . ($table_exists ? 'Yes' : 'No'));
+        
+        // Create table if it doesn't exist
+        if (!$table_exists) {
+            error_log('Members Subscriptions: Creating transactions table');
             
-            // Store as user meta
-            $user_transactions = get_user_meta($user_id, '_members_transactions', true);
-            if (!is_array($user_transactions)) {
-                $user_transactions = [];
-            }
+            $charset_collate = $wpdb->get_charset_collate();
+            $sql = "CREATE TABLE $table_name (
+                id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+                user_id bigint(20) unsigned NOT NULL,
+                product_id bigint(20) unsigned NOT NULL,
+                amount decimal(10,2) NOT NULL DEFAULT '0.00',
+                status varchar(50) NOT NULL DEFAULT 'pending',
+                gateway varchar(50) NOT NULL DEFAULT 'manual',
+                transaction_id varchar(100) NOT NULL,
+                created_at datetime NOT NULL,
+                PRIMARY KEY  (id)
+            ) $charset_collate;";
             
-            $user_transactions[] = $transaction_data;
-            update_user_meta($user_id, '_members_transactions', $user_transactions);
-            error_log('Members Subscriptions: Stored transaction in user meta');
-        } catch (\Exception $e) {
-            error_log('Members Subscriptions: Error in transaction fallback: ' . $e->getMessage());
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+            dbDelta($sql);
+            
+            // Check if creation was successful
+            $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'") !== null;
+            error_log('Members Subscriptions: Transactions table created successfully? ' . ($table_exists ? 'Yes' : 'No'));
         }
+        
+        // Check table structure to help debug
+        if ($table_exists) {
+            $table_structure = $wpdb->get_results("DESCRIBE $table_name");
+            error_log('Members Subscriptions: Transactions table structure: ' . print_r($table_structure, true));
+        }
+        
+        // Transaction data
+        $transaction_data = [
+            'user_id' => $user_id,
+            'product_id' => $product_id,
+            'amount' => $price,
+            'status' => 'completed',
+            'gateway' => 'manual',
+            'transaction_id' => 'manual_' . time(),
+            'created_at' => current_time('mysql'),
+        ];
+        
+        if ($table_exists) {
+            // Try direct database insert
+            $result = $wpdb->insert(
+                $table_name,
+                [
+                    'user_id' => $transaction_data['user_id'],
+                    'product_id' => $transaction_data['product_id'],
+                    'amount' => $transaction_data['amount'],
+                    'status' => $transaction_data['status'],
+                    'gateway' => $transaction_data['gateway'],
+                    'transaction_id' => $transaction_data['transaction_id'],
+                    'created_at' => $transaction_data['created_at'],
+                ],
+                ['%d', '%d', '%f', '%s', '%s', '%s', '%s']
+            );
+            
+            if ($result === false) {
+                error_log('Members Subscriptions: Database insert error: ' . $wpdb->last_error);
+            } else {
+                $transaction_id = $wpdb->insert_id;
+                error_log('Members Subscriptions: Transaction created with ID: ' . $transaction_id);
+            }
+        }
+        
+        // Always store as user meta as a backup
+        $user_transactions = get_user_meta($user_id, '_members_transactions', true);
+        if (!is_array($user_transactions)) {
+            $user_transactions = [];
+        }
+        
+        $user_transactions[] = $transaction_data;
+        $meta_result = update_user_meta($user_id, '_members_transactions', $user_transactions);
+        
+        if ($meta_result) {
+            error_log('Members Subscriptions: Stored transaction in user meta successfully');
+        } else {
+            error_log('Members Subscriptions: Failed to store transaction in user meta');
+        }
+        
+    } catch (\Exception $e) {
+        error_log('Members Subscriptions: Error creating transaction: ' . $e->getMessage());
     }
     
-    // Create a subscription record if recurring
-    if ($is_recurring && function_exists('\\Members\\Subscriptions\\create_subscription')) {
-        try {
-            $subscription_data = [
-                'user_id' => $user_id,
-                'product_id' => $product_id,
-                'status' => 'active',
-                'gateway' => 'manual',
-                'subscription_id' => 'manual_sub_' . time(),
-                'amount' => $price,
-                'period' => $period,
-                'period_type' => $period_type,
-            ];
-            
-            error_log('Members Subscriptions: Creating subscription with data: ' . print_r($subscription_data, true));
-            $subscription_id = \Members\Subscriptions\create_subscription($subscription_data);
-            error_log('Members Subscriptions: Subscription created with ID: ' . $subscription_id);
-        } catch (\Exception $e) {
-            error_log('Members Subscriptions: Error creating subscription: ' . $e->getMessage());
-        }
-    } else {
-        error_log('Members Subscriptions: create_subscription function not found or product is not recurring');
+    // Create a subscription record - direct implementation to ensure it works
+    try {
+        error_log('Members Subscriptions: Attempting to create subscription directly in database');
         
-        // Fallback - store the subscription data as user meta if it's recurring
-        if ($is_recurring) {
-            try {
-                $subscription_data = [
-                    'product_id' => $product_id,
-                    'product_name' => $product->post_title,
-                    'status' => 'active',
-                    'gateway' => 'manual',
-                    'subscription_id' => 'manual_sub_' . time(),
-                    'amount' => $price,
-                    'period' => $period,
-                    'period_type' => $period_type,
-                    'created_at' => current_time('mysql')
-                ];
-                
-                // Store as user meta
-                $user_subscriptions = get_user_meta($user_id, '_members_subscriptions', true);
-                if (!is_array($user_subscriptions)) {
-                    $user_subscriptions = [];
-                }
-                
-                $user_subscriptions[] = $subscription_data;
-                update_user_meta($user_id, '_members_subscriptions', $user_subscriptions);
-                error_log('Members Subscriptions: Stored subscription in user meta');
-            } catch (\Exception $e) {
-                error_log('Members Subscriptions: Error in subscription fallback: ' . $e->getMessage());
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'members_subscriptions';
+        
+        // Check if table exists
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'");
+        error_log('Members Subscriptions: Subscriptions table exists? ' . ($table_exists ? 'Yes' : 'No'));
+        
+        // Create table if it doesn't exist
+        if (!$table_exists) {
+            error_log('Members Subscriptions: Creating subscriptions table');
+            
+            $charset_collate = $wpdb->get_charset_collate();
+            $sql = "CREATE TABLE $table_name (
+                id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+                user_id bigint(20) unsigned NOT NULL,
+                product_id bigint(20) unsigned NOT NULL,
+                amount decimal(10,2) NOT NULL DEFAULT '0.00',
+                status varchar(50) NOT NULL DEFAULT 'pending',
+                gateway varchar(50) NOT NULL DEFAULT 'manual',
+                subscription_id varchar(100) NOT NULL,
+                period int(11) NOT NULL DEFAULT '0',
+                period_type varchar(20) NOT NULL DEFAULT '',
+                created_at datetime NOT NULL,
+                expires_at datetime DEFAULT NULL,
+                cancelled_at datetime DEFAULT NULL,
+                PRIMARY KEY  (id)
+            ) $charset_collate;";
+            
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+            dbDelta($sql);
+            
+            // Check if creation was successful
+            $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'") !== null;
+            error_log('Members Subscriptions: Subscriptions table created successfully? ' . ($table_exists ? 'Yes' : 'No'));
+        }
+        
+        // Check table structure to help debug
+        if ($table_exists) {
+            $table_structure = $wpdb->get_results("DESCRIBE $table_name");
+            error_log('Members Subscriptions: Subscriptions table structure: ' . print_r($table_structure, true));
+        }
+        
+        // Subscription data
+        $subscription_data = [
+            'user_id' => $user_id,
+            'product_id' => $product_id,
+            'status' => 'active',
+            'gateway' => 'manual',
+            'subscription_id' => 'manual_sub_' . time(),
+            'amount' => $price,
+            'period' => $is_recurring ? $period : 0,
+            'period_type' => $is_recurring ? $period_type : '',
+            'created_at' => current_time('mysql'),
+        ];
+        
+        if ($table_exists) {
+            // Try direct database insert
+            $result = $wpdb->insert(
+                $table_name,
+                [
+                    'user_id' => $subscription_data['user_id'],
+                    'product_id' => $subscription_data['product_id'],
+                    'status' => $subscription_data['status'],
+                    'gateway' => $subscription_data['gateway'],
+                    'subscription_id' => $subscription_data['subscription_id'],
+                    'amount' => $subscription_data['amount'],
+                    'period' => $subscription_data['period'],
+                    'period_type' => $subscription_data['period_type'],
+                    'created_at' => $subscription_data['created_at'],
+                ],
+                ['%d', '%d', '%s', '%s', '%s', '%f', '%d', '%s', '%s']
+            );
+            
+            if ($result === false) {
+                error_log('Members Subscriptions: Database insert error: ' . $wpdb->last_error);
+            } else {
+                $subscription_id = $wpdb->insert_id;
+                error_log('Members Subscriptions: Subscription created with ID: ' . $subscription_id);
             }
         }
+        
+        // Always store as user meta as a backup
+        $user_subscriptions = get_user_meta($user_id, '_members_subscriptions', true);
+        if (!is_array($user_subscriptions)) {
+            $user_subscriptions = [];
+        }
+        
+        $user_subscriptions[] = $subscription_data;
+        $meta_result = update_user_meta($user_id, '_members_subscriptions', $user_subscriptions);
+        
+        if ($meta_result) {
+            error_log('Members Subscriptions: Stored subscription in user meta successfully');
+        } else {
+            error_log('Members Subscriptions: Failed to store subscription in user meta');
+        }
+        
+    } catch (\Exception $e) {
+        error_log('Members Subscriptions: Error creating subscription: ' . $e->getMessage());
     }
     
     // Redirect to thank you page or content
