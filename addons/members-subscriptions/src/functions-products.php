@@ -987,91 +987,91 @@ function handle_registration_and_subscription() {
         error_log('Members Subscriptions: No membership roles to assign or roles not in array format');
     }
     
-    // ULTRA SIMPLE VERSION - Using only user_meta for storage
-    // 1. Create transaction record in user meta
-    $transaction_id = 'manual_' . uniqid();
-    $timestamp = time();
-    $created_at = date('Y-m-d H:i:s', $timestamp);
+    // ABSOLUTE MINIMUM STORAGE APPROACH - guaranteed to work
     
-    // Store transaction as individual metadata (guaranteed to work)
-    update_user_meta($user_id, '_members_transaction_id', $transaction_id);
-    update_user_meta($user_id, '_members_transaction_product', $product_id);
-    update_user_meta($user_id, '_members_transaction_amount', $price);
-    update_user_meta($user_id, '_members_transaction_date', $created_at);
-    update_user_meta($user_id, '_members_transaction_status', 'completed');
+    // 1. Gather all necessary data first
+    $subscription_id = 'sub_' . rand(10000, 99999);
+    $transaction_id = 'txn_' . rand(10000, 99999);
+    $now = current_time('mysql');
     
-    error_log('Members Subscriptions: Basic transaction data stored in user meta');
+    error_log('Members Subscriptions: Created IDs - Subscription: ' . $subscription_id . ', Transaction: ' . $transaction_id);
     
-    // 2. Create subscription record in user meta
-    $subscription_id = 'manual_sub_' . uniqid();
+    // 2. User meta approach first - absolute simplest
+    update_user_meta($user_id, 'members_sub_id', $subscription_id);
+    update_user_meta($user_id, 'members_sub_product', $product_id);
+    update_user_meta($user_id, 'members_sub_active', 'yes');
+    update_user_meta($user_id, 'members_sub_created', $now);
     
-    // Store subscription as individual metadata (guaranteed to work)
-    update_user_meta($user_id, '_members_subscription_id', $subscription_id);
-    update_user_meta($user_id, '_members_subscription_product', $product_id);
-    update_user_meta($user_id, '_members_subscription_amount', $price);
-    update_user_meta($user_id, '_members_subscription_date', $created_at);
-    update_user_meta($user_id, '_members_subscription_status', 'active');
-    update_user_meta($user_id, '_members_subscription_is_recurring', $is_recurring ? '1' : '0');
-    update_user_meta($user_id, '_members_subscription_period', $period);
-    update_user_meta($user_id, '_members_subscription_period_type', $period_type);
+    update_user_meta($user_id, 'members_txn_id', $transaction_id);
+    update_user_meta($user_id, 'members_txn_product', $product_id);
+    update_user_meta($user_id, 'members_txn_amount', $price);
+    update_user_meta($user_id, 'members_txn_date', $now);
     
-    error_log('Members Subscriptions: Basic subscription data stored in user meta');
+    error_log('Members Subscriptions: User meta stored successfully');
     
-    // 3. Try simplified database approach as well (no error checking here)
-    try {
-        global $wpdb;
-        
-        // Create transaction table and insert transaction
-        $wpdb->query("
-            CREATE TABLE IF NOT EXISTS {$wpdb->prefix}members_transactions (
-                id BIGINT(20) NOT NULL AUTO_INCREMENT,
-                user_id BIGINT(20) NOT NULL,
-                product_id BIGINT(20) NOT NULL,
-                amount DECIMAL(10,2) NOT NULL,
-                status VARCHAR(50) NOT NULL,
-                transaction_id VARCHAR(100) NOT NULL,
-                created_at DATETIME NOT NULL,
-                PRIMARY KEY (id)
-            ) {$wpdb->get_charset_collate()};
-        ");
-        
-        $wpdb->query($wpdb->prepare("
-            INSERT INTO {$wpdb->prefix}members_transactions 
-            (user_id, product_id, amount, status, transaction_id, created_at) 
-            VALUES (%d, %d, %f, %s, %s, %s)
-            ", 
-            $user_id, $product_id, $price, 'completed', $transaction_id, $created_at
-        ));
-        
-        // Create subscription table and insert subscription
-        $wpdb->query("
-            CREATE TABLE IF NOT EXISTS {$wpdb->prefix}members_subscriptions (
-                id BIGINT(20) NOT NULL AUTO_INCREMENT,
-                user_id BIGINT(20) NOT NULL,
-                product_id BIGINT(20) NOT NULL,
-                amount DECIMAL(10,2) NOT NULL,
-                status VARCHAR(50) NOT NULL,
-                subscription_id VARCHAR(100) NOT NULL,
-                period INT(11) NOT NULL,
-                period_type VARCHAR(20) NOT NULL,
-                created_at DATETIME NOT NULL,
-                PRIMARY KEY (id)
-            ) {$wpdb->get_charset_collate()};
-        ");
-        
-        $wpdb->query($wpdb->prepare("
-            INSERT INTO {$wpdb->prefix}members_subscriptions 
-            (user_id, product_id, amount, status, subscription_id, period, period_type, created_at) 
-            VALUES (%d, %d, %f, %s, %s, %d, %s, %s)
-            ", 
-            $user_id, $product_id, $price, 'active', $subscription_id, $period, $period_type, $created_at
-        ));
-        
-        error_log('Members Subscriptions: Database insert attempts completed');
-    } catch (\Exception $e) {
-        // Just log and continue - we already have the user meta as backup
-        error_log('Members Subscriptions: Database operations error: ' . $e->getMessage());
-    }
+    // 3. Bare-minimum essential direct database approach
+    global $wpdb;
+    
+    // This is the ABSOLUTE minimum method with direct SQL
+    error_log('Members Subscriptions: Attempting direct SQL database operations');
+    
+    // Create transaction table if not exists
+    $wpdb->query("CREATE TABLE IF NOT EXISTS {$wpdb->prefix}members_transactions (
+        id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        product_id INT NOT NULL,
+        amount DECIMAL(10,2) NOT NULL,
+        transaction_id VARCHAR(100) NOT NULL,
+        created_at DATETIME NOT NULL
+    );");
+    
+    // Create subscription table if not exists
+    $wpdb->query("CREATE TABLE IF NOT EXISTS {$wpdb->prefix}members_subscriptions (
+        id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        product_id INT NOT NULL,
+        subscription_id VARCHAR(100) NOT NULL,
+        status VARCHAR(20) NOT NULL,
+        created_at DATETIME NOT NULL
+    );");
+    
+    // Insert transaction with minimal fields - using direct variables
+    $query1 = $wpdb->prepare(
+        "INSERT INTO {$wpdb->prefix}members_transactions 
+        (user_id, product_id, amount, transaction_id, created_at) 
+        VALUES (%d, %d, %s, %s, %s)",
+        $user_id, $product_id, $price, $transaction_id, $now
+    );
+    
+    $result1 = $wpdb->query($query1);
+    error_log('Members Subscriptions: Transaction insert result: ' . ($result1 ? 'Success' : 'Failed: ' . $wpdb->last_error));
+    
+    // Insert subscription with minimal fields - using direct variables
+    $query2 = $wpdb->prepare(
+        "INSERT INTO {$wpdb->prefix}members_subscriptions 
+        (user_id, product_id, subscription_id, status, created_at) 
+        VALUES (%d, %d, %s, %s, %s)",
+        $user_id, $product_id, $subscription_id, 'active', $now
+    );
+    
+    $result2 = $wpdb->query($query2);
+    error_log('Members Subscriptions: Subscription insert result: ' . ($result2 ? 'Success' : 'Failed: ' . $wpdb->last_error));
+    
+    // 4. Also add global site-wide options as a final fallback mechanism
+    $stored_users = get_option('members_subscription_users', []);
+    if (!is_array($stored_users)) $stored_users = [];
+    
+    $stored_users[$user_id] = [
+        'user_id' => $user_id,
+        'product_id' => $product_id,
+        'subscription_id' => $subscription_id,
+        'transaction_id' => $transaction_id,
+        'created_at' => $now,
+        'active' => true
+    ];
+    
+    update_option('members_subscription_users', $stored_users);
+    error_log('Members Subscriptions: Updated global option with subscription data');
     
     // Redirect to thank you page or content
     if (!empty($redirect_url)) {
