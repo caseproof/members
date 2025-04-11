@@ -9,8 +9,11 @@ defined( 'ABSPATH' ) || exit;
  * Register necessary hooks for product processing
  */
 function init_product_hooks() {
-    // Process subscription form
+    // Process subscription form for logged-in users
     add_action('init', __NAMESPACE__ . '\process_subscription_form');
+    
+    // Process registration and subscription form for logged-out users
+    add_action('init', __NAMESPACE__ . '\process_registration_and_subscription');
     
     // Add meta boxes for product editing
     add_action('add_meta_boxes', __NAMESPACE__ . '\add_product_meta_boxes');
@@ -113,14 +116,162 @@ function subscription_form_shortcode($atts) {
     // Start output buffer
     ob_start();
     
-    // Check if user is logged in
+    // For logged-out users, show registration form instead of login prompt
     if (!is_user_logged_in()) {
         ?>
-        <div class="members-product-login-required" style="margin: 20px 0; padding: 15px; background: #f8f8f8; border: 1px solid #ddd; border-radius: 4px;">
-            <p><?php _e('Please log in to purchase this membership.', 'members'); ?></p>
-            <a href="<?php echo esc_url(wp_login_url(get_permalink())); ?>" class="button" style="display: inline-block; padding: 8px 16px; background: #0073aa; color: white; text-decoration: none; border-radius: 3px;">
-                <?php _e('Log In', 'members'); ?>
-            </a>
+        <div class="members-signup-form-container" style="margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 4px; background: #f9f9f9;">
+            <h3><?php _e('Create Account & Subscribe', 'members'); ?></h3>
+            <p><?php _e('Fill out this form to create your account and purchase this membership.', 'members'); ?></p>
+            
+            <form action="<?php echo esc_url(site_url('/')); ?>" method="post" class="members-registration-form">
+                <?php wp_nonce_field('members_subscription_form', 'members_subscription_nonce'); ?>
+                <input type="hidden" name="action" value="members_process_registration_and_subscription">
+                <input type="hidden" name="product_id" value="<?php echo esc_attr($atts['product_id']); ?>">
+                <input type="hidden" name="payment_method" value="manual">
+                <input type="hidden" name="is_recurring" value="<?php echo $recurring ? '1' : '0'; ?>">
+                
+                <div class="members-form-row" style="margin-bottom: 15px;">
+                    <label for="members_first_name" style="display: block; margin-bottom: 5px; font-weight: bold;">
+                        <?php _e('First Name', 'members'); ?> <span class="required">*</span>
+                    </label>
+                    <input type="text" name="first_name" id="members_first_name" required 
+                           style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                
+                <div class="members-form-row" style="margin-bottom: 15px;">
+                    <label for="members_last_name" style="display: block; margin-bottom: 5px; font-weight: bold;">
+                        <?php _e('Last Name', 'members'); ?> <span class="required">*</span>
+                    </label>
+                    <input type="text" name="last_name" id="members_last_name" required
+                           style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                
+                <div class="members-form-row" style="margin-bottom: 15px;">
+                    <label for="members_email" style="display: block; margin-bottom: 5px; font-weight: bold;">
+                        <?php _e('Email Address', 'members'); ?> <span class="required">*</span>
+                    </label>
+                    <input type="email" name="email" id="members_email" required
+                           style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                
+                <div class="members-form-row" style="margin-bottom: 15px;">
+                    <label for="members_username" style="display: block; margin-bottom: 5px; font-weight: bold;">
+                        <?php _e('Username', 'members'); ?> <span class="required">*</span>
+                    </label>
+                    <input type="text" name="username" id="members_username" required
+                           style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                
+                <div class="members-form-row" style="margin-bottom: 15px;">
+                    <label for="members_password" style="display: block; margin-bottom: 5px; font-weight: bold;">
+                        <?php _e('Password', 'members'); ?> <span class="required">*</span>
+                    </label>
+                    <input type="password" name="password" id="members_password" required
+                           style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                
+                <div class="members-address-toggle" style="margin-bottom: 15px;">
+                    <label>
+                        <input type="checkbox" name="show_address" id="members_show_address" value="1"> 
+                        <?php _e('Add billing address information', 'members'); ?>
+                    </label>
+                </div>
+                
+                <div id="members_address_fields" style="display: none; padding: 15px; background: #f0f0f0; border-radius: 4px; margin-bottom: 15px;">
+                    <div class="members-form-row" style="margin-bottom: 15px;">
+                        <label for="members_address" style="display: block; margin-bottom: 5px; font-weight: bold;">
+                            <?php _e('Address', 'members'); ?>
+                        </label>
+                        <input type="text" name="address" id="members_address"
+                               style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    
+                    <div class="members-form-row" style="margin-bottom: 15px;">
+                        <label for="members_city" style="display: block; margin-bottom: 5px; font-weight: bold;">
+                            <?php _e('City', 'members'); ?>
+                        </label>
+                        <input type="text" name="city" id="members_city"
+                               style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    
+                    <div class="members-form-row" style="margin-bottom: 15px; display: flex; gap: 10px;">
+                        <div style="flex: 1;">
+                            <label for="members_state" style="display: block; margin-bottom: 5px; font-weight: bold;">
+                                <?php _e('State/Province', 'members'); ?>
+                            </label>
+                            <input type="text" name="state" id="members_state"
+                                   style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
+                        
+                        <div style="flex: 1;">
+                            <label for="members_zip" style="display: block; margin-bottom: 5px; font-weight: bold;">
+                                <?php _e('Postal Code', 'members'); ?>
+                            </label>
+                            <input type="text" name="zip" id="members_zip"
+                                   style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
+                    </div>
+                    
+                    <div class="members-form-row" style="margin-bottom: 15px;">
+                        <label for="members_country" style="display: block; margin-bottom: 5px; font-weight: bold;">
+                            <?php _e('Country', 'members'); ?>
+                        </label>
+                        <select name="country" id="members_country"
+                                style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                            <option value=""><?php _e('Select a country', 'members'); ?></option>
+                            <option value="US">United States</option>
+                            <option value="CA">Canada</option>
+                            <option value="GB">United Kingdom</option>
+                            <option value="AU">Australia</option>
+                            <!-- More countries would be added here -->
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="members-price-summary" style="margin-bottom: 20px; padding: 15px; background: #f0f0f0; border-radius: 4px;">
+                    <h4 style="margin-top: 0;"><?php _e('Order Summary', 'members'); ?></h4>
+                    <div class="members-product-price" style="font-size: 1.2em; margin-bottom: 10px;">
+                        <strong><?php echo esc_html($product->post_title); ?>:</strong> 
+                        $<?php echo number_format($price, 2); ?>
+                        
+                        <?php if ($recurring) : ?>
+                            <?php printf(__(' every %d %s', 'members'), $period, $period_label); ?>
+                        <?php else : ?>
+                            <?php _e(' (one-time payment)', 'members'); ?>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                
+                <div class="members-form-terms" style="margin-bottom: 15px;">
+                    <label>
+                        <input type="checkbox" name="agree_terms" value="1" required> 
+                        <?php _e('I agree to the terms and conditions', 'members'); ?> <span class="required">*</span>
+                    </label>
+                </div>
+                
+                <button type="submit" class="button members-subscribe-button" style="padding: 10px 20px; background: #0073aa; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                    <?php _e('Create Account & Subscribe', 'members'); ?>
+                </button>
+                
+                <div class="members-login-link" style="margin-top: 15px; text-align: center;">
+                    <?php _e('Already have an account?', 'members'); ?> 
+                    <a href="<?php echo esc_url(wp_login_url(get_permalink())); ?>">
+                        <?php _e('Log in', 'members'); ?>
+                    </a>
+                </div>
+            </form>
+            
+            <script>
+            jQuery(document).ready(function($) {
+                $('#members_show_address').change(function() {
+                    if ($(this).is(':checked')) {
+                        $('#members_address_fields').slideDown();
+                    } else {
+                        $('#members_address_fields').slideUp();
+                    }
+                });
+            });
+            </script>
         </div>
         <?php
         return ob_get_clean();
@@ -367,7 +518,7 @@ function product_user_has_access($user_id, $product_id) {
 }
 
 /**
- * Process subscription form submission
+ * Process subscription form submission for logged-in users
  */
 function process_subscription_form() {
     // Debug
@@ -536,6 +687,198 @@ function process_subscription_form() {
             wp_die(isset($result['message']) ? $result['message'] : __('Payment failed. Please try again.', 'members'));
         }
     }
+}
+
+/**
+ * Process registration and subscription form submission for logged-out users
+ */
+function process_registration_and_subscription() {
+    // Register the action handler
+    add_action('init', __NAMESPACE__ . '\handle_registration_and_subscription');
+}
+
+/**
+ * Handler for registration and subscription process
+ */
+function handle_registration_and_subscription() {
+    // Debug
+    error_log('Members Subscriptions: Processing registration and subscription');
+    
+    // Check if form is submitted
+    if (!isset($_POST['action']) || $_POST['action'] !== 'members_process_registration_and_subscription') {
+        return;
+    }
+    
+    // Verify nonce
+    if (!isset($_POST['members_subscription_nonce']) || !wp_verify_nonce($_POST['members_subscription_nonce'], 'members_subscription_form')) {
+        wp_die(__('Security check failed. Please try again.', 'members'));
+    }
+    
+    // Get product
+    $product_id = isset($_POST['product_id']) ? absint($_POST['product_id']) : 0;
+    $product = get_post($product_id);
+    
+    if (!$product || $product->post_type !== 'members_product') {
+        wp_die(__('Invalid product.', 'members'));
+    }
+    
+    // Validate required fields
+    $required_fields = [
+        'first_name' => __('First Name', 'members'),
+        'last_name' => __('Last Name', 'members'),
+        'email' => __('Email', 'members'),
+        'username' => __('Username', 'members'),
+        'password' => __('Password', 'members'),
+        'agree_terms' => __('Terms Agreement', 'members'),
+    ];
+    
+    $errors = [];
+    foreach ($required_fields as $field => $label) {
+        if (empty($_POST[$field])) {
+            $errors[] = sprintf(__('%s is required.', 'members'), $label);
+        }
+    }
+    
+    // Validate email
+    if (!empty($_POST['email']) && !is_email($_POST['email'])) {
+        $errors[] = __('Please enter a valid email address.', 'members');
+    }
+    
+    // Check if username exists
+    if (!empty($_POST['username']) && username_exists($_POST['username'])) {
+        $errors[] = __('This username is already in use. Please choose another one.', 'members');
+    }
+    
+    // Check if email exists
+    if (!empty($_POST['email']) && email_exists($_POST['email'])) {
+        $errors[] = __('This email address is already registered. Please use a different email or log in to your account.', 'members');
+    }
+    
+    // Check password strength
+    if (!empty($_POST['password']) && strlen($_POST['password']) < 6) {
+        $errors[] = __('Password must be at least 6 characters long.', 'members');
+    }
+    
+    // If we have errors, display them
+    if (!empty($errors)) {
+        $error_html = '<div class="members-form-errors" style="padding: 15px; margin-bottom: 20px; border: 1px solid #f5c6cb; border-radius: 4px; background-color: #f8d7da; color: #721c24;">';
+        $error_html .= '<strong>' . __('Please fix the following errors:', 'members') . '</strong>';
+        $error_html .= '<ul style="margin-top: 10px; margin-bottom: 0;">';
+        foreach ($errors as $error) {
+            $error_html .= '<li>' . esc_html($error) . '</li>';
+        }
+        $error_html .= '</ul>';
+        $error_html .= '</div>';
+        
+        wp_die($error_html . '<p><a href="javascript:history.back()" class="button">' . __('Go Back', 'members') . '</a></p>');
+    }
+    
+    // Create the user
+    $user_data = [
+        'user_login' => sanitize_user($_POST['username']),
+        'user_pass' => $_POST['password'],
+        'user_email' => sanitize_email($_POST['email']),
+        'first_name' => sanitize_text_field($_POST['first_name']),
+        'last_name' => sanitize_text_field($_POST['last_name']),
+        'role' => 'subscriber', // Default role
+    ];
+    
+    $user_id = wp_insert_user($user_data);
+    
+    // Check if user was created successfully
+    if (is_wp_error($user_id)) {
+        wp_die($user_id->get_error_message() . '<p><a href="javascript:history.back()" class="button">' . __('Go Back', 'members') . '</a></p>');
+    }
+    
+    // Store additional user meta
+    $meta_fields = [
+        'billing_first_name' => 'first_name',
+        'billing_last_name' => 'last_name',
+        'billing_email' => 'email',
+    ];
+    
+    foreach ($meta_fields as $meta_key => $post_key) {
+        if (!empty($_POST[$post_key])) {
+            update_user_meta($user_id, $meta_key, sanitize_text_field($_POST[$post_key]));
+        }
+    }
+    
+    // If address fields are filled out, save them too
+    if (isset($_POST['show_address']) && $_POST['show_address'] == '1') {
+        $address_fields = [
+            'billing_address_1' => 'address',
+            'billing_city' => 'city',
+            'billing_state' => 'state',
+            'billing_postcode' => 'zip',
+            'billing_country' => 'country',
+        ];
+        
+        foreach ($address_fields as $meta_key => $post_key) {
+            if (!empty($_POST[$post_key])) {
+                update_user_meta($user_id, $meta_key, sanitize_text_field($_POST[$post_key]));
+            }
+        }
+    }
+    
+    // Log the user in
+    wp_set_current_user($user_id);
+    wp_set_auth_cookie($user_id);
+    
+    // Get product data
+    $price = get_product_meta($product_id, '_price', 0);
+    $is_recurring = get_product_meta($product_id, '_recurring', false);
+    $period = get_product_meta($product_id, '_period', 1);
+    $period_type = get_product_meta($product_id, '_period_type', 'month');
+    $redirect_url = get_product_meta($product_id, '_redirect_url', get_permalink($product_id));
+    
+    // Get membership roles
+    $membership_roles = get_product_meta($product_id, '_membership_roles', []);
+    
+    // Assign roles to the user
+    if (!empty($membership_roles) && is_array($membership_roles)) {
+        $user = new \WP_User($user_id);
+        foreach ($membership_roles as $role) {
+            $user->add_role($role);
+        }
+    }
+    
+    // Create a transaction record
+    if (function_exists('\\Members\\Subscriptions\\create_transaction')) {
+        $transaction_data = [
+            'user_id' => $user_id,
+            'product_id' => $product_id,
+            'amount' => $price,
+            'status' => 'completed',
+            'gateway' => 'manual',
+            'transaction_id' => 'manual_' . time(),
+        ];
+        
+        create_transaction($transaction_data);
+    }
+    
+    // Create a subscription record if recurring
+    if ($is_recurring && function_exists('\\Members\\Subscriptions\\create_subscription')) {
+        $subscription_data = [
+            'user_id' => $user_id,
+            'product_id' => $product_id,
+            'status' => 'active',
+            'gateway' => 'manual',
+            'subscription_id' => 'manual_sub_' . time(),
+            'amount' => $price,
+            'period' => $period,
+            'period_type' => $period_type,
+        ];
+        
+        create_subscription($subscription_data);
+    }
+    
+    // Redirect to thank you page or content
+    if (!empty($redirect_url)) {
+        wp_redirect($redirect_url);
+    } else {
+        wp_redirect(add_query_arg('registration', 'success', get_permalink($product_id)));
+    }
+    exit;
 }
 
 /**
