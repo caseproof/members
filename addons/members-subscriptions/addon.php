@@ -2,7 +2,7 @@
 /**
  * Add-on Name: Members - Subscriptions
  * Description: Adds subscription and payment functionality to Members. Create membership products with associated roles, process payments via Stripe, and manage user subscriptions. Includes enhanced security features.
- * Version:     1.0.1
+ * Version:     1.0.2
  * Author:      MemberPress Team
  * Author URI:  https://members-plugin.com
  */
@@ -76,6 +76,7 @@ class Addon {
         require_once $this->dir . 'src/Activator.php';
         require_once $this->dir . 'src/Plugin.php';
         require_once $this->dir . 'src/functions-db.php';
+        require_once $this->dir . 'src/class-admin-notifications.php';
         
         // Check for and include these files if they exist
         $files = array(

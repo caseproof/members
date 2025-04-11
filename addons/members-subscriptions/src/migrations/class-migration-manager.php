@@ -38,6 +38,7 @@ class Migration_Manager {
         $this->migrations = [
             new Migration_1_0_0(),
             new Migration_1_0_1(),
+            new Migration_1_0_2(),
             // Add new migrations here
         ];
         

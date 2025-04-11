@@ -13,7 +13,7 @@ class Plugin {
     /**
      * Plugin version
      */
-    const VERSION = '1.0.1';
+    const VERSION = '1.0.2';
 
     /**
      * Plugin instance
@@ -59,6 +59,9 @@ class Plugin {
         // Initialize database tables and run migrations
         add_action('plugins_loaded', [$this, 'initialize_database']);
         
+        // Handle admin actions like database updates
+        add_action('admin_init', [$this, 'handle_admin_actions']);
+        
         // Initialize gateways
         add_action('init', [$this, 'initialize_gateways']);
         
@@ -102,6 +105,7 @@ class Plugin {
         require_once __DIR__ . '/migrations/class-migration-manager.php';
         require_once __DIR__ . '/migrations/class-migration-1-0-0.php';
         require_once __DIR__ . '/migrations/class-migration-1-0-1.php';
+        require_once __DIR__ . '/migrations/class-migration-1-0-2.php';
         
         // Run migrations
         $migration_manager = new Migrations\Migration_Manager();
@@ -137,6 +141,68 @@ class Plugin {
         
         // Include email manager
         require_once __DIR__ . '/emails/class-email-manager.php';
+    }
+    
+    /**
+     * Handle admin actions like manual database updates
+     */
+    public function handle_admin_actions() {
+        // Check if we need to run a manual database update
+        if (isset($_GET['page']) && $_GET['page'] === 'members-subscriptions' && 
+            isset($_GET['action']) && $_GET['action'] === 'update_database') {
+            
+            // Verify user can manage options
+            if (!current_user_can('manage_options')) {
+                wp_die(__('You do not have sufficient permissions to perform this action.', 'members'));
+            }
+            
+            // Run migrations
+            $migration_manager = new Migrations\Migration_Manager();
+            $results = $migration_manager->migrate();
+            
+            // Set success/error message
+            $success = true;
+            foreach ($results as $result) {
+                if (!$result['success']) {
+                    $success = false;
+                    break;
+                }
+            }
+            
+            // Redirect back with status
+            $redirect_url = admin_url('admin.php?page=members-subscriptions');
+            $redirect_url = add_query_arg('db_update', $success ? 'success' : 'error', $redirect_url);
+            
+            // If successful, remove the notification
+            if ($success) {
+                // Include the Admin_Notifications class if it's not already loaded
+                if (!class_exists('\\Members\\Subscriptions\\Admin_Notifications')) {
+                    require_once __DIR__ . '/class-admin-notifications.php';
+                }
+                
+                Admin_Notifications::remove_notification('database_update');
+            }
+            
+            wp_redirect($redirect_url);
+            exit;
+        }
+        
+        // Display update success/error message
+        if (isset($_GET['page']) && $_GET['page'] === 'members-subscriptions' && isset($_GET['db_update'])) {
+            if ($_GET['db_update'] === 'success') {
+                add_action('admin_notices', function() {
+                    echo '<div class="notice notice-success is-dismissible"><p>' . 
+                        __('Database update completed successfully. You can now add and edit subscription products.', 'members') . 
+                        '</p></div>';
+                });
+            } elseif ($_GET['db_update'] === 'error') {
+                add_action('admin_notices', function() {
+                    echo '<div class="notice notice-error is-dismissible"><p>' . 
+                        __('Database update failed. Please contact support for assistance.', 'members') . 
+                        '</p></div>';
+                });
+            }
+        }
     }
 
     /**

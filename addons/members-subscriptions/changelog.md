@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.0.2 - 2025-04-11
+
+### Major Fixes
+
+- Added missing products_meta database table
+  - Created migration file for products_meta table
+  - Fixed issue preventing adding and editing subscription products
+  - Added admin notification system for database updates
+  - Added database update utility
+  - Updated version markers throughout codebase
+
 ## 1.0.1 - 2025-04-11
 
 ### Security Enhancements
