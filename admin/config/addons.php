@@ -29,7 +29,7 @@ return array(
 	'members-role-levels' => array(
 		'url'         => '',
 		'title'       => 'Members - Role Levels',
-		'excerpt'     => 'Exposes the old user levels system, which fixes the WordPress author drop-down bug when users don't have a role with one of the assigned levels.'
+		'excerpt'     => 'Exposes the old user levels system, which fixes the WordPress author drop-down bug when users don\'t have a role with one of the assigned levels.'
 	),
 
 	'members-role-hierarchy' => array(
@@ -77,7 +77,7 @@ return array(
 	'members-subscriptions' => array(
 		'url'         => '',
 		'title'       => 'Members - Subscriptions',
-		'excerpt'     => '<p>Adds subscription and payment functionality to Members. Create membership products with associated roles, process payments via Stripe, and manage user subscriptions.</p>'
+		'excerpt'     => '<p>Adds subscription and payment functionality to Members. Create membership products with associated roles, process payments via Stripe, and manage user subscriptions. Includes enhanced security features.</p>'
 	),
 
 	'memberpress-payments' => array(
