@@ -152,7 +152,41 @@ abstract class Gateway {
      * @return mixed
      */
     public function get_setting($key, $default = '') {
-        return isset($this->settings[$key]) ? $this->settings[$key] : $default;
+        // If the setting exists, get it
+        if (isset($this->settings[$key])) {
+            $value = $this->settings[$key];
+            
+            // Handle potentially problematic values for form fields
+            if (is_array($value) && !$this->is_multidimensional_array($value)) {
+                // For checkboxes or similar fields that expect booleans
+                // Return the first value for checkbox fields where '1' is expected
+                return reset($value);
+            }
+            
+            return $value;
+        }
+        
+        return $default;
+    }
+    
+    /**
+     * Check if an array is multidimensional
+     * 
+     * @param array $array
+     * @return bool
+     */
+    private function is_multidimensional_array($array) {
+        if (!is_array($array)) {
+            return false;
+        }
+        
+        foreach ($array as $value) {
+            if (is_array($value)) {
+                return true;
+            }
+        }
+        
+        return false;
     }
 
     /**
@@ -161,7 +195,10 @@ abstract class Gateway {
      * @return bool
      */
     public function is_enabled() {
-        return $this->get_setting('enabled', false);
+        $enabled = $this->get_setting('enabled', false);
+        
+        // Make sure the output is explicitly a boolean
+        return !empty($enabled);
     }
 
     /**

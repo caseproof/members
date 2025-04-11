@@ -27,6 +27,11 @@
   - Improved error handling in migration process
   - Added fallbacks for missing Members plugin functions
   - Enhanced dependency checking for robust plugin initialization
+  - Fixed "Array to string conversion" errors
+  - Added recursive array sanitization for settings
+  - Improved form field value handling for product forms
+  - Enhanced gateway settings to prevent unexpected array values
+  - Added defensive coding for meta values throughout the codebase
 
 ## 1.0.1 - 2025-04-11
 

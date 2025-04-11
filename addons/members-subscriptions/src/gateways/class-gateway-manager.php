@@ -209,6 +209,29 @@ class Gateway_Manager {
     }
 
     /**
+     * Recursively sanitize an array of values
+     * 
+     * @param array $array Array to sanitize
+     * @return array Sanitized array
+     */
+    private static function sanitize_array($array) {
+        if (!is_array($array)) {
+            return sanitize_text_field($array);
+        }
+        
+        $sanitized = [];
+        foreach ($array as $key => $value) {
+            if (is_array($value)) {
+                $sanitized[$key] = self::sanitize_array($value);
+            } else {
+                $sanitized[$key] = sanitize_text_field($value);
+            }
+        }
+        
+        return $sanitized;
+    }
+    
+    /**
      * Save gateway settings
      */
     public function save_gateway_settings() {
@@ -243,7 +266,8 @@ class Gateway_Manager {
         // Basic sanitization of settings
         foreach ($settings as $key => $value) {
             if (is_array($value)) {
-                $sanitized_settings[$key] = array_map('sanitize_text_field', $value);
+                // Handle nested arrays properly to avoid Array to string conversion warnings
+                $sanitized_settings[$key] = self::sanitize_array($value);
             } else {
                 $sanitized_settings[$key] = sanitize_text_field($value);
             }

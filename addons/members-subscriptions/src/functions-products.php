@@ -243,17 +243,36 @@ function render_product_settings_meta_box($post) {
  * @param WP_Post $post The post object.
  */
 function render_product_pricing_meta_box($post) {
-    // Get current values
+    // Get current values and ensure they're not arrays to avoid warnings
     $price = get_product_meta($post->ID, '_price', '0.00');
+    $price = is_array($price) ? '0.00' : $price;
+    
     $recurring = get_product_meta($post->ID, '_recurring', false);
+    $recurring = is_array($recurring) ? false : (bool)$recurring;
+    
     $period = get_product_meta($post->ID, '_period', 1);
+    $period = is_array($period) ? 1 : (int)$period;
+    
     $period_type = get_product_meta($post->ID, '_period_type', 'month');
+    $period_type = is_array($period_type) ? 'month' : $period_type;
+    
     $has_trial = get_product_meta($post->ID, '_has_trial', false);
+    $has_trial = is_array($has_trial) ? false : (bool)$has_trial;
+    
     $trial_days = get_product_meta($post->ID, '_trial_days', 0);
+    $trial_days = is_array($trial_days) ? 0 : (int)$trial_days;
+    
     $trial_price = get_product_meta($post->ID, '_trial_price', '0.00');
+    $trial_price = is_array($trial_price) ? '0.00' : $trial_price;
+    
     $has_access_period = get_product_meta($post->ID, '_has_access_period', false);
+    $has_access_period = is_array($has_access_period) ? false : (bool)$has_access_period;
+    
     $access_period = get_product_meta($post->ID, '_access_period', 1);
+    $access_period = is_array($access_period) ? 1 : (int)$access_period;
+    
     $access_period_type = get_product_meta($post->ID, '_access_period_type', 'month');
+    $access_period_type = is_array($access_period_type) ? 'month' : $access_period_type;
     
     // Get period options
     $period_options = get_subscription_period_options();
@@ -371,15 +390,29 @@ function render_product_access_meta_box($post) {
     // Get roles
     $roles = get_editable_roles();
     
-    // Get current values
+    // Get current values and sanitize
     $membership_roles = get_product_meta($post->ID, '_membership_roles', []);
+    
+    // Make sure it's an array and handle legacy format
     if (!is_array($membership_roles)) {
-        // Handle backward compatibility for single role
+        // Handle backward compatibility for single role or invalid value
+        if (is_string($membership_roles) && !empty($membership_roles)) {
+            $membership_roles = [$membership_roles];
+        } else {
+            $membership_roles = [];
+        }
+    }
+    
+    // Double check for a legacy role if the array is empty
+    if (empty($membership_roles)) {
         $legacy_role = get_product_meta($post->ID, '_membership_role', '');
-        $membership_roles = empty($legacy_role) ? [] : [$legacy_role];
+        if (!empty($legacy_role) && !is_array($legacy_role)) {
+            $membership_roles = [$legacy_role];
+        }
     }
     
     $redirect_url = get_product_meta($post->ID, '_redirect_url', '');
+    $redirect_url = is_array($redirect_url) ? '' : $redirect_url;
     
     ?>
     <div class="members-roles-section">
@@ -457,6 +490,14 @@ function save_product_meta($post_id, $post, $update) {
         
         foreach ($fields as $key => $sanitize_callback) {
             $value = isset($meta_data[$key]) ? $meta_data[$key] : '';
+            
+            // Handle arrays properly
+            if (is_array($value)) {
+                // Skip arrays that shouldn't be here - they should be handled separately
+                continue;
+            }
+            
+            // Apply sanitization callback
             $sanitized_value = $sanitize_callback($value);
             
             if ($key === '_price' || $key === '_trial_price') {
@@ -467,8 +508,12 @@ function save_product_meta($post_id, $post, $update) {
         }
         
         // Handle membership roles (special case for array of values)
-        if (isset($meta_data['_membership_roles']) && is_array($meta_data['_membership_roles'])) {
-            $roles = array_map('sanitize_text_field', $meta_data['_membership_roles']);
+        if (isset($meta_data['_membership_roles'])) {
+            // Ensure it's an array to avoid issues
+            $membership_roles = is_array($meta_data['_membership_roles']) ? $meta_data['_membership_roles'] : [$meta_data['_membership_roles']];
+            
+            // Sanitize each role
+            $roles = array_map('sanitize_text_field', $membership_roles);
             update_product_meta($post_id, '_membership_roles', $roles);
             
             // For backward compatibility, also save the first role in _membership_role
