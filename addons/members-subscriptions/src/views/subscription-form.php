@@ -41,7 +41,7 @@ $user_id = get_current_user_id();
 $redirect_url = get_product_meta($product_id, '_redirect_url', '');
 
 // Check if user already has access
-if ($user_id && user_has_access($user_id, $product_id)) {
+if ($user_id && function_exists('\\Members\\Subscriptions\\user_has_access') && user_has_access($user_id, $product_id)) {
     echo '<div class="members-already-subscribed">';
     echo '<p>' . __('You already have access to this membership.', 'members') . '</p>';
     if (!empty($redirect_url)) {
