@@ -15,6 +15,15 @@ function init_product_hooks() {
     // Process registration and subscription form for logged-out users
     add_action('init', __NAMESPACE__ . '\process_registration_and_subscription');
     
+    // Register the admin-post handlers for both forms
+    add_action('admin_post_members_process_registration_and_subscription', __NAMESPACE__ . '\handle_registration_and_subscription');
+    add_action('admin_post_nopriv_members_process_registration_and_subscription', __NAMESPACE__ . '\handle_registration_and_subscription');
+    
+    add_action('admin_post_members_process_subscription', __NAMESPACE__ . '\process_subscription_form');
+    add_action('admin_post_nopriv_members_process_subscription', function() {
+        wp_die(__('You must be logged in to purchase a membership.', 'members'));
+    });
+    
     // Add meta boxes for product editing
     add_action('add_meta_boxes', __NAMESPACE__ . '\add_product_meta_boxes');
     
@@ -123,7 +132,7 @@ function subscription_form_shortcode($atts) {
             <h3><?php _e('Create Account & Subscribe', 'members'); ?></h3>
             <p><?php _e('Fill out this form to create your account and purchase this membership.', 'members'); ?></p>
             
-            <form action="<?php echo esc_url(site_url('/')); ?>" method="post" class="members-registration-form">
+            <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" class="members-registration-form">
                 <?php wp_nonce_field('members_subscription_form', 'members_subscription_nonce'); ?>
                 <input type="hidden" name="action" value="members_process_registration_and_subscription">
                 <input type="hidden" name="product_id" value="<?php echo esc_attr($atts['product_id']); ?>">
@@ -310,7 +319,7 @@ function subscription_form_shortcode($atts) {
             <?php endif; ?>
         </div>
 
-        <form action="<?php echo esc_url(site_url('/')); ?>" method="post" class="members-direct-form">
+        <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" class="members-direct-form">
             <?php wp_nonce_field('members_subscription_form', 'members_subscription_nonce'); ?>
             <input type="hidden" name="action" value="members_process_subscription">
             <input type="hidden" name="product_id" value="<?php echo esc_attr($atts['product_id']); ?>">
@@ -693,26 +702,41 @@ function process_subscription_form() {
  * Process registration and subscription form submission for logged-out users
  */
 function process_registration_and_subscription() {
-    // Register the action handler
-    add_action('init', __NAMESPACE__ . '\handle_registration_and_subscription');
+    // Debug - check if this function is being called
+    error_log('Members Subscriptions: process_registration_and_subscription function called');
+    
+    // Check if form is submitted directly to this function
+    if (isset($_POST['action']) && $_POST['action'] === 'members_process_registration_and_subscription') {
+        // Call the handler directly to avoid potential hook timing issues
+        handle_registration_and_subscription();
+    }
 }
 
 /**
  * Handler for registration and subscription process
  */
 function handle_registration_and_subscription() {
-    // Debug
+    // Debug - dump all POST data for inspection
     error_log('Members Subscriptions: Processing registration and subscription');
+    error_log('POST data: ' . print_r($_POST, true));
     
     // Check if form is submitted
     if (!isset($_POST['action']) || $_POST['action'] !== 'members_process_registration_and_subscription') {
+        error_log('Members Subscriptions: Action not set or incorrect: ' . (isset($_POST['action']) ? $_POST['action'] : 'not set'));
         return;
     }
     
+    // Debug - form submission detected
+    error_log('Members Subscriptions: Registration form submission detected');
+    
     // Verify nonce
     if (!isset($_POST['members_subscription_nonce']) || !wp_verify_nonce($_POST['members_subscription_nonce'], 'members_subscription_form')) {
+        error_log('Members Subscriptions: Nonce verification failed. Nonce: ' . (isset($_POST['members_subscription_nonce']) ? $_POST['members_subscription_nonce'] : 'not set'));
         wp_die(__('Security check failed. Please try again.', 'members'));
     }
+    
+    // Debug - nonce verification passed
+    error_log('Members Subscriptions: Nonce verification passed');
     
     // Get product
     $product_id = isset($_POST['product_id']) ? absint($_POST['product_id']) : 0;
@@ -783,12 +807,19 @@ function handle_registration_and_subscription() {
         'role' => 'subscriber', // Default role
     ];
     
+    // Debug - User creation attempt
+    error_log('Members Subscriptions: Attempting to create user with data: ' . print_r($user_data, true));
+    
     $user_id = wp_insert_user($user_data);
     
     // Check if user was created successfully
     if (is_wp_error($user_id)) {
+        error_log('Members Subscriptions: User creation failed: ' . $user_id->get_error_message());
         wp_die($user_id->get_error_message() . '<p><a href="javascript:history.back()" class="button">' . __('Go Back', 'members') . '</a></p>');
     }
+    
+    // Debug - User created successfully
+    error_log('Members Subscriptions: User created successfully with ID: ' . $user_id);
     
     // Store additional user meta
     $meta_fields = [
@@ -832,44 +863,127 @@ function handle_registration_and_subscription() {
     $redirect_url = get_product_meta($product_id, '_redirect_url', get_permalink($product_id));
     
     // Get membership roles
-    $membership_roles = get_product_meta($product_id, '_membership_roles', []);
+    try {
+        $membership_roles = get_product_meta($product_id, '_membership_roles', []);
+        error_log('Members Subscriptions: Got membership roles: ' . print_r($membership_roles, true));
+    } catch (\Exception $e) {
+        error_log('Members Subscriptions: Error getting membership roles: ' . $e->getMessage());
+        $membership_roles = [];
+    }
     
     // Assign roles to the user
     if (!empty($membership_roles) && is_array($membership_roles)) {
-        $user = new \WP_User($user_id);
-        foreach ($membership_roles as $role) {
-            $user->add_role($role);
+        try {
+            $user = new \WP_User($user_id);
+            foreach ($membership_roles as $role) {
+                error_log('Members Subscriptions: Assigning role: ' . $role . ' to user: ' . $user_id);
+                $user->add_role($role);
+            }
+        } catch (\Exception $e) {
+            error_log('Members Subscriptions: Error assigning roles: ' . $e->getMessage());
         }
+    } else {
+        error_log('Members Subscriptions: No membership roles to assign or roles not in array format');
     }
     
     // Create a transaction record
     if (function_exists('\\Members\\Subscriptions\\create_transaction')) {
-        $transaction_data = [
-            'user_id' => $user_id,
-            'product_id' => $product_id,
-            'amount' => $price,
-            'status' => 'completed',
-            'gateway' => 'manual',
-            'transaction_id' => 'manual_' . time(),
-        ];
+        try {
+            $transaction_data = [
+                'user_id' => $user_id,
+                'product_id' => $product_id,
+                'amount' => $price,
+                'status' => 'completed',
+                'gateway' => 'manual',
+                'transaction_id' => 'manual_' . time(),
+            ];
+            
+            error_log('Members Subscriptions: Creating transaction with data: ' . print_r($transaction_data, true));
+            $transaction_id = \Members\Subscriptions\create_transaction($transaction_data);
+            error_log('Members Subscriptions: Transaction created with ID: ' . $transaction_id);
+        } catch (\Exception $e) {
+            error_log('Members Subscriptions: Error creating transaction: ' . $e->getMessage());
+        }
+    } else {
+        error_log('Members Subscriptions: create_transaction function not found');
         
-        create_transaction($transaction_data);
+        // Fallback - store the transaction data as user meta
+        try {
+            $transaction_data = [
+                'product_id' => $product_id,
+                'product_name' => $product->post_title,
+                'amount' => $price,
+                'status' => 'completed',
+                'gateway' => 'manual',
+                'transaction_id' => 'manual_' . time(),
+                'created_at' => current_time('mysql')
+            ];
+            
+            // Store as user meta
+            $user_transactions = get_user_meta($user_id, '_members_transactions', true);
+            if (!is_array($user_transactions)) {
+                $user_transactions = [];
+            }
+            
+            $user_transactions[] = $transaction_data;
+            update_user_meta($user_id, '_members_transactions', $user_transactions);
+            error_log('Members Subscriptions: Stored transaction in user meta');
+        } catch (\Exception $e) {
+            error_log('Members Subscriptions: Error in transaction fallback: ' . $e->getMessage());
+        }
     }
     
     // Create a subscription record if recurring
     if ($is_recurring && function_exists('\\Members\\Subscriptions\\create_subscription')) {
-        $subscription_data = [
-            'user_id' => $user_id,
-            'product_id' => $product_id,
-            'status' => 'active',
-            'gateway' => 'manual',
-            'subscription_id' => 'manual_sub_' . time(),
-            'amount' => $price,
-            'period' => $period,
-            'period_type' => $period_type,
-        ];
+        try {
+            $subscription_data = [
+                'user_id' => $user_id,
+                'product_id' => $product_id,
+                'status' => 'active',
+                'gateway' => 'manual',
+                'subscription_id' => 'manual_sub_' . time(),
+                'amount' => $price,
+                'period' => $period,
+                'period_type' => $period_type,
+            ];
+            
+            error_log('Members Subscriptions: Creating subscription with data: ' . print_r($subscription_data, true));
+            $subscription_id = \Members\Subscriptions\create_subscription($subscription_data);
+            error_log('Members Subscriptions: Subscription created with ID: ' . $subscription_id);
+        } catch (\Exception $e) {
+            error_log('Members Subscriptions: Error creating subscription: ' . $e->getMessage());
+        }
+    } else {
+        error_log('Members Subscriptions: create_subscription function not found or product is not recurring');
         
-        create_subscription($subscription_data);
+        // Fallback - store the subscription data as user meta if it's recurring
+        if ($is_recurring) {
+            try {
+                $subscription_data = [
+                    'product_id' => $product_id,
+                    'product_name' => $product->post_title,
+                    'status' => 'active',
+                    'gateway' => 'manual',
+                    'subscription_id' => 'manual_sub_' . time(),
+                    'amount' => $price,
+                    'period' => $period,
+                    'period_type' => $period_type,
+                    'created_at' => current_time('mysql')
+                ];
+                
+                // Store as user meta
+                $user_subscriptions = get_user_meta($user_id, '_members_subscriptions', true);
+                if (!is_array($user_subscriptions)) {
+                    $user_subscriptions = [];
+                }
+                
+                $user_subscriptions[] = $subscription_data;
+                update_user_meta($user_id, '_members_subscriptions', $user_subscriptions);
+                error_log('Members Subscriptions: Stored subscription in user meta');
+            } catch (\Exception $e) {
+                error_log('Members Subscriptions: Error in subscription fallback: ' . $e->getMessage());
+            }
+        }
     }
     
     // Redirect to thank you page or content
