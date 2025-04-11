@@ -111,4 +111,48 @@ class Renewal_Reminder_Email extends Subscription_Email {
         
         return $tokens;
     }
+    
+    /**
+     * Get email content
+     *
+     * @return string
+     */
+    public function get_content() {
+        if (!$this->subscription || !$this->user || !$this->product) {
+            return '';
+        }
+        
+        $content = '<p>' . sprintf(
+            __('Hello %s,', 'members'),
+            $this->user->display_name
+        ) . '</p>';
+        
+        $content .= '<p>' . sprintf(
+            __('Your subscription to %s will renew in %d days on %s.', 'members'),
+            '<strong>' . $this->product->post_title . '</strong>',
+            $this->days,
+            date_i18n(get_option('date_format'), strtotime($this->subscription->next_payment_at))
+        ) . '</p>';
+        
+        $content .= '<h3>' . __('Subscription Details', 'members') . '</h3>';
+        
+        $content .= '<ul>';
+        $content .= '<li>' . sprintf(__('Product: %s', 'members'), $this->product->post_title) . '</li>';
+        $content .= '<li>' . sprintf(__('Amount: %s', 'members'), number_format_i18n($this->subscription->price, 2)) . '</li>';
+        $content .= '<li>' . sprintf(__('Next billing date: %s', 'members'), 
+                     date_i18n(get_option('date_format'), strtotime($this->subscription->next_payment_at))) . '</li>';
+        $content .= '</ul>';
+        
+        $content .= '<p>' . sprintf(
+            __('You can manage your subscription from your %s.', 'members'),
+            '<a href="' . esc_url(get_permalink(get_option('members_account_page'))) . '">' . __('account page', 'members') . '</a>'
+        ) . '</p>';
+        
+        $content .= '<p>' . __('If you have any questions or want to make changes to your subscription, please contact us.', 'members') . '</p>';
+        
+        $content .= '<p>' . __('Thank you for your continued support!', 'members') . '</p>';
+        
+        // Replace placeholders
+        return $this->replace_placeholders($content);
+    }
 }

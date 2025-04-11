@@ -36,6 +36,7 @@
   
 - Fixed PHP compatibility errors
   - Fixed incompatible method declaration in Renewal_Reminder_Email class
+  - Added missing abstract method implementations in email classes
 
 ## 1.0.0 - Initial Release
 
