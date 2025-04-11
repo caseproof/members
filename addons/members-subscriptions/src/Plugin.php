@@ -622,9 +622,39 @@ class Plugin {
             'product_id' => 0,
         ], $atts, 'members_subscription_form');
         
+        // Debug log
+        error_log('Members Subscriptions: subscription_form_shortcode called with product_id=' . $atts['product_id']);
+        
+        // Check for valid product_id
+        if (empty($atts['product_id'])) {
+            // If no product ID provided, get it from the current post
+            if (is_singular('members_product')) {
+                $atts['product_id'] = get_the_ID();
+                error_log('Members Subscriptions: Using current post ID: ' . $atts['product_id']);
+            } else {
+                error_log('Members Subscriptions: No product ID provided and not on a product page');
+                return '<p class="members-error">' . __('Error: No valid product selected.', 'members') . '</p>';
+            }
+        }
+        
+        // Ensure product_id is an integer
+        $atts['product_id'] = absint($atts['product_id']);
+        
+        // Verify product exists and is the right type
+        $product = get_post($atts['product_id']);
+        if (!$product || $product->post_type !== 'members_product') {
+            error_log('Members Subscriptions: Invalid product ID: ' . $atts['product_id']);
+            return '<p class="members-error">' . __('Error: Invalid product.', 'members') . '</p>';
+        }
+        
         ob_start();
         include __DIR__ . '/views/subscription-form.php';
-        return ob_get_clean();
+        $output = ob_get_clean();
+        
+        // Debug log
+        error_log('Members Subscriptions: Form output length: ' . strlen($output));
+        
+        return $output;
     }
 
     /**

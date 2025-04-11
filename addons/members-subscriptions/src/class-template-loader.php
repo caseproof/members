@@ -414,12 +414,30 @@ class Template_Loader {
         
         // Include the subscription form
         if (class_exists('\\Members\\Subscriptions\\Plugin')) {
+            error_log('Direct template: Plugin class exists, using subscription_form_shortcode');
             $plugin = Plugin::get_instance();
             echo $plugin->subscription_form_shortcode(['product_id' => $post->ID]);
+        } elseif (shortcode_exists('members_subscription_form')) {
+            error_log('Direct template: Using direct shortcode call');
+            echo do_shortcode('[members_subscription_form product_id="' . $post->ID . '"]');
         } else {
-            // Fallback in case the plugin instance isn't available
+            error_log('Direct template: Using fallback direct form');
+            // Fallback direct form
             if (is_user_logged_in()) {
-                echo '<p><a href="' . esc_url(add_query_arg('product_id', $post->ID, site_url('/checkout/'))) . '" class="button" style="display: inline-block; padding: 10px 20px; background: #0073aa; color: white; text-decoration: none; border-radius: 3px;">Subscribe Now</a></p>';
+                // Get product meta
+                $recurring = get_post_meta($post->ID, '_recurring', true);
+                $recurring = !empty($recurring) && $recurring !== '0';
+                
+                echo '<div class="members-direct-form-container">';
+                echo '<form action="' . esc_url(site_url('/')) . '" method="post" class="members-direct-form">';
+                wp_nonce_field('members_subscription_form', 'members_subscription_nonce');
+                echo '<input type="hidden" name="action" value="members_process_subscription">';
+                echo '<input type="hidden" name="product_id" value="' . esc_attr($post->ID) . '">';
+                echo '<input type="hidden" name="payment_method" value="manual">';
+                echo '<input type="hidden" name="is_recurring" value="' . ($recurring ? '1' : '0') . '">';
+                echo '<button type="submit" class="button members-subscribe-button" style="display: inline-block; padding: 10px 20px; background: #0073aa; color: white; text-decoration: none; border-radius: 3px; border: none; cursor: pointer;">Subscribe Now</button>';
+                echo '</form>';
+                echo '</div>';
             } else {
                 echo '<p>Please <a href="' . wp_login_url(get_permalink()) . '" style="color: #0073aa;">login</a> to purchase this membership.</p>';
             }

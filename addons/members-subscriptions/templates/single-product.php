@@ -67,15 +67,31 @@ $period_label = isset($period_options[$period_type]) ? $period_options[$period_t
                         <?php 
                         // Include the subscription form
                         if (function_exists('\\Members\\Subscriptions\\Plugin::get_instance')) {
+                            error_log('Templates: Plugin class exists, using subscription_form_shortcode');
                             $plugin = \Members\Subscriptions\Plugin::get_instance();
                             echo $plugin->subscription_form_shortcode(['product_id' => get_the_ID()]);
+                        } elseif (shortcode_exists('members_subscription_form')) {
+                            error_log('Templates: Using direct shortcode call');
+                            echo do_shortcode('[members_subscription_form product_id="' . get_the_ID() . '"]');
                         } else {
-                            // Fallback in case the plugin instance isn't available
-                            if (is_user_logged_in()) : ?>
+                            error_log('Templates: Using fallback direct form');
+                            // Fallback direct form
+                            if (is_user_logged_in()) : 
+                                $product_id = get_the_ID();
+                                $nonce = wp_create_nonce('members_subscription_form');
+                                ?>
                                 <div class="members-product-purchase">
-                                    <a href="<?php echo esc_url(add_query_arg('product_id', get_the_ID(), site_url('/checkout/'))); ?>" class="button">
-                                        <?php _e('Subscribe Now', 'members'); ?>
-                                    </a>
+                                    <form action="<?php echo esc_url(site_url('/')); ?>" method="post" class="members-direct-form">
+                                        <?php wp_nonce_field('members_subscription_form', 'members_subscription_nonce'); ?>
+                                        <input type="hidden" name="action" value="members_process_subscription">
+                                        <input type="hidden" name="product_id" value="<?php echo esc_attr($product_id); ?>">
+                                        <input type="hidden" name="payment_method" value="manual">
+                                        <input type="hidden" name="is_recurring" value="<?php echo $recurring ? '1' : '0'; ?>">
+                                        
+                                        <button type="submit" class="button members-subscribe-button" style="padding: 10px 20px; background: #0073aa; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                            <?php _e('Subscribe Now', 'members'); ?>
+                                        </button>
+                                    </form>
                                 </div>
                             <?php else : ?>
                                 <div class="members-product-login-required">

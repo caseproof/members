@@ -90,22 +90,71 @@ function maybe_update_product_meta_table($post) {
 // We use get_subscription_period_options() from functions-subscriptions.php
 
 /**
+ * Simple local version of user_has_access to avoid function conflicts
+ * This is a fallback in case the main function in functions-subscriptions.php isn't available
+ */
+function product_user_has_access($user_id, $product_id) {
+    // Check if the real function exists and use it
+    if (function_exists('\\Members\\Subscriptions\\user_has_access')) {
+        return user_has_access($user_id, $product_id);
+    }
+    
+    // Simple implementation for fallback
+    if (!$user_id) {
+        return false;
+    }
+    
+    // Get user's roles
+    $user = get_userdata($user_id);
+    if (!$user) {
+        return false;
+    }
+    
+    // Get product roles
+    $product_roles = [];
+    if (function_exists('\\Members\\Subscriptions\\get_product_meta')) {
+        $product_roles = get_product_meta($product_id, '_membership_roles', []);
+    } else {
+        $product_roles = get_post_meta($product_id, '_membership_roles', true);
+    }
+    
+    if (!is_array($product_roles)) {
+        $product_roles = [];
+    }
+    
+    // Check if user has any of the required roles
+    foreach ($product_roles as $role) {
+        if (in_array($role, (array) $user->roles)) {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+/**
  * Process subscription form submission
  */
 function process_subscription_form() {
+    // Debug
+    error_log('Members Subscriptions: Processing subscription form submission');
+    
     // Check if form is submitted
     if (!isset($_POST['action']) || $_POST['action'] !== 'members_process_subscription') {
+        error_log('Members Subscriptions: Form not submitted or incorrect action');
         return;
     }
     
     // Verify nonce
     if (!isset($_POST['members_subscription_nonce']) || !wp_verify_nonce($_POST['members_subscription_nonce'], 'members_subscription_form')) {
+        error_log('Members Subscriptions: Nonce verification failed');
         wp_die(__('Security check failed. Please try again.', 'members'));
     }
     
     // Check if user is logged in
     $user_id = get_current_user_id();
     if (!$user_id) {
+        error_log('Members Subscriptions: User not logged in');
         wp_die(__('You must be logged in to purchase a membership.', 'members'));
     }
     
@@ -114,13 +163,18 @@ function process_subscription_form() {
     $product = get_post($product_id);
     
     if (!$product || $product->post_type !== 'members_product') {
+        error_log('Members Subscriptions: Invalid product: ' . $product_id);
         wp_die(__('Invalid product.', 'members'));
     }
     
-    // Check if user already has access
-    if (function_exists('user_has_access') && user_has_access($user_id, $product_id)) {
+    error_log('Members Subscriptions: Processing product: ' . $product->post_title);
+    
+    // Check if user already has access using our local function
+    if (product_user_has_access($user_id, $product_id)) {
+        error_log('Members Subscriptions: User already has access to product');
+        
         // Use post meta directly if get_product_meta isn't available or working
-        if (function_exists('get_product_meta')) {
+        if (function_exists('\\Members\\Subscriptions\\get_product_meta')) {
             $redirect_url = get_product_meta($product_id, '_redirect_url', get_permalink($product_id));
         } else {
             $redirect_url = get_post_meta($product_id, '_redirect_url', true);
@@ -129,6 +183,7 @@ function process_subscription_form() {
             }
         }
         
+        error_log('Members Subscriptions: Redirecting to: ' . $redirect_url);
         wp_redirect($redirect_url);
         exit;
     }
@@ -319,39 +374,77 @@ function render_product_settings_meta_box($post) {
  * @param WP_Post $post The post object.
  */
 function render_product_pricing_meta_box($post) {
-    // Get current values and ensure they're not arrays to avoid warnings
-    $price = get_product_meta($post->ID, '_price', '0.00');
-    $price = is_array($price) ? '0.00' : $price;
+    // Set default values
+    $defaults = [
+        '_price' => '0.00',
+        '_recurring' => false,
+        '_period' => 1,
+        '_period_type' => 'month',
+        '_has_trial' => false,
+        '_trial_days' => 0,
+        '_trial_price' => '0.00',
+        '_has_access_period' => false,
+        '_access_period' => 1,
+        '_access_period_type' => 'month'
+    ];
     
-    $recurring = get_product_meta($post->ID, '_recurring', false);
-    $recurring = is_array($recurring) ? false : (bool)$recurring;
+    // Get current values with error handling
+    $meta_values = [];
     
-    $period = get_product_meta($post->ID, '_period', 1);
-    $period = is_array($period) ? 1 : (int)$period;
+    try {
+        // Safely get each meta value with fallback to defaults
+        foreach ($defaults as $key => $default) {
+            $value = get_post_meta($post->ID, $key, true);
+            
+            // If the value is empty and we have a get_product_meta function, try that
+            if (empty($value) && function_exists('\\Members\\Subscriptions\\get_product_meta')) {
+                $value = get_product_meta($post->ID, $key, $default);
+            }
+            
+            // Ensure proper type casting
+            if ($key === '_price' || $key === '_trial_price') {
+                $value = !empty($value) ? $value : $default;
+                $value = is_array($value) ? $default : $value;
+            } elseif (in_array($key, ['_recurring', '_has_trial', '_has_access_period'])) {
+                $value = !empty($value) && $value !== '0' ? true : false;
+            } elseif (in_array($key, ['_period', '_trial_days', '_access_period'])) {
+                $value = !empty($value) ? intval($value) : $default;
+                $value = $value < 1 ? 1 : $value; // Ensure minimum of 1
+            } else {
+                $value = !empty($value) ? $value : $default;
+            }
+            
+            $meta_values[$key] = $value;
+        }
+    } catch (Exception $e) {
+        error_log('Members Subscriptions: Error in render_product_pricing_meta_box: ' . $e->getMessage());
+        // Fall back to defaults if there's an error
+        $meta_values = $defaults;
+    }
     
-    $period_type = get_product_meta($post->ID, '_period_type', 'month');
-    $period_type = is_array($period_type) ? 'month' : $period_type;
+    // Extract values for easier access in the template
+    $price = $meta_values['_price'];
+    $recurring = $meta_values['_recurring'];
+    $period = $meta_values['_period'];
+    $period_type = $meta_values['_period_type'];
+    $has_trial = $meta_values['_has_trial'];
+    $trial_days = $meta_values['_trial_days'];
+    $trial_price = $meta_values['_trial_price'];
+    $has_access_period = $meta_values['_has_access_period'];
+    $access_period = $meta_values['_access_period'];
+    $access_period_type = $meta_values['_access_period_type'];
     
-    $has_trial = get_product_meta($post->ID, '_has_trial', false);
-    $has_trial = is_array($has_trial) ? false : (bool)$has_trial;
-    
-    $trial_days = get_product_meta($post->ID, '_trial_days', 0);
-    $trial_days = is_array($trial_days) ? 0 : (int)$trial_days;
-    
-    $trial_price = get_product_meta($post->ID, '_trial_price', '0.00');
-    $trial_price = is_array($trial_price) ? '0.00' : $trial_price;
-    
-    $has_access_period = get_product_meta($post->ID, '_has_access_period', false);
-    $has_access_period = is_array($has_access_period) ? false : (bool)$has_access_period;
-    
-    $access_period = get_product_meta($post->ID, '_access_period', 1);
-    $access_period = is_array($access_period) ? 1 : (int)$access_period;
-    
-    $access_period_type = get_product_meta($post->ID, '_access_period_type', 'month');
-    $access_period_type = is_array($access_period_type) ? 'month' : $access_period_type;
-    
-    // Get period options
-    $period_options = get_subscription_period_options();
+    // Create period options fallback if the function doesn't exist
+    if (function_exists('\\Members\\Subscriptions\\get_subscription_period_options')) {
+        $period_options = get_subscription_period_options();
+    } else {
+        $period_options = [
+            'day' => __('Day(s)', 'members'),
+            'week' => __('Week(s)', 'members'),
+            'month' => __('Month(s)', 'members'),
+            'year' => __('Year(s)', 'members'),
+        ];
+    }
     
     ?>
     <p>
@@ -463,32 +556,62 @@ function render_product_pricing_meta_box($post) {
  * @param WP_Post $post The post object.
  */
 function render_product_access_meta_box($post) {
-    // Get roles
-    $roles = get_editable_roles();
+    // Get roles with error handling
+    if (function_exists('get_editable_roles')) {
+        $roles = get_editable_roles();
+    } else {
+        // Fallback to get_roles function if available
+        $roles = function_exists('get_roles') ? get_roles() : [];
+        
+        // Last resort fallback
+        if (empty($roles)) {
+            global $wp_roles;
+            $roles = isset($wp_roles) && isset($wp_roles->roles) ? $wp_roles->roles : [];
+        }
+    }
     
-    // Get current values and sanitize
-    $membership_roles = get_product_meta($post->ID, '_membership_roles', []);
+    // Safety check
+    if (empty($roles) || !is_array($roles)) {
+        echo '<p class="error">' . __('Error: Unable to retrieve available roles.', 'members') . '</p>';
+        $roles = [];
+    }
     
-    // Make sure it's an array and handle legacy format
+    // Get current values with error handling
+    try {
+        $membership_roles = get_product_meta($post->ID, '_membership_roles', []);
+        
+        // Make sure it's an array and handle legacy format
+        if (!is_array($membership_roles)) {
+            // Handle backward compatibility for single role or invalid value
+            if (is_string($membership_roles) && !empty($membership_roles)) {
+                $membership_roles = [$membership_roles];
+            } else {
+                $membership_roles = [];
+            }
+        }
+        
+        // Double check for a legacy role if the array is empty
+        if (empty($membership_roles)) {
+            $legacy_role = get_product_meta($post->ID, '_membership_role', '');
+            if (!empty($legacy_role) && !is_array($legacy_role)) {
+                $membership_roles = [$legacy_role];
+            }
+        }
+        
+        $redirect_url = get_product_meta($post->ID, '_redirect_url', '');
+        $redirect_url = is_array($redirect_url) ? '' : $redirect_url;
+    } catch (Exception $e) {
+        // Fallback to direct post meta if get_product_meta fails
+        error_log('Members Subscriptions: Error in render_product_access_meta_box: ' . $e->getMessage());
+        $membership_roles = get_post_meta($post->ID, '_membership_roles', true);
+        $membership_roles = is_array($membership_roles) ? $membership_roles : [];
+        $redirect_url = get_post_meta($post->ID, '_redirect_url', true);
+    }
+    
+    // Ensure membership_roles is an array
     if (!is_array($membership_roles)) {
-        // Handle backward compatibility for single role or invalid value
-        if (is_string($membership_roles) && !empty($membership_roles)) {
-            $membership_roles = [$membership_roles];
-        } else {
-            $membership_roles = [];
-        }
+        $membership_roles = [];
     }
-    
-    // Double check for a legacy role if the array is empty
-    if (empty($membership_roles)) {
-        $legacy_role = get_product_meta($post->ID, '_membership_role', '');
-        if (!empty($legacy_role) && !is_array($legacy_role)) {
-            $membership_roles = [$legacy_role];
-        }
-    }
-    
-    $redirect_url = get_product_meta($post->ID, '_redirect_url', '');
-    $redirect_url = is_array($redirect_url) ? '' : $redirect_url;
     
     ?>
     <div class="members-roles-section">
@@ -498,17 +621,30 @@ function render_product_access_meta_box($post) {
         </p>
         
         <div class="members-roles-list" style="margin-left: 15px; max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px;">
-            <?php foreach ($roles as $role_id => $role) : ?>
-                <p>
-                    <label>
-                        <input type="checkbox" 
-                               name="members_product_meta[_membership_roles][]" 
-                               value="<?php echo esc_attr($role_id); ?>" 
-                               <?php checked(in_array($role_id, $membership_roles)); ?>>
-                        <?php echo esc_html(translate_user_role($role['name'])); ?>
-                    </label>
-                </p>
-            <?php endforeach; ?>
+            <?php if (!empty($roles)) : ?>
+                <?php foreach ($roles as $role_id => $role) : ?>
+                    <?php 
+                    // Skip if role is not properly formatted
+                    if (!is_array($role) || empty($role)) {
+                        continue;
+                    }
+                    
+                    // Get role name with fallback
+                    $role_name = isset($role['name']) ? $role['name'] : $role_id;
+                    ?>
+                    <p>
+                        <label>
+                            <input type="checkbox" 
+                                name="members_product_meta[_membership_roles][]" 
+                                value="<?php echo esc_attr($role_id); ?>" 
+                                <?php checked(in_array($role_id, $membership_roles)); ?>>
+                            <?php echo esc_html(function_exists('translate_user_role') ? translate_user_role($role_name) : $role_name); ?>
+                        </label>
+                    </p>
+                <?php endforeach; ?>
+            <?php else : ?>
+                <p class="description"><?php _e('No roles available. Please ensure WordPress roles are properly configured.', 'members'); ?></p>
+            <?php endif; ?>
         </div>
         <p class="description"><?php _e('Users will receive all selected roles upon purchase. If their subscription expires or is cancelled, these roles will be removed.', 'members'); ?></p>
     </div>

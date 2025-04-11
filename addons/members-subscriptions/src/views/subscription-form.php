@@ -79,19 +79,19 @@ if ($user_id && function_exists('\\Members\\Subscriptions\\user_has_access') && 
 // Generate nonce
 $nonce = wp_create_nonce('members_subscribe_nonce');
 
-// Main container
-echo '<div class="members-subscription-container">';
+// Main container - make sure we have inline styling so it works in any theme
+echo '<div class="members-subscription-container" style="max-width: 800px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 4px; background: #fff;">';
 
 // Product details
-echo '<div class="members-subscription-form-header">';
-echo '<h2>' . esc_html($product->post_title) . '</h2>';
+echo '<div class="members-subscription-form-header" style="margin-bottom: 20px;">';
+echo '<h2 style="margin-top: 0;">' . esc_html($product->post_title) . '</h2>';
 if (!empty($product->post_excerpt)) {
     echo '<div class="members-product-excerpt">' . wp_kses_post($product->post_excerpt) . '</div>';
 }
 echo '</div>';
 
-// Subscription form
-echo '<form id="members-payment-form" class="members-subscription-form" method="post">';
+// Subscription form - simple direct form that works anywhere
+echo '<form id="members-payment-form" class="members-subscription-form" method="post" action="' . esc_url(site_url('/')) . '">';
 
 // Logged out message
 if (!$user_id) {
