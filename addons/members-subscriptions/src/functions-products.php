@@ -20,8 +20,242 @@ function init_product_hooks() {
     
     // Update the meta table for existing products on access
     add_action('the_post', __NAMESPACE__ . '\maybe_update_product_meta_table');
+    
+    // Shortcodes for displaying products and subscription forms
+    add_shortcode('members_subscription_form', __NAMESPACE__ . '\subscription_form_shortcode');
+    add_shortcode('members_product_details', __NAMESPACE__ . '\product_details_shortcode');
+    
+    // Filter to add subscription form to product content
+    add_filter('the_content', __NAMESPACE__ . '\maybe_append_subscription_form');
 }
 init_product_hooks();
+
+/**
+ * Append subscription form to product content
+ *
+ * @param string $content The post content
+ * @return string Modified content
+ */
+function maybe_append_subscription_form($content) {
+    // Only modify content for members_product post type
+    if (!is_singular('members_product')) {
+        return $content;
+    }
+    
+    // Don't add the form if it's already in the content
+    if (stripos($content, 'members-subscription-form') !== false) {
+        return $content;
+    }
+    
+    // Get the form
+    $form = subscription_form_shortcode(['product_id' => get_the_ID()]);
+    
+    // Append the form to the content
+    $content .= '<div class="members-subscription-form-wrapper">';
+    $content .= '<h3>' . __('Subscribe Now', 'members') . '</h3>';
+    $content .= $form;
+    $content .= '</div>';
+    
+    return $content;
+}
+
+/**
+ * Shortcode callback for subscription form
+ *
+ * @param array $atts Shortcode attributes
+ * @return string Subscription form HTML
+ */
+function subscription_form_shortcode($atts) {
+    // Parse shortcode attributes
+    $atts = shortcode_atts([
+        'product_id' => 0,
+    ], $atts, 'members_subscription_form');
+    
+    // Debug log
+    error_log('Members Subscriptions: subscription_form_shortcode called with product_id=' . $atts['product_id']);
+    
+    // Check for valid product_id
+    if (empty($atts['product_id'])) {
+        // If no product ID provided, get it from the current post
+        if (is_singular('members_product')) {
+            $atts['product_id'] = get_the_ID();
+            error_log('Members Subscriptions: Using current post ID: ' . $atts['product_id']);
+        } else {
+            error_log('Members Subscriptions: No product ID provided and not on a product page');
+            return '<p class="members-error">' . __('Error: No valid product selected.', 'members') . '</p>';
+        }
+    }
+    
+    // Ensure product_id is an integer
+    $atts['product_id'] = absint($atts['product_id']);
+    
+    // Verify product exists and is the right type
+    $product = get_post($atts['product_id']);
+    if (!$product || $product->post_type !== 'members_product') {
+        error_log('Members Subscriptions: Invalid product ID: ' . $atts['product_id']);
+        return '<p class="members-error">' . __('Error: Invalid product.', 'members') . '</p>';
+    }
+    
+    // Get product meta
+    $price = get_product_meta($atts['product_id'], '_price', 0);
+    $recurring = get_product_meta($atts['product_id'], '_recurring', false);
+    $period = get_product_meta($atts['product_id'], '_period', 1);
+    $period_type = get_product_meta($atts['product_id'], '_period_type', 'month');
+    
+    $period_options = [
+        'day' => __('day(s)', 'members'),
+        'week' => __('week(s)', 'members'),
+        'month' => __('month(s)', 'members'),
+        'year' => __('year(s)', 'members'),
+    ];
+    $period_label = isset($period_options[$period_type]) ? $period_options[$period_type] : $period_type;
+    
+    // Start output buffer
+    ob_start();
+    
+    // Check if user is logged in
+    if (!is_user_logged_in()) {
+        ?>
+        <div class="members-product-login-required" style="margin: 20px 0; padding: 15px; background: #f8f8f8; border: 1px solid #ddd; border-radius: 4px;">
+            <p><?php _e('Please log in to purchase this membership.', 'members'); ?></p>
+            <a href="<?php echo esc_url(wp_login_url(get_permalink())); ?>" class="button" style="display: inline-block; padding: 8px 16px; background: #0073aa; color: white; text-decoration: none; border-radius: 3px;">
+                <?php _e('Log In', 'members'); ?>
+            </a>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+    
+    // Check if user already has access
+    $user_id = get_current_user_id();
+    if (function_exists('\\Members\\Subscriptions\\user_has_access') && user_has_access($user_id, $atts['product_id'])) {
+        ?>
+        <div class="members-already-subscribed" style="margin: 20px 0; padding: 15px; background: #e7f7ea; border: 1px solid #c3e6cb; border-radius: 4px; color: #155724;">
+            <p><?php _e('You already have access to this membership.', 'members'); ?></p>
+            <?php 
+            $redirect_url = get_product_meta($atts['product_id'], '_redirect_url', '');
+            if (!empty($redirect_url)) : 
+            ?>
+                <a href="<?php echo esc_url($redirect_url); ?>" class="button" style="display: inline-block; padding: 8px 16px; background: #0073aa; color: white; text-decoration: none; border-radius: 3px;">
+                    <?php _e('Go to Membership Content', 'members'); ?>
+                </a>
+            <?php endif; ?>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+    
+    // Display the subscription form
+    ?>
+    <div class="members-subscription-form-container" style="margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 4px; background: #f9f9f9;">
+        <div class="members-product-price" style="font-size: 1.2em; margin-bottom: 20px;">
+            <strong><?php _e('Price:', 'members'); ?></strong> 
+            $<?php echo number_format($price, 2); ?>
+            
+            <?php if ($recurring) : ?>
+                <?php printf(__(' every %d %s', 'members'), $period, $period_label); ?>
+            <?php else : ?>
+                <?php _e(' (one-time payment)', 'members'); ?>
+            <?php endif; ?>
+        </div>
+
+        <form action="<?php echo esc_url(site_url('/')); ?>" method="post" class="members-direct-form">
+            <?php wp_nonce_field('members_subscription_form', 'members_subscription_nonce'); ?>
+            <input type="hidden" name="action" value="members_process_subscription">
+            <input type="hidden" name="product_id" value="<?php echo esc_attr($atts['product_id']); ?>">
+            <input type="hidden" name="payment_method" value="manual">
+            <input type="hidden" name="is_recurring" value="<?php echo $recurring ? '1' : '0'; ?>">
+            
+            <button type="submit" class="button members-subscribe-button" style="padding: 10px 20px; background: #0073aa; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                <?php _e('Subscribe Now', 'members'); ?>
+            </button>
+        </form>
+    </div>
+    <?php
+    
+    // Return the form
+    return ob_get_clean();
+}
+
+/**
+ * Shortcode callback for product details
+ *
+ * @param array $atts Shortcode attributes
+ * @return string Product details HTML
+ */
+function product_details_shortcode($atts) {
+    // Parse shortcode attributes
+    $atts = shortcode_atts([
+        'product_id' => 0,
+        'show_form' => 'yes',
+    ], $atts, 'members_product_details');
+    
+    // Check for valid product_id
+    if (empty($atts['product_id'])) {
+        // If no product ID provided, get it from the current post
+        if (is_singular('members_product')) {
+            $atts['product_id'] = get_the_ID();
+        } else {
+            return '<p class="members-error">' . __('Error: No valid product selected.', 'members') . '</p>';
+        }
+    }
+    
+    // Ensure product_id is an integer
+    $atts['product_id'] = absint($atts['product_id']);
+    
+    // Verify product exists and is the right type
+    $product = get_post($atts['product_id']);
+    if (!$product || $product->post_type !== 'members_product') {
+        return '<p class="members-error">' . __('Error: Invalid product.', 'members') . '</p>';
+    }
+    
+    // Get product meta
+    $price = get_product_meta($atts['product_id'], '_price', 0);
+    $recurring = get_product_meta($atts['product_id'], '_recurring', false);
+    $period = get_product_meta($atts['product_id'], '_period', 1);
+    $period_type = get_product_meta($atts['product_id'], '_period_type', 'month');
+    
+    $period_options = [
+        'day' => __('day(s)', 'members'),
+        'week' => __('week(s)', 'members'),
+        'month' => __('month(s)', 'members'),
+        'year' => __('year(s)', 'members'),
+    ];
+    $period_label = isset($period_options[$period_type]) ? $period_options[$period_type] : $period_type;
+    
+    // Start output buffer
+    ob_start();
+    
+    ?>
+    <div class="members-product-details" style="margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 4px; background: #f9f9f9;">
+        <h2><?php echo esc_html($product->post_title); ?></h2>
+        
+        <?php if (!empty($product->post_excerpt)) : ?>
+            <div class="members-product-excerpt" style="margin-bottom: 20px;">
+                <?php echo wp_kses_post($product->post_excerpt); ?>
+            </div>
+        <?php endif; ?>
+        
+        <div class="members-product-price" style="font-size: 1.2em; margin-bottom: 20px;">
+            <strong><?php _e('Price:', 'members'); ?></strong> 
+            $<?php echo number_format($price, 2); ?>
+            
+            <?php if ($recurring) : ?>
+                <?php printf(__(' every %d %s', 'members'), $period, $period_label); ?>
+            <?php else : ?>
+                <?php _e(' (one-time payment)', 'members'); ?>
+            <?php endif; ?>
+        </div>
+        
+        <?php if ($atts['show_form'] === 'yes') : ?>
+            <?php echo subscription_form_shortcode(['product_id' => $atts['product_id']]); ?>
+        <?php endif; ?>
+    </div>
+    <?php
+    
+    // Return the details
+    return ob_get_clean();
+}
 
 /**
  * Update product meta table for existing products when viewed
