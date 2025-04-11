@@ -13,7 +13,7 @@ class Plugin {
     /**
      * Plugin version
      */
-    const VERSION = '1.0.0';
+    const VERSION = '1.0.1';
 
     /**
      * Plugin instance
@@ -219,6 +219,11 @@ class Plugin {
      * Render the Subscriptions admin page
      */
     public function render_subscriptions_page() {
+        // Check capabilities before rendering
+        if (!current_user_can('view_subscriptions')) {
+            wp_die(__('You do not have sufficient permissions to access this page.', 'members'));
+        }
+        
         // Include the subscription list table class
         require_once __DIR__ . '/admin/class-subscriptions-list-table.php';
         
@@ -234,6 +239,11 @@ class Plugin {
      * Render the Transactions admin page
      */
     public function render_transactions_page() {
+        // Check capabilities before rendering
+        if (!current_user_can('view_transactions')) {
+            wp_die(__('You do not have sufficient permissions to access this page.', 'members'));
+        }
+        
         // Include the transaction list table class
         require_once __DIR__ . '/admin/class-transactions-list-table.php';
         
@@ -249,6 +259,11 @@ class Plugin {
      * Render the Gateways admin page
      */
     public function render_gateways_page() {
+        // Check capabilities before rendering
+        if (!current_user_can('manage_payment_gateways')) {
+            wp_die(__('You do not have sufficient permissions to access this page.', 'members'));
+        }
+        
         // Output the gateways page
         include __DIR__ . '/admin/views/gateways-page.php';
     }

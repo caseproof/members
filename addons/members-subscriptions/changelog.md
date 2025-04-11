@@ -1,0 +1,33 @@
+# Changelog
+
+## 1.0.1 - 2025-04-11
+
+### Security Enhancements
+
+- Fixed unsanitized POST data in payment processing
+  - Replaced direct array merge of $_POST data with sanitization of specific allowed fields
+  - Added proper type casting and sanitization for form fields
+  
+- Improved output escaping in admin views
+  - Added proper sanitization and escaping of request parameters in subscriptions page
+  - Added sanitization for status, page, and date inputs in transaction views
+  - Fixed escaping in the gateways page for better XSS protection
+  
+- Enhanced capability checks for administrative functions
+  - Added explicit capability validation to all admin page rendering functions
+  - Added proper access control with wp_die error messages for unauthorized access
+  - Maintained existing capability checks in REST API endpoints
+  
+- Added validation for role assignments
+  - Added validation checks to ensure roles exist before assigning to users
+  - Added comprehensive validation to role removal function
+  - Added error logging for invalid role assignments
+  - Added fallback to default roles for better error handling
+
+## 1.0.0 - Initial Release
+
+- Initial version of the Members Subscriptions addon
+- Added subscription management functionality
+- Integrated Stripe payment gateway
+- Created admin interfaces for managing subscriptions and transactions
+- Added role-based access control for memberships

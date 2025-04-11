@@ -20,8 +20,11 @@ $gateway = $current_gateway ? $gateway_manager->get_gateway($current_gateway) : 
 
 // Check if we need to show a message
 $message = '';
-if (isset($_GET['updated']) && $_GET['updated'] === '1') {
-    $message = __('Gateway settings updated successfully.', 'members');
+if (isset($_GET['updated'])) {
+    $updated = sanitize_text_field($_GET['updated']);
+    if ($updated === '1') {
+        $message = __('Gateway settings updated successfully.', 'members');
+    }
 }
 ?>
 

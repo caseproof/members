@@ -121,8 +121,27 @@ function process_subscription_form() {
         }
     }
     
-    // Add form data to payment_data
-    $payment_data = array_merge($payment_data, $_POST);
+    // Add sanitized form data to payment_data - only include allowed fields
+    $allowed_fields = array(
+        'stripe_payment_method' => 'sanitize_text_field',
+        'payment_method' => 'sanitize_text_field',
+        'agree_terms' => 'intval',
+        'coupon_code' => 'sanitize_text_field',
+        'first_name' => 'sanitize_text_field',
+        'last_name' => 'sanitize_text_field',
+        'email' => 'sanitize_email',
+        'address' => 'sanitize_text_field',
+        'city' => 'sanitize_text_field',
+        'state' => 'sanitize_text_field',
+        'zip' => 'sanitize_text_field',
+        'country' => 'sanitize_text_field',
+    );
+    
+    foreach ($allowed_fields as $field => $sanitize_callback) {
+        if (isset($_POST[$field])) {
+            $payment_data[$field] = $sanitize_callback($_POST[$field]);
+        }
+    }
     
     // Process payment
     if ($is_recurring) {

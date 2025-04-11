@@ -304,11 +304,20 @@ function apply_membership_role($user_id, $product_id) {
         return false;
     }
     
+    // Get all valid roles
+    $valid_roles = array_keys(get_editable_roles());
+    
     // Apply all roles
     $success = true;
     foreach ($roles as $role) {
-        if (!empty($role)) {
+        // Validate the role before applying it
+        if (!empty($role) && in_array($role, $valid_roles)) {
             $user->add_role($role);
+        } else {
+            // Log invalid role attempt
+            if (!empty($role)) {
+                error_log(sprintf('Attempted to add invalid role: %s to user %d', esc_html($role), $user_id));
+            }
         }
     }
     
@@ -343,6 +352,23 @@ function remove_membership_role($user_id, $product_id) {
         return false;
     }
     
+    // Get all valid roles
+    $valid_roles = array_keys(get_editable_roles());
+    
+    // Filter to only include valid roles
+    $roles_to_remove = array_filter($roles_to_remove, function($role) use ($valid_roles) {
+        if (empty($role)) {
+            return false;
+        }
+        
+        if (!in_array($role, $valid_roles)) {
+            error_log(sprintf('Skipping invalid role for removal: %s', esc_html($role)));
+            return false;
+        }
+        
+        return true;
+    });
+    
     // Get all roles from other active subscriptions
     $other_active_roles = [];
     $active_subscriptions = get_active_user_subscriptions($user_id);
@@ -364,6 +390,11 @@ function remove_membership_role($user_id, $product_id) {
             }
         }
         
+        // Validate subscription roles
+        $subscription_roles = array_filter($subscription_roles, function($role) use ($valid_roles) {
+            return !empty($role) && in_array($role, $valid_roles);
+        });
+        
         // Add roles to the list of roles to keep
         if (!empty($subscription_roles)) {
             $other_active_roles = array_merge($other_active_roles, $subscription_roles);
@@ -372,7 +403,7 @@ function remove_membership_role($user_id, $product_id) {
     
     // Only remove roles that aren't provided by other active subscriptions
     foreach ($roles_to_remove as $role) {
-        if (!empty($role) && !in_array($role, $other_active_roles)) {
+        if (!in_array($role, $other_active_roles)) {
             $user->remove_role($role);
         }
     }
@@ -380,7 +411,15 @@ function remove_membership_role($user_id, $product_id) {
     // If user has no roles left, assign the default role
     if (empty($user->roles)) {
         $default_role = get_option('default_role', 'subscriber');
-        $user->set_role($default_role);
+        
+        // Validate default role
+        if (in_array($default_role, $valid_roles)) {
+            $user->set_role($default_role);
+        } else {
+            // Fallback to subscriber if default role is invalid
+            $user->set_role('subscriber');
+            error_log(sprintf('Default role %s is invalid, falling back to subscriber', esc_html($default_role)));
+        }
     }
     
     return true;

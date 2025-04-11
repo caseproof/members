@@ -5,7 +5,7 @@ return array(
 	'members-privacy-caps' => array(
 		'url'         => '',
 		'title'       => 'Members - Privacy Caps',
-		'excerpt'     => 'Creates additional capabilities for control over WordPress' privacy and personal data features (GDPR).'
+		'excerpt'     => 'Creates additional capabilities for control over WordPress\'s privacy and personal data features (GDPR).'
 	),
 
 	'members-admin-access' => array(

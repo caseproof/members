@@ -15,7 +15,8 @@ $transactions_table->prepare_items();
 // Check if we need to show a message
 $message = '';
 if (isset($_REQUEST['message'])) {
-    switch ($_REQUEST['message']) {
+    $message_type = sanitize_key($_REQUEST['message']);
+    switch ($message_type) {
         case 'completed':
             $message = __('Transaction marked as complete.', 'members');
             break;
@@ -30,6 +31,13 @@ if (isset($_REQUEST['message'])) {
             break;
     }
 }
+
+// Safely get request values
+$page_val = isset($_REQUEST['page']) ? sanitize_key($_REQUEST['page']) : '';
+$current_status = isset($_REQUEST['status']) ? sanitize_key($_REQUEST['status']) : '';
+$current_gateway = isset($_REQUEST['gateway']) ? sanitize_key($_REQUEST['gateway']) : '';
+$date_from = isset($_REQUEST['date_from']) ? sanitize_text_field($_REQUEST['date_from']) : '';
+$date_to = isset($_REQUEST['date_to']) ? sanitize_text_field($_REQUEST['date_to']) : '';
 ?>
 
 <div class="wrap members-subscriptions-wrap">
@@ -44,7 +52,7 @@ if (isset($_REQUEST['message'])) {
     <hr class="wp-header-end">
     
     <form id="transactions-filter" method="get">
-        <input type="hidden" name="page" value="<?php echo esc_attr($_REQUEST['page']); ?>" />
+        <input type="hidden" name="page" value="<?php echo esc_attr($page_val); ?>" />
         
         <?php
         // Display search box
@@ -62,10 +70,10 @@ jQuery(document).ready(function($) {
     $('.tablenav.top .bulkactions').after(
         '<div class="date-filter">' +
         '<label for="filter-by-date-from" class="screen-reader-text"><?php _e('From date', 'members'); ?></label>' +
-        '<input type="text" name="date_from" id="filter-by-date-from" class="members-datepicker" value="<?php echo isset($_REQUEST['date_from']) ? esc_attr($_REQUEST['date_from']) : ''; ?>" placeholder="<?php _e('From', 'members'); ?>" />' +
+        '<input type="text" name="date_from" id="filter-by-date-from" class="members-datepicker" value="<?php echo esc_attr($date_from); ?>" placeholder="<?php _e('From', 'members'); ?>" />' +
         
         '<label for="filter-by-date-to" class="screen-reader-text"><?php _e('To date', 'members'); ?></label>' +
-        '<input type="text" name="date_to" id="filter-by-date-to" class="members-datepicker" value="<?php echo isset($_REQUEST['date_to']) ? esc_attr($_REQUEST['date_to']) : ''; ?>" placeholder="<?php _e('To', 'members'); ?>" />' +
+        '<input type="text" name="date_to" id="filter-by-date-to" class="members-datepicker" value="<?php echo esc_attr($date_to); ?>" placeholder="<?php _e('To', 'members'); ?>" />' +
         '</div>'
     );
     
@@ -75,10 +83,10 @@ jQuery(document).ready(function($) {
         '<label for="filter-by-status" class="screen-reader-text"><?php _e('Filter by status', 'members'); ?></label>' +
         '<select name="status" id="filter-by-status" class="transaction-status-filter">' +
         '<option value=""><?php _e('All statuses', 'members'); ?></option>' +
-        '<option value="completed" <?php selected(isset($_REQUEST['status']) ? $_REQUEST['status'] : '', 'completed'); ?>><?php _e('Completed', 'members'); ?></option>' +
-        '<option value="pending" <?php selected(isset($_REQUEST['status']) ? $_REQUEST['status'] : '', 'pending'); ?>><?php _e('Pending', 'members'); ?></option>' +
-        '<option value="refunded" <?php selected(isset($_REQUEST['status']) ? $_REQUEST['status'] : '', 'refunded'); ?>><?php _e('Refunded', 'members'); ?></option>' +
-        '<option value="failed" <?php selected(isset($_REQUEST['status']) ? $_REQUEST['status'] : '', 'failed'); ?>><?php _e('Failed', 'members'); ?></option>' +
+        '<option value="completed" <?php selected($current_status, 'completed'); ?>><?php _e('Completed', 'members'); ?></option>' +
+        '<option value="pending" <?php selected($current_status, 'pending'); ?>><?php _e('Pending', 'members'); ?></option>' +
+        '<option value="refunded" <?php selected($current_status, 'refunded'); ?>><?php _e('Refunded', 'members'); ?></option>' +
+        '<option value="failed" <?php selected($current_status, 'failed'); ?>><?php _e('Failed', 'members'); ?></option>' +
         '</select>' +
         '</div>'
     );
@@ -89,8 +97,8 @@ jQuery(document).ready(function($) {
         '<label for="filter-by-gateway" class="screen-reader-text"><?php _e('Filter by gateway', 'members'); ?></label>' +
         '<select name="gateway" id="filter-by-gateway" class="gateway-filter">' +
         '<option value=""><?php _e('All gateways', 'members'); ?></option>' +
-        '<option value="stripe" <?php selected(isset($_REQUEST['gateway']) ? $_REQUEST['gateway'] : '', 'stripe'); ?>><?php _e('Stripe', 'members'); ?></option>' +
-        '<option value="manual" <?php selected(isset($_REQUEST['gateway']) ? $_REQUEST['gateway'] : '', 'manual'); ?>><?php _e('Manual', 'members'); ?></option>' +
+        '<option value="stripe" <?php selected($current_gateway, 'stripe'); ?>><?php _e('Stripe', 'members'); ?></option>' +
+        '<option value="manual" <?php selected($current_gateway, 'manual'); ?>><?php _e('Manual', 'members'); ?></option>' +
         '</select>' +
         '</div>'
     );

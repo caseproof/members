@@ -15,7 +15,8 @@ $subscriptions_table->prepare_items();
 // Check if we need to show a message
 $message = '';
 if (isset($_REQUEST['message'])) {
-    switch ($_REQUEST['message']) {
+    $message_type = sanitize_key($_REQUEST['message']);
+    switch ($message_type) {
         case 'activated':
             $message = __('Subscription activated successfully.', 'members');
             break;
@@ -29,6 +30,18 @@ if (isset($_REQUEST['message'])) {
             $message = __('An error occurred. Please try again.', 'members');
             break;
     }
+}
+
+// Safely get status value
+$current_status = '';
+if (isset($_REQUEST['status'])) {
+    $current_status = sanitize_key($_REQUEST['status']);
+}
+
+// Get page value securely
+$page_val = '';
+if (isset($_REQUEST['page'])) {
+    $page_val = sanitize_key($_REQUEST['page']);
 }
 ?>
 
@@ -44,7 +57,7 @@ if (isset($_REQUEST['message'])) {
     <hr class="wp-header-end">
     
     <form id="subscriptions-filter" method="get">
-        <input type="hidden" name="page" value="<?php echo esc_attr($_REQUEST['page']); ?>" />
+        <input type="hidden" name="page" value="<?php echo esc_attr($page_val); ?>" />
         
         <?php 
         // Display search box
@@ -64,12 +77,12 @@ jQuery(document).ready(function($) {
         '<label for="filter-by-status" class="screen-reader-text"><?php _e('Filter by status', 'members'); ?></label>' +
         '<select name="status" id="filter-by-status" class="subscription-status-filter">' +
         '<option value=""><?php _e('All statuses', 'members'); ?></option>' +
-        '<option value="active" <?php selected(isset($_REQUEST['status']) ? $_REQUEST['status'] : '', 'active'); ?>><?php _e('Active', 'members'); ?></option>' +
-        '<option value="pending" <?php selected(isset($_REQUEST['status']) ? $_REQUEST['status'] : '', 'pending'); ?>><?php _e('Pending', 'members'); ?></option>' +
-        '<option value="cancelled" <?php selected(isset($_REQUEST['status']) ? $_REQUEST['status'] : '', 'cancelled'); ?>><?php _e('Cancelled', 'members'); ?></option>' +
-        '<option value="expired" <?php selected(isset($_REQUEST['status']) ? $_REQUEST['status'] : '', 'expired'); ?>><?php _e('Expired', 'members'); ?></option>' +
-        '<option value="suspended" <?php selected(isset($_REQUEST['status']) ? $_REQUEST['status'] : '', 'suspended'); ?>><?php _e('Suspended', 'members'); ?></option>' +
-        '<option value="trialing" <?php selected(isset($_REQUEST['status']) ? $_REQUEST['status'] : '', 'trialing'); ?>><?php _e('Trialing', 'members'); ?></option>' +
+        '<option value="active" <?php selected($current_status, 'active'); ?>><?php _e('Active', 'members'); ?></option>' +
+        '<option value="pending" <?php selected($current_status, 'pending'); ?>><?php _e('Pending', 'members'); ?></option>' +
+        '<option value="cancelled" <?php selected($current_status, 'cancelled'); ?>><?php _e('Cancelled', 'members'); ?></option>' +
+        '<option value="expired" <?php selected($current_status, 'expired'); ?>><?php _e('Expired', 'members'); ?></option>' +
+        '<option value="suspended" <?php selected($current_status, 'suspended'); ?>><?php _e('Suspended', 'members'); ?></option>' +
+        '<option value="trialing" <?php selected($current_status, 'trialing'); ?>><?php _e('Trialing', 'members'); ?></option>' +
         '</select>' +
         '</div>'
     );
