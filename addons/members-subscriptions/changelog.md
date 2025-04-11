@@ -39,7 +39,9 @@
   - Added missing abstract method implementations in email classes
   
 - Fixed form submission errors
-  - Added explicit form action URL to gateway settings form to fix "expired link" error
+  - Completely redesigned the gateway settings form submission to fix "expired link" error
+  - Simplified nonce verification with a consistent action name
+  - Added proper sanitization for all gateway settings
 
 ## 1.0.0 - Initial Release
 

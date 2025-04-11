@@ -47,8 +47,10 @@ if (isset($_GET['updated'])) {
         <div class="members-gateway-settings">
             <h3><?php echo esc_html($gateway->get_name()); ?> <?php _e('Configuration', 'members'); ?></h3>
             
-            <form method="post" action="<?php echo esc_url(admin_url('admin.php?page=members-gateways&gateway=' . $gateway->get_id())); ?>">
-                <?php wp_nonce_field('members_save_gateway_settings_' . $gateway->get_id(), 'members_gateway_settings'); ?>
+            <form method="post" action="<?php echo esc_url(admin_url('admin.php')); ?>">
+                <?php wp_nonce_field('members_save_gateway_settings', 'members_gateway_settings'); ?>
+                <input type="hidden" name="page" value="members-gateways">
+                <input type="hidden" name="gateway" value="<?php echo esc_attr($gateway->get_id()); ?>">
                 <input type="hidden" name="gateway_id" value="<?php echo esc_attr($gateway->get_id()); ?>">
                 
                 <table class="form-table">

@@ -212,11 +212,14 @@ class Gateway_Manager {
      * Save gateway settings
      */
     public function save_gateway_settings() {
+        // Early exit if this is not a form submission
         if (!isset($_POST['members_gateway_settings']) || !isset($_POST['gateway_id'])) {
             return;
         }
         
+        // Check user capabilities
         if (!current_user_can('manage_payment_gateways')) {
+            wp_die(__('You do not have permission to manage payment gateways.', 'members'));
             return;
         }
         
@@ -224,14 +227,32 @@ class Gateway_Manager {
         $gateway = $this->get_gateway($gateway_id);
         
         if (!$gateway) {
+            wp_die(__('Invalid gateway.', 'members'));
             return;
         }
         
-        check_admin_referer('members_save_gateway_settings_' . $gateway_id);
+        // Verify nonce with generic action name to avoid expiration issues
+        if (!check_admin_referer('members_save_gateway_settings', 'members_gateway_settings')) {
+            return; // Nonce verification will handle the error message
+        }
         
+        // Get and sanitize settings
         $settings = isset($_POST['members_gateway'][$gateway_id]) ? $_POST['members_gateway'][$gateway_id] : [];
-        $gateway->save_settings($settings);
+        $sanitized_settings = [];
         
+        // Basic sanitization of settings
+        foreach ($settings as $key => $value) {
+            if (is_array($value)) {
+                $sanitized_settings[$key] = array_map('sanitize_text_field', $value);
+            } else {
+                $sanitized_settings[$key] = sanitize_text_field($value);
+            }
+        }
+        
+        // Save settings
+        $gateway->save_settings($sanitized_settings);
+        
+        // Redirect with success message
         wp_redirect(add_query_arg([
             'page'    => 'members-gateways',
             'gateway' => $gateway_id,
