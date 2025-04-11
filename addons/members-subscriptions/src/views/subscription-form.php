@@ -10,13 +10,19 @@ namespace Members\Subscriptions;
 # Don't execute code if file is accessed directly.
 defined( 'ABSPATH' ) || exit;
 
+// Output some debugging info
+error_log('Subscription form shortcode rendering started');
+
 // Get product
 $product_id = absint($atts['product_id']);
 $product = get_post($product_id);
 
 if (!$product || $product->post_type !== 'members_product') {
+    error_log('Subscription form: Invalid product: ' . $product_id);
     return;
 }
+
+error_log('Subscription form: Found product: ' . $product->post_title);
 
 // Get product data
 $price = get_product_meta($product_id, '_price', 0);
@@ -27,13 +33,32 @@ $has_trial = get_product_meta($product_id, '_has_trial', false);
 $trial_days = get_product_meta($product_id, '_trial_days', 0);
 $trial_price = get_product_meta($product_id, '_trial_price', 0);
 
+error_log('Subscription form: Product meta - price: ' . $price . ', recurring: ' . ($is_recurring ? 'yes' : 'no'));
+
 // Get payment gateways
 if (class_exists('\\Members\\Subscriptions\\gateways\\Gateway_Manager')) {
-    $gateway_manager = gateways\Gateway_Manager::get_instance();
-    $payment_methods = $gateway_manager->get_payment_methods();
+    try {
+        error_log('Subscription form: Gateway_Manager class exists');
+        $gateway_manager = gateways\Gateway_Manager::get_instance();
+        $payment_methods = $gateway_manager->get_payment_methods();
+        error_log('Subscription form: Found ' . count($payment_methods) . ' payment methods');
+    } catch (\Exception $e) {
+        error_log('Subscription form: Error getting payment methods: ' . $e->getMessage());
+        $payment_methods = [];
+    }
 } else {
-    // Fallback if gateways aren't loaded
-    $payment_methods = [];
+    error_log('Subscription form: Gateway_Manager class not found');
+    // Create a manual payment method as fallback
+    $payment_methods = [
+        'manual' => [
+            'id' => 'manual',
+            'name' => __('Manual Payment', 'members'),
+            'description' => __('Pay manually. The administrator will contact you with payment instructions.', 'members'),
+            'fields' => '<div class="members-manual-payment-info">' . 
+                        '<p>' . __('After submitting this form, you will receive instructions on how to complete your payment.', 'members') . '</p>' .
+                        '</div>'
+        ]
+    ];
 }
 
 // Check if user is logged in
@@ -148,30 +173,33 @@ echo '<input type="hidden" name="plan_id" value="' . esc_attr($product_id) . '">
 echo '<div class="members-payment-form">';
 echo '<h3 class="members-payment-form-title">' . __('Payment Information', 'members') . '</h3>';
 
+// Add debug info for payment method processing
+error_log('Subscription form: Processing payment methods section');
+
 // Payment methods
+echo '<div class="members-payment-section" style="margin-bottom: 20px;">';
+
 if (!empty($payment_methods)) {
+    error_log('Subscription form: Rendering ' . count($payment_methods) . ' payment methods');
     echo '<div class="members-payment-methods">';
     
+    $processed_methods = 0;
     foreach ($payment_methods as $method) {
+        $processed_methods++;
+        error_log('Subscription form: Processing payment method #' . $processed_methods);
+        
         // Set first method as default
-        $is_first = ($payment_methods && isset(reset($payment_methods)['id']) && reset($payment_methods)['id'] === $method['id']);
+        $is_first = true; // Always set first to true for simplicity
         
-        echo '<div class="members-payment-method' . ($is_first ? ' selected' : '') . '">';
-        echo '<div class="members-payment-method-header">';
+        echo '<div class="members-payment-method' . ($is_first ? ' selected' : '') . '" style="margin-bottom: 15px; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">';
+        echo '<div class="members-payment-method-header" style="margin-bottom: 10px;">';
         echo '<input type="radio" name="payment_method" value="' . esc_attr($method['id']) . '" ' . 
-             checked($is_first, true, false) . ' class="members-payment-method-radio">';
+             'checked="checked" class="members-payment-method-radio">';
         
-        // Add logo if available, use method ID to determine which logo to show
-        if ($method['id'] === 'stripe') {
-            echo '<img src="' . esc_url(plugins_url('/images/stripe-logo.png', dirname(dirname(__FILE__)))) . '" class="members-payment-method-logo" alt="Stripe">';
-        } elseif ($method['id'] === 'paypal') {
-            echo '<img src="' . esc_url(plugins_url('/images/paypal-logo.png', dirname(dirname(__FILE__)))) . '" class="members-payment-method-logo" alt="PayPal">';
-        }
-        
-        echo '<span class="members-payment-method-title">' . esc_html($method['name']) . '</span>';
+        echo '<span class="members-payment-method-title" style="font-weight: bold; margin-left: 10px;">' . esc_html($method['name']) . '</span>';
         echo '</div>'; // End header
         
-        echo '<div class="members-payment-method-content" data-method="' . esc_attr($method['id']) . '">';
+        echo '<div class="members-payment-method-content" style="padding-left: 25px;">';
         echo '<div class="members-payment-method-description">';
         echo wp_kses_post(isset($method['description']) ? $method['description'] : '');
         echo '</div>';
@@ -186,21 +214,35 @@ if (!empty($payment_methods)) {
     
     echo '</div>'; // End payment methods
 } else {
-    // No payment methods yet, show a simple message
-    echo '<div class="members-payment-methods-notice">';
-    echo '<p>' . __('Payment methods will be configured by the administrator.', 'members') . '</p>';
-    echo '</div>';
+    error_log('Subscription form: No payment methods available, showing fallback');
+    // No payment methods yet, show a simple message and a manual payment option
+    echo '<div class="members-payment-methods">';
+    echo '<div class="members-payment-method selected" style="margin-bottom: 15px; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">';
+    echo '<div class="members-payment-method-header" style="margin-bottom: 10px;">';
+    echo '<input type="radio" name="payment_method" value="manual" checked="checked" class="members-payment-method-radio">';
+    echo '<span class="members-payment-method-title" style="font-weight: bold; margin-left: 10px;">' . __('Manual Payment', 'members') . '</span>';
+    echo '</div>'; // End header
+    echo '<div class="members-payment-method-content" style="padding-left: 25px;">';
+    echo '<p>' . __('After submitting this form, you will receive instructions on how to complete your payment.', 'members') . '</p>';
+    echo '</div>'; // End content
+    echo '</div>'; // End payment method
+    echo '</div>'; // End payment methods
 }
 
+echo '</div>'; // End payment section
+
 // Submit section
-echo '<div class="members-form-row">';
+echo '<div class="members-form-row" style="margin-top: 20px;">';
 wp_nonce_field('members_subscription_form', 'members_subscription_nonce');
 echo '<input type="hidden" name="product_id" value="' . esc_attr($product_id) . '">';
 echo '<input type="hidden" name="action" value="members_process_subscription">';
 echo '<input type="hidden" name="is_recurring" value="' . ($is_recurring ? '1' : '0') . '">';
 echo '<input type="hidden" name="redirect_url" value="' . esc_url($redirect_url) . '">';
-echo '<button type="submit" class="members-form-submit">' . __('Complete Purchase', 'members') . '</button>';
+echo '<button type="submit" class="members-form-submit" style="padding: 10px 20px; background: #0073aa; color: white; border: none; border-radius: 4px; cursor: pointer;">' . __('Complete Purchase', 'members') . '</button>';
 echo '</div>'; // End submit row
+
+// Debug section
+error_log('Subscription form: Completed rendering form');
 
 echo '</div>'; // End payment form
 
