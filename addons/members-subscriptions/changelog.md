@@ -37,6 +37,9 @@
 - Fixed PHP compatibility errors
   - Fixed incompatible method declaration in Renewal_Reminder_Email class
   - Added missing abstract method implementations in email classes
+  
+- Fixed form submission errors
+  - Added explicit form action URL to gateway settings form to fix "expired link" error
 
 ## 1.0.0 - Initial Release
 
