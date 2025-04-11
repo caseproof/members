@@ -28,8 +28,13 @@ $trial_days = get_product_meta($product_id, '_trial_days', 0);
 $trial_price = get_product_meta($product_id, '_trial_price', 0);
 
 // Get payment gateways
-$gateway_manager = gateways\Gateway_Manager::get_instance();
-$payment_methods = $gateway_manager->get_payment_methods();
+if (class_exists('\\Members\\Subscriptions\\gateways\\Gateway_Manager')) {
+    $gateway_manager = gateways\Gateway_Manager::get_instance();
+    $payment_methods = $gateway_manager->get_payment_methods();
+} else {
+    // Fallback if gateways aren't loaded
+    $payment_methods = [];
+}
 
 // Check if user is logged in
 $user_id = get_current_user_id();
@@ -144,10 +149,13 @@ if (!empty($payment_methods)) {
     echo '<div class="members-payment-methods">';
     
     foreach ($payment_methods as $method) {
-        echo '<div class="members-payment-method' . (reset($payment_methods)['id'] === $method['id'] ? ' selected' : '') . '">';
+        // Set first method as default
+        $is_first = ($payment_methods && isset(reset($payment_methods)['id']) && reset($payment_methods)['id'] === $method['id']);
+        
+        echo '<div class="members-payment-method' . ($is_first ? ' selected' : '') . '">';
         echo '<div class="members-payment-method-header">';
         echo '<input type="radio" name="payment_method" value="' . esc_attr($method['id']) . '" ' . 
-             checked(reset($payment_methods)['id'], $method['id'], false) . ' class="members-payment-method-radio">';
+             checked($is_first, true, false) . ' class="members-payment-method-radio">';
         
         // Add logo if available, use method ID to determine which logo to show
         if ($method['id'] === 'stripe') {
@@ -161,16 +169,23 @@ if (!empty($payment_methods)) {
         
         echo '<div class="members-payment-method-content" data-method="' . esc_attr($method['id']) . '">';
         echo '<div class="members-payment-method-description">';
-        echo wp_kses_post($method['description']);
+        echo wp_kses_post(isset($method['description']) ? $method['description'] : '');
         echo '</div>';
         
         // Payment method specific fields
-        echo $method['fields'];
+        if (isset($method['fields'])) {
+            echo $method['fields'];
+        }
         echo '</div>'; // End content
         echo '</div>'; // End payment method
     }
     
     echo '</div>'; // End payment methods
+} else {
+    // No payment methods yet, show a simple message
+    echo '<div class="members-payment-methods-notice">';
+    echo '<p>' . __('Payment methods will be configured by the administrator.', 'members') . '</p>';
+    echo '</div>';
 }
 
 // Submit section

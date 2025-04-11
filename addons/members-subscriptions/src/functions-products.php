@@ -603,47 +603,7 @@ function save_product_meta($post_id, $post, $update) {
     }
 }
 
-/**
- * Get product meta data
- *
- * @param int    $product_id  The product ID
- * @param string $meta_key    The meta key to retrieve
- * @param mixed  $default     Default value if meta doesn't exist
- * @return mixed The meta value
- */
-function get_product_meta($product_id, $meta_key, $default = '') {
-    global $wpdb;
-    
-    // Get meta from custom table
-    $table_name = $wpdb->prefix . 'members_products_meta';
-    
-    // Check if table exists
-    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'");
-    
-    if ($table_exists) {
-        $value = $wpdb->get_var(
-            $wpdb->prepare(
-                "SELECT meta_value FROM $table_name WHERE product_id = %d AND meta_key = %s",
-                $product_id,
-                $meta_key
-            )
-        );
-        
-        if ($value !== null) {
-            $unserialized = maybe_unserialize($value);
-            return $unserialized;
-        }
-    }
-    
-    // Fallback to post meta if custom table doesn't exist or value not found
-    $value = get_post_meta($product_id, $meta_key, true);
-    
-    if (empty($value) && $value !== '0' && $value !== 0) {
-        return $default;
-    }
-    
-    return $value;
-}
+// get_product_meta function is now defined in functions-db.php
 
 /**
  * Format subscription period
