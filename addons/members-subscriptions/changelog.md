@@ -32,6 +32,13 @@
   - Improved form field value handling for product forms
   - Enhanced gateway settings to prevent unexpected array values
   - Added defensive coding for meta values throughout the codebase
+  
+- Added front-end product display features
+  - Improved product post type registration for public viewing
+  - Added template loader for custom product templates
+  - Created single product and archive templates
+  - Added automatic rewrite rules flushing mechanism
+  - Fixed 404 errors on product pages
 
 ## 1.0.1 - 2025-04-11
 

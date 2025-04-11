@@ -73,6 +73,43 @@ class Plugin {
         
         // Load required files
         $this->load_required_files();
+        
+        // Check if we need to flush rewrite rules
+        add_action('admin_init', [$this, 'maybe_flush_rewrite_rules']);
+    }
+    
+    /**
+     * Conditionally flush rewrite rules
+     * Only does this when we detect our version has changed
+     */
+    public function maybe_flush_rewrite_rules() {
+        $version_option = 'members_subscriptions_post_types_version';
+        $current_version = get_option($version_option, '0.0.0');
+        
+        // If this is a new version, flush rewrite rules
+        if (version_compare($current_version, self::VERSION, '<')) {
+            // Get current global option
+            $flush_option = get_option('members_subscriptions_needs_flush', 0);
+            
+            // Set to current time if not already set
+            if (!$flush_option) {
+                update_option('members_subscriptions_needs_flush', time());
+            }
+            
+            // Update the version
+            update_option($version_option, self::VERSION);
+        }
+        
+        // Check if we need to flush rules
+        $needs_flush = get_option('members_subscriptions_needs_flush', 0);
+        
+        if ($needs_flush) {
+            // Only flush once per 5 minutes to avoid performance issues
+            if ((time() - $needs_flush) > 300) {
+                flush_rewrite_rules();
+                delete_option('members_subscriptions_needs_flush');
+            }
+        }
     }
     
     /**
@@ -87,6 +124,9 @@ class Plugin {
         
         // Load renewal functions
         require_once __DIR__ . '/functions-renewals.php';
+        
+        // Load template loader
+        require_once __DIR__ . '/class-template-loader.php';
         
         // Load exception classes
         require_once __DIR__ . '/exceptions/class-members-exception.php';
@@ -247,10 +287,14 @@ class Plugin {
                 'menu_name'          => __('Products', 'members'), // Shorter name for menu
                 'all_items'          => __('All Products', 'members'),
             ],
-            'public'              => true, // Changed to true to allow frontend viewing
-            'publicly_queryable'  => true,
-            'show_ui'             => true,
+            'public'              => true, // Public to allow front-end viewing
+            'publicly_queryable'  => true, // Allow querying
+            'exclude_from_search' => false, // Include in searches
+            'show_ui'             => true, // Admin UI
+            'show_in_nav_menus'   => true, // Allow adding to navigation menus
             'show_in_menu'        => false, // We'll add it as a submenu in register_admin_menu
+            'show_in_admin_bar'   => true, // Show in admin bar
+            
             // Define a custom capability type
             'capability_type'     => 'post', // Using the standard post capabilities to avoid warnings
             // Override specific capabilities without using map_meta_cap
@@ -269,13 +313,16 @@ class Plugin {
             'hierarchical'        => false,
             'rewrite'             => [
                 'slug' => 'membership-products',
-                'with_front' => false
+                'with_front' => false,
+                'pages' => true,
+                'feeds' => true,
             ],
             'menu_position'       => null,
-            'supports'            => ['title', 'editor', 'thumbnail'],
-            'has_archive'         => false,
-            'show_in_rest'        => true,
+            'supports'            => ['title', 'editor', 'thumbnail', 'excerpt', 'comments'],
+            'has_archive'         => true, // Create an archive page for products
+            'show_in_rest'        => true, // Support REST API
             'menu_icon'           => 'dashicons-cart',
+            'query_var'           => true, // Allow querying with 'members_product' var
         ]);
         
         // Flush rewrite rules only on activation, not on every page load

@@ -51,8 +51,17 @@ function process_subscription_form() {
     }
     
     // Check if user already has access
-    if (user_has_access($user_id, $product_id)) {
-        $redirect_url = get_product_meta($product_id, '_redirect_url', get_permalink($product_id));
+    if (function_exists('user_has_access') && user_has_access($user_id, $product_id)) {
+        // Use post meta directly if get_product_meta isn't available or working
+        if (function_exists('get_product_meta')) {
+            $redirect_url = get_product_meta($product_id, '_redirect_url', get_permalink($product_id));
+        } else {
+            $redirect_url = get_post_meta($product_id, '_redirect_url', true);
+            if (empty($redirect_url)) {
+                $redirect_url = get_permalink($product_id);
+            }
+        }
+        
         wp_redirect($redirect_url);
         exit;
     }
