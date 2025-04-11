@@ -6,14 +6,9 @@ namespace Members\Subscriptions;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Get subscription
- *
- * @param int $subscription_id Subscription ID
- * @return object|null
+ * This function has been moved to functions-db.php
+ * We're keeping this comment here for reference
  */
-function get_subscription($subscription_id) {
-    return \Members\Subscriptions\get_subscription($subscription_id);
-}
 
 /**
  * Get user subscriptions
@@ -267,7 +262,8 @@ function calculate_subscription_expiration($period, $period_type, $from_date = n
  * @return \WP_Post|null
  */
 function get_product_by_subscription($subscription_id) {
-    $subscription = get_subscription($subscription_id);
+    // Use the get_subscription function from functions-db.php
+    $subscription = \Members\Subscriptions\get_subscription($subscription_id);
     
     if (!$subscription || empty($subscription->product_id)) {
         return null;
@@ -434,7 +430,8 @@ function remove_membership_role($user_id, $product_id) {
  * @param string $new_status
  */
 function handle_subscription_status_change($subscription_id, $old_status, $new_status) {
-    $subscription = get_subscription($subscription_id);
+    // Use the get_subscription function from functions-db.php
+    $subscription = \Members\Subscriptions\get_subscription($subscription_id);
     
     if (!$subscription) {
         return;

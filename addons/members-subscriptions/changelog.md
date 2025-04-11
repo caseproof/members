@@ -24,6 +24,12 @@
   - Added error logging for invalid role assignments
   - Added fallback to default roles for better error handling
 
+### Bug Fixes
+
+- Fixed fatal error with duplicate function declaration
+  - Removed duplicate `get_subscription()` function in functions-subscriptions.php
+  - Fixed references to use the function from functions-db.php
+
 ## 1.0.0 - Initial Release
 
 - Initial version of the Members Subscriptions addon
