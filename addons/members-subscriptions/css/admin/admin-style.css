@@ -1,0 +1,344 @@
+/**
+ * Members Subscriptions - Admin Styles
+ */
+
+/* General Admin Styles */
+.members-subscriptions-wrap {
+    margin: 10px 20px 0 2px;
+}
+
+.members-subscriptions-wrap .postbox {
+    margin-bottom: 20px;
+}
+
+.members-subscriptions-wrap .postbox h2 {
+    border-bottom: 1px solid #eee;
+    padding: 12px;
+    margin: 0;
+}
+
+.members-subscriptions-wrap .postbox .inside {
+    padding: 12px;
+}
+
+/* List Tables */
+.members-subscriptions-wrap .wp-list-table .column-id {
+    width: 80px;
+}
+
+.members-subscriptions-wrap .wp-list-table .column-status {
+    width: 100px;
+}
+
+.members-subscriptions-wrap .wp-list-table .column-actions {
+    width: 120px;
+    text-align: right;
+}
+
+.members-subscriptions-wrap .wp-list-table .column-amount,
+.members-subscriptions-wrap .wp-list-table .column-gateway {
+    width: 100px;
+}
+
+.members-subscriptions-wrap .wp-list-table .column-date,
+.members-subscriptions-wrap .wp-list-table .column-created,
+.members-subscriptions-wrap .wp-list-table .column-expiration {
+    width: 120px;
+}
+
+/* Status Badges */
+.members-sub-status {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    text-align: center;
+    color: #fff;
+}
+
+.members-sub-status-active {
+    background-color: #46b450;
+}
+
+.members-sub-status-pending {
+    background-color: #ffba00;
+}
+
+.members-sub-status-cancelled {
+    background-color: #dc3232;
+}
+
+.members-sub-status-expired {
+    background-color: #888;
+}
+
+.members-sub-status-suspended {
+    background-color: #00a0d2;
+}
+
+.members-sub-status-trialing {
+    background-color: #826eb4;
+}
+
+/* Transaction Status Badges */
+.members-txn-status {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    text-align: center;
+    color: #fff;
+}
+
+.members-txn-status-completed {
+    background-color: #46b450;
+}
+
+.members-txn-status-pending {
+    background-color: #ffba00;
+}
+
+.members-txn-status-failed {
+    background-color: #dc3232;
+}
+
+.members-txn-status-refunded {
+    background-color: #00a0d2;
+}
+
+/* Action Links */
+.members-sub-actions a {
+    margin-right: 5px;
+    text-decoration: none;
+}
+
+.members-sub-actions a:last-child {
+    margin-right: 0;
+}
+
+.members-sub-actions .delete {
+    color: #a00;
+}
+
+.members-sub-actions .delete:hover {
+    color: #dc3232;
+}
+
+/* Filter Controls */
+.tablenav .subscription-filters,
+.tablenav .transaction-filters {
+    display: inline-block;
+    margin-right: 6px;
+}
+
+.tablenav select.subscription-status-filter,
+.tablenav select.transaction-status-filter,
+.tablenav select.gateway-filter {
+    max-width: 160px;
+}
+
+.tablenav .date-filter {
+    display: inline-block;
+    margin-right: 6px;
+}
+
+.tablenav .date-filter input {
+    width: 120px;
+}
+
+/* Gateway Settings */
+.members-gateway-settings {
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+    margin-top: 20px;
+    padding: 15px;
+}
+
+.members-gateway-settings h3 {
+    border-bottom: 1px solid #eee;
+    margin: 0 0 15px;
+    padding-bottom: 10px;
+}
+
+.members-gateway-settings .form-table th {
+    padding: 15px 10px 15px 0;
+    width: 200px;
+}
+
+.members-gateway-settings .form-table td {
+    padding: 15px 10px;
+}
+
+.members-gateway-settings .form-table input[type="text"],
+.members-gateway-settings .form-table input[type="password"] {
+    width: 400px;
+    max-width: 100%;
+}
+
+.members-gateway-enabled-toggle {
+    display: inline-block;
+    margin-left: 10px;
+}
+
+/* Dashboard Widgets */
+.members-dashboard-widget .inside {
+    margin: 0;
+    padding: 0;
+}
+
+.members-dashboard-widget .members-dashboard-widget-data-table {
+    width: 100%;
+    border-spacing: 0;
+}
+
+.members-dashboard-widget .members-dashboard-widget-data-table td {
+    padding: 8px 12px;
+    border-top: 1px solid #eee;
+}
+
+.members-dashboard-widget .members-dashboard-widget-data-table tr:first-child td {
+    border-top: none;
+}
+
+.members-dashboard-widget .members-dashboard-widget-data-table td.data-value {
+    text-align: right;
+}
+
+/* Metabox Styles */
+.members-subscription-metabox .inside {
+    margin: 0;
+    padding: 0;
+}
+
+.members-subscription-metabox table.form-table {
+    margin: 0;
+}
+
+.members-subscription-metabox table.form-table th {
+    padding: 10px;
+    width: 30%;
+}
+
+.members-subscription-metabox table.form-table td {
+    padding: 10px;
+}
+
+.members-subscription-metabox table.form-table tr {
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.members-subscription-metabox table.form-table tr:last-child {
+    border-bottom: none;
+}
+
+/* Product Metabox */
+.members-product-pricing-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.members-product-pricing-table th,
+.members-product-pricing-table td {
+    padding: 8px;
+    border: 1px solid #e5e5e5;
+}
+
+.members-product-pricing-table th {
+    text-align: left;
+    background: #f9f9f9;
+}
+
+.members-product-pricing-table input[type="text"],
+.members-product-pricing-table input[type="number"] {
+    width: 100%;
+}
+
+/* Roles Section */
+.members-roles-section {
+    margin-bottom: 15px;
+}
+
+.members-roles-list {
+    background: #f9f9f9;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 10px 15px;
+    margin: 8px 0;
+}
+
+.members-roles-list p {
+    margin: 5px 0;
+}
+
+.members-roles-list label {
+    display: block;
+    font-weight: normal;
+    margin: 3px 0;
+}
+
+.members-roles-list input[type="checkbox"] {
+    margin-right: 6px;
+}
+
+/* Subscription Details Modal */
+.members-subscription-details-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 100000;
+    display: none;
+}
+
+.members-subscription-details-modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    max-width: 800px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.members-subscription-details-modal-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+/* Responsive Adjustments */
+@media screen and (max-width: 782px) {
+    .members-subscriptions-wrap .wp-list-table .column-id,
+    .members-subscriptions-wrap .wp-list-table .column-status,
+    .members-subscriptions-wrap .wp-list-table .column-amount,
+    .members-subscriptions-wrap .wp-list-table .column-gateway,
+    .members-subscriptions-wrap .wp-list-table .column-date,
+    .members-subscriptions-wrap .wp-list-table .column-created,
+    .members-subscriptions-wrap .wp-list-table .column-expiration,
+    .members-subscriptions-wrap .wp-list-table .column-actions {
+        width: auto;
+    }
+    
+    .tablenav .subscription-filters,
+    .tablenav .transaction-filters,
+    .tablenav .date-filter {
+        display: block;
+        margin-bottom: 8px;
+    }
+}
