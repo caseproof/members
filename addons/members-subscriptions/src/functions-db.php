@@ -160,12 +160,14 @@ function update_subscription($subscription_id, $data) {
 function get_subscription($subscription_id) {
     global $wpdb;
     
-    return $wpdb->get_row(
-        $wpdb->prepare(
-            "SELECT * FROM " . get_subscriptions_table_name() . " WHERE id = %d",
-            $subscription_id
-        )
-    );
+    return db_operation_with_verification(function($id) use ($wpdb) {
+        return $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT * FROM " . get_subscriptions_table_name() . " WHERE id = %d",
+                $id
+            )
+        );
+    }, [$subscription_id], null);
 }
 
 /**
@@ -177,54 +179,56 @@ function get_subscription($subscription_id) {
 function get_subscriptions($args = []) {
     global $wpdb;
     
-    $defaults = [
-        'user_id'    => 0,
-        'product_id' => 0,
-        'status'     => '',
-        'gateway'    => '',
-        'orderby'    => 'id',
-        'order'      => 'DESC',
-        'limit'      => 0,
-        'offset'     => 0,
-    ];
-    
-    $args = wp_parse_args($args, $defaults);
-    
-    // Build where clause
-    $where = "WHERE 1=1";
-    
-    if (!empty($args['user_id'])) {
-        $where .= $wpdb->prepare(" AND user_id = %d", $args['user_id']);
-    }
-    
-    if (!empty($args['product_id'])) {
-        $where .= $wpdb->prepare(" AND product_id = %d", $args['product_id']);
-    }
-    
-    if (!empty($args['status'])) {
-        $where .= $wpdb->prepare(" AND status = %s", $args['status']);
-    }
-    
-    if (!empty($args['gateway'])) {
-        $where .= $wpdb->prepare(" AND gateway = %s", $args['gateway']);
-    }
-    
-    // Build order clause
-    $orderby = sanitize_sql_orderby($args['orderby'] . ' ' . $args['order']);
-    if (!$orderby) {
-        $orderby = 'id DESC';
-    }
-    
-    // Build limit clause
-    $limit = '';
-    if (!empty($args['limit'])) {
-        $limit = $wpdb->prepare("LIMIT %d, %d", $args['offset'], $args['limit']);
-    }
-    
-    // Execute query
-    $sql = "SELECT * FROM " . get_subscriptions_table_name() . " $where ORDER BY $orderby $limit";
-    
-    return $wpdb->get_results($sql);
+    return db_operation_with_verification(function($query_args) use ($wpdb) {
+        $defaults = [
+            'user_id'    => 0,
+            'product_id' => 0,
+            'status'     => '',
+            'gateway'    => '',
+            'orderby'    => 'id',
+            'order'      => 'DESC',
+            'limit'      => 0,
+            'offset'     => 0,
+        ];
+        
+        $args = wp_parse_args($query_args, $defaults);
+        
+        // Build where clause
+        $where = "WHERE 1=1";
+        
+        if (!empty($args['user_id'])) {
+            $where .= $wpdb->prepare(" AND user_id = %d", $args['user_id']);
+        }
+        
+        if (!empty($args['product_id'])) {
+            $where .= $wpdb->prepare(" AND product_id = %d", $args['product_id']);
+        }
+        
+        if (!empty($args['status'])) {
+            $where .= $wpdb->prepare(" AND status = %s", $args['status']);
+        }
+        
+        if (!empty($args['gateway'])) {
+            $where .= $wpdb->prepare(" AND gateway = %s", $args['gateway']);
+        }
+        
+        // Build order clause
+        $orderby = sanitize_sql_orderby($args['orderby'] . ' ' . $args['order']);
+        if (!$orderby) {
+            $orderby = 'id DESC';
+        }
+        
+        // Build limit clause
+        $limit = '';
+        if (!empty($args['limit'])) {
+            $limit = $wpdb->prepare("LIMIT %d, %d", $args['offset'], $args['limit']);
+        }
+        
+        // Execute query
+        $sql = "SELECT * FROM " . get_subscriptions_table_name() . " $where ORDER BY $orderby $limit";
+        
+        return $wpdb->get_results($sql);
+    }, [$args], []);
 }
 
 /**
@@ -746,4 +750,105 @@ function get_transaction_meta_all($transaction_id) {
     }
     
     return $meta_array;
+}
+
+/**
+ * Check if database tables exist and create them if they don't
+ * 
+ * @return bool True if all tables exist or were created successfully
+ */
+function verify_database_tables() {
+    global $wpdb;
+    
+    // Tables to check
+    $required_tables = [
+        get_subscriptions_table_name(),
+        get_transactions_table_name(),
+        get_transactions_meta_table_name(),
+        get_products_meta_table_name(),
+    ];
+    
+    $missing_tables = [];
+    
+    // Check if each table exists
+    foreach ($required_tables as $table) {
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table'");
+        
+        if (!$table_exists) {
+            $missing_tables[] = $table;
+        }
+    }
+    
+    // If all tables exist, return true
+    if (empty($missing_tables)) {
+        return true;
+    }
+    
+    // Include migration manager and migrations to create tables
+    require_once dirname(__FILE__) . '/migrations/class-migration.php';
+    require_once dirname(__FILE__) . '/migrations/class-migration-manager.php';
+    require_once dirname(__FILE__) . '/migrations/class-migration-1-0-0.php';
+    require_once dirname(__FILE__) . '/migrations/class-migration-1-0-1.php';
+    require_once dirname(__FILE__) . '/migrations/class-migration-1-0-2.php';
+    
+    // Run migrations
+    $migration_manager = new Migrations\Migration_Manager();
+    $results = $migration_manager->migrate();
+    
+    // Check if all migrations were successful
+    $all_success = true;
+    foreach ($results as $result) {
+        if (!$result['success']) {
+            $all_success = false;
+            break;
+        }
+    }
+    
+    return $all_success;
+}
+
+/**
+ * Run a database operation with auto-verification of tables
+ * If tables don't exist, it will attempt to create them before running the operation
+ * 
+ * @param callable $callback The database operation to run
+ * @param array $args Arguments to pass to the callback
+ * @param mixed $default Default value to return if operation fails
+ * @return mixed Result of callback or default value on failure
+ */
+function db_operation_with_verification($callback, $args = [], $default = false) {
+    global $wpdb;
+    
+    // Check if callback is valid
+    if (!is_callable($callback)) {
+        return $default;
+    }
+    
+    try {
+        // Try to run the callback
+        $result = call_user_func_array($callback, $args);
+        
+        // If error occurs due to missing table
+        if (!empty($wpdb->last_error) && strpos($wpdb->last_error, "doesn't exist") !== false) {
+            // Verify and create tables
+            $tables_created = verify_database_tables();
+            
+            if ($tables_created) {
+                // Try again
+                $result = call_user_func_array($callback, $args);
+            } else {
+                // Failed to create tables
+                return $default;
+            }
+        }
+        
+        return $result;
+    } catch (\Exception $e) {
+        // Log error if logging function exists
+        if (function_exists('\\Members\\Subscriptions\\log_message')) {
+            log_message('Database operation failed: ' . $e->getMessage(), 'error');
+        }
+        
+        return $default;
+    }
 }

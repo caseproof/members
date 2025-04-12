@@ -76,6 +76,68 @@ class Plugin {
         
         // Check if we need to flush rewrite rules
         add_action('admin_init', [$this, 'maybe_flush_rewrite_rules']);
+        
+        // Add hook to verify database tables when needed
+        add_action('admin_notices', [$this, 'check_database_tables']);
+    }
+    
+    /**
+     * Check if database tables exist and show notice if missing
+     */
+    public function check_database_tables() {
+        // Only run on our plugin's admin pages
+        $screen = get_current_screen();
+        if (!$screen || strpos($screen->id, 'members') === false) {
+            return;
+        }
+        
+        // Load DB functions if not already loaded
+        if (!function_exists('\\Members\\Subscriptions\\verify_database_tables')) {
+            require_once __DIR__ . '/functions-db.php';
+        }
+        
+        global $wpdb;
+        
+        // Tables to check
+        $required_tables = [
+            \Members\Subscriptions\get_subscriptions_table_name(),
+            \Members\Subscriptions\get_transactions_table_name(),
+            \Members\Subscriptions\get_transactions_meta_table_name(),
+            \Members\Subscriptions\get_products_meta_table_name(),
+        ];
+        
+        $missing_tables = [];
+        
+        // Check if each table exists
+        foreach ($required_tables as $table) {
+            $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table'");
+            
+            if (!$table_exists) {
+                $missing_tables[] = $table;
+            }
+        }
+        
+        // If tables are missing, attempt to create them automatically
+        if (!empty($missing_tables)) {
+            $tables_created = \Members\Subscriptions\verify_database_tables();
+            
+            // If tables were created successfully, don't show notice
+            if ($tables_created) {
+                return;
+            }
+            
+            // Show admin notice if tables couldn't be created
+            ?>
+            <div class="notice notice-error">
+                <p>
+                    <strong><?php _e('Members Subscriptions: Database tables are missing', 'members'); ?></strong>
+                </p>
+                <p>
+                    <?php _e('The plugin requires database tables to function properly. Automatic creation failed. Please deactivate and reactivate the plugin to trigger database setup.', 'members'); ?>
+                </p>
+            </div>
+            <?php
+        }
     }
     
     /**
@@ -395,15 +457,317 @@ class Plugin {
             wp_die(__('You do not have sufficient permissions to access this page.', 'members'));
         }
         
+        // Verify database tables exist - create if needed
+        \Members\Subscriptions\verify_database_tables();
+        
+        // Check for export request
+        if (isset($_REQUEST['export']) && $_REQUEST['export'] === 'csv') {
+            $this->export_subscriptions_csv();
+            exit;
+        }
+        
         // Include the subscription list table class
         require_once __DIR__ . '/admin/class-subscriptions-list-table.php';
         
         // Create an instance of the subscriptions list table
         $subscriptions_table = new admin\Subscriptions_List_Table();
+        
+        // Handle reactivate action
+        if (isset($_REQUEST['action']) && $_REQUEST['action'] === 'reactivate' && 
+            isset($_REQUEST['subscription']) && isset($_REQUEST['_wpnonce'])) {
+            
+            $subscription_id = intval($_REQUEST['subscription']);
+            
+            if (wp_verify_nonce($_REQUEST['_wpnonce'], 'members_reactivate_subscription')) {
+                $this->reactivate_subscription($subscription_id);
+            }
+        }
+        
+        // Handle renew action
+        if (isset($_REQUEST['action']) && $_REQUEST['action'] === 'renew' && 
+            isset($_REQUEST['subscription']) && isset($_REQUEST['_wpnonce'])) {
+            
+            $subscription_id = intval($_REQUEST['subscription']);
+            
+            if (wp_verify_nonce($_REQUEST['_wpnonce'], 'members_renew_subscription')) {
+                $this->renew_subscription($subscription_id);
+            }
+        }
+        
         $subscriptions_table->prepare_items();
         
         // Output the subscriptions page
         include __DIR__ . '/admin/views/subscriptions-page.php';
+    }
+    
+    /**
+     * Reactivate subscription
+     *
+     * @param int $subscription_id
+     * @return void
+     */
+    private function reactivate_subscription($subscription_id) {
+        // Get subscription
+        $subscription = \Members\Subscriptions\get_subscription($subscription_id);
+        
+        if (!$subscription) {
+            wp_redirect(add_query_arg('message', 'error', admin_url('admin.php?page=members-subscriptions')));
+            exit;
+        }
+        
+        // Check if subscription is cancelled or expired
+        if (!in_array($subscription->status, ['cancelled', 'expired'])) {
+            wp_redirect(add_query_arg('message', 'error', admin_url('admin.php?page=members-subscriptions')));
+            exit;
+        }
+        
+        // Calculate new expiration date for expired subscriptions
+        $data = [
+            'status' => 'active',
+        ];
+        
+        // If expired, set a new expiration date
+        if ($subscription->status === 'expired') {
+            $data['expires_at'] = \Members\Subscriptions\calculate_subscription_expiration(
+                $subscription->period, 
+                $subscription->period_type, 
+                current_time('mysql')
+            );
+        }
+        
+        // Update subscription
+        $result = \Members\Subscriptions\update_subscription($subscription_id, $data);
+        
+        if ($result) {
+            // Add membership roles to user
+            \Members\Subscriptions\apply_membership_role($subscription->user_id, $subscription->product_id);
+            
+            // Log event
+            \Members\Subscriptions\log_event('subscription_reactivated', [
+                'subscription_id' => $subscription_id,
+                'user_id' => $subscription->user_id,
+                'old_status' => $subscription->status,
+                'new_status' => 'active',
+            ]);
+            
+            // Trigger action
+            do_action('members_subscription_reactivated', $subscription_id);
+            
+            // Redirect with success message
+            wp_redirect(add_query_arg('message', 'reactivated', admin_url('admin.php?page=members-subscriptions')));
+            exit;
+        } else {
+            // Redirect with error message
+            wp_redirect(add_query_arg('message', 'error', admin_url('admin.php?page=members-subscriptions')));
+            exit;
+        }
+    }
+    
+    /**
+     * Process subscription renewal
+     *
+     * @param int $subscription_id
+     * @return void
+     */
+    private function renew_subscription($subscription_id) {
+        // Get subscription
+        $subscription = \Members\Subscriptions\get_subscription($subscription_id);
+        
+        if (!$subscription) {
+            wp_redirect(add_query_arg('message', 'error', admin_url('admin.php?page=members-subscriptions')));
+            exit;
+        }
+        
+        // Check if subscription is active
+        if ($subscription->status !== 'active') {
+            wp_redirect(add_query_arg('message', 'error', admin_url('admin.php?page=members-subscriptions')));
+            exit;
+        }
+        
+        // Process renewal
+        $result = \Members\Subscriptions\process_subscription_renewal($subscription_id);
+        
+        if ($result && $result['success']) {
+            // Redirect with success message
+            wp_redirect(add_query_arg('message', 'renewed', admin_url('admin.php?page=members-subscriptions')));
+            exit;
+        } else {
+            // Redirect with error message
+            wp_redirect(add_query_arg('message', 'error', admin_url('admin.php?page=members-subscriptions')));
+            exit;
+        }
+    }
+    
+    /**
+     * Export subscriptions to CSV
+     *
+     * @return void
+     */
+    private function export_subscriptions_csv() {
+        global $wpdb;
+        
+        // Security check
+        if (!current_user_can('view_subscriptions')) {
+            wp_die(__('You do not have sufficient permissions to access this page.', 'members'));
+        }
+        
+        // Build query args based on filters
+        $args = [];
+        
+        // User filter
+        if (!empty($_REQUEST['user_id'])) {
+            $args['user_id'] = intval($_REQUEST['user_id']);
+        }
+        
+        // Product filter
+        if (!empty($_REQUEST['product_id'])) {
+            $args['product_id'] = intval($_REQUEST['product_id']);
+        }
+        
+        // Status filter
+        if (!empty($_REQUEST['status'])) {
+            $args['status'] = sanitize_text_field($_REQUEST['status']);
+        }
+        
+        // Gateway filter
+        if (!empty($_REQUEST['gateway'])) {
+            $args['gateway'] = sanitize_text_field($_REQUEST['gateway']);
+        }
+        
+        // Date range filter for created_at
+        $where = '';
+        if (!empty($_REQUEST['date_from']) || !empty($_REQUEST['date_to'])) {
+            $table_name = \Members\Subscriptions\get_subscriptions_table_name();
+            
+            if (!empty($_REQUEST['date_from'])) {
+                $date_from = sanitize_text_field($_REQUEST['date_from']);
+                $where .= $wpdb->prepare(" AND created_at >= %s", $date_from . ' 00:00:00');
+            }
+            
+            if (!empty($_REQUEST['date_to'])) {
+                $date_to = sanitize_text_field($_REQUEST['date_to']);
+                $where .= $wpdb->prepare(" AND created_at <= %s", $date_to . ' 23:59:59');
+            }
+        }
+        
+        // Get subscriptions
+        if (!empty($where)) {
+            $table_name = \Members\Subscriptions\get_subscriptions_table_name();
+            $sql = "SELECT * FROM $table_name WHERE 1=1";
+            
+            // Add where conditions from args
+            if (!empty($args['user_id'])) {
+                $sql .= $wpdb->prepare(" AND user_id = %d", $args['user_id']);
+            }
+            
+            if (!empty($args['product_id'])) {
+                $sql .= $wpdb->prepare(" AND product_id = %d", $args['product_id']);
+            }
+            
+            if (!empty($args['status'])) {
+                $sql .= $wpdb->prepare(" AND status = %s", $args['status']);
+            }
+            
+            if (!empty($args['gateway'])) {
+                $sql .= $wpdb->prepare(" AND gateway = %s", $args['gateway']);
+            }
+            
+            // Add where clause for date range
+            $sql .= $where;
+            
+            // Order by created_at desc
+            $sql .= " ORDER BY created_at DESC";
+            
+            $subscriptions = $wpdb->get_results($sql);
+        } else {
+            $subscriptions = \Members\Subscriptions\get_subscriptions($args);
+        }
+        
+        // Check if expiring filter is set
+        if (isset($_REQUEST['expiring']) && $_REQUEST['expiring'] === 'soon') {
+            $filtered_subscriptions = [];
+            $now = current_time('timestamp');
+            $thirty_days_from_now = strtotime('+30 days', $now);
+            
+            foreach ($subscriptions as $subscription) {
+                if ($subscription->status === 'active' && 
+                    !empty($subscription->expires_at) && 
+                    $subscription->expires_at !== '0000-00-00 00:00:00') {
+                    
+                    $expires_timestamp = strtotime($subscription->expires_at);
+                    
+                    if ($expires_timestamp > $now && $expires_timestamp <= $thirty_days_from_now) {
+                        $filtered_subscriptions[] = $subscription;
+                    }
+                }
+            }
+            
+            $subscriptions = $filtered_subscriptions;
+        }
+        
+        // Set headers for CSV download
+        header('Content-Type: text/csv');
+        header('Content-Disposition: attachment; filename="members-subscriptions-' . date('Y-m-d') . '.csv"');
+        
+        // Create output handle
+        $output = fopen('php://output', 'w');
+        
+        // Add UTF-8 BOM
+        fputs($output, "\xEF\xBB\xBF");
+        
+        // Define CSV headers
+        $headers = [
+            'ID',
+            'User ID',
+            'User Email',
+            'User Name',
+            'Product ID',
+            'Product Name',
+            'Status',
+            'Gateway',
+            'Subscription ID',
+            'Price',
+            'Tax Amount',
+            'Total',
+            'Period',
+            'Created Date',
+            'Expiry Date',
+            'Renewal Count',
+        ];
+        
+        // Write headers
+        fputcsv($output, $headers);
+        
+        // Write data rows
+        foreach ($subscriptions as $subscription) {
+            $user = get_userdata($subscription->user_id);
+            $product = get_post($subscription->product_id);
+            
+            $row = [
+                $subscription->id,
+                $subscription->user_id,
+                $user ? $user->user_email : __('User deleted', 'members'),
+                $user ? $user->display_name : __('User deleted', 'members'),
+                $subscription->product_id,
+                $product ? $product->post_title : __('Product deleted', 'members'),
+                $subscription->status,
+                $subscription->gateway,
+                $subscription->subscr_id,
+                $subscription->price,
+                $subscription->tax_amount,
+                $subscription->total,
+                !empty($subscription->period) ? $subscription->period . ' ' . $subscription->period_type : 'N/A',
+                $subscription->created_at,
+                !empty($subscription->expires_at) && $subscription->expires_at !== '0000-00-00 00:00:00' ? $subscription->expires_at : 'Never',
+                $subscription->renewal_count,
+            ];
+            
+            fputcsv($output, $row);
+        }
+        
+        // Close output and exit
+        fclose($output);
+        exit;
     }
 
     /**
@@ -414,6 +778,9 @@ class Plugin {
         if (!current_user_can('view_transactions')) {
             wp_die(__('You do not have sufficient permissions to access this page.', 'members'));
         }
+        
+        // Verify database tables exist - create if needed
+        \Members\Subscriptions\verify_database_tables();
         
         // Include the transaction list table class
         require_once __DIR__ . '/admin/class-transactions-list-table.php';
@@ -434,6 +801,9 @@ class Plugin {
         if (!current_user_can('manage_payment_gateways')) {
             wp_die(__('You do not have sufficient permissions to access this page.', 'members'));
         }
+        
+        // Verify database tables exist - create if needed
+        \Members\Subscriptions\verify_database_tables();
         
         // Output the gateways page
         include __DIR__ . '/admin/views/gateways-page.php';

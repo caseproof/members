@@ -607,10 +607,121 @@ class Subscriptions_List_Table extends \WP_List_Table {
                         </option>
                     <?php endforeach; ?>
                 </select>
+                
+                <?php if (isset($_REQUEST['gateway'])) : ?>
+                <input type="hidden" name="gateway" value="<?php echo esc_attr($_REQUEST['gateway']); ?>">
+                <?php endif; ?>
+                
+                <?php if (isset($_REQUEST['date_from'])) : ?>
+                <input type="hidden" name="date_from" value="<?php echo esc_attr($_REQUEST['date_from']); ?>">
+                <?php endif; ?>
+                
+                <?php if (isset($_REQUEST['date_to'])) : ?>
+                <input type="hidden" name="date_to" value="<?php echo esc_attr($_REQUEST['date_to']); ?>">
+                <?php endif; ?>
+                
+                <?php if (isset($_REQUEST['expiring']) && $_REQUEST['expiring'] === 'soon') : ?>
+                <input type="hidden" name="expiring" value="soon">
+                <?php endif; ?>
+                
                 <input type="submit" class="button" value="<?php esc_attr_e('Filter', 'members'); ?>">
             </div>
             <?php
         }
+        
+        // Add export button
+        ?>
+        <div class="alignright">
+            <button type="submit" name="export" value="csv" class="button"><?php _e('Export CSV', 'members'); ?></button>
+        </div>
+        <?php
+    }
+    
+    /**
+     * Column actions
+     *
+     * @param object $item
+     * @return string
+     */
+    public function column_actions($item) {
+        $base_url = admin_url('admin.php?page=members-subscriptions');
+        
+        $actions_html = '<div class="members-sub-actions">';
+        
+        // View action
+        $actions_html .= sprintf(
+            '<a href="%s" class="members-sub-action view">%s</a>',
+            esc_url(add_query_arg(['action' => 'view', 'subscription' => $item->id], $base_url)),
+            __('View', 'members')
+        );
+        
+        // Edit action
+        $actions_html .= sprintf(
+            '<a href="%s" class="members-sub-action edit">%s</a>',
+            esc_url(add_query_arg(['action' => 'edit', 'subscription' => $item->id], $base_url)),
+            __('Edit', 'members')
+        );
+        
+        // Status-specific actions
+        switch ($item->status) {
+            case 'pending':
+                $actions_html .= sprintf(
+                    '<a href="%s" class="members-sub-action activate">%s</a>',
+                    esc_url(add_query_arg(['action' => 'activate', 'subscription' => $item->id, '_wpnonce' => wp_create_nonce('members_activate_subscription')], $base_url)),
+                    __('Activate', 'members')
+                );
+                break;
+                
+            case 'active':
+                // Get dates for renew button to be displayed
+                $show_renew_button = false;
+                if (!empty($item->expires_at) && $item->expires_at !== '0000-00-00 00:00:00') {
+                    $expires_timestamp = strtotime($item->expires_at);
+                    $now_timestamp = current_time('timestamp');
+                    
+                    // Show renew button if subscription expires within the next 30 days
+                    if ($expires_timestamp - $now_timestamp < 30 * DAY_IN_SECONDS) {
+                        $show_renew_button = true;
+                    }
+                }
+                
+                if ($show_renew_button) {
+                    $actions_html .= sprintf(
+                        '<a href="%s" class="members-sub-action renew">%s</a>',
+                        esc_url(add_query_arg(['action' => 'renew', 'subscription' => $item->id, '_wpnonce' => wp_create_nonce('members_renew_subscription')], $base_url)),
+                        __('Renew', 'members')
+                    );
+                }
+                
+                $actions_html .= sprintf(
+                    '<a href="%s" class="members-sub-action cancel" onclick="return confirm(\'%s\')">%s</a>',
+                    esc_url(add_query_arg(['action' => 'cancel', 'subscription' => $item->id, '_wpnonce' => wp_create_nonce('members_cancel_subscription')], $base_url)),
+                    esc_attr__('Are you sure you want to cancel this subscription? This action cannot be undone.', 'members'),
+                    __('Cancel', 'members')
+                );
+                break;
+                
+            case 'cancelled':
+            case 'expired':
+                $actions_html .= sprintf(
+                    '<a href="%s" class="members-sub-action reactivate">%s</a>',
+                    esc_url(add_query_arg(['action' => 'reactivate', 'subscription' => $item->id, '_wpnonce' => wp_create_nonce('members_reactivate_subscription')], $base_url)),
+                    __('Reactivate', 'members')
+                );
+                break;
+        }
+        
+        // Delete action
+        $actions_html .= sprintf(
+            '<a href="%s" class="members-sub-action delete" onclick="return confirm(\'%s\')">%s</a>',
+            esc_url(add_query_arg(['action' => 'delete', 'subscription' => $item->id, '_wpnonce' => wp_create_nonce('members_delete_subscription')], $base_url)),
+            esc_attr__('Are you sure you want to delete this subscription? This action cannot be undone.', 'members'),
+            __('Delete', 'members')
+        );
+        
+        $actions_html .= '</div>';
+        
+        return $actions_html;
     }
 
     /**
