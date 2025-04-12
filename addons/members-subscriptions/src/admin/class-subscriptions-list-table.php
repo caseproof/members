@@ -312,56 +312,6 @@ class Subscriptions_List_Table extends \WP_List_Table {
     }
 
     /**
-     * Column actions
-     *
-     * @param object $item
-     * @return string
-     */
-    public function column_actions($item) {
-        $base_url = admin_url('admin.php?page=members-subscriptions');
-        
-        $actions_html = '<div class="members-sub-actions">';
-        
-        // View action
-        $actions_html .= sprintf(
-            '<a href="%s" class="members-sub-action view">%s</a>',
-            esc_url(add_query_arg(['action' => 'view', 'subscription' => $item->id], $base_url)),
-            __('View', 'members')
-        );
-        
-        // Status-specific actions
-        switch ($item->status) {
-            case 'pending':
-                $actions_html .= sprintf(
-                    '<a href="%s" class="members-sub-action activate">%s</a>',
-                    esc_url(add_query_arg(['action' => 'activate', 'subscription' => $item->id, '_wpnonce' => wp_create_nonce('members_activate_subscription')], $base_url)),
-                    __('Activate', 'members')
-                );
-                break;
-                
-            case 'active':
-                $actions_html .= sprintf(
-                    '<a href="%s" class="members-sub-action cancel">%s</a>',
-                    esc_url(add_query_arg(['action' => 'cancel', 'subscription' => $item->id, '_wpnonce' => wp_create_nonce('members_cancel_subscription')], $base_url)),
-                    __('Cancel', 'members')
-                );
-                break;
-        }
-        
-        // Delete action
-        $actions_html .= sprintf(
-            '<a href="%s" class="members-sub-action delete" onclick="return confirm(\'%s\')">%s</a>',
-            esc_url(add_query_arg(['action' => 'delete', 'subscription' => $item->id, '_wpnonce' => wp_create_nonce('members_delete_subscription')], $base_url)),
-            esc_attr__('Are you sure you want to delete this subscription? This action cannot be undone.', 'members'),
-            __('Delete', 'members')
-        );
-        
-        $actions_html .= '</div>';
-        
-        return $actions_html;
-    }
-
-    /**
      * Column cb
      *
      * @param object $item
