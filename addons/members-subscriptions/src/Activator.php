@@ -127,11 +127,119 @@ class Activator {
             KEY meta_key (meta_key(191))
         ) $charset_collate;";
         
-        // Run the queries to create the tables
-        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-        dbDelta($subscriptions_sql);
-        dbDelta($transactions_sql);
-        dbDelta($products_meta_sql);
+        // Transaction meta table
+        $transactions_meta_table = $wpdb->prefix . 'members_transactions_meta';
+        $transactions_meta_sql = "CREATE TABLE IF NOT EXISTS $transactions_meta_table (
+            meta_id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            transaction_id bigint(20) unsigned NOT NULL,
+            meta_key varchar(255) NOT NULL,
+            meta_value longtext,
+            PRIMARY KEY (meta_id),
+            KEY transaction_id (transaction_id),
+            KEY meta_key (meta_key(191))
+        ) $charset_collate;";
+        
+        try {
+            // Run the queries to create the tables
+            require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+            
+            // First try using dbDelta
+            $results = [];
+            $results[] = dbDelta($subscriptions_sql);
+            $results[] = dbDelta($transactions_sql);
+            $results[] = dbDelta($products_meta_sql);
+            $results[] = dbDelta($transactions_meta_sql);
+            
+            // Log the results
+            error_log('Members Subscriptions: Database tables created via dbDelta: ' . json_encode($results));
+            
+            // Verify tables were created and try direct creation if they weren't
+            $tables_to_check = [
+                $subscriptions_table,
+                $transactions_table,
+                $products_meta_table,
+                $transactions_meta_table
+            ];
+            
+            foreach ($tables_to_check as $index => $table) {
+                $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table'");
+                
+                if (!$table_exists) {
+                    error_log("Members Subscriptions: Table $table does not exist after dbDelta. Trying direct creation.");
+                    
+                    // Try direct creation
+                    switch ($index) {
+                        case 0:
+                            $direct_result = $wpdb->query($subscriptions_sql);
+                            break;
+                        case 1:
+                            $direct_result = $wpdb->query($transactions_sql);
+                            break;
+                        case 2:
+                            $direct_result = $wpdb->query($products_meta_sql);
+                            break;
+                        case 3:
+                            $direct_result = $wpdb->query($transactions_meta_sql);
+                            break;
+                    }
+                    
+                    error_log("Members Subscriptions: Direct creation of $table result: " . ($direct_result ? 'Success' : 'Failed'));
+                }
+            }
+            
+            // Update option to indicate database setup has been attempted
+            update_option('members_subscriptions_db_version', \Members\Subscriptions\Plugin::VERSION);
+            
+        } catch (\Exception $e) {
+            error_log('Members Subscriptions: Error creating database tables: ' . $e->getMessage());
+            
+            // Try manual creation as a last resort
+            try {
+                $wpdb->query($subscriptions_sql);
+                $wpdb->query($transactions_sql);
+                $wpdb->query($products_meta_sql);
+                $wpdb->query($transactions_meta_sql);
+                
+                error_log('Members Subscriptions: Attempted direct database table creation after exception');
+            } catch (\Exception $e2) {
+                error_log('Members Subscriptions: Error in direct table creation: ' . $e2->getMessage());
+            }
+        }
+        
+        // Make one final verification
+        self::verify_tables_exist();
+    }
+    
+    /**
+     * Verify that all required tables exist
+     */
+    private static function verify_tables_exist() {
+        global $wpdb;
+        
+        $tables_to_check = [
+            $wpdb->prefix . 'members_subscriptions',
+            $wpdb->prefix . 'members_transactions',
+            $wpdb->prefix . 'members_products_meta',
+            $wpdb->prefix . 'members_transactions_meta'
+        ];
+        
+        $missing_tables = [];
+        
+        foreach ($tables_to_check as $table) {
+            $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table'");
+            
+            if (!$table_exists) {
+                $missing_tables[] = $table;
+            }
+        }
+        
+        if (!empty($missing_tables)) {
+            error_log('Members Subscriptions: These tables are still missing after setup: ' . implode(', ', $missing_tables));
+            update_option('members_subscriptions_missing_tables', $missing_tables);
+        } else {
+            error_log('Members Subscriptions: All required tables exist after setup');
+            delete_option('members_subscriptions_missing_tables');
+        }
     }
 
     /**

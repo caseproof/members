@@ -54,6 +54,12 @@ function get_transactions_meta_table_name() {
 function create_subscription($data) {
     global $wpdb;
     
+    // Verify database tables exist before attempting to insert
+    if (!verify_database_tables()) {
+        error_log('Members Subscriptions: Failed to create database tables for subscriptions');
+        return false;
+    }
+    
     // Make sure required fields are set
     $data = wp_parse_args($data, [
         'user_id'        => 0,
@@ -83,45 +89,63 @@ function create_subscription($data) {
     
     // Validate required fields
     if (empty($data['user_id']) || empty($data['product_id'])) {
+        error_log('Members Subscriptions: Missing required fields for subscription creation');
         return false;
     }
     
-    // Insert subscription
-    $result = $wpdb->insert(
-        get_subscriptions_table_name(),
-        $data,
-        [
-            '%d', // user_id
-            '%d', // product_id
-            '%s', // gateway
-            '%s', // status
-            '%s', // subscr_id
-            '%d', // trial
-            '%d', // trial_days
-            '%f', // trial_amount
-            '%f', // trial_tax_amount
-            '%f', // trial_total
-            '%s', // period_type
-            '%d', // period
-            '%f', // price
-            '%f', // tax_amount
-            '%f', // tax_rate
-            '%s', // tax_desc
-            '%f', // total
-            '%s', // cc_last4
-            '%s', // cc_exp_month
-            '%s', // cc_exp_year
-            '%s', // created_at
-            '%s', // expires_at
-            '%d', // renewal_count
-        ]
-    );
-    
-    if (!$result) {
+    try {
+        // Insert subscription
+        $result = $wpdb->insert(
+            get_subscriptions_table_name(),
+            $data,
+            [
+                '%d', // user_id
+                '%d', // product_id
+                '%s', // gateway
+                '%s', // status
+                '%s', // subscr_id
+                '%d', // trial
+                '%d', // trial_days
+                '%f', // trial_amount
+                '%f', // trial_tax_amount
+                '%f', // trial_total
+                '%s', // period_type
+                '%d', // period
+                '%f', // price
+                '%f', // tax_amount
+                '%f', // tax_rate
+                '%s', // tax_desc
+                '%f', // total
+                '%s', // cc_last4
+                '%s', // cc_exp_month
+                '%s', // cc_exp_year
+                '%s', // created_at
+                '%s', // expires_at
+                '%d', // renewal_count
+            ]
+        );
+        
+        if (!$result) {
+            error_log('Members Subscriptions: Failed to insert subscription. DB Error: ' . $wpdb->last_error);
+            return false;
+        }
+        
+        $insert_id = $wpdb->insert_id;
+        if (!$insert_id) {
+            error_log('Members Subscriptions: Failed to get insert_id for subscription');
+            return false;
+        }
+        
+        // Also store as user meta as a backup
+        update_user_meta($data['user_id'], '_members_subscription_data', $data);
+        update_user_meta($data['user_id'], '_members_subscription_id', $insert_id);
+        
+        error_log('Members Subscriptions: Successfully created subscription with ID: ' . $insert_id);
+        return $insert_id;
+    } catch (\Exception $e) {
+        error_log('Members Subscriptions: Exception when creating subscription: ' . $e->getMessage());
         return false;
     }
-    
-    return $wpdb->insert_id;
 }
 
 /**
@@ -283,6 +307,12 @@ function count_subscriptions($args = []) {
 function create_transaction($data) {
     global $wpdb;
     
+    // Verify database tables exist before attempting to insert
+    if (!verify_database_tables()) {
+        error_log('Members Subscriptions: Failed to create database tables for transactions');
+        return false;
+    }
+    
     // Make sure required fields are set
     $data = wp_parse_args($data, [
         'user_id'        => 0,
@@ -303,36 +333,54 @@ function create_transaction($data) {
     
     // Validate required fields
     if (empty($data['user_id']) || empty($data['product_id']) || empty($data['trans_num'])) {
+        error_log('Members Subscriptions: Missing required fields for transaction creation');
         return false;
     }
     
-    // Insert transaction
-    $result = $wpdb->insert(
-        get_transactions_table_name(),
-        $data,
-        [
-            '%d', // user_id
-            '%d', // product_id
-            '%f', // amount
-            '%f', // total
-            '%f', // tax_amount
-            '%f', // tax_rate
-            '%s', // tax_desc
-            '%s', // trans_num
-            '%s', // status
-            '%s', // txn_type
-            '%s', // gateway
-            '%s', // created_at
-            '%s', // expires_at
-            '%d', // subscription_id
-        ]
-    );
-    
-    if (!$result) {
+    try {
+        // Insert transaction
+        $result = $wpdb->insert(
+            get_transactions_table_name(),
+            $data,
+            [
+                '%d', // user_id
+                '%d', // product_id
+                '%f', // amount
+                '%f', // total
+                '%f', // tax_amount
+                '%f', // tax_rate
+                '%s', // tax_desc
+                '%s', // trans_num
+                '%s', // status
+                '%s', // txn_type
+                '%s', // gateway
+                '%s', // created_at
+                '%s', // expires_at
+                '%d', // subscription_id
+            ]
+        );
+        
+        if (!$result) {
+            error_log('Members Subscriptions: Failed to insert transaction. DB Error: ' . $wpdb->last_error);
+            return false;
+        }
+        
+        $insert_id = $wpdb->insert_id;
+        if (!$insert_id) {
+            error_log('Members Subscriptions: Failed to get insert_id for transaction');
+            return false;
+        }
+        
+        // Also store as user meta as a backup
+        update_user_meta($data['user_id'], '_members_transaction_data', $data);
+        update_user_meta($data['user_id'], '_members_transaction_id', $insert_id);
+        
+        error_log('Members Subscriptions: Successfully created transaction with ID: ' . $insert_id);
+        return $insert_id;
+    } catch (\Exception $e) {
+        error_log('Members Subscriptions: Exception when creating transaction: ' . $e->getMessage());
         return false;
     }
-    
-    return $wpdb->insert_id;
 }
 
 /**
@@ -784,28 +832,297 @@ function verify_database_tables() {
         return true;
     }
     
-    // Include migration manager and migrations to create tables
-    require_once dirname(__FILE__) . '/migrations/class-migration.php';
-    require_once dirname(__FILE__) . '/migrations/class-migration-manager.php';
-    require_once dirname(__FILE__) . '/migrations/class-migration-1-0-0.php';
-    require_once dirname(__FILE__) . '/migrations/class-migration-1-0-1.php';
-    require_once dirname(__FILE__) . '/migrations/class-migration-1-0-2.php';
+    error_log('Members Subscriptions: Missing database tables: ' . implode(', ', $missing_tables));
     
-    // Run migrations
-    $migration_manager = new Migrations\Migration_Manager();
-    $results = $migration_manager->migrate();
+    try {
+        // Try to include migration manager and migrations to create tables
+        $migration_files = [
+            dirname(__FILE__) . '/migrations/class-migration.php',
+            dirname(__FILE__) . '/migrations/class-migration-manager.php',
+            dirname(__FILE__) . '/migrations/class-migration-1-0-0.php',
+            dirname(__FILE__) . '/migrations/class-migration-1-0-1.php',
+            dirname(__FILE__) . '/migrations/class-migration-1-0-2.php',
+        ];
+        
+        foreach ($migration_files as $file) {
+            if (!file_exists($file)) {
+                error_log('Members Subscriptions: Migration file not found: ' . $file);
+                create_tables_directly();
+                return check_tables_exist();
+            }
+            require_once $file;
+        }
+        
+        // Run migrations
+        $migration_manager = new Migrations\Migration_Manager();
+        $results = $migration_manager->migrate();
+        
+        // Check if all migrations were successful
+        $all_success = true;
+        foreach ($results as $result) {
+            if (!$result['success']) {
+                error_log('Members Subscriptions: Migration failed: ' . ($result['message'] ?? 'Unknown error'));
+                $all_success = false;
+                break;
+            }
+        }
+        
+        if (!$all_success) {
+            error_log('Members Subscriptions: Migrations failed, attempting direct table creation');
+            create_tables_directly();
+        }
+        
+        return check_tables_exist();
+    } catch (\Exception $e) {
+        error_log('Members Subscriptions: Exception during table verification/creation: ' . $e->getMessage());
+        // If migrations fail, try direct table creation
+        create_tables_directly();
+        return check_tables_exist();
+    }
+}
+
+/**
+ * Create database tables directly without using migrations
+ */
+function create_tables_directly() {
+    global $wpdb;
+    $charset_collate = $wpdb->get_charset_collate();
     
-    // Check if all migrations were successful
-    $all_success = true;
-    foreach ($results as $result) {
-        if (!$result['success']) {
-            $all_success = false;
-            break;
+    error_log('Members Subscriptions: Creating tables directly');
+    
+    // Subscriptions table
+    $subscriptions_table = "CREATE TABLE " . get_subscriptions_table_name() . " (
+        id bigint(20) NOT NULL AUTO_INCREMENT,
+        user_id bigint(20) NOT NULL,
+        product_id bigint(20) NOT NULL,
+        gateway varchar(50) NOT NULL,
+        status varchar(50) NOT NULL DEFAULT 'pending',
+        subscr_id varchar(100) NOT NULL,
+        trial tinyint(1) NOT NULL DEFAULT 0,
+        trial_days int(11) NOT NULL DEFAULT 0,
+        trial_amount decimal(10,2) NOT NULL DEFAULT 0.00,
+        trial_tax_amount decimal(10,2) NOT NULL DEFAULT 0.00,
+        trial_total decimal(10,2) NOT NULL DEFAULT 0.00,
+        period_type varchar(20) NOT NULL DEFAULT 'month',
+        period int(11) NOT NULL DEFAULT 1,
+        price decimal(10,2) NOT NULL DEFAULT 0.00,
+        tax_amount decimal(10,2) NOT NULL DEFAULT 0.00,
+        tax_rate decimal(10,2) NOT NULL DEFAULT 0.00,
+        tax_desc varchar(255) NOT NULL DEFAULT '',
+        total decimal(10,2) NOT NULL DEFAULT 0.00,
+        cc_last4 varchar(4) NOT NULL DEFAULT '',
+        cc_exp_month varchar(2) NOT NULL DEFAULT '',
+        cc_exp_year varchar(4) NOT NULL DEFAULT '',
+        created_at datetime NOT NULL,
+        expires_at datetime DEFAULT NULL,
+        renewal_count int(11) NOT NULL DEFAULT 0,
+        PRIMARY KEY  (id),
+        KEY user_id (user_id),
+        KEY product_id (product_id),
+        KEY status (status),
+        KEY gateway (gateway)
+    ) $charset_collate;";
+    
+    // Transactions table
+    $transactions_table = "CREATE TABLE " . get_transactions_table_name() . " (
+        id bigint(20) NOT NULL AUTO_INCREMENT,
+        user_id bigint(20) NOT NULL,
+        product_id bigint(20) NOT NULL,
+        amount decimal(10,2) NOT NULL DEFAULT 0.00,
+        total decimal(10,2) NOT NULL DEFAULT 0.00,
+        tax_amount decimal(10,2) NOT NULL DEFAULT 0.00,
+        tax_rate decimal(10,2) NOT NULL DEFAULT 0.00,
+        tax_desc varchar(255) NOT NULL DEFAULT '',
+        trans_num varchar(100) NOT NULL,
+        status varchar(50) NOT NULL DEFAULT 'pending',
+        txn_type varchar(50) NOT NULL DEFAULT 'payment',
+        gateway varchar(50) NOT NULL,
+        created_at datetime NOT NULL,
+        expires_at datetime DEFAULT NULL,
+        subscription_id bigint(20) NOT NULL DEFAULT 0,
+        PRIMARY KEY  (id),
+        KEY user_id (user_id),
+        KEY product_id (product_id),
+        KEY status (status),
+        KEY gateway (gateway),
+        KEY subscription_id (subscription_id)
+    ) $charset_collate;";
+    
+    // Products meta table
+    $products_meta_table = "CREATE TABLE " . get_products_meta_table_name() . " (
+        id bigint(20) NOT NULL AUTO_INCREMENT,
+        product_id bigint(20) NOT NULL,
+        meta_key varchar(255) NOT NULL,
+        meta_value longtext NOT NULL,
+        PRIMARY KEY  (id),
+        KEY product_id (product_id),
+        KEY meta_key (meta_key(191))
+    ) $charset_collate;";
+    
+    // Transactions meta table
+    $transactions_meta_table = "CREATE TABLE " . get_transactions_meta_table_name() . " (
+        meta_id bigint(20) NOT NULL AUTO_INCREMENT,
+        transaction_id bigint(20) NOT NULL,
+        meta_key varchar(255) NOT NULL,
+        meta_value longtext NOT NULL,
+        PRIMARY KEY  (meta_id),
+        KEY transaction_id (transaction_id),
+        KEY meta_key (meta_key(191))
+    ) $charset_collate;";
+    
+    // Execute queries
+    try {
+        // Ensure dbDelta function is available
+        if (!function_exists('dbDelta')) {
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        }
+        
+        dbDelta($subscriptions_table);
+        dbDelta($transactions_table);
+        dbDelta($products_meta_table);
+        dbDelta($transactions_meta_table);
+        
+        error_log('Members Subscriptions: Tables created directly with dbDelta');
+        return true;
+    } catch (\Exception $e) {
+        // Fall back to direct query execution if dbDelta fails
+        error_log('Members Subscriptions: dbDelta failed: ' . $e->getMessage() . ', trying direct execution');
+        try {
+            // Drop tables if they exist but are incomplete
+            $wpdb->query("DROP TABLE IF EXISTS " . get_subscriptions_table_name());
+            $wpdb->query("DROP TABLE IF EXISTS " . get_transactions_table_name());
+            $wpdb->query("DROP TABLE IF EXISTS " . get_products_meta_table_name());
+            $wpdb->query("DROP TABLE IF EXISTS " . get_transactions_meta_table_name());
+            
+            // Create tables
+            $wpdb->query($subscriptions_table);
+            $wpdb->query($transactions_table);
+            $wpdb->query($products_meta_table);
+            $wpdb->query($transactions_meta_table);
+            
+            error_log('Members Subscriptions: Tables created with direct SQL');
+            return true;
+        } catch (\Exception $e2) {
+            error_log('Members Subscriptions: Direct table creation failed: ' . $e2->getMessage());
+            return false;
+        }
+    }
+}
+
+/**
+ * Check if all required tables exist
+ * 
+ * @return bool True if all tables exist
+ */
+function check_tables_exist() {
+    global $wpdb;
+    
+    // Tables to check
+    $required_tables = [
+        get_subscriptions_table_name(),
+        get_transactions_table_name(),
+        get_transactions_meta_table_name(),
+        get_products_meta_table_name(),
+    ];
+    
+    // Check if each table exists
+    foreach ($required_tables as $table) {
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table'");
+        
+        if (!$table_exists) {
+            error_log('Members Subscriptions: Table still missing after creation attempts: ' . $table);
+            return false;
         }
     }
     
-    return $all_success;
+    error_log('Members Subscriptions: All required tables exist');
+    return true;
 }
+
+/**
+ * Adds an admin notice if database tables are missing
+ */
+function maybe_add_database_admin_notice() {
+    global $wpdb;
+    
+    // Only run this check once per session
+    if (get_transient('members_subscriptions_tables_checked')) {
+        return;
+    }
+    
+    // Set transient to prevent repeated checks
+    set_transient('members_subscriptions_tables_checked', true, HOUR_IN_SECONDS);
+    
+    // Check if tables exist
+    $missing_tables = [];
+    $required_tables = [
+        get_subscriptions_table_name(),
+        get_transactions_table_name(),
+        get_transactions_meta_table_name(),
+        get_products_meta_table_name(),
+    ];
+    
+    foreach ($required_tables as $table) {
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table'");
+        if (!$table_exists) {
+            $missing_tables[] = $table;
+        }
+    }
+    
+    // If tables are missing, add an admin notice
+    if (!empty($missing_tables)) {
+        add_action('admin_notices', function() use ($missing_tables) {
+            ?>
+            <div class="notice notice-error is-dismissible">
+                <p><strong>Members Subscriptions:</strong> Some required database tables are missing.</p>
+                <p>Missing tables: <?php echo esc_html(implode(', ', $missing_tables)); ?></p>
+                <p>This may cause subscription and transaction records to fail. Please try deactivating and reactivating the plugin.</p>
+                <p>
+                    <a href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=members_create_missing_tables'), 'members_create_tables')); ?>" class="button button-primary">
+                        Attempt to Create Tables Now
+                    </a>
+                </p>
+            </div>
+            <?php
+        });
+        
+        // Register the admin action to create tables
+        add_action('admin_post_members_create_missing_tables', function() {
+            // Verify nonce
+            if (!isset($_GET['_wpnonce']) || !wp_verify_nonce($_GET['_wpnonce'], 'members_create_tables')) {
+                wp_die('Security check failed.');
+            }
+            
+            // Create tables
+            $result = verify_database_tables();
+            if (!$result) {
+                // Try direct creation
+                create_tables_directly();
+            }
+            
+            // Clear the transient to check tables again
+            delete_transient('members_subscriptions_tables_checked');
+            
+            // Redirect back
+            wp_redirect(admin_url('index.php?members_tables_created=1'));
+            exit;
+        });
+        
+        // Add notice for successful table creation
+        add_action('admin_notices', function() {
+            if (isset($_GET['members_tables_created'])) {
+                ?>
+                <div class="notice notice-success is-dismissible">
+                    <p><strong>Members Subscriptions:</strong> Attempted to create missing database tables. Please check if they're now available.</p>
+                </div>
+                <?php
+            }
+        });
+    }
+}
+
+// Hook the admin notice function
+add_action('admin_init', __NAMESPACE__ . '\maybe_add_database_admin_notice');
 
 /**
  * Run a database operation with auto-verification of tables
@@ -821,6 +1138,13 @@ function db_operation_with_verification($callback, $args = [], $default = false)
     
     // Check if callback is valid
     if (!is_callable($callback)) {
+        error_log('Members Subscriptions: Invalid callback in db_operation_with_verification');
+        return $default;
+    }
+    
+    // First, verify that tables exist before attempting the operation
+    if (!verify_database_tables()) {
+        error_log('Members Subscriptions: Tables do not exist or could not be created in db_operation_with_verification');
         return $default;
     }
     
@@ -829,26 +1153,52 @@ function db_operation_with_verification($callback, $args = [], $default = false)
         $result = call_user_func_array($callback, $args);
         
         // If error occurs due to missing table
-        if (!empty($wpdb->last_error) && strpos($wpdb->last_error, "doesn't exist") !== false) {
-            // Verify and create tables
-            $tables_created = verify_database_tables();
-            
-            if ($tables_created) {
-                // Try again
-                $result = call_user_func_array($callback, $args);
+        if (!empty($wpdb->last_error)) {
+            if (strpos($wpdb->last_error, "doesn't exist") !== false || 
+                strpos($wpdb->last_error, "doesn't exist") !== false ||
+                strpos($wpdb->last_error, "no such table") !== false) {
+                    
+                error_log('Members Subscriptions: Table missing error detected: ' . $wpdb->last_error);
+                
+                // Verify and create tables again
+                $tables_created = verify_database_tables();
+                
+                if ($tables_created) {
+                    error_log('Members Subscriptions: Tables created, retrying operation');
+                    // Try again
+                    $result = call_user_func_array($callback, $args);
+                    
+                    // If still failing, create tables using the direct method
+                    if (!empty($wpdb->last_error)) {
+                        error_log('Members Subscriptions: Operation still failing after table creation: ' . $wpdb->last_error);
+                        create_tables_directly();
+                        $result = call_user_func_array($callback, $args);
+                    }
+                } else {
+                    error_log('Members Subscriptions: Failed to create tables, using direct method');
+                    // Failed to create tables, try direct method
+                    create_tables_directly();
+                    $result = call_user_func_array($callback, $args);
+                }
             } else {
-                // Failed to create tables
-                return $default;
+                error_log('Members Subscriptions: Database error in operation: ' . $wpdb->last_error);
             }
         }
         
         return $result;
     } catch (\Exception $e) {
-        // Log error if logging function exists
-        if (function_exists('\\Members\\Subscriptions\\log_message')) {
-            log_message('Database operation failed: ' . $e->getMessage(), 'error');
-        }
+        // Log the error
+        error_log('Members Subscriptions: Exception in db_operation_with_verification: ' . $e->getMessage());
         
-        return $default;
+        // Try to create tables before giving up
+        create_tables_directly();
+        
+        try {
+            // One more attempt
+            return call_user_func_array($callback, $args);
+        } catch (\Exception $e2) {
+            error_log('Members Subscriptions: Final attempt failed: ' . $e2->getMessage());
+            return $default;
+        }
     }
 }
