@@ -163,6 +163,7 @@ class Products_List_Table extends \WP_List_Table {
     public function column_title($item) {
         $edit_link = get_edit_post_link($item->ID);
         $view_link = get_permalink($item->ID);
+        $subscriptions_link = admin_url('admin.php?page=members-subscriptions&product_id=' . $item->ID);
         
         $output = sprintf(
             '<strong><a class="row-title" href="%s">%s</a></strong>',
@@ -181,6 +182,11 @@ class Products_List_Table extends \WP_List_Table {
                 '<a href="%s">%s</a>',
                 esc_url($view_link),
                 __('View', 'members')
+            ),
+            'subscribers' => sprintf(
+                '<a href="%s">%s</a>',
+                esc_url($subscriptions_link),
+                __('Subscribers', 'members')
             ),
         ];
         
@@ -513,9 +519,9 @@ class Products_List_Table extends \WP_List_Table {
         
         $actions = '<div class="product-actions">';
         
-        // Edit action
+        // Edit action - this is primary now that we only have one menu
         $actions .= sprintf(
-            '<a href="%s" class="button button-small">%s</a>',
+            '<a href="%s" class="button button-small button-primary">%s</a>',
             esc_url($edit_url),
             __('Edit', 'members')
         );

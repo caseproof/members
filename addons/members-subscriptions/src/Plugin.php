@@ -407,7 +407,7 @@ class Plugin {
      * Register admin menu items
      */
     public function register_admin_menu() {
-        // Subscription Products page using custom list table
+        // Single Subscription Products page using custom list table
         add_submenu_page(
             'members',
             __('Subscription Products', 'members'),
@@ -415,16 +415,6 @@ class Plugin {
             'manage_subscription_products',
             'members-products',
             [$this, 'render_products_page']
-        );
-        
-        // Also keep the default WP editor product page as a separate menu item
-        add_submenu_page(
-            'members',
-            __('Add/Edit Products', 'members'),
-            __('Add/Edit Products', 'members'),
-            'manage_subscription_products',
-            'edit.php?post_type=members_product',
-            null
         );
         
         // Subscriptions page
