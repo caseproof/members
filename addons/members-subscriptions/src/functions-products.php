@@ -821,6 +821,26 @@ function handle_registration_and_subscription() {
     error_log('Members Subscriptions: Processing registration and subscription');
     error_log('POST data: ' . print_r($_POST, true));
     
+    // Verify database tables first to ensure they exist
+    try {
+        if (function_exists('\\Members\\Subscriptions\\verify_database_tables')) {
+            // Try to verify/create tables if they don't exist
+            $tables_verified = \Members\Subscriptions\verify_database_tables();
+            error_log('Members Subscriptions: Database tables verification result: ' . ($tables_verified ? 'Success' : 'Failed'));
+            
+            if (!$tables_verified) {
+                // If verification failed, try direct creation
+                error_log('Members Subscriptions: Attempting direct table creation');
+                if (function_exists('\\Members\\Subscriptions\\create_tables_directly')) {
+                    \Members\Subscriptions\create_tables_directly();
+                }
+            }
+        }
+    } catch (\Exception $e) {
+        error_log('Members Subscriptions: Error verifying tables: ' . $e->getMessage());
+        // Continue with fallback mechanisms even if table verification fails
+    }
+    
     // Check if form is submitted
     if (!isset($_POST['action']) || $_POST['action'] !== 'members_process_registration_and_subscription') {
         error_log('Members Subscriptions: Action not set or incorrect: ' . (isset($_POST['action']) ? $_POST['action'] : 'not set'));
@@ -835,6 +855,10 @@ function handle_registration_and_subscription() {
         error_log('Members Subscriptions: Nonce verification failed. Nonce: ' . (isset($_POST['members_subscription_nonce']) ? $_POST['members_subscription_nonce'] : 'not set'));
         wp_die(__('Security check failed. Please try again.', 'members'));
     }
+    
+    // Set up error handling - we'll collect errors but continue processing where possible
+    $process_errors = [];
+    $continue_processing = true;
     
     // Debug - nonce verification passed
     error_log('Members Subscriptions: Nonce verification passed');
@@ -898,7 +922,7 @@ function handle_registration_and_subscription() {
         wp_die($error_html . '<p><a href="javascript:history.back()" class="button">' . __('Go Back', 'members') . '</a></p>');
     }
     
-    // Create the user
+    // Create the user with additional error tracking
     $user_data = [
         'user_login' => sanitize_user($_POST['username']),
         'user_pass' => $_POST['password'],
@@ -911,27 +935,71 @@ function handle_registration_and_subscription() {
     // Debug - User creation attempt
     error_log('Members Subscriptions: Attempting to create user with data: ' . print_r($user_data, true));
     
-    $user_id = wp_insert_user($user_data);
-    
-    // Check if user was created successfully
-    if (is_wp_error($user_id)) {
-        error_log('Members Subscriptions: User creation failed: ' . $user_id->get_error_message());
-        wp_die($user_id->get_error_message() . '<p><a href="javascript:history.back()" class="button">' . __('Go Back', 'members') . '</a></p>');
-    }
-    
-    // Debug - User created successfully
-    error_log('Members Subscriptions: User created successfully with ID: ' . $user_id);
-    
-    // Store additional user meta
-    $meta_fields = [
-        'billing_first_name' => 'first_name',
-        'billing_last_name' => 'last_name',
-        'billing_email' => 'email',
-    ];
-    
-    foreach ($meta_fields as $meta_key => $post_key) {
-        if (!empty($_POST[$post_key])) {
-            update_user_meta($user_id, $meta_key, sanitize_text_field($_POST[$post_key]));
+    // Begin try/catch block to handle any issues with user creation
+    try {
+        $user_id = wp_insert_user($user_data);
+        
+        // Check if user was created successfully
+        if (is_wp_error($user_id)) {
+            $error_message = $user_id->get_error_message();
+            error_log('Members Subscriptions: User creation failed: ' . $error_message);
+            
+            // Add to process errors and abort
+            $process_errors[] = 'User creation failed: ' . $error_message;
+            $continue_processing = false;
+            throw new \Exception('User creation failed: ' . $error_message);
+        }
+        
+        // Debug - User created successfully
+        error_log('Members Subscriptions: User created successfully with ID: ' . $user_id);
+        
+        // Double-check if user actually exists
+        $user_check = get_user_by('ID', $user_id);
+        if (!$user_check) {
+            error_log('Members Subscriptions: User verification failed - user not found after creation');
+            $process_errors[] = 'User verification failed - user not found after creation';
+            $continue_processing = false;
+            throw new \Exception('User verification failed');
+        }
+        
+        // Store additional user meta with verification
+        $meta_fields = [
+            'billing_first_name' => 'first_name',
+            'billing_last_name' => 'last_name',
+            'billing_email' => 'email',
+            '_members_registration_date' => current_time('mysql'), // Add creation timestamp
+            '_members_registration_source' => 'subscription_form', // Track registration source
+        ];
+        
+        foreach ($meta_fields as $meta_key => $post_key) {
+            $meta_value = null;
+            
+            if (is_string($post_key) && !empty($_POST[$post_key])) {
+                $meta_value = sanitize_text_field($_POST[$post_key]);
+            } else if (!is_string($post_key)) {
+                $meta_value = $post_key;
+            }
+            
+            if ($meta_value !== null) {
+                $meta_result = update_user_meta($user_id, $meta_key, $meta_value);
+                if ($meta_result === false) {
+                    error_log('Members Subscriptions: Failed to update user meta: ' . $meta_key);
+                }
+            }
+        }
+    } catch (\Exception $e) {
+        // If we get here and continue_processing is false, we need to display the error and exit
+        if (!$continue_processing) {
+            $error_html = '<div class="members-form-errors" style="padding: 15px; margin-bottom: 20px; border: 1px solid #f5c6cb; border-radius: 4px; background-color: #f8d7da; color: #721c24;">';
+            $error_html .= '<strong>' . __('Registration errors:', 'members') . '</strong>';
+            $error_html .= '<ul style="margin-top: 10px; margin-bottom: 0;">';
+            foreach ($process_errors as $error) {
+                $error_html .= '<li>' . esc_html($error) . '</li>';
+            }
+            $error_html .= '</ul>';
+            $error_html .= '</div>';
+            
+            wp_die($error_html . '<p><a href="javascript:history.back()" class="button">' . __('Go Back', 'members') . '</a></p>');
         }
     }
     
@@ -1009,53 +1077,210 @@ function handle_registration_and_subscription() {
     
     error_log('Members Subscriptions: User meta stored successfully');
     
-    // 3. Bare-minimum essential direct database approach
+    // 3. Enhanced database approach with transactions and comprehensive table creation
     global $wpdb;
     
-    // This is the ABSOLUTE minimum method with direct SQL
-    error_log('Members Subscriptions: Attempting direct SQL database operations');
+    error_log('Members Subscriptions: Starting enhanced database operations');
     
-    // Create transaction table if not exists
+    // Create more comprehensive transaction table if not exists
     $wpdb->query("CREATE TABLE IF NOT EXISTS {$wpdb->prefix}members_transactions (
         id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
         user_id INT NOT NULL,
         product_id INT NOT NULL,
+        subscription_id INT NULL,
         amount DECIMAL(10,2) NOT NULL,
-        transaction_id VARCHAR(100) NOT NULL,
-        created_at DATETIME NOT NULL
-    );");
+        tax_amount DECIMAL(10,2) DEFAULT 0.00,
+        fee_amount DECIMAL(10,2) DEFAULT 0.00,
+        total DECIMAL(10,2) DEFAULT 0.00,
+        trans_num VARCHAR(100) NOT NULL,
+        trans_id VARCHAR(255) NULL,
+        txn_type VARCHAR(50) DEFAULT 'payment',
+        gateway VARCHAR(50) DEFAULT 'manual',
+        status VARCHAR(50) DEFAULT 'complete',
+        created_at DATETIME NOT NULL,
+        INDEX idx_user_id (user_id),
+        INDEX idx_product_id (product_id),
+        INDEX idx_subscription_id (subscription_id),
+        INDEX idx_status (status),
+        INDEX idx_created_at (created_at)
+    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;");
     
-    // Create subscription table if not exists
+    // Create more comprehensive subscription table if not exists
     $wpdb->query("CREATE TABLE IF NOT EXISTS {$wpdb->prefix}members_subscriptions (
         id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
         user_id INT NOT NULL,
         product_id INT NOT NULL,
-        subscription_id VARCHAR(100) NOT NULL,
-        status VARCHAR(20) NOT NULL,
-        created_at DATETIME NOT NULL
-    );");
+        gateway VARCHAR(50) DEFAULT 'manual',
+        subscr_id VARCHAR(100) NOT NULL,
+        status VARCHAR(20) NOT NULL DEFAULT 'active',
+        created_at DATETIME NOT NULL,
+        trial TINYINT(1) DEFAULT 0,
+        trial_amount DECIMAL(10,2) DEFAULT 0.00,
+        trial_days INT DEFAULT 0,
+        price DECIMAL(10,2) DEFAULT 0.00,
+        tax_amount DECIMAL(10,2) DEFAULT 0.00,
+        tax_rate DECIMAL(10,2) DEFAULT 0.00,
+        fee_amount DECIMAL(10,2) DEFAULT 0.00,
+        total DECIMAL(10,2) DEFAULT 0.00,
+        period INT DEFAULT 0,
+        period_type VARCHAR(20) DEFAULT 'month',
+        bill_times INT DEFAULT 0,
+        renewal_count INT DEFAULT 0,
+        date_trial_ends DATETIME NULL,
+        date_renewed DATETIME NULL,
+        date_cancelled DATETIME NULL,
+        expires_at DATETIME NULL,
+        INDEX idx_user_id (user_id),
+        INDEX idx_product_id (product_id),
+        INDEX idx_status (status),
+        INDEX idx_created_at (created_at),
+        INDEX idx_expires_at (expires_at)
+    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;");
     
-    // Insert transaction with minimal fields - using direct variables
-    $query1 = $wpdb->prepare(
-        "INSERT INTO {$wpdb->prefix}members_transactions 
-        (user_id, product_id, amount, transaction_id, created_at) 
-        VALUES (%d, %d, %s, %s, %s)",
-        $user_id, $product_id, $price, $transaction_id, $now
-    );
+    // Start transaction for database operations
+    $wpdb->query('START TRANSACTION');
     
-    $result1 = $wpdb->query($query1);
-    error_log('Members Subscriptions: Transaction insert result: ' . ($result1 ? 'Success' : 'Failed: ' . $wpdb->last_error));
+    $transaction_success = false;
+    $subscription_success = false;
     
-    // Insert subscription with minimal fields - using direct variables
-    $query2 = $wpdb->prepare(
-        "INSERT INTO {$wpdb->prefix}members_subscriptions 
-        (user_id, product_id, subscription_id, status, created_at) 
-        VALUES (%d, %d, %s, %s, %s)",
-        $user_id, $product_id, $subscription_id, 'active', $now
-    );
-    
-    $result2 = $wpdb->query($query2);
-    error_log('Members Subscriptions: Subscription insert result: ' . ($result2 ? 'Success' : 'Failed: ' . $wpdb->last_error));
+    try {
+        // Calculate totals
+        $tax_amount = 0; // In a real implementation, calculate tax
+        $fee_amount = 0; // In a real implementation, calculate fees
+        $total = floatval($price) + floatval($tax_amount) + floatval($fee_amount);
+        
+        // Calculate expiration date if needed
+        $expires_at = null;
+        if ($is_recurring && $period > 0) {
+            // For recurring subscriptions, calculate next billing date
+            $expires_at = date('Y-m-d H:i:s', strtotime("+{$period} {$period_type}", strtotime($now)));
+        } else {
+            // For one-time payments, check if there's a limited access period
+            $has_access_period = get_product_meta($product_id, '_has_access_period', false);
+            if ($has_access_period) {
+                $access_period = get_product_meta($product_id, '_access_period', 1);
+                $access_period_type = get_product_meta($product_id, '_access_period_type', 'month');
+                $expires_at = date('Y-m-d H:i:s', strtotime("+{$access_period} {$access_period_type}", strtotime($now)));
+            }
+        }
+        
+        // Insert transaction with comprehensive fields
+        $transaction_data = [
+            'user_id' => $user_id,
+            'product_id' => $product_id,
+            'amount' => $price,
+            'tax_amount' => $tax_amount,
+            'fee_amount' => $fee_amount,
+            'total' => $total,
+            'trans_num' => $transaction_id,
+            'txn_type' => 'payment',
+            'gateway' => 'manual',
+            'status' => 'complete',
+            'created_at' => $now
+        ];
+        
+        $transaction_format = [
+            '%d', // user_id
+            '%d', // product_id
+            '%f', // amount
+            '%f', // tax_amount
+            '%f', // fee_amount
+            '%f', // total
+            '%s', // trans_num
+            '%s', // txn_type
+            '%s', // gateway
+            '%s', // status
+            '%s'  // created_at
+        ];
+        
+        $transaction_result = $wpdb->insert(
+            $wpdb->prefix . 'members_transactions',
+            $transaction_data,
+            $transaction_format
+        );
+        
+        if ($transaction_result === false) {
+            throw new \Exception('Transaction insert failed: ' . $wpdb->last_error);
+        }
+        
+        $transaction_id_db = $wpdb->insert_id;
+        error_log('Members Subscriptions: Transaction created with ID: ' . $transaction_id_db);
+        $transaction_success = true;
+        
+        // Insert subscription with comprehensive fields
+        $subscription_data = [
+            'user_id' => $user_id,
+            'product_id' => $product_id,
+            'gateway' => 'manual',
+            'subscr_id' => $subscription_id,
+            'status' => 'active',
+            'created_at' => $now,
+            'price' => $price,
+            'tax_amount' => $tax_amount,
+            'total' => $total,
+            'period' => $is_recurring ? $period : 0,
+            'period_type' => $period_type
+        ];
+        
+        // Add expiration date if set
+        if ($expires_at) {
+            $subscription_data['expires_at'] = $expires_at;
+        }
+        
+        $subscription_format = [
+            '%d', // user_id
+            '%d', // product_id
+            '%s', // gateway
+            '%s', // subscr_id
+            '%s', // status
+            '%s', // created_at
+            '%f', // price
+            '%f', // tax_amount
+            '%f', // total
+            '%d', // period
+            '%s'  // period_type
+        ];
+        
+        if ($expires_at) {
+            $subscription_format[] = '%s'; // expires_at
+        }
+        
+        $subscription_result = $wpdb->insert(
+            $wpdb->prefix . 'members_subscriptions',
+            $subscription_data,
+            $subscription_format
+        );
+        
+        if ($subscription_result === false) {
+            throw new \Exception('Subscription insert failed: ' . $wpdb->last_error);
+        }
+        
+        $subscription_id_db = $wpdb->insert_id;
+        error_log('Members Subscriptions: Subscription created with ID: ' . $subscription_id_db);
+        $subscription_success = true;
+        
+        // Update transaction with subscription ID
+        if ($transaction_success && $subscription_success) {
+            $wpdb->update(
+                $wpdb->prefix . 'members_transactions',
+                ['subscription_id' => $subscription_id_db],
+                ['id' => $transaction_id_db],
+                ['%d'],
+                ['%d']
+            );
+        }
+        
+        // If we got here, commit the transaction
+        $wpdb->query('COMMIT');
+        error_log('Members Subscriptions: Database transaction committed successfully');
+        
+    } catch (\Exception $e) {
+        // An error occurred, rollback the transaction
+        $wpdb->query('ROLLBACK');
+        error_log('Members Subscriptions: Database error: ' . $e->getMessage());
+        
+        // We'll continue with user meta and options as fallbacks
+    }
     
     // 4. Also add global site-wide options as a final fallback mechanism
     $stored_users = get_option('members_subscription_users', []);
@@ -1072,6 +1297,25 @@ function handle_registration_and_subscription() {
     
     update_option('members_subscription_users', $stored_users);
     error_log('Members Subscriptions: Updated global option with subscription data');
+    
+    // Record final status in diagnostics log
+    $subscription_status = [
+        'user_id' => $user_id,
+        'product_id' => $product_id,
+        'transaction_success' => isset($transaction_success) ? $transaction_success : false,
+        'subscription_success' => isset($subscription_success) ? $subscription_success : false,
+        'user_meta_stored' => true,
+        'global_option_stored' => true,
+        'roles_assigned' => !empty($membership_roles) && is_array($membership_roles),
+        'timestamp' => current_time('mysql'),
+    ];
+    
+    // Store diagnostic data for admins to review if needed
+    update_option('members_last_subscription_status', $subscription_status);
+    error_log('Members Subscriptions: Final registration status: ' . print_r($subscription_status, true));
+    
+    // Update user meta with subscription status information
+    update_user_meta($user_id, '_members_subscription_status', $subscription_status);
     
     // Redirect to thank you page or content
     if (!empty($redirect_url)) {
