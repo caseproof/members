@@ -29,6 +29,7 @@ $total_count = $wpdb->get_var($wpdb->prepare(
 $active_subs_count = $wpdb->get_var(
     "SELECT COUNT(*) FROM $subscriptions_table WHERE status = 'active'"
 );
+$active_subs_count = $active_subs_count ? $active_subs_count : 0;
 
 // Count total revenue
 $total_revenue = $wpdb->get_var(
@@ -111,17 +112,78 @@ if (isset($_REQUEST['message'])) {
     
     <hr class="wp-header-end">
     
+    <style>
+    .members-dashboard {
+        margin-bottom: 20px;
+    }
+    .members-stats-wrapper {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+    .members-card {
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        padding: 15px;
+    }
+    .members-card-header h2 {
+        margin: 0 0 15px 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: #23282d;
+        border-bottom: none;
+        padding: 0;
+    }
+    .members-card-value {
+        font-size: 28px;
+        font-weight: 600;
+        margin-bottom: 5px;
+        color: #2271b1;
+    }
+    .members-card-description {
+        color: #646970;
+        font-size: 13px;
+        margin-bottom: 15px;
+    }
+    .members-card-footer a {
+        text-decoration: none;
+        font-size: 13px;
+    }
+    .members-product-name {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+    .members-product-name a {
+        text-decoration: none;
+        color: #2271b1;
+    }
+    .members-product-stats {
+        color: #646970;
+        font-size: 13px;
+        margin-bottom: 15px;
+    }
+    
+    @media screen and (max-width: 782px) {
+        .members-stats-wrapper {
+            grid-template-columns: 1fr;
+        }
+    }
+    </style>
+    
     <!-- Dashboard Cards -->
     <div class="members-dashboard">
-        <div class="members-stats-cards">
+        <!-- Top stats cards -->
+        <div class="members-stats-wrapper">
             <div class="members-card">
                 <div class="members-card-header">
                     <h2><?php _e('Total Products', 'members'); ?></h2>
                 </div>
-                <div class="members-card-body">
-                    <div class="members-card-value"><?php echo esc_html($total_count); ?></div>
-                    <div class="members-card-description"><?php _e('Published membership products', 'members'); ?></div>
-                </div>
+                <div class="members-card-value"><?php echo esc_html($total_count); ?></div>
+                <div class="members-card-description"><?php _e('Published membership products', 'members'); ?></div>
                 <div class="members-card-footer">
                     <a href="<?php echo esc_url(admin_url('edit.php?post_type=members_product')); ?>"><?php _e('Manage products', 'members'); ?></a>
                 </div>
@@ -131,10 +193,8 @@ if (isset($_REQUEST['message'])) {
                 <div class="members-card-header">
                     <h2><?php _e('Active Subscriptions', 'members'); ?></h2>
                 </div>
-                <div class="members-card-body">
-                    <div class="members-card-value"><?php echo esc_html($active_subs_count); ?></div>
-                    <div class="members-card-description"><?php _e('Currently active subscribers', 'members'); ?></div>
-                </div>
+                <div class="members-card-value"><?php echo esc_html($active_subs_count); ?></div>
+                <div class="members-card-description"><?php _e('Currently active subscribers', 'members'); ?></div>
                 <div class="members-card-footer">
                     <a href="<?php echo esc_url(admin_url('admin.php?page=members-subscriptions&status=active')); ?>"><?php _e('View subscriptions', 'members'); ?></a>
                 </div>
@@ -144,22 +204,20 @@ if (isset($_REQUEST['message'])) {
                 <div class="members-card-header">
                     <h2><?php _e('Total Revenue', 'members'); ?></h2>
                 </div>
-                <div class="members-card-body">
-                    <div class="members-card-value">$<?php echo esc_html(number_format_i18n($total_revenue, 2)); ?></div>
-                    <div class="members-card-description"><?php _e('Lifetime revenue from all products', 'members'); ?></div>
-                </div>
+                <div class="members-card-value">$<?php echo esc_html(number_format_i18n($total_revenue, 2)); ?></div>
+                <div class="members-card-description"><?php _e('Lifetime revenue from all products', 'members'); ?></div>
                 <div class="members-card-footer">
                     <a href="<?php echo esc_url(admin_url('admin.php?page=members-transactions')); ?>"><?php _e('View transactions', 'members'); ?></a>
                 </div>
             </div>
         </div>
         
-        <div class="members-stats-secondary">
+        <!-- Secondary stats cards -->
+        <div class="members-stats-wrapper">
             <div class="members-card">
                 <div class="members-card-header">
                     <h2><?php _e('Most Popular Product', 'members'); ?></h2>
                 </div>
-                <div class="members-card-body">
                 <?php if ($popular_product) : ?>
                     <div class="members-product-name">
                         <a href="<?php echo esc_url(get_edit_post_link($popular_product->ID)); ?>">
@@ -172,25 +230,22 @@ if (isset($_REQUEST['message'])) {
                             number_format_i18n($popular_product->subscription_count)
                         ); ?>
                     </div>
+                    <div class="members-card-footer">
+                        <a href="<?php echo esc_url(admin_url('admin.php?page=members-subscriptions&product_id=' . $popular_product->ID)); ?>"><?php _e('View subscribers', 'members'); ?></a>
+                    </div>
                 <?php else: ?>
                     <div class="members-card-value">—</div>
                     <div class="members-card-description"><?php _e('No active subscriptions yet', 'members'); ?></div>
+                    <div class="members-card-footer">
+                        <a href="<?php echo esc_url(admin_url('post-new.php?post_type=members_product')); ?>"><?php _e('Create a product', 'members'); ?></a>
+                    </div>
                 <?php endif; ?>
-                </div>
-                <div class="members-card-footer">
-                    <?php if ($popular_product): ?>
-                    <a href="<?php echo esc_url(admin_url('admin.php?page=members-subscriptions&product_id=' . $popular_product->ID)); ?>"><?php _e('View subscribers', 'members'); ?></a>
-                    <?php else: ?>
-                    <a href="<?php echo esc_url(admin_url('post-new.php?post_type=members_product')); ?>"><?php _e('Create a product', 'members'); ?></a>
-                    <?php endif; ?>
-                </div>
             </div>
             
             <div class="members-card">
                 <div class="members-card-header">
                     <h2><?php _e('Newest Product', 'members'); ?></h2>
                 </div>
-                <div class="members-card-body">
                 <?php if ($newest_product) : ?>
                     <div class="members-product-name">
                         <a href="<?php echo esc_url(get_edit_post_link($newest_product->ID)); ?>">
@@ -203,25 +258,22 @@ if (isset($_REQUEST['message'])) {
                             date_i18n(get_option('date_format'), strtotime($newest_product->post_date))
                         )); ?>
                     </div>
+                    <div class="members-card-footer">
+                        <a href="<?php echo esc_url(get_permalink($newest_product->ID)); ?>"><?php _e('View product', 'members'); ?></a>
+                    </div>
                 <?php else: ?>
                     <div class="members-card-value">—</div>
                     <div class="members-card-description"><?php _e('No products created yet', 'members'); ?></div>
+                    <div class="members-card-footer">
+                        <a href="<?php echo esc_url(admin_url('post-new.php?post_type=members_product')); ?>"><?php _e('Create a product', 'members'); ?></a>
+                    </div>
                 <?php endif; ?>
-                </div>
-                <div class="members-card-footer">
-                    <?php if ($newest_product): ?>
-                    <a href="<?php echo esc_url(get_permalink($newest_product->ID)); ?>"><?php _e('View product', 'members'); ?></a>
-                    <?php else: ?>
-                    <a href="<?php echo esc_url(admin_url('post-new.php?post_type=members_product')); ?>"><?php _e('Create a product', 'members'); ?></a>
-                    <?php endif; ?>
-                </div>
             </div>
             
             <div class="members-card">
                 <div class="members-card-header">
                     <h2><?php _e('Highest Revenue Product', 'members'); ?></h2>
                 </div>
-                <div class="members-card-body">
                 <?php if ($highest_revenue_product) : ?>
                     <div class="members-product-name">
                         <a href="<?php echo esc_url(get_edit_post_link($highest_revenue_product->ID)); ?>">
@@ -234,18 +286,16 @@ if (isset($_REQUEST['message'])) {
                             number_format_i18n($highest_revenue_product->total_revenue, 2)
                         ); ?>
                     </div>
+                    <div class="members-card-footer">
+                        <a href="<?php echo esc_url(admin_url('admin.php?page=members-transactions&product_id=' . $highest_revenue_product->ID)); ?>"><?php _e('View transactions', 'members'); ?></a>
+                    </div>
                 <?php else: ?>
                     <div class="members-card-value">$0.00</div>
                     <div class="members-card-description"><?php _e('No completed transactions yet', 'members'); ?></div>
+                    <div class="members-card-footer">
+                        <a href="<?php echo esc_url(admin_url('post-new.php?post_type=members_product')); ?>"><?php _e('Create a product', 'members'); ?></a>
+                    </div>
                 <?php endif; ?>
-                </div>
-                <div class="members-card-footer">
-                    <?php if ($highest_revenue_product): ?>
-                    <a href="<?php echo esc_url(admin_url('admin.php?page=members-transactions&product_id=' . $highest_revenue_product->ID)); ?>"><?php _e('View transactions', 'members'); ?></a>
-                    <?php else: ?>
-                    <a href="<?php echo esc_url(admin_url('post-new.php?post_type=members_product')); ?>"><?php _e('Create a product', 'members'); ?></a>
-                    <?php endif; ?>
-                </div>
             </div>
         </div>
     </div>
