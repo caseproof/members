@@ -39,14 +39,29 @@ The add-on creates and manages the following custom database tables:
 1. `wp_members_transactions`
    - Records all payment transactions
    - Stores user ID, product ID, amount, status, gateway info, and timestamps
+   - Provides transaction history and receipt generation
 
 2. `wp_members_subscriptions`
    - Tracks active and past subscriptions
    - Stores subscription details, period information, and status
+   - Manages recurring billing cycles and expiration dates
 
 3. `wp_members_products_meta`
    - Stores product configuration details 
    - Supplements the standard WordPress post meta
+   - Optimizes performance for product data retrieval
+
+4. `wp_members_transactions_meta`
+   - Stores additional transaction data
+   - Supports custom fields for transaction records
+   - Enables integration with external systems
+
+### Database Reliability Features
+
+- **Auto-verification**: Automatically checks for required database tables before operations
+- **Table Creation**: Dynamically creates missing tables to prevent data loss
+- **Fallback Storage**: Uses WordPress user meta as backup storage if tables are unavailable
+- **Admin Notifications**: Alerts administrators about database issues with one-click repair
 
 ### Form Processing System
 
@@ -105,9 +120,21 @@ The add-on provides a combined registration and checkout process:
    - WordPress roles are assigned
    - Users are redirected to content or thank you page
 
+## System Resilience
+
+The Members Subscriptions add-on includes several features to ensure reliable operation:
+
+- **Fault-tolerant Database Operations**: Gracefully handles missing or corrupted database tables
+- **Transaction Integrity**: Ensures data consistency with transaction logging and verification
+- **User Data Redundancy**: Stores critical subscription data in both custom tables and user meta
+- **Automatic Recovery**: Self-healing capabilities for common database issues
+- **Diagnostic Tools**: Built-in tools for administrators to identify and resolve issues
+
 ## Future Development
 
 - Additional payment gateway integrations (Stripe, PayPal)
 - Subscription management capabilities (pause, resume, upgrade)
 - More advanced content restriction options
 - Enhanced reporting and analytics
+- Improved migration tools for importing from other membership plugins
+- Advanced caching for high-performance sites
