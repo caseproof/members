@@ -37,16 +37,18 @@ class Transactions_List_Table extends \WP_List_Table {
      */
     public function get_columns() {
         return [
-            'cb'           => '<input type="checkbox" />',
-            'id'           => __('ID', 'members'),
-            'user'         => __('User', 'members'),
-            'product'      => __('Product', 'members'),
-            'amount'       => __('Amount', 'members'),
-            'status'       => __('Status', 'members'),
-            'type'         => __('Type', 'members'),
-            'gateway'      => __('Gateway', 'members'),
-            'date'         => __('Date', 'members'),
-            'actions'      => __('Actions', 'members'),
+            'cb'               => '<input type="checkbox" />',
+            'id'               => __('ID', 'members'),
+            'user'             => __('User', 'members'),
+            'product'          => __('Product', 'members'),
+            'subscription_id'  => __('Subscription', 'members'),
+            'amount'           => __('Amount', 'members'),
+            'status'           => __('Status', 'members'),
+            'type'             => __('Type', 'members'),
+            'gateway'          => __('Gateway', 'members'),
+            'notes'            => __('Notes', 'members'),
+            'date'             => __('Date', 'members'),
+            'actions'          => __('Actions', 'members'),
         ];
     }
     
@@ -57,14 +59,15 @@ class Transactions_List_Table extends \WP_List_Table {
      */
     public function get_sortable_columns() {
         return [
-            'id'      => ['id', false],
-            'user'    => ['user_id', false],
-            'product' => ['product_id', false],
-            'amount'  => ['amount', false],
-            'status'  => ['status', false],
-            'type'    => ['txn_type', false],
-            'gateway' => ['gateway', false],
-            'date'    => ['created_at', true],
+            'id'              => ['id', false],
+            'user'            => ['user_id', false],
+            'product'         => ['product_id', false],
+            'subscription_id' => ['subscription_id', false],
+            'amount'          => ['amount', false],
+            'status'          => ['status', false],
+            'type'            => ['txn_type', false],
+            'gateway'         => ['gateway', false],
+            'date'            => ['created_at', true],
         ];
     }
     
@@ -102,8 +105,53 @@ class Transactions_List_Table extends \WP_List_Table {
                 }
                 return __('Unknown Product', 'members');
             
+            case 'subscription_id':
+                // If no subscription ID, show 'N/A'
+                if (empty($item->subscription_id)) {
+                    return '<span class="na">—</span>';
+                }
+                
+                // Get subscription data if available
+                if (function_exists('\\Members\\Subscriptions\\get_subscription')) {
+                    $subscription = Subscriptions\get_subscription($item->subscription_id);
+                    
+                    if ($subscription) {
+                        return sprintf(
+                            '<a href="%s">%s</a>',
+                            esc_url(admin_url('admin.php?page=members-subscriptions&action=view&subscription=' . $subscription->id)),
+                            '#' . $subscription->id
+                        );
+                    }
+                }
+                
+                // Fallback if subscription not found or function not available
+                return '#' . $item->subscription_id;
+            
             case 'amount':
-                return '$' . number_format((float)$item->amount, 2);
+                // Get currency symbol and formatting
+                $currency_symbol = '$'; // Default
+                $currency_position = 'before'; // Default
+                
+                // Check if WordPress Currency settings are available
+                if (function_exists('get_woocommerce_currency_symbol')) {
+                    $currency_symbol = get_woocommerce_currency_symbol();
+                }
+                
+                $amount = floatval($item->amount);
+                
+                // Format the amount based on currency position
+                if ($currency_position === 'before') {
+                    $formatted = $currency_symbol . number_format_i18n($amount, 2);
+                } else {
+                    $formatted = number_format_i18n($amount, 2) . $currency_symbol;
+                }
+                
+                // Add special styling based on transaction type
+                if (isset($item->txn_type) && $item->txn_type === 'refund') {
+                    return '<span class="amount-refund">-' . $formatted . '</span>';
+                }
+                
+                return $formatted;
             
             case 'status':
                 $status_labels = [
@@ -141,9 +189,40 @@ class Transactions_List_Table extends \WP_List_Table {
                 $gateway_labels = [
                     'manual' => __('Manual', 'members'),
                     'stripe' => __('Stripe', 'members'),
+                    'paypal' => __('PayPal', 'members'),
                 ];
                 
                 return isset($gateway_labels[$item->gateway]) ? $gateway_labels[$item->gateway] : ucfirst($item->gateway);
+            
+            case 'notes':
+                // Get transaction notes if available
+                if (empty($item->notes)) {
+                    // Check transaction meta table for notes
+                    global $wpdb;
+                    $meta_table = $wpdb->prefix . 'members_transactions_meta';
+                    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$meta_table'");
+                    
+                    if ($table_exists) {
+                        $notes = $wpdb->get_var($wpdb->prepare(
+                            "SELECT meta_value FROM $meta_table WHERE transaction_id = %d AND meta_key = 'notes'",
+                            $item->id
+                        ));
+                        
+                        if (!empty($notes)) {
+                            return sprintf(
+                                '<div class="transaction-notes-summary">%s</div>',
+                                wp_trim_words($notes, 10, '...')
+                            );
+                        }
+                    }
+                    
+                    return '<span class="na">—</span>';
+                }
+                
+                return sprintf(
+                    '<div class="transaction-notes-summary">%s</div>',
+                    wp_trim_words($item->notes, 10, '...')
+                );
             
             case 'date':
                 $date = strtotime($item->created_at);

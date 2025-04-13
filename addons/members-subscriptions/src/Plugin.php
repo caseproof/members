@@ -407,11 +407,21 @@ class Plugin {
      * Register admin menu items
      */
     public function register_admin_menu() {
-        // Subscription Products page
+        // Subscription Products page using custom list table
         add_submenu_page(
             'members',
             __('Subscription Products', 'members'),
             __('Subscription Products', 'members'),
+            'manage_subscription_products',
+            'members-products',
+            [$this, 'render_products_page']
+        );
+        
+        // Also keep the default WP editor product page as a separate menu item
+        add_submenu_page(
+            'members',
+            __('Add/Edit Products', 'members'),
+            __('Add/Edit Products', 'members'),
             'manage_subscription_products',
             'edit.php?post_type=members_product',
             null
@@ -446,6 +456,22 @@ class Plugin {
             'members-gateways',
             [$this, 'render_gateways_page']
         );
+    }
+    
+    /**
+     * Render the Products admin page
+     */
+    public function render_products_page() {
+        // Check capabilities before rendering
+        if (!current_user_can('manage_subscription_products')) {
+            wp_die(__('You do not have sufficient permissions to access this page.', 'members'));
+        }
+        
+        // Include the products list table class
+        require_once __DIR__ . '/admin/class-products-list-table.php';
+        
+        // Output the products page (the table is instantiated in the view)
+        include __DIR__ . '/admin/views/products-page.php';
     }
 
     /**
@@ -841,12 +867,20 @@ class Plugin {
         );
         
         // Enqueue specific styles for product administration
-        if ($is_product_page) {
+        if ($is_product_page || strpos($hook, 'members-products') !== false) {
             wp_enqueue_style(
                 'members-products-admin',
                 plugin_dir_url(dirname(__DIR__)) . 'css/admin/products-style.css',
                 [],
                 self::VERSION
+            );
+            
+            wp_enqueue_script(
+                'members-products-admin',
+                plugin_dir_url(dirname(__DIR__)) . 'js/admin-products.js',
+                ['jquery'],
+                self::VERSION,
+                true
             );
         }
         

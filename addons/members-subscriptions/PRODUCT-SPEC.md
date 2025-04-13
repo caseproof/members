@@ -154,11 +154,53 @@ The Members Subscriptions add-on includes several features to ensure reliable op
   - Status tracking for troubleshooting subscription problems
   - Data recovery from fallback storage mechanisms
 
+## Admin Interface
+
+### List Tables
+
+1. **Products List Table**
+   - Custom WP_List_Table implementation with comprehensive product information
+   - Dashboard with statistics showing total products, active subscribers, and revenue
+   - Cards for popular products, newest products, and highest revenue products
+   - Columns for pricing, subscription type, roles, active members, and total revenue
+   - Sortable columns and built-in filtering
+   - Export functionality
+   - Mobile-responsive design
+
+2. **Subscriptions List Table**
+   - Enhanced with subscription health indicators for at-risk memberships
+   - Next renewal date column for improved subscription management
+   - Countdown indicators for approaching renewals and expirations
+   - Currency formatting with proper symbol display
+   - Date formatting with timezone support
+   - Quick-action buttons for managing subscriptions
+   - Filtering by status, user, product, and gateway
+
+3. **Transactions List Table**
+   - Added subscription reference column linking transactions to subscriptions
+   - Notes column for transaction comments and payment details
+   - Improved currency formatting with proper symbol handling
+   - Transaction type indicators (one-time, renewal, refund)
+   - Status indicators with color-coding
+   - Bulk actions for managing transactions
+   - Export functionality
+
+### Common Features
+
+- Consistent UI design across all list tables
+- Standardized currency formatting with proper symbol display
+- Export to CSV functionality for data analysis
+- Advanced filtering capabilities
+- Bulk management actions
+- Responsive design for all screen sizes
+- Interactive elements with JavaScript enhancements
+
 ## Future Development
 
 - Additional payment gateway integrations (Stripe, PayPal)
 - Subscription management capabilities (pause, resume, upgrade)
 - More advanced content restriction options
-- Enhanced reporting and analytics
+- Enhanced reporting and analytics dashboard
 - Improved migration tools for importing from other membership plugins
 - Advanced caching for high-performance sites
+- Chart visualizations for subscription metrics

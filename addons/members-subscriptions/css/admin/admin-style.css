@@ -2,6 +2,224 @@
  * Members Subscriptions - Admin Styles
  */
 
+/* Dashboard Cards */
+.members-dashboard {
+    margin-bottom: 25px;
+}
+
+.members-stats-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.members-stats-secondary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.members-card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.members-stats-cards .members-card {
+    flex: 1;
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+}
+
+.members-stats-secondary .members-card {
+    flex: 1;
+    min-width: 220px;
+}
+
+.members-card-header {
+    padding: 15px 20px 0;
+}
+
+.members-card-header h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #23282d;
+    border-bottom: none;
+}
+
+.members-card-body {
+    padding: 15px 20px;
+    flex-grow: 1;
+}
+
+.members-card-value {
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #2271b1;
+}
+
+.members-card-description {
+    color: #646970;
+    font-size: 13px;
+}
+
+.members-card-footer {
+    padding: 10px 20px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.members-card-footer a {
+    font-size: 13px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+}
+
+.members-product-name {
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 5px;
+}
+
+.members-product-name a {
+    text-decoration: none;
+    color: #2271b1;
+}
+
+.members-product-stats {
+    color: #646970;
+    font-size: 13px;
+}
+
+/* Health indicators */
+.subscription-health {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.subscription-health-good {
+    background-color: #e7f7ea;
+    color: #1d9d4f;
+}
+
+.subscription-health-warning {
+    background-color: #fcf8e3;
+    color: #8a6d3b;
+}
+
+.subscription-health-atrisk {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.subscription-health-critical {
+    background-color: #f5c6cb;
+    color: #721c24;
+}
+
+.subscription-health-desc {
+    display: block;
+    font-size: 12px;
+    color: #646970;
+    margin-top: 4px;
+}
+
+/* Transaction list table styles */
+.column-subscription_id a {
+    text-decoration: none;
+}
+
+.transaction-notes {
+    max-width: 250px;
+    color: #646970;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.transaction-notes.has-notes {
+    font-style: italic;
+}
+
+/* Product list table styles */
+.column-price,
+.column-subscription {
+    width: 15%;
+}
+
+.column-roles,
+.column-active_members {
+    width: 12%;
+}
+
+.column-total_revenue {
+    width: 10%;
+}
+
+.product-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.product-actions .button-small {
+    padding: 0 8px 1px;
+    font-size: 12px;
+}
+
+/* Recurring and trial indicators */
+.trial-price,
+.recurring,
+.one-time,
+.limited-access {
+    font-size: 12px;
+    color: #646970;
+}
+
+/* Date and time formatting */
+.subscription-date {
+    display: flex;
+    flex-direction: column;
+}
+
+.subscription-date-primary {
+    margin-bottom: 4px;
+}
+
+.subscription-date-secondary {
+    color: #646970;
+    font-size: 12px;
+}
+
+.subscription-countdown {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    margin-left: 5px;
+}
+
+.subscription-countdown.days-7,
+.subscription-countdown.days-14,
+.subscription-countdown.days-30 {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.subscription-countdown.days-60,
+.subscription-countdown.days-90 {
+    background-color: #fcf8e3;
+    color: #8a6d3b;
+}
+
 /* General Admin Styles */
 .members-subscriptions-wrap {
     margin: 10px 20px 0 2px;

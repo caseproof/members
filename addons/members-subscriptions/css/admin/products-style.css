@@ -2,6 +2,121 @@
  * Product admin styling
  */
 
+/* Products List Table */
+.members-products-wrap {
+    margin: 0;
+}
+
+/* Column specific widths */
+.column-title {
+    width: 25%;
+}
+
+.column-price {
+    width: 15%;
+}
+
+.column-subscription {
+    width: 12%;
+}
+
+.column-roles {
+    width: 15%;
+}
+
+.column-active_members {
+    width: 10%;
+}
+
+.column-total_revenue {
+    width: 10%;
+}
+
+.column-date {
+    width: 10%;
+}
+
+.column-actions {
+    width: 10%;
+}
+
+/* Pricing display */
+.product-price {
+    font-weight: 600;
+}
+
+.product-price .trial-price {
+    display: block;
+    font-weight: normal;
+    font-size: 12px;
+    color: #646970;
+    margin-top: 4px;
+}
+
+/* Subscription type display */
+.product-subscription-type {
+    display: flex;
+    flex-direction: column;
+}
+
+.product-subscription-type-label {
+    font-weight: 600;
+}
+
+.product-subscription-type-details {
+    color: #646970;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+/* Roles list */
+.product-roles-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.product-roles-list li {
+    margin-bottom: 4px;
+    font-size: 13px;
+}
+
+.product-roles-list li:last-child {
+    margin-bottom: 0;
+}
+
+/* Members count */
+.product-members-count {
+    display: flex;
+    flex-direction: column;
+}
+
+.product-members-count-value {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.product-members-count-label {
+    color: #646970;
+    font-size: 12px;
+}
+
+/* Revenue display */
+.product-revenue {
+    display: flex;
+    flex-direction: column;
+}
+
+.product-revenue-value {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.product-revenue-label {
+    color: #646970;
+    font-size: 12px;
+}
+
 /* Meta box styling */
 .members-product-section {
     margin-bottom: 15px;
