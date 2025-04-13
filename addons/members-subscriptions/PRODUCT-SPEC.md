@@ -124,11 +124,35 @@ The add-on provides a combined registration and checkout process:
 
 The Members Subscriptions add-on includes several features to ensure reliable operation:
 
-- **Fault-tolerant Database Operations**: Gracefully handles missing or corrupted database tables
-- **Transaction Integrity**: Ensures data consistency with transaction logging and verification
-- **User Data Redundancy**: Stores critical subscription data in both custom tables and user meta
-- **Automatic Recovery**: Self-healing capabilities for common database issues
-- **Diagnostic Tools**: Built-in tools for administrators to identify and resolve issues
+- **Multi-layered Database Operations**: 
+  - Gracefully handles missing or corrupted database tables
+  - Uses three independent methods for database operations with automatic fallback
+  - Includes duplicate prevention with explicit existence checks
+  - Sequential execution of creation methods with intelligent success tracking
+  
+- **Triple-redundant Storage System**: 
+  - Primary storage: Custom database tables (optimized for performance)
+  - Secondary storage: WordPress user meta (for user-specific backup)
+  - Tertiary storage: WordPress options table (for global system backup)
+  - Additional mapping table for cross-referencing across storage methods
+  
+- **Comprehensive Error Detection & Handling**:
+  - Detailed error logging with diagnostic information
+  - Status tracking for all insertion attempts and methods
+  - Clean retry mechanisms that prevent duplicate records
+  - Success reporting to identify which methods worked
+  
+- **Self-healing Capabilities**:
+  - Automatic table creation with simple schema for maximum compatibility
+  - Minimal field requirements to maximize success probability
+  - Direct SQL operations that bypass potential middleware issues
+  - Last resort mechanisms for challenging environments
+  
+- **Diagnostic & Administrative Tools**:
+  - Built-in debug-subscriptions.php tool with comprehensive reporting
+  - One-click repair options for database issues
+  - Status tracking for troubleshooting subscription problems
+  - Data recovery from fallback storage mechanisms
 
 ## Future Development
 
