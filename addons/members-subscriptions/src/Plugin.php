@@ -486,7 +486,7 @@ class Plugin {
         require_once __DIR__ . '/admin/class-subscriptions-list-table.php';
         
         // Create an instance of the subscriptions list table
-        $subscriptions_table = new admin\Subscriptions_List_Table();
+        $subscriptions_table = new \Members\Subscriptions\admin\Subscriptions_List_Table();
         
         // Handle reactivate action
         if (isset($_REQUEST['action']) && $_REQUEST['action'] === 'reactivate' && 
@@ -802,7 +802,7 @@ class Plugin {
         require_once __DIR__ . '/admin/class-transactions-list-table.php';
         
         // Create an instance of the transactions list table
-        $transactions_table = new admin\Transactions_List_Table();
+        $transactions_table = new \Members\Subscriptions\admin\Transactions_List_Table();
         $transactions_table->prepare_items();
         
         // Output the transactions page

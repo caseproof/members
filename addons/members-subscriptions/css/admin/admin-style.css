@@ -26,17 +26,17 @@
     border: 1px solid #ddd;
     border-radius: 4px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    width: calc(33.33% - 14px);
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
 }
 
 .members-stats-cards .members-card {
-    flex: 1;
     min-width: 200px;
-    display: flex;
-    flex-direction: column;
 }
 
 .members-stats-secondary .members-card {
-    flex: 1;
     min-width: 220px;
 }
 
@@ -150,17 +150,42 @@
 }
 
 /* Product list table styles */
-.column-price,
-.column-subscription {
+.members-products-wrap .wp-list-table {
+    clear: both;
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.members-products-wrap .wp-list-table th,
+.members-products-wrap .wp-list-table td {
+    padding: 8px 10px;
+}
+
+.members-products-wrap .wp-list-table th {
+    font-weight: 600;
+}
+
+.members-products-wrap .wp-list-table .column-cb {
+    width: 3%;
+}
+
+.members-products-wrap .wp-list-table .column-title {
+    width: 25%;
+}
+
+.members-products-wrap .wp-list-table .column-price,
+.members-products-wrap .wp-list-table .column-subscription {
     width: 15%;
 }
 
-.column-roles,
-.column-active_members {
+.members-products-wrap .wp-list-table .column-roles,
+.members-products-wrap .wp-list-table .column-active_members {
     width: 12%;
 }
 
-.column-total_revenue {
+.members-products-wrap .wp-list-table .column-total_revenue,
+.members-products-wrap .wp-list-table .column-date {
     width: 10%;
 }
 
@@ -173,6 +198,13 @@
 .product-actions .button-small {
     padding: 0 8px 1px;
     font-size: 12px;
+}
+
+.product-actions .button-primary {
+    background: #2271b1;
+    border-color: #2271b1;
+    color: #fff;
+    font-weight: 500;
 }
 
 /* Recurring and trial indicators */
@@ -218,6 +250,66 @@
 .subscription-countdown.days-90 {
     background-color: #fcf8e3;
     color: #8a6d3b;
+}
+
+/* Mobile responsiveness */
+@media screen and (max-width: 782px) {
+    .members-stats-cards,
+    .members-stats-secondary {
+        flex-direction: column;
+    }
+    
+    .members-card {
+        width: 100%;
+        margin-bottom: 20px;
+    }
+    
+    .column-health,
+    .column-next_renewal,
+    .column-role,
+    .column-subscription_id,
+    .column-notes {
+        display: none;
+    }
+    
+    .members-products-wrap .wp-list-table .column-roles,
+    .members-products-wrap .wp-list-table .column-active_members,
+    .members-products-wrap .wp-list-table .column-total_revenue {
+        display: none;
+    }
+    
+    .members-products-wrap .wp-list-table .column-title,
+    .members-products-wrap .wp-list-table .column-price {
+        width: auto;
+    }
+    
+    .members-products-wrap .product-actions .button-small {
+        padding: 6px 10px;
+        font-size: 13px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .members-dashboard {
+        margin-top: 20px;
+    }
+    
+    .members-card-header h2 {
+        font-size: 14px;
+    }
+    
+    .members-card-value {
+        font-size: 24px;
+    }
+    
+    .members-products-wrap .wp-list-table .column-subscription,
+    .members-products-wrap .wp-list-table .column-date {
+        display: none;
+    }
+    
+    .product-actions {
+        flex-direction: column;
+    }
 }
 
 /* General Admin Styles */
