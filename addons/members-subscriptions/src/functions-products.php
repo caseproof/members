@@ -1077,34 +1077,18 @@ function handle_registration_and_subscription() {
     
     error_log('Members Subscriptions: User meta stored successfully');
     
-    // 3. CRITICAL FIX: Direct Database Insertion - Ultra Simple Approach
-    // No transactions, no try/catch, no bells and whistles - just insert the data!
+    // 3. CHECK FIRST: Before inserting, check if records already exist
     global $wpdb;
     
     // Ensure tables exist first
     $subscription_table = $wpdb->prefix . 'members_subscriptions';
     $transaction_table = $wpdb->prefix . 'members_transactions';
     
-    error_log('Members Subscriptions: Starting CRITICAL FIX direct insertion to ' . $subscription_table);
+    // Check if a subscription record already exists for this user and product
+    $subscription_exists = false;
+    $transaction_exists = false;
     
-    // We're going to run direct queries to ensure they work
-    $subscription_sql = $wpdb->prepare(
-        "INSERT INTO {$subscription_table} 
-         (user_id, product_id, subscr_id, status, created_at) 
-         VALUES (%d, %d, %s, %s, %s)",
-        $user_id, $product_id, $subscription_id, 'active', $now
-    );
-    
-    $transaction_sql = $wpdb->prepare(
-        "INSERT INTO {$transaction_table} 
-         (user_id, product_id, trans_num, amount, status, gateway, created_at) 
-         VALUES (%d, %d, %s, %f, %s, %s, %s)",
-        $user_id, $product_id, $transaction_id, floatval($price), 'complete', 'manual', $now
-    );
-    
-    error_log('Members Subscriptions: Direct SQL prepared for subscription: ' . $subscription_sql);
-    
-    // Direct execution - first make sure required tables exist
+    // Create tables if they don't exist
     $create_subscription_table = "CREATE TABLE IF NOT EXISTS {$subscription_table} (
         id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
         user_id INT NOT NULL,
@@ -1131,71 +1115,142 @@ function handle_registration_and_subscription() {
     
     error_log('Members Subscriptions: Verified tables exist');
     
-    // Now execute the inserts directly
-    $sub_result = $wpdb->query($subscription_sql);
-    error_log('Members Subscriptions: CRITICAL FIX subscription insert result: ' . ($sub_result ? 'Success' : 'Failed: ' . $wpdb->last_error));
+    // Check if records already exist
+    $check_subscription_sql = $wpdb->prepare(
+        "SELECT COUNT(*) FROM {$subscription_table} WHERE user_id = %d AND product_id = %d",
+        $user_id, $product_id
+    );
     
-    $txn_result = $wpdb->query($transaction_sql);
-    error_log('Members Subscriptions: CRITICAL FIX transaction insert result: ' . ($txn_result ? 'Success' : 'Failed: ' . $wpdb->last_error));
+    $check_transaction_sql = $wpdb->prepare(
+        "SELECT COUNT(*) FROM {$transaction_table} WHERE user_id = %d AND product_id = %d",
+        $user_id, $product_id
+    );
     
-    // 4. EMERGENCY BACKUP APPROACH - Use the built-in functions directly with all required fields
-    // This is a completely separate attempt in case the direct approach fails
-    error_log('Members Subscriptions: Attempting EMERGENCY BACKUP with existing functions');
+    // Use get_var instead of query to get result directly
+    $subscription_count = $wpdb->get_var($check_subscription_sql);
+    $transaction_count = $wpdb->get_var($check_transaction_sql);
     
-    if (function_exists('\\Members\\Subscriptions\\create_subscription')) {
-        $sub_data = [
-            'user_id' => $user_id,
-            'product_id' => $product_id,
-            'gateway' => 'manual',
-            'status' => 'active',
-            'subscr_id' => $subscription_id,
-            'price' => $price,
-            'total' => $price,
-            'period' => $is_recurring ? $period : 0,
-            'period_type' => $period_type,
-            'created_at' => $now
-        ];
+    $subscription_exists = ($subscription_count > 0);
+    $transaction_exists = ($transaction_count > 0);
+    
+    error_log('Members Subscriptions: Existing records check - Subscription: ' . 
+             ($subscription_exists ? 'Already exists' : 'Needs creation') . 
+             ', Transaction: ' . ($transaction_exists ? 'Already exists' : 'Needs creation'));
+    
+    // Variables to track if we succeeded with any method
+    $sub_success = $subscription_exists;
+    $txn_success = $transaction_exists;
+    
+    // Only proceed with creation if records don't exist
+    if (!$subscription_exists || !$transaction_exists) {
+        error_log('Members Subscriptions: Starting record creation process');
         
-        $sub_id = \Members\Subscriptions\create_subscription($sub_data);
-        error_log('Members Subscriptions: EMERGENCY BACKUP create_subscription result: ' . ($sub_id ? 'Success - ID: ' . $sub_id : 'Failed'));
-    }
-    
-    if (function_exists('\\Members\\Subscriptions\\create_transaction')) {
-        $txn_data = [
-            'user_id' => $user_id,
-            'product_id' => $product_id,
-            'amount' => $price,
-            'total' => $price,
-            'trans_num' => $transaction_id,
-            'txn_type' => 'payment',
-            'gateway' => 'manual',
-            'status' => 'complete',
-            'created_at' => $now
-        ];
+        // METHOD 1: CRITICAL FIX - Direct Database Insertion - Ultra Simple Approach
+        if (!$subscription_exists) {
+            // We're going to run direct queries to ensure they work
+            $subscription_sql = $wpdb->prepare(
+                "INSERT INTO {$subscription_table} 
+                 (user_id, product_id, subscr_id, status, created_at) 
+                 VALUES (%d, %d, %s, %s, %s)",
+                $user_id, $product_id, $subscription_id, 'active', $now
+            );
+            
+            $sub_result = $wpdb->query($subscription_sql);
+            error_log('Members Subscriptions: METHOD 1 subscription insert result: ' . 
+                     ($sub_result ? 'Success' : 'Failed: ' . $wpdb->last_error));
+            
+            $sub_success = $sub_success || $sub_result;
+        }
         
-        $txn_id = \Members\Subscriptions\create_transaction($txn_data);
-        error_log('Members Subscriptions: EMERGENCY BACKUP create_transaction result: ' . ($txn_id ? 'Success - ID: ' . $txn_id : 'Failed'));
-    }
-    
-    // 5. LAST RESORT - Force direct SQL with minimal fields and no placeholders
-    // This is a last resort that should work on any MySQL configuration
-    $last_resort_sub_sql = "INSERT INTO {$subscription_table} (user_id, product_id, subscr_id, status, created_at) 
-                           VALUES ({$user_id}, {$product_id}, '{$subscription_id}', 'active', '{$now}')";
-    
-    $last_resort_txn_sql = "INSERT INTO {$transaction_table} (user_id, product_id, trans_num, amount, status, gateway, created_at) 
-                           VALUES ({$user_id}, {$product_id}, '{$transaction_id}', {$price}, 'complete', 'manual', '{$now}')";
-    
-    error_log('Members Subscriptions: LAST RESORT SQL prepared: ' . $last_resort_sub_sql);
-    
-    // Only execute these if the previous attempts failed
-    if (!$sub_result && (!isset($sub_id) || !$sub_id)) {
-        $last_resort_sub_result = $wpdb->query($last_resort_sub_sql);
-        error_log('Members Subscriptions: LAST RESORT subscription insert result: ' . ($last_resort_sub_result ? 'Success' : 'Failed: ' . $wpdb->last_error));
-    }
-    
-    if (!$txn_result && (!isset($txn_id) || !$txn_id)) {
-        $last_resort_txn_result = $wpdb->query($last_resort_txn_sql);
-        error_log('Members Subscriptions: LAST RESORT transaction insert result: ' . ($last_resort_txn_result ? 'Success' : 'Failed: ' . $wpdb->last_error));
+        if (!$transaction_exists) {
+            $transaction_sql = $wpdb->prepare(
+                "INSERT INTO {$transaction_table} 
+                 (user_id, product_id, trans_num, amount, status, gateway, created_at) 
+                 VALUES (%d, %d, %s, %f, %s, %s, %s)",
+                $user_id, $product_id, $transaction_id, floatval($price), 'complete', 'manual', $now
+            );
+            
+            $txn_result = $wpdb->query($transaction_sql);
+            error_log('Members Subscriptions: METHOD 1 transaction insert result: ' . 
+                     ($txn_result ? 'Success' : 'Failed: ' . $wpdb->last_error));
+            
+            $txn_success = $txn_success || $txn_result;
+        }
+        
+        // METHOD 2: BACKUP APPROACH - Only try if method 1 failed
+        if (!$sub_success && function_exists('\\Members\\Subscriptions\\create_subscription')) {
+            error_log('Members Subscriptions: METHOD 1 subscription failed, trying METHOD 2');
+            
+            $sub_data = [
+                'user_id' => $user_id,
+                'product_id' => $product_id,
+                'gateway' => 'manual',
+                'status' => 'active',
+                'subscr_id' => $subscription_id,
+                'price' => $price,
+                'total' => $price,
+                'period' => $is_recurring ? $period : 0,
+                'period_type' => $period_type,
+                'created_at' => $now
+            ];
+            
+            $sub_id = \Members\Subscriptions\create_subscription($sub_data);
+            error_log('Members Subscriptions: METHOD 2 create_subscription result: ' . 
+                     ($sub_id ? 'Success - ID: ' . $sub_id : 'Failed'));
+            
+            $sub_success = $sub_success || $sub_id;
+        }
+        
+        if (!$txn_success && function_exists('\\Members\\Subscriptions\\create_transaction')) {
+            error_log('Members Subscriptions: METHOD 1 transaction failed, trying METHOD 2');
+            
+            $txn_data = [
+                'user_id' => $user_id,
+                'product_id' => $product_id,
+                'amount' => $price,
+                'total' => $price,
+                'trans_num' => $transaction_id,
+                'txn_type' => 'payment',
+                'gateway' => 'manual',
+                'status' => 'complete',
+                'created_at' => $now
+            ];
+            
+            $txn_id = \Members\Subscriptions\create_transaction($txn_data);
+            error_log('Members Subscriptions: METHOD 2 create_transaction result: ' . 
+                     ($txn_id ? 'Success - ID: ' . $txn_id : 'Failed'));
+            
+            $txn_success = $txn_success || $txn_id;
+        }
+        
+        // METHOD 3: LAST RESORT - Only try if methods 1 and 2 failed
+        if (!$sub_success) {
+            error_log('Members Subscriptions: METHODS 1 & 2 subscription failed, trying METHOD 3');
+            
+            $last_resort_sub_sql = "INSERT INTO {$subscription_table} (user_id, product_id, subscr_id, status, created_at) 
+                                  VALUES ({$user_id}, {$product_id}, '{$subscription_id}', 'active', '{$now}')";
+            
+            $last_resort_sub_result = $wpdb->query($last_resort_sub_sql);
+            error_log('Members Subscriptions: METHOD 3 subscription insert result: ' . 
+                     ($last_resort_sub_result ? 'Success' : 'Failed: ' . $wpdb->last_error));
+            
+            $sub_success = $sub_success || $last_resort_sub_result;
+        }
+        
+        if (!$txn_success) {
+            error_log('Members Subscriptions: METHODS 1 & 2 transaction failed, trying METHOD 3');
+            
+            $last_resort_txn_sql = "INSERT INTO {$transaction_table} (user_id, product_id, trans_num, amount, status, gateway, created_at) 
+                                  VALUES ({$user_id}, {$product_id}, '{$transaction_id}', {$price}, 'complete', 'manual', '{$now}')";
+            
+            $last_resort_txn_result = $wpdb->query($last_resort_txn_sql);
+            error_log('Members Subscriptions: METHOD 3 transaction insert result: ' . 
+                     ($last_resort_txn_result ? 'Success' : 'Failed: ' . $wpdb->last_error));
+            
+            $txn_success = $txn_success || $last_resort_txn_result;
+        }
+    } else {
+        error_log('Members Subscriptions: Both subscription and transaction records already exist, skipping creation');
     }
     
     // 4. Also add global site-wide options as a final fallback mechanism
@@ -1214,19 +1269,23 @@ function handle_registration_and_subscription() {
     update_option('members_subscription_users', $stored_users);
     error_log('Members Subscriptions: Updated global option with subscription data');
     
-    // Record final status in diagnostics log including all insertion attempts
+    // Record final status in diagnostics log with duplicate prevention results
     $subscription_status = [
         'user_id' => $user_id,
         'product_id' => $product_id,
-        // Direct SQL approach results
-        'direct_sql_sub_result' => isset($sub_result) ? $sub_result : false,
-        'direct_sql_txn_result' => isset($txn_result) ? $txn_result : false,
-        // Function approach results
-        'function_sub_result' => isset($sub_id) ? $sub_id : false,
-        'function_txn_result' => isset($txn_id) ? $txn_id : false,
-        // Last resort approach results
-        'last_resort_sub_result' => isset($last_resort_sub_result) ? $last_resort_sub_result : false,
-        'last_resort_txn_result' => isset($last_resort_txn_result) ? $last_resort_txn_result : false,
+        // Duplicate prevention
+        'subscription_existed' => isset($subscription_exists) ? $subscription_exists : false,
+        'transaction_existed' => isset($transaction_exists) ? $transaction_exists : false,
+        // Method Results
+        'method1_sub_result' => isset($sub_result) ? $sub_result : false,
+        'method1_txn_result' => isset($txn_result) ? $txn_result : false,
+        'method2_sub_result' => isset($sub_id) ? $sub_id : false,
+        'method2_txn_result' => isset($txn_id) ? $txn_id : false,
+        'method3_sub_result' => isset($last_resort_sub_result) ? $last_resort_sub_result : false,
+        'method3_txn_result' => isset($last_resort_txn_result) ? $last_resort_txn_result : false,
+        // Final success state
+        'sub_success' => isset($sub_success) ? $sub_success : false,
+        'txn_success' => isset($txn_success) ? $txn_success : false,
         // Storage fallbacks
         'user_meta_stored' => true,
         'global_option_stored' => true,
@@ -1235,12 +1294,6 @@ function handle_registration_and_subscription() {
         'transaction_id' => $transaction_id,
         'timestamp' => current_time('mysql'),
     ];
-    
-    // Calculate overall success
-    $subscription_status['any_method_succeeded'] = 
-        $subscription_status['direct_sql_sub_result'] || 
-        $subscription_status['function_sub_result'] || 
-        $subscription_status['last_resort_sub_result'];
     
     // Store diagnostic data for admins to review if needed
     update_option('members_last_subscription_status', $subscription_status);
