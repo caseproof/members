@@ -5,20 +5,20 @@
 /* Dashboard Cards */
 .members-dashboard {
     margin-bottom: 25px;
+    width: 100%;
+    max-width: 100%;
+    clear: both;
+    overflow: hidden;
 }
 
-.members-stats-cards {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    margin-bottom: 20px;
-}
-
+.members-stats-cards,
 .members-stats-secondary {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
     gap: 20px;
     margin-bottom: 20px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .members-card {
@@ -26,18 +26,11 @@
     border: 1px solid #ddd;
     border-radius: 4px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    width: calc(33.33% - 14px);
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
-}
-
-.members-stats-cards .members-card {
-    min-width: 200px;
-}
-
-.members-stats-secondary .members-card {
-    min-width: 220px;
+    margin: 0;
+    height: 100%;
 }
 
 .members-card-header {
@@ -50,6 +43,7 @@
     font-weight: 600;
     color: #23282d;
     border-bottom: none;
+    padding: 0;
 }
 
 .members-card-body {
@@ -256,12 +250,12 @@
 @media screen and (max-width: 782px) {
     .members-stats-cards,
     .members-stats-secondary {
-        flex-direction: column;
+        grid-template-columns: 1fr;
+        gap: 15px;
     }
     
     .members-card {
-        width: 100%;
-        margin-bottom: 20px;
+        margin-bottom: 0;
     }
     
     .column-health,
@@ -595,60 +589,4 @@
 
 .members-roles-list input[type="checkbox"] {
     margin-right: 6px;
-}
-
-/* Subscription Details Modal */
-.members-subscription-details-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0,0,0,0.7);
-    z-index: 100000;
-    display: none;
-}
-
-.members-subscription-details-modal-content {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: #fff;
-    padding: 20px;
-    border-radius: 5px;
-    max-width: 800px;
-    width: 90%;
-    max-height: 80vh;
-    overflow-y: auto;
-}
-
-.members-subscription-details-modal-close {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    font-size: 24px;
-    line-height: 1;
-    cursor: pointer;
-}
-
-/* Responsive Adjustments */
-@media screen and (max-width: 782px) {
-    .members-subscriptions-wrap .wp-list-table .column-id,
-    .members-subscriptions-wrap .wp-list-table .column-status,
-    .members-subscriptions-wrap .wp-list-table .column-amount,
-    .members-subscriptions-wrap .wp-list-table .column-gateway,
-    .members-subscriptions-wrap .wp-list-table .column-date,
-    .members-subscriptions-wrap .wp-list-table .column-created,
-    .members-subscriptions-wrap .wp-list-table .column-expiration,
-    .members-subscriptions-wrap .wp-list-table .column-actions {
-        width: auto;
-    }
-    
-    .tablenav .subscription-filters,
-    .tablenav .transaction-filters,
-    .tablenav .date-filter {
-        display: block;
-        margin-bottom: 8px;
-    }
 }
