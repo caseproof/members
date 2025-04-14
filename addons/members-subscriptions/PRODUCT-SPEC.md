@@ -156,19 +156,32 @@ The Members Subscriptions add-on includes several features to ensure reliable op
 
 ## Admin Interface
 
-### List Tables
+### Dashboard and List Tables
 
-1. **Products List Table**
+1. **Products Dashboard**
+   - Redesigned with CSS Grid layout for better responsiveness
+   - Two-row dashboard with key metrics in top row
+   - Secondary statistics cards in bottom row
+   - Stats include total products, active subscribers, and total revenue
+   - Featured cards for popular products, newest products, and highest revenue generators
+   - Proper fallback displays for empty states (no products, no subscriptions)
+   - Inline styling to prevent theme conflicts
+   - Mobile-responsive breakpoints for all screen sizes
+   - Clear visual hierarchy with consistent card styling
+
+2. **Products List Table**
    - Custom WP_List_Table implementation with comprehensive product information
-   - Dashboard with statistics showing total products, active subscribers, and revenue
-   - Cards for popular products, newest products, and highest revenue products
+   - Streamlined edit button with improved styling
+   - Unified access point for all product management
    - Columns for pricing, subscription type, roles, active members, and total revenue
    - Sortable columns and built-in filtering
    - Export functionality
    - Mobile-responsive design
+   - Fully qualified namespaces for proper class loading
 
-2. **Subscriptions List Table**
+3. **Subscriptions List Table**
    - Enhanced with subscription health indicators for at-risk memberships
+   - Properly namespaced to prevent PHP fatal errors
    - Next renewal date column for improved subscription management
    - Countdown indicators for approaching renewals and expirations
    - Currency formatting with proper symbol display
@@ -176,7 +189,7 @@ The Members Subscriptions add-on includes several features to ensure reliable op
    - Quick-action buttons for managing subscriptions
    - Filtering by status, user, product, and gateway
 
-3. **Transactions List Table**
+4. **Transactions List Table**
    - Added subscription reference column linking transactions to subscriptions
    - Notes column for transaction comments and payment details
    - Improved currency formatting with proper symbol handling
@@ -185,15 +198,25 @@ The Members Subscriptions add-on includes several features to ensure reliable op
    - Bulk actions for managing transactions
    - Export functionality
 
+### Admin Menu Structure
+
+- Simplified menu structure with single "Subscription Products" entry
+- Removed duplicate "Add/Edit Products" menu item
+- Menu registration with proper capability checks
+- Clear navigation path to product management
+- Consistent naming across all admin screens
+
 ### Common Features
 
 - Consistent UI design across all list tables
+- Fixed PHP namespace resolution in class instantiation
 - Standardized currency formatting with proper symbol display
 - Export to CSV functionality for data analysis
 - Advanced filtering capabilities
 - Bulk management actions
 - Responsive design for all screen sizes
 - Interactive elements with JavaScript enhancements
+- Proper error handling for database table verification
 
 ## Future Development
 
