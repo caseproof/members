@@ -198,6 +198,18 @@ The Members Subscriptions add-on includes several features to ensure reliable op
    - Bulk actions for managing transactions
    - Export functionality
 
+5. **Reports Dashboard**
+   - Comprehensive reports with monthly, yearly, and all-time views
+   - Multiple chart types for revenue analysis:
+     - Monthly revenue by day
+     - Annual revenue by month
+     - Annual Recurring Revenue (ARR) trends
+     - Transaction counts and distributions
+   - Interactive charts with tooltips for detailed information
+   - Tabular data displays for in-depth analysis
+   - Revenue statistics including total revenue, refunds, and taxes
+   - Subscription metrics including active subscribers and average values
+
 ### Admin Menu Structure
 
 - Simplified menu structure with single "Subscription Products" entry
@@ -223,7 +235,10 @@ The Members Subscriptions add-on includes several features to ensure reliable op
 - Additional payment gateway integrations (Stripe, PayPal)
 - Subscription management capabilities (pause, resume, upgrade)
 - More advanced content restriction options
-- Enhanced reporting and analytics dashboard
+- Additional reporting metrics and visualizations:
+  - Customer cohort analysis
+  - Churn prediction and prevention tools
+  - Customer Lifetime Value (LTV) calculations
 - Improved migration tools for importing from other membership plugins
 - Advanced caching for high-performance sites
-- Chart visualizations for subscription metrics
+- Enhanced dashboard customization options
