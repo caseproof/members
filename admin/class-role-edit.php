@@ -123,6 +123,16 @@ final class Role_Edit {
 			$grant_caps = ! empty( $_POST['grant-caps'] ) ? members_remove_hidden_caps( array_unique( $_POST['grant-caps'] ) ) : array();
 			$deny_caps  = ! empty( $_POST['deny-caps'] )  ? members_remove_hidden_caps( array_unique( $_POST['deny-caps']  ) ) : array();
 
+			// Get the new role label if submitted
+			$role_label = ! empty( $_POST['role_label'] ) ? sanitize_text_field( $_POST['role_label'] ) : $this->members_role->get( 'label' );
+
+			// Update the WordPress core role object's display name
+			global $wp_roles;
+			if (isset($wp_roles->role_names[$this->role->name])) {
+				$wp_roles->role_names[$this->role->name] = $role_label;
+				$wp_roles->roles[$this->role->name]['name'] = $role_label;
+			}
+
 			// Get the new (custom) granted and denied caps.
 			$grant_new_caps = ! empty( $_POST['grant-new-caps'] ) ? members_remove_hidden_caps( array_unique( $_POST['grant-new-caps'] ) ) : array();
 			$deny_new_caps  = ! empty( $_POST['deny-new-caps'] )  ? members_remove_hidden_caps( array_unique( $_POST['deny-new-caps']  ) ) : array();
@@ -208,10 +218,17 @@ final class Role_Edit {
 			members_register_role(
 				$this->role->name,
 				array(
-					'label' => $this->members_role->get( 'label' ),
+					'label' => $role_label,
 					'caps'  => $this->role->capabilities
 				)
 			);
+
+			// Update the role object's display name and capabilities
+			$this->role->name = $this->role->name;
+			$this->role->capabilities = $this->role->capabilities;
+
+			// Force WordPress to update its role cache
+			$wp_roles->reinit();
 
 			// Reset the Members role object.
 			$this->members_role = members_get_role( $this->role->name );
@@ -318,7 +335,7 @@ final class Role_Edit {
 
 								<div id="titlewrap">
 									<span class="screen-reader-text"><?php esc_html_e( 'Role Name', 'members' ); ?></span>
-									<input type="text" disabled="disabled" readonly="readonly" value="<?php echo esc_attr( members_get_role( $this->role->name )->get( 'label' ) ); ?>" />
+									<input type="text" name="role_label" value="<?php echo esc_attr( members_get_role( $this->role->name )->get( 'label' ) ); ?>" />
 								</div><!-- #titlewrap -->
 
 								<div class="inside">
