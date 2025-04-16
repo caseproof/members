@@ -124,13 +124,18 @@ final class Role_Edit {
 			$deny_caps  = ! empty( $_POST['deny-caps'] )  ? members_remove_hidden_caps( array_unique( $_POST['deny-caps']  ) ) : array();
 
 			// Get the new role label if submitted
-			$role_label = ! empty( $_POST['role_label'] ) ? sanitize_text_field( $_POST['role_label'] ) : $this->members_role->get( 'label' );
+			$role_label = ! empty( $_POST['role_label'] ) ? sanitize_text_field( $_POST['role_label'] ) : '';
 
-			// Update the WordPress core role object's display name
-			global $wp_roles;
-			if (isset($wp_roles->role_names[$this->role->name])) {
+			// Update the role name in WordPress roles
+			if ($role_label) {
+				global $wp_roles;
+				if (isset($wp_roles->roles[$this->role->name])) {
+					$wp_roles->roles[$this->role->name]['name'] = $role_label;
+					// Also update the role names array which is used for translations
 				$wp_roles->role_names[$this->role->name] = $role_label;
-				$wp_roles->roles[$this->role->name]['name'] = $role_label;
+				// Make sure changes are persisted
+				update_option($wp_roles->role_key, $wp_roles->roles);
+				}
 			}
 
 			// Get the new (custom) granted and denied caps.
@@ -218,17 +223,10 @@ final class Role_Edit {
 			members_register_role(
 				$this->role->name,
 				array(
-					'label' => $role_label,
+					'label' => $role_label ? $role_label : $this->members_role->get( 'label' ),
 					'caps'  => $this->role->capabilities
 				)
 			);
-
-			// Update the role object's display name and capabilities
-			$this->role->name = $this->role->name;
-			$this->role->capabilities = $this->role->capabilities;
-
-			// Force WordPress to update its role cache
-			$wp_roles->reinit();
 
 			// Reset the Members role object.
 			$this->members_role = members_get_role( $this->role->name );
