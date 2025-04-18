@@ -131,9 +131,9 @@ final class Role_Edit {
 				if (isset($wp_roles->roles[$this->role->name])) {
 					$wp_roles->roles[$this->role->name]['name'] = $role_label;
 					// Also update the role names array which is used for translations
-				$wp_roles->role_names[$this->role->name] = $role_label;
-				// Make sure changes are persisted
-				update_option($wp_roles->role_key, $wp_roles->roles);
+					$wp_roles->role_names[$this->role->name] = $role_label;
+					// Make sure changes are persisted
+					update_option($wp_roles->role_key, $wp_roles->roles);
 				}
 			}
 
