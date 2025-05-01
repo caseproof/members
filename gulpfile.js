@@ -16,8 +16,8 @@ var lastTranslator = 'The MemberPress Team <outreach@memberpress.com>'; // Last 
 var team = 'The MemberPress Team <outreach@memberpress.com>'; // Team's Email ID.
 
 // Files to watch
-var stylesWatchFiles = './css/*.css'; // Path to all Sass partials.
-var scriptsWatchFiles = './js/*.js'; // Path to all custom JS files.
+var stylesWatchFiles = ['./css/*.css', '!./css/*.min.css']; // Path to CSS files, excluding minified files.
+var scriptsWatchFiles = ['./js/*.js', '!./js/*.min.js']; // Path to JS files, excluding minified files.
 var projectPHPWatchFiles = './**/*.php'; // Path to all PHP files.
 
 /**
@@ -63,7 +63,7 @@ const AUTOPREFIXER_BROWSERS = [
  *    5. Minifies the CSS file and generates .min.css
  */
 gulp.task('styles', function () {
-  gulp.src([
+  return gulp.src([
       styleSRC,
       '!css/*.min.css'
     ])
@@ -89,7 +89,7 @@ gulp.task('styles', function () {
  *     4. Uglifes/Minifies the JS file and generates minified JS file
  */
 gulp.task('scripts', function () {
-  gulp.src([
+  return gulp.src([
       jsSource,
       '!js/*.min.js'
     ])
@@ -131,11 +131,21 @@ gulp.task('pot', function () {
 
 
 /**
- * Watch Tasks.
- *
- * Watches for file changes and runs specific tasks.
+ * Watch Task.
  */
-gulp.task('default', ['styles', 'scripts'], function () {
-  gulp.watch([stylesWatchFiles, './css/*.css'], ['styles']);
-  gulp.watch(scriptsWatchFiles, ['scripts']);
-});
+function watchFiles() {
+  // Watch CSS files but ignore minified files
+  gulp.watch(stylesWatchFiles, gulp.series('styles'));
+  
+  // Watch JS files but ignore minified files
+  gulp.watch(scriptsWatchFiles, gulp.series('scripts'));
+}
+
+
+/**
+ * Define default task using Gulp 4.x syntax.
+ */
+gulp.task('default', gulp.series(
+  gulp.parallel('styles', 'scripts'),
+  watchFiles
+));
