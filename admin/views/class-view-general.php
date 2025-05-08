@@ -11,7 +11,6 @@
  */
 
 namespace Members\Admin;
-
 /**
  * Sets up and handles the general settings view.
  *
@@ -37,8 +36,17 @@ class View_General extends View {
 	 * @return void
 	 */
 	public function enqueue() {
-
-		wp_enqueue_script( 'members-settings' );
+		// Enqueue the settings script with jQuery dependency
+		wp_enqueue_script( 'members-settings', members_plugin()->uri . 'js/settings.js', array( 'jquery' ), '', true );
+		
+		// Add reset roles data to the settings script
+		wp_localize_script( 'members-settings', 'membersResetRoles', array(
+			'nonce' => wp_create_nonce( 'members_reset_roles' ),
+			'ajaxurl' => admin_url( 'admin-ajax.php' ),
+			'confirmMessage' => esc_html__( 'Are you sure you want to reset all roles to their default WordPress settings? This action cannot be undone.', 'members' ),
+			'successMessage' => esc_html__( 'Roles have been reset to their default WordPress settings.', 'members' ),
+			'errorMessage' => esc_html__( 'An error occurred while resetting roles. Please try again.', 'members' )
+		) );
 	}
 
 	/**
@@ -125,7 +133,6 @@ class View_General extends View {
 	 * @return void
 	 */
 	public function section_roles_caps() { ?>
-
 		<p class="description">
 			<?php esc_html_e( 'Your roles and capabilities will not revert back to their previous settings after deactivating or uninstalling this plugin, so use this feature wisely.', 'members' ); ?>
 		</p>
@@ -329,13 +336,25 @@ class View_General extends View {
 	 * @return void
 	 */
 	public function template() { ?>
-
 		<form method="post" action="options.php">
 			<?php settings_fields( 'members_settings' ); ?>
 			<?php do_settings_sections( 'members-settings' ); ?>
+			
+			<table class="form-table" role="presentation">
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Reset Roles', 'members' ); ?></th>
+					<td>
+						<button type="button" id="members-reset-roles" class="button button-warning">
+							<?php esc_html_e( 'Reset to Default WordPress Roles', 'members' ); ?>
+						</button>
+						<span class="spinner" style="float: none; margin-top: 0;"></span>
+						<div id="members-reset-roles-message"></div>
+					</td>
+				</tr>
+			</table>
+
 			<?php submit_button( esc_attr__( 'Update Settings', 'members' ), 'primary' ); ?>
 		</form>
-
 	<?php }
 
 	/**
