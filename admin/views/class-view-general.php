@@ -11,6 +11,7 @@
  */
 
 namespace Members\Admin;
+
 /**
  * Sets up and handles the general settings view.
  *

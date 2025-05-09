@@ -1,4 +1,4 @@
-jQuery(document).ready(function ($) {
+jQuery(document).ready(function($) {
 
 	/* ====== Plugin Settings ====== */
 
@@ -17,7 +17,7 @@ jQuery(document).ready(function ($) {
 
 	// Show above hidden items if feature becomes disabled.
 	jQuery('[name="members_settings[content_permissions]"], [name="members_settings[private_feed]"], [name="members_settings[private_blog]"]').on('change',
-		function () {
+		function() {
 
 			if (jQuery(this).prop('checked')) {
 
@@ -29,7 +29,7 @@ jQuery(document).ready(function ($) {
 		}
 	);
 
-	$('.activate-addon').on('click', function (e) {
+	$('.activate-addon').on('click', function(e) {
 		var $this = $(this);
 		var addon = $this.data('addon');
 		$this.addClass('processing');
@@ -43,26 +43,26 @@ jQuery(document).ready(function ($) {
 				addon: addon
 			},
 		})
-			.done(function (response) {
-				if (response.success == true) {
-					$this.find('.action-label').html(response.data.action_label);
-					var svg = $this.find('svg');
-					svg.removeClass();
-					svg.addClass(response.data.status);
-				} else {
-					alert(response.data.msg);
-				}
-			})
-			.fail(function (response) {
+		.done(function(response) {
+			if (response.success == true) {
+				$this.find('.action-label').html(response.data.action_label);
+				var svg = $this.find('svg');
+				svg.removeClass();
+				svg.addClass(response.data.status);
+			} else {
 				alert(response.data.msg);
-			})
-			.always(function (response) {
-				$this.removeClass('processing');
-			});
+			}
+		})
+		.fail(function(response) {
+			alert(response.data.msg);
+		})
+		.always(function(response) {
+			$this.removeClass('processing');
+		});
 	});
 
 	// Reset roles functionality
-	jQuery('#members-reset-roles').on('click', function (e) {
+	jQuery('#members-reset-roles').on('click', function(e) {
 		e.preventDefault();
 
 		if (!confirm(membersResetRoles.confirmMessage)) {
@@ -84,21 +84,21 @@ jQuery(document).ready(function ($) {
 				action: 'members_reset_roles',
 				nonce: membersResetRoles.nonce
 			},
-			success: function (response) {
+			success: function(response) {
 				if (response.success) {
 					$message.addClass('notice notice-success').html('<p>' + membersResetRoles.successMessage + '</p>');
 					// Reload the page after successful reset
-					setTimeout(function () {
+					setTimeout(function() {
 						window.location.reload();
 					}, 1000);
 				} else {
 					$message.addClass('notice notice-error').html('<p>' + membersResetRoles.errorMessage + '</p>');
 				}
 			},
-			error: function () {
+			error: function() {
 				$message.addClass('notice notice-error').html('<p>' + membersResetRoles.errorMessage + '</p>');
 			},
-			complete: function () {
+			complete: function() {
 				$button.prop('disabled', false);
 				$spinner.removeClass('is-active');
 			}
