@@ -279,6 +279,10 @@ final class Members_Plugin {
 
 		// Register activation hook.
 		register_activation_hook( __FILE__, array( $this, 'activation' ) );
+
+		add_action( 'admin_menu', array( $this, 'admin_menu' ), 25 );
+		add_action( 'wp_ajax_mbrs_toggle_addon', array( $this, 'toggle_addon' ) );
+		add_action( 'wp_ajax_members_reset_roles', array( $this, 'reset_roles' ) );
 	}
 
 	/**
@@ -456,6 +460,201 @@ final class Members_Plugin {
 				'message' => __( 'To protect this block by paid membership or centrally with a content protection rule, add MemberPress.', 'members' )
 			) );
 		}
+	}
+
+	/**
+	 * AJAX handler for resetting roles to default WordPress roles.
+	 *
+	 * @since  3.2.18
+	 * @access public
+	 * @return void
+	 */
+	public function reset_roles() {
+		
+		// Verify nonce
+		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( $_POST['nonce'], 'members_reset_roles' ) ) {
+			wp_send_json_error();
+		}
+
+		// Check user capabilities
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error();
+		}
+
+		// Get all roles
+		$roles = wp_roles()->get_names();
+		
+		// Remove all custom roles
+		foreach ( $roles as $role_name => $role_label ) {
+			if ( ! in_array( $role_name, array( 'administrator', 'editor', 'author', 'contributor', 'subscriber' ) ) ) {
+				remove_role( $role_name );
+			}
+		}
+
+		// Reset default roles to WordPress defaults
+		$default_roles = array(
+			'administrator' => array(
+				'name' => 'Administrator',
+				'capabilities' => array(
+					'switch_themes' => true,
+					'edit_themes' => true,
+					'activate_plugins' => true,
+					'edit_plugins' => true,
+					'edit_users' => true,
+					'edit_files' => true,
+					'manage_options' => true,
+					'moderate_comments' => true,
+					'manage_categories' => true,
+					'manage_links' => true,
+					'upload_files' => true,
+					'import' => true,
+					'unfiltered_html' => true,
+					'edit_posts' => true,
+					'edit_others_posts' => true,
+					'edit_published_posts' => true,
+					'publish_posts' => true,
+					'edit_pages' => true,
+					'read' => true,
+					'level_10' => true,
+					'level_9' => true,
+					'level_8' => true,
+					'level_7' => true,
+					'level_6' => true,
+					'level_5' => true,
+					'level_4' => true,
+					'level_3' => true,
+					'level_2' => true,
+					'level_1' => true,
+					'level_0' => true,
+					'edit_others_pages' => true,
+					'edit_published_pages' => true,
+					'publish_pages' => true,
+					'delete_pages' => true,
+					'delete_others_pages' => true,
+					'delete_published_pages' => true,
+					'delete_posts' => true,
+					'delete_others_posts' => true,
+					'delete_published_posts' => true,
+					'delete_private_posts' => true,
+					'edit_private_posts' => true,
+					'read_private_posts' => true,
+					'delete_private_pages' => true,
+					'edit_private_pages' => true,
+					'read_private_pages' => true,
+					'delete_users' => true,
+					'create_users' => true,
+					'unfiltered_upload' => true,
+					'edit_dashboard' => true,
+					'update_plugins' => true,
+					'delete_plugins' => true,
+					'install_plugins' => true,
+					'update_themes' => true,
+					'install_themes' => true,
+					'update_core' => true,
+					'list_users' => true,
+					'remove_users' => true,
+					'promote_users' => true,
+					'edit_theme_options' => true,
+					'delete_themes' => true,
+					'export' => true
+				)
+			),
+			'editor' => array(
+				'name' => 'Editor',
+				'capabilities' => array(
+					'moderate_comments' => true,
+					'manage_categories' => true,
+					'manage_links' => true,
+					'upload_files' => true,
+					'unfiltered_html' => true,
+					'edit_posts' => true,
+					'edit_others_posts' => true,
+					'edit_published_posts' => true,
+					'publish_posts' => true,
+					'edit_pages' => true,
+					'read' => true,
+					'level_7' => true,
+					'level_6' => true,
+					'level_5' => true,
+					'level_4' => true,
+					'level_3' => true,
+					'level_2' => true,
+					'level_1' => true,
+					'level_0' => true,
+					'edit_others_pages' => true,
+					'edit_published_pages' => true,
+					'publish_pages' => true,
+					'delete_pages' => true,
+					'delete_others_pages' => true,
+					'delete_published_pages' => true,
+					'delete_posts' => true,
+					'delete_others_posts' => true,
+					'delete_published_posts' => true,
+					'delete_private_posts' => true,
+					'edit_private_posts' => true,
+					'read_private_posts' => true,
+					'delete_private_pages' => true,
+					'edit_private_pages' => true,
+					'read_private_pages' => true,
+					'delete_users' => true,
+					'create_users' => true,
+					'unfiltered_upload' => true,
+					'edit_dashboard' => true,
+					'update_plugins' => true,
+					'delete_plugins' => true,
+					'install_plugins' => true,
+					'update_themes' => true,
+					'install_themes' => true,
+					'update_core' => true,
+					'list_users' => true,
+					'remove_users' => true,
+					'promote_users' => true,
+					'edit_theme_options' => true,
+					'delete_themes' => true,
+					'export' => true
+				)
+			),
+			'author' => array(
+				'name' => 'Author',
+				'capabilities' => array(
+					'upload_files' => true,
+					'edit_posts' => true,
+					'edit_published_posts' => true,
+					'publish_posts' => true,
+					'read' => true,
+					'level_2' => true,
+					'level_1' => true,
+					'level_0' => true,
+					'delete_posts' => true,
+					'delete_published_posts' => true
+				)
+			),
+			'contributor' => array(
+				'name' => 'Contributor',
+				'capabilities' => array(
+					'edit_posts' => true,
+					'read' => true,
+					'level_1' => true,
+					'level_0' => true,
+					'delete_posts' => true
+				)
+			),
+			'subscriber' => array(
+				'name' => 'Subscriber',
+				'capabilities' => array(
+					'read' => true,
+					'level_0' => true
+				)
+			)
+		);
+
+		// Update each default role
+		foreach ( $default_roles as $role_name => $role_data ) {
+			remove_role( $role_name );
+			add_role( $role_name, $role_data['name'], $role_data['capabilities'] );
+		}
+
+		wp_send_json_success();
 	}
 }
 

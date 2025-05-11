@@ -25,12 +25,12 @@
 }
 
 .members-upgrade-header {
-  	text-align: center;
-  	padding: 5px;
+	text-align: center;
+	padding: 5px;
 }
 
 .members-upgrade-header a {
-  	color: #F59431;
+	color: #F59431;
 }
 
 .memberpress-paid-memberships {
@@ -87,7 +87,7 @@
 	text-align: center;
 }
 
-#members-cp-side .members-tabs .members-tab-nav li a i,
+#members-cp-side .members-tabs .members-tab-nav li a,
 #members-cp-side .members-tabs .members-tab-nav li[aria-selected="false"] a i {
 	color: #555;
 }
@@ -120,25 +120,25 @@
 }
 
 #wpcontent #members-admin-header {
-  	margin-left: -20px;
-  	padding: 0;
-  	padding-left: 22px;
-  	background-color: #f9f9f9;
-  	background-repeat: repeat;
-  	background-size: 1200px 75px;
-  	min-height: 36px;
-  	position: relative;
-  	/* border-bottom: 2px solid #00cee6; */
+	margin-left: -20px;
+	padding: 0;
+	padding-left: 22px;
+	background-color: #f9f9f9;
+	background-repeat: repeat;
+	background-size: 1200px 75px;
+	min-height: 36px;
+	position: relative;
+	/* border-bottom: 2px solid #00cee6; */
 }
 
 #wpcontent #members-admin-header img.members-logo {
-  	height: 90px;
+	height: 90px;
 }
 
 .members-upgrade-header #close-members-upgrade-header {
-  	position: absolute;
-  	right: 20px;
-  	top: 3px;
+	position: absolute;
+	right: 20px;
+	top: 3px;
 }
 
 .members-upgrade-header #close-members-upgrade-header:hover {
@@ -149,7 +149,7 @@
 
 .memberpress-welcome-panel.welcome-panel {
 	margin-top: 0;
-	padding:    40px 20px;
+	padding: 40px 20px;
 	background: #fff;
 }
 
@@ -165,7 +165,7 @@
 	margin: 0;
 }
 
-.memberpress-welcome-panel.welcome-panel-content .mp-logo-wrap > a {
+.memberpress-welcome-panel.welcome-panel-content .mp-logo-wrap>a {
 	display: block;
 }
 
@@ -303,7 +303,7 @@
 
 .activate-toggle .action-label {
 	display: inline-block;
-	padding-left: 3px;
+	width: 50px;
 	text-align: left;
 }
 
@@ -318,7 +318,7 @@
 }
 
 .mepr_dummy_txns::after {
-	background-color: rgba(0,0,0,.2);
+	background-color: rgba(0, 0, 0, .2);
 	position: absolute;
 	top: 0;
 	left: 0;
@@ -335,7 +335,7 @@
 	position: relative;
 	top: 100px;
 	z-index: 10;
-	background: rgba( 0,0,0,.2 );
+	background: rgba(0, 0, 0, .2);
 	width: 100%;
 	height: 100%;
 	max-width: 600px;
@@ -485,7 +485,8 @@
 		left: 14px
 	}
 
-	.members-addons .plugin-card .desc>p, .members-addons .plugin-card .name {
+	.members-addons .plugin-card .desc>p,
+	.members-addons .plugin-card .name {
 		margin-left: 84px;
 	}
 }
@@ -556,7 +557,7 @@
 	}
 }
 
-@media screen and (max-width: 1200px)  {
+@media screen and (max-width: 1200px) {
 	.welcome-panel .welcome-panel-column-container {
 		flex-direction: column-reverse;
 		gap: 0;
@@ -575,12 +576,12 @@
 
 /* ====== Manage Roles Screen. ====== */
 
-@media only screen and ( min-width: 783px ) {
+@media only screen and (min-width: 783px) {
 
 	.members_page_roles .column-users,
 	.members_page_roles .column-granted_caps,
 	.members_page_roles .column-denied_caps {
-		width:      100px;
+		width: 100px;
 		text-align: center;
 	}
 }
@@ -590,133 +591,137 @@
 /* === Role and Role Name === */
 
 .members-title-div #titlewrap input {
-	padding:          0 8px;
-	font-size:        1.7em;
-	line-height:      normal;
-	height:           1.7em;
-	width:            100%;
-	outline:          none;
-	margin:           0 0 3px;
+	padding: 0 8px;
+	font-size: 1.7em;
+	line-height: normal;
+	height: 1.7em;
+	width: 100%;
+	outline: none;
+	margin: 0 0 3px;
 	background-color: #fff;
 }
 
 .members-title-div input[name="role"] {
 	font-size: 13px;
-	height:    22px;
-	margin:    0;
-	width:     16em;
+	height: 22px;
+	margin: 0;
+	width: 16em;
 }
 
 /* === Edit Capabilities Tabs === */
 
 /* Wrapper box */
 
-#tabcapsdiv { margin-top: 1em; }
+#tabcapsdiv {
+	margin-top: 1em;
+}
 
-	#tabcapsdiv > .hndle {
-		padding:       10px;
-		border-bottom: 1px solid #eee;
-	}
+#tabcapsdiv>.hndle {
+	padding: 10px;
+	border-bottom: 1px solid #eee;
+}
 
-	#tabcapsdiv .inside,
-	#members-cp .inside {
-		margin:  0;
-		padding: 0;
-	}
+#tabcapsdiv .inside,
+#members-cp .inside {
+	margin: 0;
+	padding: 0;
+}
 
 /* Tabs wrapper. */
 
 .members-cap-tabs,
 .members-tabs {
-	overflow:   hidden;
+	overflow: hidden;
 	background: #fff;
-	background: linear-gradient( 90deg, #fafafa 0%, #fafafa 20%, #fff 20%, #fff 100% );
+	background: linear-gradient(90deg, #fafafa 0%, #fafafa 20%, #fff 20%, #fff 100%);
 }
 
-@media only screen and ( max-width: 782px ) {
+@media only screen and (max-width: 782px) {
 
 	.members-cap-tabs,
 	.members-tabs {
-		background: linear-gradient( 90deg, #fafafa 0%, #fafafa 48px, #fff 48px, #fff 100% );
+		background: linear-gradient(90deg, #fafafa 0%, #fafafa 48px, #fff 48px, #fff 100%);
 	}
 }
 
-	/* Tab nav. */
+/* Tab nav. */
 
 .members-cap-tabs .members-tab-nav,
 .members-tabs .members-tab-nav {
-	position:         relative;
-	float:            left;
-	list-style:       none;
-	width:            20%;
-	line-height:      1em;
-	margin:           0 0 -1px 0;
-	padding:          0;
+	position: relative;
+	float: left;
+	list-style: none;
+	width: 20%;
+	line-height: 1em;
+	margin: 0 0 -1px 0;
+	padding: 0;
 	background-color: #fafafa;
-	border-right:     1px solid #eee;
-	box-sizing:       border-box;
+	border-right: 1px solid #eee;
+	box-sizing: border-box;
 }
 
 .members-cap-tabs .members-tab-nav li,
 .members-tabs .members-tab-nav li {
-	display:     block;
-	position:    relative;
-	margin:      0;
-	padding:     0;
+	display: block;
+	position: relative;
+	margin: 0;
+	padding: 0;
 	line-height: 20px;
 }
 
 .members-cap-tabs .members-tab-nav li a,
 .members-tabs .members-tab-nav li a {
-	display:         block;
-	margin:          0;
-	padding:         10px;
-	line-height:     20px !important;
+	display: block;
+	margin: 0;
+	padding: 10px;
+	line-height: 20px !important;
 	text-decoration: none;
-	border-bottom:   1px solid #eee;
-	box-shadow:      none;
+	border-bottom: 1px solid #eee;
+	box-shadow: none;
 }
 
 .members-cap-tabs .members-tab-nav li a .dashicons,
 .members-tabs .members-tab-nav li a .dashicons {
-	line-height:  20px;
+	line-height: 20px;
 	margin-right: 3px;
 }
 
 .members-cap-tabs .members-tab-nav li[aria-selected="true"] a,
 .members-tabs .members-tab-nav li[aria-selected="true"] a {
-	position:         relative;
-	font-weight:      bold;
-	color:            #555;
+	position: relative;
+	font-weight: bold;
+	color: #555;
 	background-color: #e0e0e0;
 }
 
-@media only screen and ( max-width: 782px ) {
+@media only screen and (max-width: 782px) {
 
 	.members-cap-tabs .members-tab-nav,
-	.members-tabs .members-tab-nav { width: 48px; }
+	.members-tabs .members-tab-nav {
+		width: 48px;
+	}
 
 	.members-cap-tabs .members-tab-nav li a .dashicons,
 	.members-tabs .members-tab-nav li a .dashicons {
-		width:       24px;
-		height:      24px;
-		font-size:   24px;
+		width: 24px;
+		height: 24px;
+		font-size: 24px;
 		line-height: 24px;
 	}
 
-		.members-tab-nav li .dashicons::before,
-		.members-tab-nav li .dashicons::before {
-			width:  24px;
-			height: 24px;
-		}
+	.members-tab-nav li .dashicons::before,
+	.members-tab-nav li .dashicons::before {
+		width: 24px;
+		height: 24px;
+	}
 
 	.members-tab-nav li .label {
 		overflow: hidden;
 		position: absolute;
-		top:      -1000em;
-		left:     -1000em;
-		width:    1px;
-		height:   1px;
+		top: -1000em;
+		left: -1000em;
+		width: 1px;
+		height: 1px;
 	}
 }
 
@@ -724,16 +729,16 @@
 
 .members-cap-tabs .members-tab-wrap,
 .members-tabs .members-tab-wrap {
-	float:       left;
-	width:       80%;
+	float: left;
+	width: 80%;
 	margin-left: -1px;
 }
 
-@media only screen and ( max-width: 782px ) {
+@media only screen and (max-width: 782px) {
 
 	.members-cap-tabs .members-tab-wrap,
 	.members-tabs .members-tab-wrap {
-		width: calc( 100% - 48px );
+		width: calc(100% - 48px);
 	}
 }
 
@@ -742,72 +747,79 @@
 	border-left: 1px solid #e5e5e5;
 }
 
-.members-roles-select th, .members-roles-select td {
+.members-roles-select th,
+.members-roles-select td {
 	width: 190px;
 	overflow: hidden;
 }
 
 .members-roles-select .check-all-th {
-    	text-align: center;
+	text-align: center;
 }
 
 .members-roles-select .check-all-th label {
-    	padding-left: 5px;
+	padding-left: 5px;
 }
 
 /* === Manager when in the side meta box. === */
 
-@media only screen and ( min-width: 850px ) {
+@media only screen and (min-width: 850px) {
 
-	#side-sortables .members-tabs { background: #fff; }
+	#side-sortables .members-tabs {
+		background: #fff;
+	}
 
-	#side-sortables .members-tabs .members-tab-wrap { width: 100%; }
+	#side-sortables .members-tabs .members-tab-wrap {
+		width: 100%;
+	}
 
 	#side-sortables .members-tabs .members-tab-nav {
 		display: table;
-		width:   100%;
+		width: 100%;
 	}
 
 	#side-sortables .members-tabs .members-tab-nav li {
-		display:      table-cell;
-		text-align:   center;
+		display: table-cell;
+		text-align: center;
 		border-right: 1px solid #eee;
 	}
 
-	#side-sortables .members-tabs .members-tab-nav li:last-of-type { border-right: none; }
+	#side-sortables .members-tabs .members-tab-nav li:last-of-type {
+		border-right: none;
+	}
 
 	#side-sortables .members-tabs .members-tab-nav li a {
-		padding:     10px 0;
+		padding: 10px 0;
 	}
 
 	#side-sortables .members-tabs .members-tab-nav .dashicons {
-		width:       24px;
-		height:      24px;
-		font-size:   24px;
+		width: 24px;
+		height: 24px;
+		font-size: 24px;
 		line-height: 24px;
 	}
 
 	#side-sortables .members-tabs .members-tab-nav .dashicons::before {
-		width:  24px;
+		width: 24px;
 		height: 24px;
 	}
 
 	#side-sortables .members-tabs .members-tab-nav .label {
 		overflow: hidden;
 		position: absolute;
-		top:      -1000em;
-		left:     -1000em;
-		width:    1px;
-		height:   1px;
+		top: -1000em;
+		left: -1000em;
+		width: 1px;
+		height: 1px;
 	}
 }
 
 
 .members-tabs .members-tabs-label {
-	display       : block !important;
-	font-weight   : bold;
-	display       : inline-block;
-	margin-bottom : 4px;
+	display: block !important;
+	font-weight: bold;
+	display: inline-block;
+	margin-bottom: 4px;
 }
 
 .members-tabs .butterbean-control-checkbox .members-tabs-label {
@@ -815,21 +827,21 @@
 }
 
 .members-tabs .members-tabs-description {
-	display       : block;
-	font-style    : italic;
-	margin-top    : 4px;
+	display: block;
+	font-style: italic;
+	margin-top: 4px;
 }
 
-.members-tabs .members-tabs-label + .members-tabs-description {
-	margin-top    : 0;
-	margin-bottom : 4px;
+.members-tabs .members-tabs-label+.members-tabs-description {
+	margin-top: 0;
+	margin-bottom: 4px;
 }
 
 /* Tab tables. */
 
 #tabcapsdiv table {
-	border-right:  none;
-	border-top:    none;
+	border-right: none;
+	border-top: none;
 	border-bottom: none;
 }
 
@@ -844,13 +856,19 @@
 	line-height: 20px;
 }
 
-#tabcapsdiv table td { padding: 9px; }
+#tabcapsdiv table td {
+	padding: 9px;
+}
 
-#tabcapsdiv tbody tr:last-of-type td { border-bottom: none; }
+#tabcapsdiv tbody tr:last-of-type td {
+	border-bottom: none;
+}
 
-#tabcapsdiv tfoot th { border-color: #eee; }
+#tabcapsdiv tfoot th {
+	border-color: #eee;
+}
 
-@media only screen and ( max-width: 782px ) {
+@media only screen and (max-width: 782px) {
 
 	#tabcapsdiv table td,
 	#tabcapsdiv table th {
@@ -862,66 +880,66 @@
 
 .members-roles-select .column-grant,
 .members-roles-select .column-deny {
-	width:      70px !important;
+	width: 70px !important;
 	text-align: left;
-	display:    table-cell !important;
-	clear:      none !important;
+	display: table-cell !important;
+	clear: none !important;
 }
 
 .members-roles-select thead th,
 .members-roles-select tfoot th {
-    	padding: 9px !important;
+	padding: 9px !important;
 }
 
 .members-roles-select .column-grant input,
 .members-roles-select .column-deny input {
-    	margin: 0 5px 0 0;
+	margin: 0 5px 0 0;
 	vertical-align: middle;
 }
 
 .members-roles-select tbody tr:nth-child(even) {
-    	background: #f2f2f2;
+	background: #f2f2f2;
 }
 
 /* Cap grant/deny button. */
 
 .members-cap-tabs button {
 	display: inline;
-	margin:        -4px;
-	line-height:   inherit;
-	padding:       4px 8px;
-	border:        1px solid transparent;
-	background:    transparent;
+	margin: -4px;
+	line-height: inherit;
+	padding: 4px 8px;
+	border: 1px solid transparent;
+	background: transparent;
 	border-radius: 0;
-	outline:       none;
+	outline: none;
 
-		-webkit-transition: all 0.25s ease-out;
-		   -moz-transition: all 0.25s ease-out;
-		      -o-transition:  all 0.25s ease-out;
-			transition: all 0.25s ease-out;
+	-webkit-transition: all 0.25s ease-out;
+	-moz-transition: all 0.25s ease-out;
+	-o-transition: all 0.25s ease-out;
+	transition: all 0.25s ease-out;
 }
 
 .members-cap-tabs button:hover,
 .members-cap-tabs button:focus {
 	border-color: #eee;
-	background:   #fafafa;
-	cursor:       pointer;
+	background: #fafafa;
+	cursor: pointer;
 }
 
 .members-cap-tabs button:active {
-	color:        #0073aa;
+	color: #0073aa;
 	border-color: #0073aa;
 }
 
-.members-cap-tabs button + .dashicons {
-	display:       none;
-	margin-top:    1px;
+.members-cap-tabs button+.dashicons {
+	display: none;
+	margin-top: 1px;
 	margin-bottom: -1px;
-	line-height:   inherit;
+	line-height: inherit;
 }
 
-.members-cap-tabs button:hover + .dashicons,
-.members-cap-tabs button:focus + .dashicons {
+.members-cap-tabs button:hover+.dashicons,
+.members-cap-tabs button:focus+.dashicons {
 	display: inline-block;
 }
 
@@ -929,14 +947,14 @@
 /* New cap highlight */
 
 .members-tab-content .members-highlight {
-	background-color: rgba( 0, 115, 170, 0.05 );
+	background-color: rgba(0, 115, 170, 0.05);
 }
 
 .members-tab-content tbody {
 	-webkit-transition: all 2s ease-in-out;
-	   -moz-transition: all 2s ease-in-out;
-	      -o-transition:  all 2s ease-in-out;
-		transition: all 2s ease-in-out;
+	-moz-transition: all 2s ease-in-out;
+	-o-transition: all 2s ease-in-out;
+	transition: all 2s ease-in-out;
 }
 
 /* ====== Edit Post ====== */
@@ -944,11 +962,11 @@
 /* Role checkboxes in the Content Permissions meta box. */
 
 .members-cp-role-list-wrap {
-	overflow:         auto;
-	min-height:       42px;
-	max-height:       200px;
-	padding:          0 0.9em;
-	border:           solid 1px rgb(223, 223, 223);
+	overflow: auto;
+	min-height: 42px;
+	max-height: 200px;
+	padding: 0 0.9em;
+	border: solid 1px rgb(223, 223, 223);
 	background-color: rgb(253, 253, 253);
 }
 
@@ -1000,4 +1018,18 @@
 .members-footer-promotion-social a {
 	display: block;
 	height: 16px;
+}
+
+/* Reset Roles Button Styles */
+.button.button-warning {
+	background: #dc3232;
+	border-color: #dc3232;
+	color: #fff;
+}
+
+.button.button-warning:hover,
+.button.button-warning:focus {
+	background: #c92424;
+	border-color: #c92424;
+	color: #fff;
 }
