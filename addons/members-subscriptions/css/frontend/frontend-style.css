@@ -1,0 +1,570 @@
+/**
+ * Members Subscriptions - Frontend Styles
+ */
+
+/* General Styles */
+.members-subscription-container {
+    margin: 20px 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+}
+
+.members-subscription-container * {
+    box-sizing: border-box;
+}
+
+.members-subscription-container h2 {
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0 0 20px;
+    padding: 0;
+    color: #333;
+}
+
+.members-subscription-container h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 15px;
+    padding: 0;
+    color: #444;
+}
+
+/* Message Boxes */
+.members-message {
+    padding: 10px 15px;
+    margin: 0 0 20px;
+    border-radius: 3px;
+    border-left: 4px solid;
+}
+
+.members-message-success {
+    background-color: #f0f9eb;
+    border-left-color: #67c23a;
+    color: #5a8d32;
+}
+
+.members-message-error {
+    background-color: #fef0f0;
+    border-left-color: #f56c6c;
+    color: #d63939;
+}
+
+.members-message-info {
+    background-color: #f4f4f5;
+    border-left-color: #909399;
+    color: #606266;
+}
+
+.members-message-warning {
+    background-color: #fdf6ec;
+    border-left-color: #e6a23c;
+    color: #b88230;
+}
+
+/* Subscription Form */
+.members-subscription-form {
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.members-subscription-form-header {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.members-subscription-plans {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.members-subscription-plan {
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 5px;
+    padding: 20px;
+    flex: 1 1 250px;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.members-subscription-plan:hover {
+    border-color: #007cba;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.members-subscription-plan.selected {
+    border-color: #007cba;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.members-subscription-plan-header {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.members-subscription-plan-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 5px;
+}
+
+.members-subscription-plan-price {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 10px 0;
+    color: #007cba;
+}
+
+.members-subscription-plan-billing {
+    font-size: 14px;
+    color: #666;
+}
+
+.members-subscription-plan-features {
+    margin: 15px 0;
+    padding: 0;
+    list-style: none;
+}
+
+.members-subscription-plan-features li {
+    padding: 5px 0 5px 25px;
+    position: relative;
+}
+
+.members-subscription-plan-features li:before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: #46b450;
+    font-weight: bold;
+}
+
+.members-subscription-plan-select-button {
+    background: #f7f7f7;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    color: #555;
+    cursor: pointer;
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: normal;
+    margin: 15px 0 0;
+    padding: 8px 12px;
+    text-align: center;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.members-subscription-plan-select-button:hover,
+.members-subscription-plan-select-button:focus {
+    background: #f0f0f0;
+    border-color: #999;
+    color: #23282d;
+}
+
+.members-subscription-plan.selected .members-subscription-plan-select-button {
+    background: #007cba;
+    border-color: #006ba1;
+    color: #fff;
+}
+
+.members-subscription-plan.selected .members-subscription-plan-select-button:hover {
+    background: #006ba1;
+}
+
+/* Payment Form */
+.members-payment-form {
+    margin-top: 30px;
+    border-top: 1px solid #e5e5e5;
+    padding-top: 30px;
+}
+
+.members-payment-form-title {
+    margin-bottom: 20px;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.members-form-row {
+    margin-bottom: 20px;
+}
+
+.members-form-row:last-child {
+    margin-bottom: 0;
+}
+
+.members-form-label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.members-form-input {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #32373c;
+    background-color: #fff;
+    border: 1px solid #7e8993;
+    border-radius: 3px;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,.07);
+    transition: border-color ease-in-out .15s;
+}
+
+.members-form-input:focus {
+    border-color: #007cba;
+    box-shadow: 0 0 0 1px #007cba;
+    outline: 2px solid transparent;
+}
+
+.members-form-row.error .members-form-input {
+    border-color: #dc3232;
+}
+
+.members-form-error {
+    color: #dc3232;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+.members-form-submit {
+    background: #007cba;
+    border: 1px solid #006ba1;
+    border-radius: 3px;
+    color: #fff;
+    cursor: pointer;
+    display: inline-block;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: normal;
+    margin: 0;
+    padding: 8px 16px;
+    text-align: center;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.members-form-submit:hover,
+.members-form-submit:focus {
+    background: #006ba1;
+    border-color: #00598e;
+    color: #fff;
+}
+
+/* Payment Method Selection */
+.members-payment-methods {
+    margin-bottom: 20px;
+}
+
+.members-payment-method {
+    margin-bottom: 10px;
+    padding: 15px;
+    border: 1px solid #e5e5e5;
+    border-radius: 3px;
+    background: #f9f9f9;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.members-payment-method:hover {
+    background: #f5f5f5;
+}
+
+.members-payment-method.selected {
+    border-color: #007cba;
+    background: #f0f7fb;
+}
+
+.members-payment-method-header {
+    display: flex;
+    align-items: center;
+}
+
+.members-payment-method-radio {
+    margin-right: 10px;
+}
+
+.members-payment-method-logo {
+    margin-right: 10px;
+    height: 24px;
+    width: auto;
+}
+
+.members-payment-method-title {
+    font-weight: 600;
+}
+
+.members-payment-method-content {
+    margin-top: 10px;
+    padding-left: 25px;
+    display: none;
+}
+
+.members-payment-method.selected .members-payment-method-content {
+    display: block;
+}
+
+/* Credit Card Fields */
+.members-card-fields {
+    margin-top: 15px;
+}
+
+.members-card-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.members-card-column {
+    flex: 1;
+}
+
+/* Account Page */
+.members-account {
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.members-account-header {
+    margin-bottom: 20px;
+    border-bottom: 1px solid #e5e5e5;
+    padding-bottom: 15px;
+}
+
+.members-account-tabs {
+    display: flex;
+    margin: 0 0 20px;
+    padding: 0;
+    list-style: none;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.members-account-tab {
+    margin: 0;
+    padding: 0;
+}
+
+.members-account-tab a {
+    display: block;
+    padding: 10px 15px;
+    text-decoration: none;
+    color: #555;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border-bottom: 2px solid transparent;
+}
+
+.members-account-tab a:hover,
+.members-account-tab a:focus {
+    color: #23282d;
+}
+
+.members-account-tab.active a {
+    color: #007cba;
+    border-bottom-color: #007cba;
+}
+
+.members-account-content {
+    padding: 10px 0;
+}
+
+.members-account-tab-content {
+    display: none;
+}
+
+.members-account-tab-content.active {
+    display: block;
+}
+
+/* Subscriptions List */
+.members-subscriptions-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.members-subscriptions-table th,
+.members-subscriptions-table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.members-subscriptions-table th {
+    font-weight: 600;
+    color: #23282d;
+    border-bottom: 2px solid #e5e5e5;
+}
+
+.members-subscription-status {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    line-height: 1;
+    text-align: center;
+    color: #fff;
+}
+
+.members-subscription-status-active {
+    background-color: #46b450;
+}
+
+.members-subscription-status-pending {
+    background-color: #ffba00;
+}
+
+.members-subscription-status-cancelled {
+    background-color: #dc3232;
+}
+
+.members-subscription-status-expired {
+    background-color: #888;
+}
+
+.members-subscription-actions {
+    margin-top: 5px;
+}
+
+.members-subscription-action {
+    display: inline-block;
+    margin-right: 10px;
+    font-size: 13px;
+    color: #0073aa;
+    text-decoration: none;
+}
+
+.members-subscription-action:hover {
+    color: #00a0d2;
+    text-decoration: underline;
+}
+
+.members-subscription-action.cancel {
+    color: #a00;
+}
+
+.members-subscription-action.cancel:hover {
+    color: #dc3232;
+}
+
+/* Transactions List */
+.members-transactions-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.members-transactions-table th,
+.members-transactions-table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.members-transactions-table th {
+    font-weight: 600;
+    color: #23282d;
+    border-bottom: 2px solid #e5e5e5;
+}
+
+.members-transaction-status {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    line-height: 1;
+    text-align: center;
+    color: #fff;
+}
+
+.members-transaction-status-completed {
+    background-color: #46b450;
+}
+
+.members-transaction-status-pending {
+    background-color: #ffba00;
+}
+
+.members-transaction-status-failed {
+    background-color: #dc3232;
+}
+
+.members-transaction-status-refunded {
+    background-color: #00a0d2;
+}
+
+/* Pagination */
+.members-pagination {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.members-pagination .page-numbers {
+    display: inline-block;
+    padding: 5px 10px;
+    margin: 0 2px;
+    border: 1px solid #e5e5e5;
+    border-radius: 3px;
+    background-color: #fff;
+    color: #555;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.members-pagination .page-numbers:hover {
+    background-color: #f5f5f5;
+    color: #23282d;
+}
+
+.members-pagination .page-numbers.current {
+    background-color: #007cba;
+    border-color: #006ba1;
+    color: #fff;
+}
+
+/* Responsive Adjustments */
+@media screen and (max-width: 600px) {
+    .members-subscription-plans {
+        flex-direction: column;
+    }
+    
+    .members-card-row {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .members-account-tabs {
+        flex-direction: column;
+        border-bottom: none;
+    }
+    
+    .members-account-tab a {
+        border-bottom: none;
+        border-left: 2px solid transparent;
+    }
+    
+    .members-account-tab.active a {
+        border-left-color: #007cba;
+        background: #f6f7f7;
+    }
+    
+    .members-subscriptions-table,
+    .members-transactions-table {
+        display: block;
+        overflow-x: auto;
+    }
+}

@@ -1,0 +1,592 @@
+/**
+ * Members Subscriptions - Admin Styles
+ */
+
+/* Dashboard Cards */
+.members-dashboard {
+    margin-bottom: 25px;
+    width: 100%;
+    max-width: 100%;
+    clear: both;
+    overflow: hidden;
+}
+
+.members-stats-cards,
+.members-stats-secondary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 20px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.members-card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    margin: 0;
+    height: 100%;
+}
+
+.members-card-header {
+    padding: 15px 20px 0;
+}
+
+.members-card-header h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #23282d;
+    border-bottom: none;
+    padding: 0;
+}
+
+.members-card-body {
+    padding: 15px 20px;
+    flex-grow: 1;
+}
+
+.members-card-value {
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #2271b1;
+}
+
+.members-card-description {
+    color: #646970;
+    font-size: 13px;
+}
+
+.members-card-footer {
+    padding: 10px 20px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.members-card-footer a {
+    font-size: 13px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+}
+
+.members-product-name {
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 5px;
+}
+
+.members-product-name a {
+    text-decoration: none;
+    color: #2271b1;
+}
+
+.members-product-stats {
+    color: #646970;
+    font-size: 13px;
+}
+
+/* Health indicators */
+.subscription-health {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.subscription-health-good {
+    background-color: #e7f7ea;
+    color: #1d9d4f;
+}
+
+.subscription-health-warning {
+    background-color: #fcf8e3;
+    color: #8a6d3b;
+}
+
+.subscription-health-atrisk {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.subscription-health-critical {
+    background-color: #f5c6cb;
+    color: #721c24;
+}
+
+.subscription-health-desc {
+    display: block;
+    font-size: 12px;
+    color: #646970;
+    margin-top: 4px;
+}
+
+/* Transaction list table styles */
+.column-subscription_id a {
+    text-decoration: none;
+}
+
+.transaction-notes {
+    max-width: 250px;
+    color: #646970;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.transaction-notes.has-notes {
+    font-style: italic;
+}
+
+/* Product list table styles */
+.members-products-wrap .wp-list-table {
+    clear: both;
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.members-products-wrap .wp-list-table th,
+.members-products-wrap .wp-list-table td {
+    padding: 8px 10px;
+}
+
+.members-products-wrap .wp-list-table th {
+    font-weight: 600;
+}
+
+.members-products-wrap .wp-list-table .column-cb {
+    width: 3%;
+}
+
+.members-products-wrap .wp-list-table .column-title {
+    width: 25%;
+}
+
+.members-products-wrap .wp-list-table .column-price,
+.members-products-wrap .wp-list-table .column-subscription {
+    width: 15%;
+}
+
+.members-products-wrap .wp-list-table .column-roles,
+.members-products-wrap .wp-list-table .column-active_members {
+    width: 12%;
+}
+
+.members-products-wrap .wp-list-table .column-total_revenue,
+.members-products-wrap .wp-list-table .column-date {
+    width: 10%;
+}
+
+.product-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.product-actions .button-small {
+    padding: 0 8px 1px;
+    font-size: 12px;
+}
+
+.product-actions .button-primary {
+    background: #2271b1;
+    border-color: #2271b1;
+    color: #fff;
+    font-weight: 500;
+}
+
+/* Recurring and trial indicators */
+.trial-price,
+.recurring,
+.one-time,
+.limited-access {
+    font-size: 12px;
+    color: #646970;
+}
+
+/* Date and time formatting */
+.subscription-date {
+    display: flex;
+    flex-direction: column;
+}
+
+.subscription-date-primary {
+    margin-bottom: 4px;
+}
+
+.subscription-date-secondary {
+    color: #646970;
+    font-size: 12px;
+}
+
+.subscription-countdown {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    margin-left: 5px;
+}
+
+.subscription-countdown.days-7,
+.subscription-countdown.days-14,
+.subscription-countdown.days-30 {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.subscription-countdown.days-60,
+.subscription-countdown.days-90 {
+    background-color: #fcf8e3;
+    color: #8a6d3b;
+}
+
+/* Mobile responsiveness */
+@media screen and (max-width: 782px) {
+    .members-stats-cards,
+    .members-stats-secondary {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .members-card {
+        margin-bottom: 0;
+    }
+    
+    .column-health,
+    .column-next_renewal,
+    .column-role,
+    .column-subscription_id,
+    .column-notes {
+        display: none;
+    }
+    
+    .members-products-wrap .wp-list-table .column-roles,
+    .members-products-wrap .wp-list-table .column-active_members,
+    .members-products-wrap .wp-list-table .column-total_revenue {
+        display: none;
+    }
+    
+    .members-products-wrap .wp-list-table .column-title,
+    .members-products-wrap .wp-list-table .column-price {
+        width: auto;
+    }
+    
+    .members-products-wrap .product-actions .button-small {
+        padding: 6px 10px;
+        font-size: 13px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .members-dashboard {
+        margin-top: 20px;
+    }
+    
+    .members-card-header h2 {
+        font-size: 14px;
+    }
+    
+    .members-card-value {
+        font-size: 24px;
+    }
+    
+    .members-products-wrap .wp-list-table .column-subscription,
+    .members-products-wrap .wp-list-table .column-date {
+        display: none;
+    }
+    
+    .product-actions {
+        flex-direction: column;
+    }
+}
+
+/* General Admin Styles */
+.members-subscriptions-wrap {
+    margin: 10px 20px 0 2px;
+}
+
+.members-subscriptions-wrap .postbox {
+    margin-bottom: 20px;
+}
+
+.members-subscriptions-wrap .postbox h2 {
+    border-bottom: 1px solid #eee;
+    padding: 12px;
+    margin: 0;
+}
+
+.members-subscriptions-wrap .postbox .inside {
+    padding: 12px;
+}
+
+/* List Tables */
+.members-subscriptions-wrap .wp-list-table .column-id {
+    width: 80px;
+}
+
+.members-subscriptions-wrap .wp-list-table .column-status {
+    width: 100px;
+}
+
+.members-subscriptions-wrap .wp-list-table .column-actions {
+    width: 120px;
+    text-align: right;
+}
+
+.members-subscriptions-wrap .wp-list-table .column-amount,
+.members-subscriptions-wrap .wp-list-table .column-gateway {
+    width: 100px;
+}
+
+.members-subscriptions-wrap .wp-list-table .column-date,
+.members-subscriptions-wrap .wp-list-table .column-created,
+.members-subscriptions-wrap .wp-list-table .column-expiration {
+    width: 120px;
+}
+
+/* Status Badges */
+.members-sub-status {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    text-align: center;
+    color: #fff;
+}
+
+.members-sub-status-active {
+    background-color: #46b450;
+}
+
+.members-sub-status-pending {
+    background-color: #ffba00;
+}
+
+.members-sub-status-cancelled {
+    background-color: #dc3232;
+}
+
+.members-sub-status-expired {
+    background-color: #888;
+}
+
+.members-sub-status-suspended {
+    background-color: #00a0d2;
+}
+
+.members-sub-status-trialing {
+    background-color: #826eb4;
+}
+
+/* Transaction Status Badges */
+.members-txn-status {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    text-align: center;
+    color: #fff;
+}
+
+.members-txn-status-completed {
+    background-color: #46b450;
+}
+
+.members-txn-status-pending {
+    background-color: #ffba00;
+}
+
+.members-txn-status-failed {
+    background-color: #dc3232;
+}
+
+.members-txn-status-refunded {
+    background-color: #00a0d2;
+}
+
+/* Action Links */
+.members-sub-actions a {
+    margin-right: 5px;
+    text-decoration: none;
+}
+
+.members-sub-actions a:last-child {
+    margin-right: 0;
+}
+
+.members-sub-actions .delete {
+    color: #a00;
+}
+
+.members-sub-actions .delete:hover {
+    color: #dc3232;
+}
+
+/* Filter Controls */
+.tablenav .subscription-filters,
+.tablenav .transaction-filters {
+    display: inline-block;
+    margin-right: 6px;
+}
+
+.tablenav select.subscription-status-filter,
+.tablenav select.transaction-status-filter,
+.tablenav select.gateway-filter {
+    max-width: 160px;
+}
+
+.tablenav .date-filter {
+    display: inline-block;
+    margin-right: 6px;
+}
+
+.tablenav .date-filter input {
+    width: 120px;
+}
+
+/* Gateway Settings */
+.members-gateway-settings {
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+    margin-top: 20px;
+    padding: 15px;
+}
+
+.members-gateway-settings h3 {
+    border-bottom: 1px solid #eee;
+    margin: 0 0 15px;
+    padding-bottom: 10px;
+}
+
+.members-gateway-settings .form-table th {
+    padding: 15px 10px 15px 0;
+    width: 200px;
+}
+
+.members-gateway-settings .form-table td {
+    padding: 15px 10px;
+}
+
+.members-gateway-settings .form-table input[type="text"],
+.members-gateway-settings .form-table input[type="password"] {
+    width: 400px;
+    max-width: 100%;
+}
+
+.members-gateway-enabled-toggle {
+    display: inline-block;
+    margin-left: 10px;
+}
+
+/* Dashboard Widgets */
+.members-dashboard-widget .inside {
+    margin: 0;
+    padding: 0;
+}
+
+.members-dashboard-widget .members-dashboard-widget-data-table {
+    width: 100%;
+    border-spacing: 0;
+}
+
+.members-dashboard-widget .members-dashboard-widget-data-table td {
+    padding: 8px 12px;
+    border-top: 1px solid #eee;
+}
+
+.members-dashboard-widget .members-dashboard-widget-data-table tr:first-child td {
+    border-top: none;
+}
+
+.members-dashboard-widget .members-dashboard-widget-data-table td.data-value {
+    text-align: right;
+}
+
+/* Metabox Styles */
+.members-subscription-metabox .inside {
+    margin: 0;
+    padding: 0;
+}
+
+.members-subscription-metabox table.form-table {
+    margin: 0;
+}
+
+.members-subscription-metabox table.form-table th {
+    padding: 10px;
+    width: 30%;
+}
+
+.members-subscription-metabox table.form-table td {
+    padding: 10px;
+}
+
+.members-subscription-metabox table.form-table tr {
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.members-subscription-metabox table.form-table tr:last-child {
+    border-bottom: none;
+}
+
+/* Product Metabox */
+.members-product-pricing-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.members-product-pricing-table th,
+.members-product-pricing-table td {
+    padding: 8px;
+    border: 1px solid #e5e5e5;
+}
+
+.members-product-pricing-table th {
+    text-align: left;
+    background: #f9f9f9;
+}
+
+.members-product-pricing-table input[type="text"],
+.members-product-pricing-table input[type="number"] {
+    width: 100%;
+}
+
+/* Roles Section */
+.members-roles-section {
+    margin-bottom: 15px;
+}
+
+.members-roles-list {
+    background: #f9f9f9;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 10px 15px;
+    margin: 8px 0;
+}
+
+.members-roles-list p {
+    margin: 5px 0;
+}
+
+.members-roles-list label {
+    display: block;
+    font-weight: normal;
+    margin: 3px 0;
+}
+
+.members-roles-list input[type="checkbox"] {
+    margin-right: 6px;
+}
