@@ -1,4 +1,11 @@
 # Change Log
+## 3.2.18 - 2025-05-20
+### Fixed
+- Add-on activate toggle display issue on narrow screens
+- Login error redirection
+- Outdated Login form styling
+- Allow changing display name for some Roles
+
 ## 3.2.17 - 2024-12-23
 ### Added
 - Added bulk select/unselect checkboxes on Role capabilities
