@@ -308,10 +308,43 @@ function members_login_redirect( $redirect_to, $request, $user ) {
     if ( ! isset( $_POST['members_redirect_to'] ) ) {
         return $redirect_to;
     } elseif ( empty( $user ) || is_wp_error( $user ) ) {
-        wp_redirect( str_replace('?login=failed', '', $_SERVER['HTTP_REFERER']) . '?login=failed' );
-        die;
+        // Start session if not already started
+        if (!session_id()) {
+            session_start();
+        }
+        
+        // Get the referrer URL
+        $redirect_to = $_SERVER['HTTP_REFERER'];
+        
+        // Remove any existing login and error parameters
+        $redirect_to = remove_query_arg(['login', 'error'], $redirect_to);
+        
+        // Add login=failed parameter
+        $redirect_to = add_query_arg('login', 'failed', $redirect_to);
+        
+        // Add error parameter if it's a 2FA error
+        if (is_wp_error($user) && $user->get_error_code() == 'wfls_twofactor_required') {
+            // Store error in session as backup
+            $_SESSION['members_login_error'] = 'wfls_twofactor_required';
+            
+            // Add to URL params
+            $redirect_to = add_query_arg('error', 'wfls_twofactor_required', $redirect_to);
+        }
+        
+        // wp_redirect() does not return a value, it simply redirects
+        wp_redirect($redirect_to);
+        exit; // Important to exit after redirect
     } else {
-        return str_replace('?login=failed', '', $_SERVER['HTTP_REFERER']);
+        // On success, clear any error session data
+        if (!session_id()) {
+            session_start();
+        }
+        if (isset($_SESSION['members_login_error'])) {
+            unset($_SESSION['members_login_error']);
+        }
+        
+        // On success, remove any error parameters
+        return remove_query_arg(['login', 'error'], $_SERVER['HTTP_REFERER']);
     }
 }
 
@@ -323,10 +356,31 @@ function members_login_redirect( $redirect_to, $request, $user ) {
  * @return string The HTML to output below the login form.
  */
 function members_login_form_bottom() {
+    // Start session if not already started
+    if (!session_id()) {
+        session_start();
+    }
+    
     $output = '<input type="hidden" name="members_redirect_to" value="1" />';
 
     if ( isset( $_GET['login'] ) && $_GET['login'] == 'failed' ) {
-        $output .= '<p class="members-login-notice members-login-error">' . esc_html( 'Invalid username or password.', 'members' ) . '</p>';
+        $error_message = '';
+        
+        // Check URL parameter first, then fall back to session
+        if (
+            (isset($_GET['error']) && $_GET['error'] == 'wfls_twofactor_required') || 
+            (isset($_SESSION['members_login_error']) && $_SESSION['members_login_error'] == 'wfls_twofactor_required')
+        ) {
+            $error_message = esc_html__('Please provide your 2FA code when prompted.', 'members');
+            // Clear the session error after using it
+            if (isset($_SESSION['members_login_error'])) {
+                unset($_SESSION['members_login_error']);
+            }
+        } else {
+            $error_message = esc_html__('Invalid username or password.', 'members');
+        }
+        
+        $output .= '<p class="members-login-notice members-login-error">' . $error_message . '</p>';
     }
 
     return $output;
