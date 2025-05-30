@@ -316,20 +316,20 @@ function members_login_redirect( $redirect_to, $request, $user ) {
         // Get the referrer URL
         $redirect_to = $_SERVER['HTTP_REFERER'];
         
-        // Remove any existing login and error parameters
-        $redirect_to = remove_query_arg(['login', 'error'], $redirect_to);
+        // If we have a WP_Error object, capture the error message
+        if (is_wp_error($user)) {
+            $error_code = $user->get_error_code();
+            
+            if ($error_code == 'incorrect_password' || $error_code == 'invalid_username') {
+                // Don't store specific message, we'll use default in the display function
+                $_SESSION['members_login_error_message'] = 'default';
+            } else {
+                $_SESSION['members_login_error_message'] = $user->get_error_message();
+            }
+        }
         
         // Add login=failed parameter
         $redirect_to = add_query_arg('login', 'failed', $redirect_to);
-        
-        // Add error parameter if it's a 2FA error
-        if (is_wp_error($user) && $user->get_error_code() == 'wfls_twofactor_required') {
-            // Store error in session as backup
-            $_SESSION['members_login_error'] = 'wfls_twofactor_required';
-            
-            // Add to URL params
-            $redirect_to = add_query_arg('error', 'wfls_twofactor_required', $redirect_to);
-        }
         
         // wp_redirect() does not return a value, it simply redirects
         wp_redirect($redirect_to);
@@ -339,12 +339,12 @@ function members_login_redirect( $redirect_to, $request, $user ) {
         if (!session_id()) {
             session_start();
         }
-        if (isset($_SESSION['members_login_error'])) {
-            unset($_SESSION['members_login_error']);
+        if (isset($_SESSION['members_login_error_message'])) {
+            unset($_SESSION['members_login_error_message']);
         }
         
-        // On success, remove any error parameters
-        return remove_query_arg(['login', 'error'], $_SERVER['HTTP_REFERER']);
+        // On success, return to the referrer without the login parameter
+        return remove_query_arg('login', $_SERVER['HTTP_REFERER']);
     }
 }
 
@@ -363,24 +363,37 @@ function members_login_form_bottom() {
     
     $output = '<input type="hidden" name="members_redirect_to" value="1" />';
 
-    if ( isset( $_GET['login'] ) && $_GET['login'] == 'failed' ) {
-        $error_message = '';
-        
-        // Check URL parameter first, then fall back to session
-        if (
-            (isset($_GET['error']) && $_GET['error'] == 'wfls_twofactor_required') || 
-            (isset($_SESSION['members_login_error']) && $_SESSION['members_login_error'] == 'wfls_twofactor_required')
-        ) {
-            $error_message = esc_html__('Please provide your 2FA code when prompted.', 'members');
-            // Clear the session error after using it
-            if (isset($_SESSION['members_login_error'])) {
-                unset($_SESSION['members_login_error']);
+    if ( isset( $_REQUEST['login'] ) && $_REQUEST['login'] == 'failed' ) {
+        // Get error message from session
+        if (isset($_SESSION['members_login_error_message']) && !empty($_SESSION['members_login_error_message'])) {
+            if ($_SESSION['members_login_error_message'] === 'default') {
+                $error_message = __('Invalid username or password.', 'members');
+            } else {
+                $error_message = $_SESSION['members_login_error_message'];
             }
         } else {
-            $error_message = esc_html__('Invalid username or password.', 'members');
+            // Default message if no specific error is found
+            $error_message = __('Invalid username or password.', 'members');
         }
         
-        $output .= '<p class="members-login-notice members-login-error">' . $error_message . '</p>';
+        // Allow specific HTML tags in error messages
+        $allowed_html = array(
+            'a' => array(
+                'href' => array(),
+                'title' => array(),
+                'target' => array(),
+                'rel' => array(),
+                'class' => array(),
+            ),
+            'br' => array(),
+            'em' => array(),
+            'strong' => array(),
+            'p' => array('class' => array()),
+            'span' => array('class' => array()),
+            'div' => array('class' => array()),
+        );
+        
+        $output .= '<p class="members-login-notice members-login-error">' . wp_kses($error_message, $allowed_html) . '</p>';
     }
 
     return $output;
