@@ -365,7 +365,7 @@ function members_login_form_bottom() {
     if ( isset( $_REQUEST['login'] ) && $_REQUEST['login'] == 'failed' ) {
         // Get error message from session
         if (isset($_SESSION['members_login_error_message']) && !empty($_SESSION['members_login_error_message'])) {
-                $error_message = $_SESSION['members_login_error_message'];
+            $error_message = $_SESSION['members_login_error_message'];
         } else {
             // Default message if no specific error is found
             $error_message = __('Invalid username or password.', 'members');
