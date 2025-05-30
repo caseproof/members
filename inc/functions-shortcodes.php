@@ -320,9 +320,9 @@ function members_login_redirect( $redirect_to, $request, $user ) {
         if (is_wp_error($user)) {
             $error_code = $user->get_error_code();
             
-            if ($error_code == 'incorrect_password' || $error_code == 'invalid_username') {
+            if (empty(trim($error_code)) || $error_code == 'incorrect_password' || $error_code == 'invalid_username') {
                 // Don't store specific message, we'll use default in the display function
-                $_SESSION['members_login_error_message'] = 'default';
+                $_SESSION['members_login_error_message'] = __('Invalid username or password.', 'members');
             } else {
                 $_SESSION['members_login_error_message'] = $user->get_error_message();
             }
@@ -331,9 +331,8 @@ function members_login_redirect( $redirect_to, $request, $user ) {
         // Add login=failed parameter
         $redirect_to = add_query_arg('login', 'failed', $redirect_to);
         
-        // wp_redirect() does not return a value, it simply redirects
         wp_redirect($redirect_to);
-        exit; // Important to exit after redirect
+        exit;
     } else {
         // On success, clear any error session data
         if (!session_id()) {
@@ -366,11 +365,7 @@ function members_login_form_bottom() {
     if ( isset( $_REQUEST['login'] ) && $_REQUEST['login'] == 'failed' ) {
         // Get error message from session
         if (isset($_SESSION['members_login_error_message']) && !empty($_SESSION['members_login_error_message'])) {
-            if ($_SESSION['members_login_error_message'] === 'default') {
-                $error_message = __('Invalid username or password.', 'members');
-            } else {
                 $error_message = $_SESSION['members_login_error_message'];
-            }
         } else {
             // Default message if no specific error is found
             $error_message = __('Invalid username or password.', 'members');
