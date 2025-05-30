@@ -308,10 +308,42 @@ function members_login_redirect( $redirect_to, $request, $user ) {
     if ( ! isset( $_POST['members_redirect_to'] ) ) {
         return $redirect_to;
     } elseif ( empty( $user ) || is_wp_error( $user ) ) {
-        wp_redirect( str_replace('?login=failed', '', $_SERVER['HTTP_REFERER']) . '?login=failed' );
-        die;
+        // Start session if not already started
+        if (!session_id()) {
+            session_start();
+        }
+        
+        // Get the referrer URL
+        $redirect_to = $_SERVER['HTTP_REFERER'];
+        
+        // If we have a WP_Error object, capture the error message
+        if (is_wp_error($user)) {
+            $error_code = $user->get_error_code();
+            
+            if (empty(trim($error_code)) || $error_code == 'incorrect_password' || $error_code == 'invalid_username') {
+                // Don't store specific message, we'll use default in the display function
+                $_SESSION['members_login_error_message'] = __('Invalid username or password.', 'members');
+            } else {
+                $_SESSION['members_login_error_message'] = $user->get_error_message();
+            }
+        }
+        
+        // Add login=failed parameter
+        $redirect_to = add_query_arg('login', 'failed', $redirect_to);
+        
+        wp_redirect($redirect_to);
+        exit;
     } else {
-        return str_replace('?login=failed', '', $_SERVER['HTTP_REFERER']);
+        // On success, clear any error session data
+        if (!session_id()) {
+            session_start();
+        }
+        if (isset($_SESSION['members_login_error_message'])) {
+            unset($_SESSION['members_login_error_message']);
+        }
+        
+        // On success, return to the referrer without the login parameter
+        return remove_query_arg('login', $_SERVER['HTTP_REFERER']);
     }
 }
 
@@ -323,10 +355,40 @@ function members_login_redirect( $redirect_to, $request, $user ) {
  * @return string The HTML to output below the login form.
  */
 function members_login_form_bottom() {
+    // Start session if not already started
+    if (!session_id()) {
+        session_start();
+    }
+    
     $output = '<input type="hidden" name="members_redirect_to" value="1" />';
 
-    if ( isset( $_GET['login'] ) && $_GET['login'] == 'failed' ) {
-        $output .= '<p class="members-login-notice members-login-error">' . esc_html( 'Invalid username or password.', 'members' ) . '</p>';
+    if ( isset( $_REQUEST['login'] ) && $_REQUEST['login'] == 'failed' ) {
+        // Get error message from session
+        if (isset($_SESSION['members_login_error_message']) && !empty($_SESSION['members_login_error_message'])) {
+            $error_message = $_SESSION['members_login_error_message'];
+        } else {
+            // Default message if no specific error is found
+            $error_message = __('Invalid username or password.', 'members');
+        }
+        
+        // Allow specific HTML tags in error messages
+        $allowed_html = array(
+            'a' => array(
+                'href' => array(),
+                'title' => array(),
+                'target' => array(),
+                'rel' => array(),
+                'class' => array(),
+            ),
+            'br' => array(),
+            'em' => array(),
+            'strong' => array(),
+            'p' => array('class' => array()),
+            'span' => array('class' => array()),
+            'div' => array('class' => array()),
+        );
+        
+        $output .= '<p class="members-login-notice members-login-error">' . wp_kses($error_message, $allowed_html) . '</p>';
     }
 
     return $output;
