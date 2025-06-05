@@ -180,7 +180,9 @@ class Config
             $config   = [];
             $response = wp_remote_get($this->configFileUrl);
             if (! is_wp_error($response)) {
-                $config = isset($response['body']) ? json_decode($response['body'], true) : $response;
+                $config      = isset($response['body']) ? json_decode($response['body'], true) : $response;
+                $allowedKeys = ['plugins', 'themes']; // Only keep plugins and themes keys.
+                $config      = array_intersect_key($config, array_flip($allowedKeys));
                 set_transient('caseproof_growth_tools_configuration_data_v2', $config, 24 * HOUR_IN_SECONDS);
             }
         }
