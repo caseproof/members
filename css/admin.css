@@ -1001,3 +1001,19 @@
 	display: block;
 	height: 16px;
 }
+
+.members_page_members-settings.rtl {
+	
+	.addon-activate {
+		left: 20px;
+		right: unset;
+	}
+
+	.members-addons .plugin-card {
+		.name,
+		.desc p {
+			margin-left: 0;
+			margin-right: 148px;
+		}
+	}
+}
