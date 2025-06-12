@@ -279,6 +279,9 @@ final class Members_Plugin {
 
 		// Register activation hook.
 		register_activation_hook( __FILE__, array( $this, 'activation' ) );
+
+		// Reset roles
+		add_action( 'wp_ajax_members_reset_roles', array( $this, 'reset_roles' ) );
 	}
 
 	/**
@@ -456,6 +459,58 @@ final class Members_Plugin {
 				'message' => __( 'To protect this block by paid membership or centrally with a content protection rule, add MemberPress.', 'members' )
 			) );
 		}
+	}
+
+	/**
+	 * AJAX handler for resetting roles to default WordPress roles.
+	 *
+	 * @since  3.2.18
+	 * @access public
+	 * @return void
+	 */
+	public function reset_roles() {
+		
+		// Verify nonce
+		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( $_POST['nonce'], 'members_reset_roles' ) ) {
+			wp_send_json_error();
+		}
+
+		// Check user capabilities
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error();
+		}
+
+		// Get all roles
+		$roles = wp_roles()->get_names();
+		
+		// Remove all custom roles
+		foreach ( $roles as $role_name => $role_label ) {
+			if ( ! in_array( $role_name, array( 'administrator', 'editor', 'author', 'contributor', 'subscriber' ) ) ) {
+				remove_role( $role_name );
+			}
+		}
+
+		// Reset default WordPress roles
+		$default_roles = array( 'administrator', 'editor', 'author', 'contributor', 'subscriber' );
+		foreach ( $default_roles as $role_name ) {
+			remove_role( $role_name );
+		}
+
+		// Re-add default roles using WordPress core
+		require_once( ABSPATH . 'wp-admin/includes/schema.php' );
+		populate_roles();
+
+		// Add Members plugin capabilities back to administrator
+		$admin_role = get_role( 'administrator' );
+		if ( $admin_role ) {
+			$admin_role->add_cap( 'restrict_content' ); // Edit per-post content permissions
+			$admin_role->add_cap( 'list_roles'       ); // View roles in backend
+			$admin_role->add_cap( 'create_roles'     ); // Create new roles
+			$admin_role->add_cap( 'delete_roles'     ); // Delete existing roles
+			$admin_role->add_cap( 'edit_roles'       ); // Edit existing roles/caps
+		}
+
+		wp_send_json_success();
 	}
 }
 

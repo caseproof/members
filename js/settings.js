@@ -1,30 +1,30 @@
-jQuery( document ).ready( function($) {
+jQuery(document).ready(function($) {
 
 	/* ====== Plugin Settings ====== */
 
 	// Hide content permissions message and hide protected posts if content permissions is disabled.
-	if ( false === jQuery( '[name="members_settings[content_permissions]"]' ).prop( 'checked' ) ) {
+	if (false === jQuery('[name="members_settings[content_permissions]"]').prop('checked')) {
 
-		jQuery( '[name="members_settings[content_permissions]"]' ).parents( 'tr' ).next( 'tr' ).hide();
+		jQuery('[name="members_settings[content_permissions]"]').parents('tr').next('tr').hide();
 
-		jQuery( '[name="members_settings[private_feed]"]' ).parents( 'tr' ).next( 'tr' ).hide();
+		jQuery('[name="members_settings[private_feed]"]').parents('tr').next('tr').hide();
 	}
 
 	// Hide protected posts from REST API field if content permissions is enabled.
-	if ( false === jQuery( '[name="members_settings[content_permissions]"]' ).prop( 'checked' ) ) {
-		jQuery( '[name="members_settings[hide_posts_rest_api]"]' ).parents( 'tr' ).hide();
+	if (false === jQuery('[name="members_settings[content_permissions]"]').prop('checked')) {
+		jQuery('[name="members_settings[hide_posts_rest_api]"]').parents('tr').hide();
 	}
 
 	// Show above hidden items if feature becomes disabled.
-	jQuery( '[name="members_settings[content_permissions]"], [name="members_settings[private_feed]"], [name="members_settings[private_blog]"]' ).on( 'change',
+	jQuery('[name="members_settings[content_permissions]"], [name="members_settings[private_feed]"], [name="members_settings[private_blog]"]').on('change',
 		function() {
 
-			if ( jQuery( this ).prop( 'checked' ) ) {
+			if (jQuery(this).prop('checked')) {
 
-				jQuery( this ).parents( 'tr' ).next( 'tr' ).show( 'slow' );
+				jQuery(this).parents('tr').next('tr').show('slow');
 			} else {
 
-				jQuery( this ).parents( 'tr' ).next( 'tr' ).hide( 'slow' );
+				jQuery(this).parents('tr').next('tr').hide('slow');
 			}
 		}
 	);
@@ -44,7 +44,7 @@ jQuery( document ).ready( function($) {
 			},
 		})
 		.done(function(response) {
-			if ( response.success == true ) {
+			if (response.success == true) {
 				$this.find('.action-label').html(response.data.action_label);
 				var svg = $this.find('svg');
 				svg.removeClass();
@@ -60,4 +60,48 @@ jQuery( document ).ready( function($) {
 			$this.removeClass('processing');
 		});
 	});
-} );
+
+	// Reset roles functionality
+	jQuery('#members-reset-roles').on('click', function(e) {
+		e.preventDefault();
+
+		if (!confirm(membersResetRoles.confirmMessage)) {
+			return;
+		}
+
+		var $button = jQuery(this);
+		var $spinner = $button.next('.spinner');
+		var $message = jQuery('#members-reset-roles-message');
+
+		$button.prop('disabled', true);
+		$spinner.addClass('is-active');
+		$message.removeClass('notice notice-success notice-error').empty();
+
+		jQuery.ajax({
+			url: membersResetRoles.ajaxurl,
+			type: 'POST',
+			data: {
+				action: 'members_reset_roles',
+				nonce: membersResetRoles.nonce
+			},
+			success: function(response) {
+				if (response.success) {
+					$message.addClass('notice notice-success').html('<p>' + membersResetRoles.successMessage + '</p>');
+					// Reload the page after successful reset
+					setTimeout(function() {
+						window.location.reload();
+					}, 1000);
+				} else {
+					$message.addClass('notice notice-error').html('<p>' + membersResetRoles.errorMessage + '</p>');
+				}
+			},
+			error: function() {
+				$message.addClass('notice notice-error').html('<p>' + membersResetRoles.errorMessage + '</p>');
+			},
+			complete: function() {
+				$button.prop('disabled', false);
+				$spinner.removeClass('is-active');
+			}
+		});
+	});
+});
