@@ -212,9 +212,19 @@ function members_access_check_shortcode( $attr, $content = null ) {
  *
  * @since  0.1.0
  * @access public
+ * @param array $attr Shortcode attributes.
  * @return string
  */
-function members_login_form_shortcode() {
+function members_login_form_shortcode( $attr = [] ) {
+    // Default attributes
+    $defaults = array(
+        'echo'     => false,
+        'redirect' => ( is_ssl() ? 'https://' : 'http://' ) . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'],
+    );
+    
+    // Merge user attributes with defaults
+    $attr = shortcode_atts( $defaults, $attr, 'members_login_form' );
+
     ob_start();
     if ( is_user_logged_in() ) { ?>
         <div class="members-login-form">
@@ -236,7 +246,7 @@ function members_login_form_shortcode() {
         </style>
     <?php } else { ?>
         <div class="members-login-form">
-            <?php echo wp_login_form( array( 'echo' => false ) ); ?>
+            <?php echo wp_login_form( $attr ); ?>
         </div>
         <style>
             .members-login-form * {
@@ -340,6 +350,10 @@ function members_login_redirect( $redirect_to, $request, $user ) {
         }
         if (isset($_SESSION['members_login_error_message'])) {
             unset($_SESSION['members_login_error_message']);
+        }
+
+        if (isset($_POST['redirect_to'])) {
+            return remove_query_arg('login', esc_url($_POST['redirect_to']));
         }
         
         // On success, return to the referrer without the login parameter
