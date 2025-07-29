@@ -2665,6 +2665,10 @@ msgstr ""
 msgid "You are not currently logged in."
 msgstr ""
 
+#: inc/functions-shortcodes.php:221
+msgid "You are already logged in."
+msgstr ""
+
 #: inc/functions-private-site.php:196
 msgid "You do not currently have access to the \"%s\" site. If you believe you should have access, please contact your network administrator."
 msgstr ""
