@@ -346,7 +346,7 @@ function members_login_redirect( $redirect_to, $request, $user ) {
       }
 
       // On success, return to the referrer without the login parameter
-      return remove_query_arg('login', $_SERVER['HTTP_REFERER']);
+      return remove_query_arg('login', $redirect_to);
     }
 }
 
