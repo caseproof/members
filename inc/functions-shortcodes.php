@@ -305,49 +305,46 @@ function members_login_form_shortcode() {
  * @return string                The redirect URL.
  */
 function members_login_redirect( $redirect_to, $request, $user ) {
-    if ( 'POST' !== $_SERVER['REQUEST_METHOD'] ) {
-      return $redirect_to;
+  if ( ! isset( $_POST['members_redirect_to'] ) ) {
+    return $redirect_to;
+  } elseif ( empty( $user ) || is_wp_error( $user ) ) {
+    // Start session if not already started
+    if (!session_id()) {
+      session_start();
     }
 
-    // If we don't have a good user, and login was from shortcode, redirect back to last page.
-    if ( ( empty( $user ) || is_wp_error( $user ) ) && isset( $_POST['members_redirect_to'] ) ) {
-      // Start session if not already started
-      if (!session_id()) {
-        session_start();
+    // Get the referrer URL
+    $redirect_to = $_SERVER['HTTP_REFERER'];
+
+    // If we have a WP_Error object, capture the error message
+    if (is_wp_error($user)) {
+      $error_code = $user->get_error_code();
+
+      if (empty(trim($error_code)) || $error_code == 'incorrect_password' || $error_code == 'invalid_username') {
+        // Don't store specific message, we'll use default in the display function
+        $_SESSION['members_login_error_message'] = __('Invalid username or password.', 'members');
+      } else {
+        $_SESSION['members_login_error_message'] = $user->get_error_message();
       }
-
-      // Get the referrer URL
-      $redirect_to = $_SERVER['HTTP_REFERER'];
-
-      // If we have a WP_Error object, capture the error message
-      if (is_wp_error($user)) {
-        $error_code = $user->get_error_code();
-
-        if (empty(trim($error_code)) || $error_code == 'incorrect_password' || $error_code == 'invalid_username') {
-          // Don't store specific message, we'll use default in the display function
-          $_SESSION['members_login_error_message'] = __('Invalid username or password.', 'members');
-        } else {
-          $_SESSION['members_login_error_message'] = $user->get_error_message();
-        }
-      }
-
-      // Add login=failed parameter
-      $redirect_to = add_query_arg('login', 'failed', $redirect_to);
-
-      wp_redirect($redirect_to);
-      exit;
-    } else {
-      // On success, clear any error session data
-      if (!session_id()) {
-        session_start();
-      }
-      if (isset($_SESSION['members_login_error_message'])) {
-        unset($_SESSION['members_login_error_message']);
-      }
-
-      // On success, return to the referrer without the login parameter
-      return remove_query_arg('login', $redirect_to);
     }
+
+    // Add login=failed parameter
+    $redirect_to = add_query_arg('login', 'failed', $redirect_to);
+
+    wp_redirect($redirect_to);
+    exit;
+  } else {
+    // On success, clear any error session data
+    if (!session_id()) {
+      session_start();
+    }
+    if (isset($_SESSION['members_login_error_message'])) {
+      unset($_SESSION['members_login_error_message']);
+    }
+
+    // On success, return to the referrer without the login parameter
+    return remove_query_arg('login', $redirect_to);
+  }
 }
 
 /**
