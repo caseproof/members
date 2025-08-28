@@ -9,48 +9,41 @@
  */
 
 const { CheckboxControl } = wp.components;
-const { withState }       = wp.compose;
-const { Component }       = wp.element;
 
-class RoleCheckbox extends Component {
+function RoleCheckbox( props ) {
+	const { roleName, roleLabel } = props;
+	let { blockPermissionsRoles = [] } = props.attributes;
 
-	render() {
-		let props = this.props;
+	return (
+		<CheckboxControl
+			disabled={ ! membersBlockPermissions.userCanAssignPermissions }
+			className="members-bp-checklist__control"
+			label={ roleLabel }
+			checked={ blockPermissionsRoles.includes( roleName ) }
+			__nextHasNoMarginBottom={ true }
+			onChange={ ( isChecked ) => {
 
-		const { setState, roleName, roleLabel } = this.props;
+				let newRoles;
 
-		let { blockPermissionsRoles = [] } = this.props.attributes;
+				if ( isChecked && ! blockPermissionsRoles.includes( roleName ) ) {
 
-		return (
-			<CheckboxControl
-				disabled={ ! membersBlockPermissions.userCanAssignPermissions }
-				className="members-bp-checklist__control"
-				label={ roleLabel }
-				checked={ blockPermissionsRoles.includes( roleName ) }
-				onChange={ ( isChecked ) => {
+					newRoles = [ ...blockPermissionsRoles, roleName ];
 
-					if ( isChecked && ! blockPermissionsRoles.includes( roleName ) ) {
+				} else if ( ! isChecked && blockPermissionsRoles.includes( roleName ) ) {
 
-						blockPermissionsRoles.push( roleName );
+					newRoles = blockPermissionsRoles.filter( role => role !== roleName );
 
-						props.setAttributes( {
-							blockPermissionsRoles: blockPermissionsRoles
-						} );
+				} else {
+					// No change needed
+					return;
+				}
 
-					} else if ( ! isChecked && blockPermissionsRoles.includes( roleName ) ) {
-
-						blockPermissionsRoles = blockPermissionsRoles.filter( role => role !== roleName );
-
-						props.setAttributes( {
-							blockPermissionsRoles: blockPermissionsRoles
-						} );
-					}
-
-					setState( { blockPermissionsRoles: blockPermissionsRoles } );
-				} }
-			/>
-		);
-	}
+				props.setAttributes( {
+					blockPermissionsRoles: newRoles
+				} );
+			} }
+		/>
+	);
 }
 
-export default withState()(RoleCheckbox);
+export default RoleCheckbox;
