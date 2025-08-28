@@ -20,6 +20,8 @@ function CapTextInput( props ) {
 			className="members-bp-capability__control"
 			label={ labels.controls.cap.label }
 			value={ blockPermissionsCap }
+			__next40pxDefaultSize={ true }
+			__nextHasNoMarginBottom={ true }
 			onChange={ ( blockPermissionsCap ) => {
 
 				props.setAttributes( {
