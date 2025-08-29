@@ -8,39 +8,28 @@
  * @link      https://members-plugin.com/-block-permissions
  */
 
-const { withState }   = wp.compose;
-const { Component }   = wp.element;
 const { TextControl } = wp.components;
 const { labels }      = membersBlockPermissions;
 
-class CapTextInput extends Component {
+function CapTextInput( props ) {
+	let { blockPermissionsCap } = props.attributes;
 
-	render() {
-		let props = this.props;
+	return (
+		<TextControl
+			disabled={ ! membersBlockPermissions.userCanAssignPermissions }
+			className="members-bp-capability__control"
+			label={ labels.controls.cap.label }
+			value={ blockPermissionsCap }
+			__next40pxDefaultSize={ true }
+			__nextHasNoMarginBottom={ true }
+			onChange={ ( blockPermissionsCap ) => {
 
-		const { setState } = props;
-
-		let { blockPermissionsCap } = props.attributes;
-
-		return (
-			<TextControl
-				disabled={ ! membersBlockPermissions.userCanAssignPermissions }
-				className="members-bp-capability__control"
-				label={ labels.controls.cap.label }
-				value={ blockPermissionsCap }
-				onChange={ ( blockPermissionsCap ) => {
-
-					props.setAttributes( {
-						blockPermissionsCap: blockPermissionsCap
-					} );
-
-					setState( {
-						blockPermissionsCap: blockPermissionsCap
-					} );
-				} }
-			/>
-		);
-	}
+				props.setAttributes( {
+					blockPermissionsCap: blockPermissionsCap
+				} );
+			} }
+		/>
+	);
 }
 
-export default withState()(CapTextInput);
+export default CapTextInput;

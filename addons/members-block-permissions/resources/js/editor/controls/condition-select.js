@@ -33,6 +33,8 @@ class ConditionSelect extends Component {
 				label={ labels.label }
 				value={ blockPermissionsCondition }
 				options={ options }
+				__next40pxDefaultSize={ true }
+				__nextHasNoMarginBottom={ true }
 				onChange={ ( selected ) => {
 
 					let attr = {
