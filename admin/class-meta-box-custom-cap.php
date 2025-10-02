@@ -51,7 +51,7 @@ final class Meta_Box_Custom_Cap {
 	 */
 	public function load() {
 
-		add_action( 'add_meta_boxes', array( $this, 'add_meta_boxes' ) );
+		add_action( 'members_add_role_meta_boxes', array( $this, 'add_meta_boxes' ) );
 	}
 
 	/**

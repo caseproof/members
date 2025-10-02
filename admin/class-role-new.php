@@ -267,8 +267,8 @@ final class Role_New {
 		// Load page hook.
 		do_action( 'members_load_role_new' );
 
-		// Hook for adding in meta boxes for new role creation.
-		do_action( 'members_add_role_meta_boxes', '' );
+		// Hook for adding in meta boxes.
+		do_action( 'members_add_role_meta_boxes', get_current_screen()->id );
 
 		// Add layout screen option.
 		add_screen_option( 'layout_columns', array( 'max' => 2, 'default' => 2 ) );
