@@ -255,8 +255,7 @@ final class Role_Edit {
 		do_action( 'members_load_role_edit' );
 
 		// Hook for adding in meta boxes.
-		do_action( 'add_meta_boxes_' . get_current_screen()->id, $this->role->name );
-		do_action( 'add_meta_boxes',   get_current_screen()->id, $this->role->name );
+		do_action( 'members_add_role_meta_boxes', get_current_screen()->id );
 
 		// Add layout screen option.
 		add_screen_option( 'layout_columns', array( 'max' => 2, 'default' => 2 ) );
