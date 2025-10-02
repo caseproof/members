@@ -254,9 +254,8 @@ final class Role_Edit {
 		// Load page hook.
 		do_action( 'members_load_role_edit' );
 
-		// Hook for adding in meta boxes.
-		do_action( 'add_meta_boxes_' . get_current_screen()->id, $this->role->name );
-		do_action( 'add_meta_boxes',   get_current_screen()->id, $this->role->name );
+		// Hook for adding in meta boxes for role editing.
+		do_action( 'members_add_role_meta_boxes', $this->role->name );
 
 		// Add layout screen option.
 		add_screen_option( 'layout_columns', array( 'max' => 2, 'default' => 2 ) );
@@ -353,7 +352,7 @@ final class Role_Edit {
 
 						<div id="postbox-container-1" class="postbox-container side">
 
-							<?php do_meta_boxes( get_current_screen()->id, 'side', $this->role ); ?>
+							<?php do_meta_boxes( get_current_screen()->id, 'side', $this->role->name ); ?>
 
 						</div><!-- .post-box-container -->
 
