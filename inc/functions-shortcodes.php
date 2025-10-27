@@ -13,7 +13,6 @@
 # Add shortcodes.
 add_action( 'init', 'members_register_shortcodes' );
 
-add_filter( 'login_form_bottom', 'members_login_form_bottom' );
 add_filter( 'login_redirect', 'members_login_redirect', 9, 3 );
 
 /**
@@ -234,10 +233,17 @@ function members_login_form_shortcode() {
                 font-weight: 500;
             }
         </style>
-    <?php } else { ?>
+    <?php } else {
+        // Add the login_form_bottom filter only for this specific Members shortcode form
+        add_filter( 'login_form_bottom', 'members_login_form_bottom' );
+        ?>
         <div class="members-login-form">
             <?php echo wp_login_form( array( 'echo' => false ) ); ?>
         </div>
+        <?php
+        // Remove the filter after rendering to avoid affecting other login forms
+        remove_filter( 'login_form_bottom', 'members_login_form_bottom' );
+        ?>
         <style>
             .members-login-form * {
                 box-sizing: border-box;
@@ -296,6 +302,7 @@ function members_login_form_shortcode() {
 /**
  * Filters the login redirect URL to send failed logins back to the
  * referrer with a query arg of `login=failed`.
+ * Only applies to Members shortcode forms (verified via nonce).
  *
  * @since 3.2.18
  *
@@ -305,7 +312,9 @@ function members_login_form_shortcode() {
  * @return string                The redirect URL.
  */
 function members_login_redirect( $redirect_to, $request, $user ) {
-    if ( ! isset( $_POST['members_redirect_to'] ) ) {
+    // Only handle redirects for Members shortcode forms (verified by nonce)
+    if ( ! isset( $_POST['members_login_nonce'] ) ||
+         ! wp_verify_nonce( $_POST['members_login_nonce'], 'members_login_form' ) ) {
         return $redirect_to;
     } elseif ( empty( $user ) || is_wp_error( $user ) ) {
         // Start session if not already started
@@ -342,13 +351,14 @@ function members_login_redirect( $redirect_to, $request, $user ) {
             unset($_SESSION['members_login_error_message']);
         }
         
-        // On success, return to the referrer without the login parameter
-        return remove_query_arg('login', $_SERVER['HTTP_REFERER']);
+        // On success, return to the redirect_to URL
+        return remove_query_arg('login', $redirect_to);
     }
 }
 
 /**
- * Filters the login form bottom output to add an error message if the login has failed.
+ * Filters the login form bottom output to add a nonce and error message if the login has failed.
+ * This is only added to Members shortcode forms, not all WordPress login forms.
  *
  * @since 3.2.18
  *
@@ -359,8 +369,9 @@ function members_login_form_bottom() {
     if (!session_id()) {
         session_start();
     }
-    
-    $output = '<input type="hidden" name="members_redirect_to" value="1" />';
+
+    // Add a nonce to verify this is a Members shortcode submission
+    $output = wp_nonce_field( 'members_login_form', 'members_login_nonce', true, false );
 
     if ( isset( $_REQUEST['login'] ) && $_REQUEST['login'] == 'failed' ) {
         // Get error message from session
