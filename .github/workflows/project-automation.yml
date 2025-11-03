@@ -30,9 +30,10 @@ jobs:
   #######################################
   issue-to-project:
     name: Move Issue to Project Board
-    runs-on: ubuntu-latest
+    runs-on: runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/extras=s3-cache
     if: ( 'issues' == github.event_name && ( 'opened' == github.event.action || 'reopened' == github.event.action ) )
     steps:
+      - uses: runs-on/action@v2
       - name: Add Issue to Project
         uses: leonsteinhaeuser/project-beta-automations@v2.2.1
         with:
@@ -47,10 +48,11 @@ jobs:
   #######################################
   issue-to-project-quarter:
     name: Assign issue to the current Quarter
-    runs-on: ubuntu-latest
+    runs-on: runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/extras=s3-cache
     needs: issue-to-project
     if: ( 'issues' == github.event_name && ( 'opened' == github.event.action || 'reopened' == github.event.action ) )
     steps:
+      - uses: runs-on/action@v2
       - name: Assign Issue to Project Quarter
         uses: leonsteinhaeuser/project-beta-automations@v2.2.1
         with:
@@ -66,9 +68,10 @@ jobs:
   ####################################
   issue-assign:
     name: Assign Issue to the Primary CODEOWNER
-    runs-on: ubuntu-latest
+    runs-on: runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/extras=s3-cache
     if: ( 'issues' == github.event_name && ( 'opened' == github.event.action || 'reopened' == github.event.action ) && ( null == github.event.issue.assignee ) )
     steps:
+      - uses: runs-on/action@v2
       - name: Checkout
         uses: actions/checkout@v4
 
