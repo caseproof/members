@@ -433,7 +433,7 @@ class Notifications {
       <?php
     }
 
-    if ( members_is_admin_page() ) {
+    if ( members_is_admin_page() && $this->has_access() ) {
       ob_start();
 
       ?>
