@@ -472,4 +472,4 @@ function members_plugin() {
 }
 
 // Let's roll!
-members_plugin();
+add_action('plugins_loaded', 'members_plugin', 1);
