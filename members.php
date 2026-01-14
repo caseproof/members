@@ -102,14 +102,7 @@ final class Members_Plugin {
 	private function __construct() {
 		require_once(__DIR__ . '/vendor-prefixed/autoload.php');
 
-		if (version_compare(phpversion(), '7.4', '>=') && class_exists('\Members\Caseproof\GrowthTools\App')) {
-			$config = new \Members\Caseproof\GrowthTools\Config([
-				'parentMenuSlug' => 'members',
-				'instanceId' => 'members',
-				'menuSlug' => 'members-growth-tools',
-			]);
-			new \Members\Caseproof\GrowthTools\App($config);
-		}
+		add_action( 'plugins_loaded', array( $this, 'init_growth_tools' ) );
 	}
 
 	/**
@@ -279,6 +272,24 @@ final class Members_Plugin {
 
 		// Register activation hook.
 		register_activation_hook( __FILE__, array( $this, 'activation' ) );
+	}
+
+	/**
+	 * Initialize Growth Tools.
+	 *
+	 * @since  3.2.19
+	 * @access public
+	 * @return void
+	 */
+	public function init_growth_tools() {
+		if ( version_compare( phpversion(), '7.4', '>=' ) && class_exists( '\Members\Caseproof\GrowthTools\App' ) ) {
+			$config = new \Members\Caseproof\GrowthTools\Config( [
+				'parentMenuSlug' => 'members',
+				'instanceId'     => 'members',
+				'menuSlug'       => 'members-growth-tools',
+			] );
+			new \Members\Caseproof\GrowthTools\App( $config );
+		}
 	}
 
 	/**
@@ -472,4 +483,4 @@ function members_plugin() {
 }
 
 // Let's roll!
-add_action('plugins_loaded', 'members_plugin', 1);
+members_plugin();
