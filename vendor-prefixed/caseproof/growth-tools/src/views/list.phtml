@@ -35,6 +35,8 @@
                         .then(data => {
                             if (data.hasOwnProperty('addon')) {
                                 plugins[plugin] = 'installed';
+                            } else if (data.success === false && data.data !== '') {
+                                alert(data.data);
                             }
                             loadingPlugins[plugin] = false;
                         });
@@ -51,8 +53,10 @@
                     })
                         .then(response => response.json())
                         .then(data => {
-                            if (data.success == true) {
+                            if (data.success === true) {
                                 plugins[plugin] = 'activated';
+                            } else if (data.success === false && data.data !== '') {
+                                alert(data.data);
                             }
                             loadingPlugins[plugin] = false;
                         });
@@ -70,8 +74,10 @@
                     })
                         .then(response => response.json())
                         .then(data => {
-                            if (data.success == true) {
+                            if (data.success === true) {
                                 plugins[plugin] = 'installed';
+                            } else if (data.success === false && data.data !== '') {
+                                alert(data.data);
                             }
                             loadingPlugins[plugin] = false;
                         });
