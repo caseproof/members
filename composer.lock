@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "c9193f67d89ca95d3682d4562fb2b970",
+    "content-hash": "41fc44e3c7a04738c1215be816c41dfa",
     "packages": [
         {
             "name": "caseproof/growth-tools",
-            "version": "1.5.0",
+            "version": "1.6.0",
             "source": {
                 "type": "git",
                 "url": "git@github.com:caseproof/growth-tools.git",
-                "reference": "1c3e2cba38f56f9be6a3cb54d83f9f2fa20f7f9a"
+                "reference": "2c86e23b4333e518a30bec94ab02d0d049680da0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/caseproof/growth-tools/zipball/1c3e2cba38f56f9be6a3cb54d83f9f2fa20f7f9a",
-                "reference": "1c3e2cba38f56f9be6a3cb54d83f9f2fa20f7f9a",
+                "url": "https://api.github.com/repos/caseproof/growth-tools/zipball/2c86e23b4333e518a30bec94ab02d0d049680da0",
+                "reference": "2c86e23b4333e518a30bec94ab02d0d049680da0",
                 "shasum": ""
             },
             "require-dev": {
@@ -94,10 +94,10 @@
             ],
             "description": "Feature plugin to provide Growth Tools to Caseproof distributed plugins.",
             "support": {
-                "source": "https://github.com/caseproof/growth-tools/tree/1.5.0",
+                "source": "https://github.com/caseproof/growth-tools/tree/1.6.0",
                 "issues": "https://github.com/caseproof/growth-tools/issues"
             },
-            "time": "2025-06-04T09:40:12+00:00"
+            "time": "2026-01-15T11:53:05+00:00"
         }
     ],
     "packages-dev": [

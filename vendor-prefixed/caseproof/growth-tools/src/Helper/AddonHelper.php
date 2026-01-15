@@ -55,7 +55,9 @@ class AddonHelper
 
         // Check for permissions.
         if (! current_user_can('activate_plugins')) {
-            wp_send_json_error();
+            wp_send_json_error(
+                esc_html__('Could not deactivate addon. Please check user permissions.', 'members')
+            );
         }
 
         if ('theme' === $addonType) {
@@ -91,7 +93,9 @@ class AddonHelper
 
         // Check for permissions.
         if (! current_user_can('install_plugins')) {
-            wp_send_json_error();
+            wp_send_json_error(
+                esc_html__('Could not install addon. Please check user permissions.', 'members')
+            );
         }
 
         // Install the addon.
