@@ -1,11 +1,14 @@
 <?php
-
 /**
  * Singleton class for setting up the plugin.
  *
  * @since  1.0.0
  * @access public
  */
+if (!defined('ABSPATH')) {
+    die('You are not allowed to call this page directly.');
+}
+
 final class Members_Role_Hierarchy_Plugin {
 
 	/**

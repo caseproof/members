@@ -26,6 +26,10 @@
  * write to the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
+if (!defined('ABSPATH')) {
+    die('You are not allowed to call this page directly.');
+}
+
 /**
  * Singleton class for setting up the plugin.
  *

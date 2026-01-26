@@ -6,6 +6,9 @@
  * @package Members
  * @subpackage Functions
  */
+if (!defined('ABSPATH')) {
+    die('You are not allowed to call this page directly.');
+}
 
 # Enable the content permissions features.
 add_action( 'after_setup_theme', 'members_enable_content_permissions', 0 );

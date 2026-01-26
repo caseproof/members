@@ -10,9 +10,9 @@
  * @link      https://members-plugin.com/-acf-integration
  * @license   https://www.gnu.org/licenses/gpl-2.0.html GPL-2.0-or-later
  */
-
 namespace Members\Integration\ACF;
 
+defined('ABSPATH') || exit;
 /**
  * Activator class.
  *

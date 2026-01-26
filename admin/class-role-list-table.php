@@ -9,9 +9,9 @@
  * @link       https://members-plugin.com/
  * @license    http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  */
-
 namespace Members\Admin;
 
+defined('ABSPATH') || exit;
 /**
  * Role list table for the roles management page in the admin. Extends the core `WP_List_Table`
  * class in the admin.
