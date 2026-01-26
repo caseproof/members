@@ -8,9 +8,9 @@
  * @link      https://members-plugin.com/-meta-box-integration
  * @license   https://www.gnu.org/licenses/gpl-2.0.html GPL-2.0-or-later
  */
-
 namespace Members\Integration\MetaBox;
 
+defined('ABSPATH') || exit;
 use function members_register_cap;
 use function members_register_cap_group;
 use function members_register_role_group;

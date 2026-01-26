@@ -10,9 +10,9 @@
  * @link      https://members-plugin.com/-category-and-tag-caps
  * @license   https://www.gnu.org/licenses/gpl-2.0.html GPL-2.0-or-later
  */
-
 namespace Members\CategoryAndTagCaps;
 
+defined('ABSPATH') || exit;
 /**
  * Activator class.
  *

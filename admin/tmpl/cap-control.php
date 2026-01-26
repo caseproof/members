@@ -9,6 +9,10 @@
  * @link       https://members-plugin.com/
  * @license    http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  */
+if (!defined('ABSPATH')) {
+    die('You are not allowed to call this page directly.');
+}
+
 ?>
 <tr class="members-cap-checklist">
 	<td class="column-cap">
