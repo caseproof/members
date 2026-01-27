@@ -28,7 +28,7 @@ class Plugin {
 	public function boot() {
 
 		// Load early to check if MetaBox is installed.
-		add_action( 'plugins_loaded', [ $this, 'load' ], -4 );
+		add_action( 'init', [ $this, 'load' ], -4 );
 	}
 
 	/**
