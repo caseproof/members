@@ -11,6 +11,8 @@
 
 namespace Members\Integration\MetaBox;
 
+defined('ABSPATH') || exit;
+
 use function members_register_cap;
 use function members_register_cap_group;
 use function members_register_role_group;
