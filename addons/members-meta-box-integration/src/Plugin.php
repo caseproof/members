@@ -8,11 +8,9 @@
  * @link      https://members-plugin.com/-meta-box-integration
  * @license   https://www.gnu.org/licenses/gpl-2.0.html GPL-2.0-or-later
  */
-
 namespace Members\Integration\MetaBox;
 
 defined('ABSPATH') || exit;
-
 use function members_register_cap;
 use function members_register_cap_group;
 use function members_register_role_group;
@@ -29,16 +27,8 @@ class Plugin {
 	 */
 	public function boot() {
 
-		// Hook the post type filter early (filters can be added before they're used).
-		// This ensures it's ready when the post type is registered on init priority 0.
-		add_filter( 'register_post_type_args', [ $this, 'registerPostTypeArgs' ], 10, 2 );
-
-		// Initialize the rest on init hook with priority 1.
-		// This works for all versions:
-		// - Standalone meta-box-builder: function exists by plugins_loaded, available on init
-		// - meta-box-aio: extensions load on init priority -5, builder on priority 0
-		// - meta-box-lite: modules load similarly on init
-		add_action( 'init', [ $this, 'load' ], 1 );
+		// Load early to check if MetaBox is installed.
+		add_action( 'plugins_loaded', [ $this, 'load' ], 20 );
 	}
 
 	/**
@@ -50,15 +40,12 @@ class Plugin {
 	 */
 	public function load() {
 
-		// Check if Meta Box Builder is active.
-		// Check function first (most reliable), then constant, then post type.
-		$is_active = function_exists( 'mb_builder_load' ) 
-			|| defined( 'MBB_VER' ) 
-			|| get_post_type_object( 'meta-box' );
-
-		if ( ! $is_active ) {
+		if ( ! function_exists( 'mb_builder_load' ) ) {
 			return;
 		}
+
+		// Filter CPT caps for MetaBox.
+		add_filter( 'register_post_type_args', [ $this, 'registerPostTypeArgs' ], 10, 2 );
 
 		// Register custom roles, caps, and groups.
 		add_action( 'members_register_role_groups', [ $this, 'registerRoleGroups' ] );
@@ -147,25 +134,21 @@ class Plugin {
 	 */
 	public function registerCapGroups() {
 
-		// Only run if we have the `meta-box` post type.
-		// Check post type exists - it should be registered by now (init priority 0)
-		// but if not, we'll still register the caps group
-		$type = get_post_type_object( 'meta-box' );
-		
-		if ( $type ) {
+		// Only run if we have the `product` post type.
+		if ( $type = get_post_type_object( 'meta-box' ) ) {
+
 			// Unregister any cap groups already registered for the
 			// plugin's custom post types.
 			members_unregister_cap_group( "type-{$type->name}" );
-		}
 
-		// Register a cap group for the Meta Box plugin.
-		// Register even if post type doesn't exist yet, as caps should still be available
-		members_register_cap_group( 'plugin-meta-box', [
-			'label'    => esc_html__( 'Meta Box', 'members' ),
-			'icon'     => 'dashicons-admin-settings',
-			'priority' => 11,
-			'caps'     => array_keys( meta_box_caps() )
-		] );
+			// Register a cap group for the Meta Box plugin.
+			members_register_cap_group( 'plugin-meta-box', [
+				'label'    => esc_html__( 'Meta Box', 'members' ),
+				'icon'     => 'dashicons-admin-settings',
+				'priority' => 11,
+				'caps'     => array_keys( meta_box_caps() )
+			] );
+		}
 	}
 
 	/**
@@ -181,8 +164,7 @@ class Plugin {
 
 			members_register_cap( $name, [
 				'label'       => $options['label'],
-				'description' => $options['description'],
-				'group'       => 'plugin-meta-box'
+				'description' => $options['description']
 			] );
 		}
 	}
