@@ -27,7 +27,8 @@ class Plugin {
 	 */
 	public function boot() {
 
-		add_action( 'init', [ $this, 'load' ], 10 );
+		// Load early to check if MetaBox is installed.
+		add_action( 'plugins_loaded', [ $this, 'load' ], -4 );
 	}
 
 	/**
@@ -39,7 +40,7 @@ class Plugin {
 	 */
 	public function load() {
 
-		if ( ! $this->is_meta_box_builder_available() ) {
+		if ( ! function_exists( 'mb_builder_load' ) ) {
 			return;
 		}
 
@@ -50,51 +51,6 @@ class Plugin {
 		add_action( 'members_register_role_groups', [ $this, 'registerRoleGroups' ] );
 		add_action( 'members_register_cap_groups',  [ $this, 'registerCapGroups'  ] );
 		add_action( 'members_register_caps',        [ $this, 'registerCaps'       ] );
-	}
-
-	/**
-	 * Checks if Meta Box Builder is available.
-	 * 
-	 * Supports both standalone Meta Box Builder and meta-box-aio.
-	 *
-	 * @since  1.0.0
-	 * @access private
-	 * @return bool
-	 */
-	private function is_meta_box_builder_available() {
-		// Check for standalone Meta Box Builder.
-		if ( function_exists( 'mb_builder_load' ) ) {
-			return true;
-		}
-
-		// Check if meta-box-aio is active and has builder extension enabled.
-		if ( $this->is_meta_box_aio_builder_enabled() ) {
-			return true;
-		}
-
-		if ( post_type_exists( 'meta-box' ) ) {
-			return true;
-		}
-
-		return false;
-	}
-
-	/**
-	 * Checks if meta-box-aio is active and has the builder extension enabled.
-	 *
-	 * @since  1.0.0
-	 * @access private
-	 * @return bool
-	 */
-	private function is_meta_box_aio_builder_enabled() {
-		// Check if meta-box-aio option exists.
-		$option = get_option( 'meta_box_aio' );
-		if ( empty( $option ) || ! isset( $option['extensions'] ) ) {
-			return false;
-		}
-
-		// Check if meta-box-builder extension is enabled.
-		return in_array( 'meta-box-builder', (array) $option['extensions'], true );
 	}
 
 	/**
@@ -178,7 +134,7 @@ class Plugin {
 	 */
 	public function registerCapGroups() {
 
-		// Only run if we have the `meta-box` post type.
+		// Only run if we have the `product` post type.
 		if ( $type = get_post_type_object( 'meta-box' ) ) {
 
 			// Unregister any cap groups already registered for the
