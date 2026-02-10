@@ -17,107 +17,18 @@ on:
       - opened
       - reopened
 
-env:
-  PROJECT_ORG: caseproof
-  PRIMARY_CODEOWNER: "@cartpauj"
-  PROJECT_ID: 8
-  ISSUE_MANAGE_APP_ID: ${{ vars.MC_ISSUE_MANAGE_APP_ID }}
-  ISSUE_MANAGE_APP_PKEY: ${{ secrets.MC_ISSUE_MANAGE_APP_PKEY }}
-
 jobs:
-  #######################################
-  # Add issue to the Development project.
-  #######################################
-  issue-to-project:
-    name: Move Issue to Project Board
+  project-automation:
+    name: Run Project Automation
     runs-on: runs-on=${{ github.run_id }}/runner=2cpu-linux-x64
-    if: ( 'issues' == github.event_name && ( 'opened' == github.event.action || 'reopened' == github.event.action ) )
-    steps:
-      - uses: runs-on/action@v2
-      - name: Generate a token
-        uses: actions/create-github-app-token@v2
-        id: generate-app-token
-        with:
-          app-id: ${{ env.ISSUE_MANAGE_APP_ID }}
-          private-key: ${{ env.ISSUE_MANAGE_APP_PKEY }}
-      - name: Add Issue to Project
-        uses: leonsteinhaeuser/project-beta-automations@v2.2.1
-        with:
-          gh_token: ${{ steps.generate-app-token.outputs.token }}
-          organization: ${{ env.PROJECT_ORG }}
-          project_id: ${{ env.PROJECT_ID }}
-          resource_node_id: ${{ github.event.issue.node_id }}
-          status_value: "Awaiting Triage"
-
-  #######################################
-  # Assign issue to the current quarter.
-  #######################################
-  issue-to-project-quarter:
-    name: Assign issue to the current Quarter
-    runs-on: runs-on=${{ github.run_id }}/runner=2cpu-linux-x64
-    needs: issue-to-project
-    if: ( 'issues' == github.event_name && ( 'opened' == github.event.action || 'reopened' == github.event.action ) )
-    steps:
-      - uses: runs-on/action@v2
-      - name: Generate a token
-        uses: actions/create-github-app-token@v2
-        id: generate-app-token
-        with:
-          app-id: ${{ env.ISSUE_MANAGE_APP_ID }}
-          private-key: ${{ env.ISSUE_MANAGE_APP_PKEY }}
-      - name: Assign Issue to Project Quarter
-        uses: leonsteinhaeuser/project-beta-automations@v2.2.1
-        with:
-          gh_token: ${{ steps.generate-app-token.outputs.token }}
-          organization: ${{ env.PROJECT_ORG }}
-          project_id: ${{ env.PROJECT_ID }}
-          resource_node_id: ${{ github.event.issue.node_id }}
-          operation_mode: custom_field
-          custom_field_values: '[{\"name\": \"Quarter\",\"type\": \"iteration\",\"value\": \"@current\"}]'
-
-  ####################################
-  # Assign to the project's CODEOWNER.
-  ####################################
-  issue-assign:
-    name: Assign Issue to the Primary CODEOWNER
-    runs-on: runs-on=${{ github.run_id }}/runner=2cpu-linux-x64
-    if: ( 'issues' == github.event_name && ( 'opened' == github.event.action || 'reopened' == github.event.action ) && ( null == github.event.issue.assignee ) )
     steps:
       - uses: runs-on/action@v2
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Check CODEOWNERS file existence
-        id: codeowners_file_exists
-        uses: andstor/file-existence-action@v3
+      - name: Run Project Automation Action
+        uses: caseproof/org-admin/.github/actions/project-automation@main
         with:
-          files: .github/CODEOWNERS
-
-      - name: Parse CODEOWNERS file
-        id: codeowner
-        if: steps.codeowners_file_exists.outputs.files_exists == 'true'
-        uses: SvanBoxel/codeowners-action@v1
-        with:
-          path: .github/CODEOWNERS
-
-      - name: Update PRIMARY_CODEOWNER env var
-        if: steps.codeowners_file_exists.outputs.files_exists == 'true'
-        run: |
-          echo PRIMARY_CODEOWNER=$( echo '${{ steps.codeowner.outputs.codeowners }}' | jq -r '."*"[0]' ) >> $GITHUB_ENV
-
-      - name: Strip @ from username
-        run: |
-          echo "PRIMARY_CODEOWNER=${PRIMARY_CODEOWNER#?}" >> $GITHUB_ENV
-
-      - name: Generate a token
-        uses: actions/create-github-app-token@v2
-        id: generate-app-token
-        with:
-          app-id: ${{ env.ISSUE_MANAGE_APP_ID }}
-          private-key: ${{ env.ISSUE_MANAGE_APP_PKEY }}
-      - name: Assign issue
-        uses: pozil/auto-assign-issue@v2
-        with:
-          repo-token: ${{ steps.generate-app-token.outputs.token }}
-          assignees: ${{ env.PRIMARY_CODEOWNER }}
-          failsIfUsersCannotBeAssigned: true
+          issue: ${{ github.event.issue.number }}
+          teams_config: ${{ vars.TEAMS_CONFIG_PATH }}
+          secrets: ${{ toJson(secrets) }}
+          vars: ${{ toJson(vars) }}
