@@ -6,12 +6,13 @@ on:
 jobs:
   tag:
     name: New tag
-    runs-on: ubuntu-latest
+    runs-on: runs-on=${{ github.run_id }}/runner=2cpu-linux-x64
     steps:
-    - uses: actions/checkout@master
-    - name: WordPress Plugin Deploy
-      uses: 10up/action-wordpress-plugin-deploy@stable
-      env:
-        SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
-        SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
-        SLUG: members # optional, remove if GitHub repo name matches SVN slug, including capitalization
+      - uses: runs-on/action@v2
+      - uses: actions/checkout@master
+      - name: WordPress Plugin Deploy
+        uses: 10up/action-wordpress-plugin-deploy@stable
+        env:
+          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+          SLUG: members # optional, remove if GitHub repo name matches SVN slug, including capitalization
