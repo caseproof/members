@@ -4,9 +4,9 @@ Contributors: supercleanse, cartpauj
 Donate link: https://memberpress.com/plans/pricing/?utm_source=members_plugin&utm_medium=link&utm_campaign=readme&utm_content=donation_link
 Tags: permissions, memberships, roles, capabilities, access
 Requires at least: 6.0
-Tested up to: 6.8
+Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 3.2.18
+Stable tag: 3.2.19
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
