@@ -310,24 +310,42 @@ function members_role_has_caps( $role ) {
  * @return int|array
  */
 function members_get_role_user_count( $role = '' ) {
+    // PATCH: Count all users with the role anywhere in their wp_capabilities (not just primary role)
+    // This matches the behavior of wp user list --role=role and fixes undercounting for secondary roles.
+    global $wpdb;
+    $blog_prefix = $wpdb->get_blog_prefix();
+    $meta_key = $blog_prefix . 'capabilities';
 
-	// If the count is not already set for all roles, let's get it.
-	if ( empty( members_plugin()->role_user_count ) ) {
+    // If the count is not already set for all roles, let's get it.
+    if ( empty( members_plugin()->role_user_count ) ) {
+        // Get all usermeta rows for capabilities
+        $results = $wpdb->get_results( $wpdb->prepare(
+            "SELECT user_id, meta_value FROM {$wpdb->usermeta} WHERE meta_key = %s",
+            $meta_key
+        ));
+        $role_counts = array();
+        foreach ( $results as $row ) {
+            $caps = maybe_unserialize( $row->meta_value );
+            if ( is_array( $caps ) ) {
+                foreach ( $caps as $cap_role => $has ) {
+                    if ( $has ) {
+                        if ( ! isset( $role_counts[ $cap_role ] ) ) {
+                            $role_counts[ $cap_role ] = 0;
+                        }
+                        $role_counts[ $cap_role ]++;
+                    }
+                }
+            }
+        }
+        members_plugin()->role_user_count = $role_counts;
+    }
 
-		// Count users.
-		$user_count = count_users();
+    // Return the role count.
+    if ( $role )
+        return isset( members_plugin()->role_user_count[ $role ] ) ? members_plugin()->role_user_count[ $role ] : 0;
 
-		// Loop through the user count by role to get a count of the users with each role.
-		foreach ( $user_count['avail_roles'] as $_role => $count )
-			members_plugin()->role_user_count[ $_role ] = $count;
-	}
-
-	// Return the role count.
-	if ( $role )
-		return isset( members_plugin()->role_user_count[ $role ] ) ? members_plugin()->role_user_count[ $role ] : 0;
-
-	// If the `$role` parameter wasn't passed into this function, return the array of user counts.
-	return members_plugin()->role_user_count;
+    // If the `$role` parameter wasn't passed into this function, return the array of user counts.
+    return members_plugin()->role_user_count;
 }
 
 /**
