@@ -40,9 +40,10 @@ function members_admin_register_scripts() {
 
 	$min = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
 
-	wp_register_script( 'members-settings',  members_plugin()->uri . "js/settings{$min}.js",  array( 'jquery'  ), '', true );
-	wp_register_script( 'members-edit-post', members_plugin()->uri . "js/edit-post{$min}.js", array( 'jquery'  ), '', true );
-	wp_register_script( 'members-edit-role', members_plugin()->uri . "js/edit-role{$min}.js", array( 'postbox', 'wp-util' ), '', true );
+	$settings_ver = filemtime( members_plugin()->dir . "js/settings{$min}.js" );
+	wp_register_script( 'members-settings',  members_plugin()->uri . "js/settings{$min}.js",  array( 'jquery'  ), $settings_ver, true );
+	wp_register_script( 'members-edit-post', members_plugin()->uri . "js/edit-post{$min}.js", array( 'jquery'  ), filemtime( members_plugin()->dir . "js/edit-post{$min}.js" ), true );
+	wp_register_script( 'members-edit-role', members_plugin()->uri . "js/edit-role{$min}.js", array( 'postbox', 'wp-util' ), filemtime( members_plugin()->dir . "js/edit-role{$min}.js" ), true );
 
 	// Localize our script with some text we want to pass in.
 	$i18n = array(
