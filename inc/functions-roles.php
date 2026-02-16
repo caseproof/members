@@ -326,7 +326,10 @@ function members_get_role_user_count( $role = '' ) {
 			)
 		);
 
-		$role_counts = array();
+		// Only count keys that are registered roles, not individual capabilities (e.g. edit_posts).
+		$all_roles   = array_keys( wp_roles()->get_names() );
+		$role_counts = array_fill_keys( $all_roles, 0 );
+
 		if ( is_array( $results ) ) {
 			foreach ( $results as $row ) {
 				// Safe deserialization: prevent object injection (allowed_classes => false).
@@ -334,13 +337,10 @@ function members_get_role_user_count( $role = '' ) {
 				if ( ! is_array( $caps ) ) {
 					continue;
 				}
-				foreach ( $caps as $cap_role => $has ) {
-					if ( $has ) {
-						if ( ! isset( $role_counts[ $cap_role ] ) ) {
-							$role_counts[ $cap_role ] = 0;
-						}
-						$role_counts[ $cap_role ]++;
-					}
+				// Count only granted capabilities that are actual role names.
+				$user_roles = array_intersect_key( array_filter( $caps ), $role_counts );
+				foreach ( array_keys( $user_roles ) as $role_name ) {
+					$role_counts[ $role_name ]++;
 				}
 			}
 		}
