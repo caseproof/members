@@ -2,6 +2,7 @@
 
 namespace Members;
 
+defined('ABSPATH') || exit;
 /**
  * Review admin notice.
  */

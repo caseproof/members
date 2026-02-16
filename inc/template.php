@@ -9,6 +9,9 @@
  * @link       https://members-plugin.com/
  * @license    http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  */
+if (!defined('ABSPATH')) {
+    die('You are not allowed to call this page directly.');
+}
 
 /**
  * Conditional tag to check if a user can view a specific post.  A user cannot view a post if their

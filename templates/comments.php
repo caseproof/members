@@ -7,3 +7,6 @@
  *
  * Theme authors can overwrite this with a `comments-no-access.php` template in their themes.
  */
+if (!defined('ABSPATH')) {
+    die('You are not allowed to call this page directly.');
+}

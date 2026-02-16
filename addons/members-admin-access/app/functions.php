@@ -8,9 +8,9 @@
  * @link      https://members-plugin.com/-admin-access
  * @license   http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  */
-
 namespace Members\AddOns\AdminAccess;
 
+defined('ABSPATH') || exit;
 # Filter whether to show the toolbar.
 add_filter( 'show_admin_bar', __NAMESPACE__ . '\show_admin_bar', 95 );
 

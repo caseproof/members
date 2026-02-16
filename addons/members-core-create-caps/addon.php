@@ -2,6 +2,7 @@
 
 namespace Members\Core_Create_Caps;
 
+defined('ABSPATH') || exit;
 # Register custom caps with Members.
 add_action( 'members_register_caps', __NAMESPACE__ . '\register_caps' );
 

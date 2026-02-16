@@ -9,6 +9,9 @@
  * @link       https://members-plugin.com/
  * @license    http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  */
+if (!defined('ABSPATH')) {
+    die('You are not allowed to call this page directly.');
+}
 
 /**
  * Removes the `level_` prefix from a role level to return the numeric version.

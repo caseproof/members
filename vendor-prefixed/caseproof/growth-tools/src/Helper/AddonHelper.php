@@ -55,7 +55,9 @@ class AddonHelper
 
         // Check for permissions.
         if (! current_user_can('activate_plugins')) {
-            wp_send_json_error();
+            wp_send_json_error(
+                esc_html__('Could not deactivate addon. Please check user permissions.', 'members')
+            );
         }
 
         if ('theme' === $addonType) {
@@ -91,7 +93,9 @@ class AddonHelper
 
         // Check for permissions.
         if (! current_user_can('install_plugins')) {
-            wp_send_json_error();
+            wp_send_json_error(
+                esc_html__('Could not install addon. Please check user permissions.', 'members')
+            );
         }
 
         // Install the addon.
@@ -189,5 +193,37 @@ class AddonHelper
             $addonsStatus[$addonFile] = $status;
         }
         return $addonsStatus;
+    }
+
+    /**
+     * Sort addons based on specified criteria
+     *
+     * @param  array  $addons Array of addons to sort.
+     * @param  string $sortBy Sort criteria (default: 'priority').
+     * @param  string $order  Sort order (default: 'desc' for priority).
+     * @return array Sorted addons array
+     */
+    public static function sortAddons(array $addons, string $sortBy = 'priority', string $order = 'desc'): array
+    {
+        if (empty($addons)) {
+            return $addons;
+        }
+
+        $sortStrategies = [
+            'priority' => static function ($a, $b) {
+                $priorityA = $a['priority'] ?? 0;
+                $priorityB = $b['priority'] ?? 0;
+                return $priorityA <=> $priorityB; // The array is sorted in ascending order Lower priority numbers first.
+            },
+        ];
+
+        $sortStrategy = $sortStrategies[$sortBy] ?? $sortStrategies['priority'];
+
+        uasort($addons, function ($a, $b) use ($sortStrategy, $order) {
+            $result = $sortStrategy($a, $b);
+            return $order === 'asc' ? $result : -$result; // If order is asc, return the result, otherwise return the negative of the result.
+        });
+
+        return $addons;
     }
 }

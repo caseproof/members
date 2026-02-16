@@ -3,7 +3,7 @@
  * Plugin Name: Members
  * Plugin URI:  https://members-plugin.com/
  * Description: A user and role management plugin that puts you in full control of your site's permissions. This plugin allows you to edit your roles and their capabilities, clone existing roles, assign multiple roles per user, block post content, or even make your site completely private.
- * Version:     3.2.17
+ * Version:     3.2.19
  * Requires PHP: 7.4
  * Author:      MemberPress
  * Author URI:  https://memberpress.com
@@ -25,6 +25,10 @@
  * You should have received a copy of the GNU General Public License along with this program; if not,
  * write to the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  */
+
+if (!defined('ABSPATH')) {
+    die('You are not allowed to call this page directly.');
+}
 
 /**
  * Singleton class for setting up the plugin.
@@ -102,14 +106,7 @@ final class Members_Plugin {
 	private function __construct() {
 		require_once(__DIR__ . '/vendor-prefixed/autoload.php');
 
-		if (version_compare(phpversion(), '7.4', '>=') && class_exists('\Members\Caseproof\GrowthTools\App')) {
-			$config = new \Members\Caseproof\GrowthTools\Config([
-				'parentMenuSlug' => 'members',
-				'instanceId' => 'members',
-				'menuSlug' => 'members-growth-tools',
-			]);
-			new \Members\Caseproof\GrowthTools\App($config);
-		}
+		add_action( 'plugins_loaded', array( $this, 'init_growth_tools' ) );
 	}
 
 	/**
@@ -282,6 +279,24 @@ final class Members_Plugin {
 
 		// Reset roles
 		add_action( 'wp_ajax_members_reset_roles', array( $this, 'reset_roles' ) );
+	}
+
+	/**
+	 * Initialize Growth Tools.
+	 *
+	 * @since  3.2.19
+	 * @access public
+	 * @return void
+	 */
+	public function init_growth_tools() {
+		if ( version_compare( phpversion(), '7.4', '>=' ) && class_exists( '\Members\Caseproof\GrowthTools\App' ) ) {
+			$config = new \Members\Caseproof\GrowthTools\Config( [
+				'parentMenuSlug' => 'members',
+				'instanceId'     => 'members',
+				'menuSlug'       => 'members-growth-tools',
+			] );
+			new \Members\Caseproof\GrowthTools\App( $config );
+		}
 	}
 
 	/**

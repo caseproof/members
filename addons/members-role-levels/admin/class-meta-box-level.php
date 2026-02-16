@@ -9,6 +9,9 @@
  * @link       https://members-plugin.com/
  * @license    http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  */
+if (!defined('ABSPATH')) {
+    die('You are not allowed to call this page directly.');
+}
 
 /**
  * Role level meta box.
@@ -54,7 +57,7 @@ final class Members_Role_Levels_Meta_Box_Level {
 	 */
 	public function load() {
 
-		add_action( 'add_meta_boxes', array( $this, 'add_meta_boxes' ) );
+		add_action( 'members_add_role_meta_boxes', array( $this, 'add_meta_boxes' ) );
 	}
 
 	/**

@@ -8,6 +8,9 @@
  * @link      https://members-plugin.com/
  * @license   http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  */
+if (!defined('ABSPATH')) {
+    die('You are not allowed to call this page directly.');
+}
 
 # Register settings on `admin_init`.
 add_action( 'admin_init', 'mrh_register_settings', 15 );

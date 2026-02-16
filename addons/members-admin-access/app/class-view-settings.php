@@ -9,9 +9,9 @@
  * @link      https://members-plugin.com/-admin-access
  * @license   http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  */
-
 namespace Members\AddOns\AdminAccess;
 
+defined('ABSPATH') || exit;
 use Members\Admin\View;
 
 /**

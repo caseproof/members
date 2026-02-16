@@ -9,9 +9,9 @@
  * @link       https://members-plugin.com/
  * @license    http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  */
-
 namespace Members\Admin;
 
+defined('ABSPATH') || exit;
 /**
  * Class to handle the new cap meta box on the edit/new role screen.
  *
@@ -51,7 +51,7 @@ final class Meta_Box_Custom_Cap {
 	 */
 	public function load() {
 
-		add_action( 'add_meta_boxes', array( $this, 'add_meta_boxes' ) );
+		add_action( 'members_add_role_meta_boxes', array( $this, 'add_meta_boxes' ) );
 	}
 
 	/**

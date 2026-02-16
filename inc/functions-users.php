@@ -9,6 +9,9 @@
  * @link       https://members-plugin.com/
  * @license    http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  */
+if (!defined('ABSPATH')) {
+    die('You are not allowed to call this page directly.');
+}
 
 // Filter `user_has_cap` if denied caps should take precedence.
 if ( members_explicitly_deny_caps() ) {

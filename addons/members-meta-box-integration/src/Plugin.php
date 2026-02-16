@@ -8,9 +8,9 @@
  * @link      https://members-plugin.com/-meta-box-integration
  * @license   https://www.gnu.org/licenses/gpl-2.0.html GPL-2.0-or-later
  */
-
 namespace Members\Integration\MetaBox;
 
+defined('ABSPATH') || exit;
 use function members_register_cap;
 use function members_register_cap_group;
 use function members_register_role_group;
@@ -28,7 +28,7 @@ class Plugin {
 	public function boot() {
 
 		// Load early to check if MetaBox is installed.
-		add_action( 'plugins_loaded', [ $this, 'load' ], ~PHP_INT_MAX );
+		add_action( 'init', [ $this, 'load' ], -4 );
 	}
 
 	/**

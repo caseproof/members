@@ -96,6 +96,9 @@ class App
             $addonsStatusData['themes'] ?? []
         );
 
+        // Sort addons.
+        $addons = AddonHelper::sortAddons($addons);
+
         $labels      = [
             'notinstalled' => esc_html(__('Not Installed', 'members')),
             'installed'    => esc_html(__('Installed', 'members')),

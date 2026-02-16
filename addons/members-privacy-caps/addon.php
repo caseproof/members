@@ -2,6 +2,7 @@
 
 namespace Members\AddOns\PrivacyCaps;
 
+defined('ABSPATH') || exit;
 # Add actions and filters.
 add_action( 'members_register_caps', __NAMESPACE__ . '\register_caps'          );
 add_filter( 'map_meta_cap',          __NAMESPACE__ . '\map_meta_cap',    95, 2 );

@@ -8,40 +8,28 @@
  * @link      https://members-plugin.com/-block-permissions
  */
 
-const { withState }       = wp.compose;
-const { Component }       = wp.element;
 const { TextareaControl } = wp.components;
 const labels              = membersBlockPermissions.labels.controls.message;
 
-class MessageTextarea extends Component {
+function MessageTextarea( props ) {
+	let { blockPermissionsMessage } = props.attributes;
 
-	render() {
-		let props = this.props;
+	return (
+		<TextareaControl
+			disabled={ ! membersBlockPermissions.userCanAssignPermissions }
+			className="members-bp-error__control"
+			label={ labels.label }
+			help={ labels.help }
+			value={ blockPermissionsMessage }
+			__nextHasNoMarginBottom={ true }
+			onChange={ ( blockPermissionsMessage ) => {
 
-		const { setState } = this.props;
-
-		let { blockPermissionsMessage } = this.props.attributes;
-
-		return (
-			<TextareaControl
-				disabled={ ! membersBlockPermissions.userCanAssignPermissions }
-				className="members-bp-error__control"
-				label={ labels.label }
-				help={ labels.help }
-				value={ blockPermissionsMessage }
-				onChange={ ( blockPermissionsMessage ) => {
-
-					props.setAttributes( {
-						blockPermissionsMessage: blockPermissionsMessage
-					} );
-
-					setState( {
-						blockPermissionsMessage: blockPermissionsMessage
-					} );
-				} }
-			/>
-		);
-	}
+				props.setAttributes( {
+					blockPermissionsMessage: blockPermissionsMessage
+				} );
+			} }
+		/>
+	);
 }
 
-export default withState()(MessageTextarea);
+export default MessageTextarea;

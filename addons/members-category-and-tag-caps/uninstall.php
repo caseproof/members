@@ -8,6 +8,9 @@
  * @link      https://members-plugin.com/-category-and-tag-caps
  * @license   https://www.gnu.org/licenses/gpl-2.0.html GPL-2.0-or-later
  */
+if (!defined('ABSPATH')) {
+    die('You are not allowed to call this page directly.');
+}
 
 // Make sure we're actually uninstalling the plugin.
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {

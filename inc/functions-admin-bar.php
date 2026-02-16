@@ -9,6 +9,9 @@
  * @link       https://members-plugin.com/
  * @license    http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  */
+if (!defined('ABSPATH')) {
+    die('You are not allowed to call this page directly.');
+}
 
 # Hook the members admin bar to 'wp_before_admin_bar_render'.
 add_action( 'wp_before_admin_bar_render', 'members_admin_bar' );

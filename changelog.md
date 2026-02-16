@@ -1,4 +1,20 @@
 # Change Log
+## 3.2.19 - 2026-02-13
+### Fixed
+- Added support for WF 2FA error messages
+- Missing "you are already logged in" string
+- Add-on page RTL CSS fix
+- Block permissions fixes
+- Fix redirect_to issue on shortcode
+- Other minor bugfixes
+
+## 3.2.18 - 2025-05-20
+### Fixed
+- Add-on activate toggle display issue on narrow screens
+- Login error redirection
+- Outdated Login form styling
+- Allow changing display name for some Roles
+
 ## 3.2.17 - 2024-12-23
 ### Added
 - Added bulk select/unselect checkboxes on Role capabilities

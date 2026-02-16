@@ -36,6 +36,8 @@ class UserStatusSelect extends Component {
 				label={ labels.label }
 				value={ blockPermissionsUserStatus }
 				options={ options }
+				__next40pxDefaultSize={ true }
+				__nextHasNoMarginBottom={ true }
 				onChange={ ( selected ) => {
 					props.setAttributes( { blockPermissionsUserStatus: selected } );
 				} }
