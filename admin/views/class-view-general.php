@@ -37,10 +37,9 @@ class View_General extends View {
 	 * @return void
 	 */
 	public function enqueue() {
-		// Enqueue the settings script with jQuery dependency
-		wp_enqueue_script( 'members-settings', members_plugin()->uri . 'js/settings.js', array( 'jquery' ), filemtime( members_plugin()->dir . 'js/settings.js' ), true );
-		
-		// Add reset roles data to the settings script
+		wp_enqueue_script( 'members-settings' );
+
+		// Add reset roles data to the settings script (must run after enqueue).
 		wp_localize_script( 'members-settings', 'membersResetRoles', array(
 			'nonce' => wp_create_nonce( 'members_reset_roles' ),
 			'ajaxurl' => admin_url( 'admin-ajax.php' ),

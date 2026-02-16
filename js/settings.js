@@ -70,7 +70,7 @@ jQuery(document).ready(function($) {
 		}
 
 		var $button = jQuery(this);
-		var $spinner = $button.next('.spinner');
+		var $spinner = $button.next('.members-reset-spinner');
 		var $message = jQuery('#members-reset-roles-message');
 
 		$button.prop('disabled', true);
