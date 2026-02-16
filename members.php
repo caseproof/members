@@ -486,7 +486,7 @@ final class Members_Plugin {
 	public function reset_roles() {
 		
 		// Verify nonce
-		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( $_POST['nonce'], 'members_reset_roles' ) ) {
+		if ( ! wp_verify_nonce( $_POST['nonce'] ?? null, 'members_reset_roles' ) ) {
 			wp_send_json_error();
 		}
 
