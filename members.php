@@ -485,14 +485,13 @@ final class Members_Plugin {
 
 		$default_roles = array( 'administrator', 'editor', 'author', 'contributor', 'subscriber' );
 
-		// If the site's default role is custom, reset it before we remove roles (avoids invalid default_role option).
-		$current_default_role = get_option( 'default_role', 'subscriber' );
-		if ( ! in_array( $current_default_role, $default_roles, true ) ) {
-			update_option( 'default_role', 'subscriber' );
+		// If the site's default role is custom, reset it to 'subscriber' to avoid an invalid default_role option.
+		$fallback_role = get_option( 'default_role', 'subscriber' );
+		if ( ! in_array( $fallback_role, $default_roles, true ) ) {
+			$fallback_role = 'subscriber';
+			update_option( 'default_role', $fallback_role );
 		}
-
-		// Reassign users who have custom roles to the default role, then remove custom roles.
-		$fallback_role = in_array( $current_default_role, $default_roles, true ) ? $current_default_role : 'subscriber';
+		// Reassign users who have custom roles to the fallback role, then remove custom roles.
 		foreach ( $roles as $role_name => $role_label ) {
 			if ( in_array( $role_name, $default_roles, true ) ) {
 				continue;
