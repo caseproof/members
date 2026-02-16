@@ -482,16 +482,35 @@ final class Members_Plugin {
 
 		// Get all roles
 		$roles = wp_roles()->get_names();
-		
-		// Remove all custom roles
+
+		$default_roles = array( 'administrator', 'editor', 'author', 'contributor', 'subscriber' );
+
+		// If the site's default role is custom, reset it before we remove roles (avoids invalid default_role option).
+		$current_default_role = get_option( 'default_role', 'subscriber' );
+		if ( ! in_array( $current_default_role, $default_roles, true ) ) {
+			update_option( 'default_role', 'subscriber' );
+		}
+
+		// Reassign users who have custom roles to the default role, then remove custom roles.
+		$fallback_role = in_array( $current_default_role, $default_roles, true ) ? $current_default_role : 'subscriber';
 		foreach ( $roles as $role_name => $role_label ) {
-			if ( ! in_array( $role_name, array( 'administrator', 'editor', 'author', 'contributor', 'subscriber' ) ) ) {
-				remove_role( $role_name );
+			if ( in_array( $role_name, $default_roles, true ) ) {
+				continue;
 			}
+			$users = get_users( array( 'role' => $role_name ) );
+			if ( is_array( $users ) ) {
+				foreach ( $users as $user ) {
+					if ( $user->has_cap( $role_name ) && 1 >= count( $user->roles ) ) {
+						$user->set_role( $fallback_role );
+					} elseif ( $user->has_cap( $role_name ) ) {
+						$user->remove_role( $role_name );
+					}
+				}
+			}
+			remove_role( $role_name );
 		}
 
 		// Reset default WordPress roles
-		$default_roles = array( 'administrator', 'editor', 'author', 'contributor', 'subscriber' );
 		foreach ( $default_roles as $role_name ) {
 			remove_role( $role_name );
 		}
@@ -500,14 +519,16 @@ final class Members_Plugin {
 		require_once( ABSPATH . 'wp-admin/includes/schema.php' );
 		populate_roles();
 
-		// Add Members plugin capabilities back to administrator
+		// Add Members plugin capabilities back to administrator (mirror activation logic)
 		$admin_role = get_role( 'administrator' );
 		if ( $admin_role ) {
 			$admin_role->add_cap( 'restrict_content' ); // Edit per-post content permissions
 			$admin_role->add_cap( 'list_roles'       ); // View roles in backend
-			$admin_role->add_cap( 'create_roles'     ); // Create new roles
-			$admin_role->add_cap( 'delete_roles'     ); // Delete existing roles
-			$admin_role->add_cap( 'edit_roles'       ); // Edit existing roles/caps
+			if ( ! is_multisite() ) {
+				$admin_role->add_cap( 'create_roles' ); // Create new roles
+				$admin_role->add_cap( 'delete_roles' ); // Delete existing roles
+				$admin_role->add_cap( 'edit_roles'   ); // Edit existing roles/caps
+			}
 		}
 
 		wp_send_json_success();
