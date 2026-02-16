@@ -348,7 +348,7 @@ class View_General extends View {
 						<button type="button" id="members-reset-roles" class="button button-warning">
 							<?php esc_html_e( 'Reset to Default WordPress Roles', 'members' ); ?>
 						</button>
-						<span class="spinner" style="float: none; margin-top: 0;"></span>
+						<span class="spinner members-reset-spinner"></span>
 						<div id="members-reset-roles-message"></div>
 					</td>
 				</tr>

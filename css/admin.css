@@ -1033,3 +1033,9 @@
 	border-color: #c92424;
 	color: #fff;
 }
+
+.members-reset-spinner {
+	float: none;
+	margin-top: 0;
+	vertical-align: middle;
+}
