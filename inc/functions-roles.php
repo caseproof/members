@@ -310,21 +310,47 @@ function members_role_has_caps( $role ) {
  * @return int|array
  */
 function members_get_role_user_count( $role = '' ) {
+	global $wpdb;
 
 	// If the count is not already set for all roles, let's get it.
 	if ( empty( members_plugin()->role_user_count ) ) {
+		// Count all users with each role anywhere in wp_capabilities (primary or secondary).
+		// Matches wp user list --role= behavior and fixes undercounting when multiple roles are enabled.
+		$blog_prefix = $wpdb->get_blog_prefix();
+		$meta_key    = $blog_prefix . 'capabilities';
 
-		// Count users.
-		$user_count = count_users();
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT user_id, meta_value FROM {$wpdb->usermeta} WHERE meta_key = %s",
+				$meta_key
+			)
+		);
 
-		// Loop through the user count by role to get a count of the users with each role.
-		foreach ( $user_count['avail_roles'] as $_role => $count )
-			members_plugin()->role_user_count[ $_role ] = $count;
+		$role_counts = array();
+		if ( is_array( $results ) ) {
+			foreach ( $results as $row ) {
+				// Safe deserialization: prevent object injection (allowed_classes => false).
+				$caps = @unserialize( trim( $row->meta_value ), array( 'allowed_classes' => false ) );
+				if ( ! is_array( $caps ) ) {
+					continue;
+				}
+				foreach ( $caps as $cap_role => $has ) {
+					if ( $has ) {
+						if ( ! isset( $role_counts[ $cap_role ] ) ) {
+							$role_counts[ $cap_role ] = 0;
+						}
+						$role_counts[ $cap_role ]++;
+					}
+				}
+			}
+		}
+		members_plugin()->role_user_count = $role_counts;
 	}
 
 	// Return the role count.
-	if ( $role )
+	if ( $role ) {
 		return isset( members_plugin()->role_user_count[ $role ] ) ? members_plugin()->role_user_count[ $role ] : 0;
+	}
 
 	// If the `$role` parameter wasn't passed into this function, return the array of user counts.
 	return members_plugin()->role_user_count;
