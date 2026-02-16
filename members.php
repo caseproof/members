@@ -512,11 +512,11 @@ final class Members_Plugin {
 				continue;
 			}
 			$users = get_users( array( 'role' => $role_name ) );
-			if ( is_array( $users ) ) {
+			if ( ! empty( $users ) ) {
 				foreach ( $users as $user ) {
-					if ( $user->has_cap( $role_name ) && 1 >= count( $user->roles ) ) {
+					if ( count( $user->roles ) <= 1 ) {
 						$user->set_role( $fallback_role );
-					} elseif ( $user->has_cap( $role_name ) ) {
+					} else {
 						$user->remove_role( $role_name );
 					}
 				}
