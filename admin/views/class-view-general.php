@@ -43,8 +43,8 @@ class View_General extends View {
 		wp_localize_script( 'members-settings', 'membersResetRoles', array(
 			'nonce' => wp_create_nonce( 'members_reset_roles' ),
 			'ajaxurl' => admin_url( 'admin-ajax.php' ),
-			'confirmMessage' => esc_html__( 'Are you sure you want to reset all roles to their default WordPress settings? This action cannot be undone.', 'members' ),
-			'successMessage' => esc_html__( 'Roles have been reset to their default WordPress settings.', 'members' ),
+			'confirmMessage' => esc_html__( 'This will remove only roles created with Members and reset the five WordPress roles (Administrator, Editor, Author, Contributor, Subscriber) to their default capabilities. Roles from other plugins (e.g. WooCommerce) will not be removed. Continue?', 'members' ),
+			'successMessage' => esc_html__( 'Members-created roles have been removed and WordPress roles have been reset to their defaults.', 'members' ),
 			'errorMessage' => esc_html__( 'An error occurred while resetting roles. Please try again.', 'members' )
 		) );
 	}
@@ -349,6 +349,9 @@ class View_General extends View {
 						</button>
 						<span class="spinner members-reset-spinner"></span>
 						<div id="members-reset-roles-message"></div>
+						<p class="description">
+							<?php esc_html_e( 'Removes only roles created with Members and resets the five WordPress roles to their default capabilities. Roles from other plugins (e.g. WooCommerce) are not removed.', 'members' ); ?>
+						</p>
 					</td>
 				</tr>
 			</table>

@@ -478,6 +478,8 @@ final class Members_Plugin {
 
 	/**
 	 * AJAX handler for resetting roles to default WordPress roles.
+	 * Only removes roles that were created via the Members UI; roles from other
+	 * plugins (e.g. WooCommerce) are left unchanged.
 	 *
 	 * @since  3.2.18
 	 * @access public
@@ -495,20 +497,26 @@ final class Members_Plugin {
 			wp_send_json_error();
 		}
 
-		// Get all roles
-		$roles = wp_roles()->get_names();
-
 		$default_roles = array( 'administrator', 'editor', 'author', 'contributor', 'subscriber' );
 
-		// If the site's default role is custom, reset it to 'subscriber' to avoid an invalid default_role option.
-		$fallback_role = get_option( 'default_role', 'subscriber' );
-		if ( ! in_array( $fallback_role, $default_roles, true ) ) {
-			$fallback_role = 'subscriber';
-			update_option( 'default_role', $fallback_role );
+		$members_created_roles = members_get_created_roles();
+		$default_role_option   = get_option( 'default_role', 'subscriber' );
+
+		// If the site default is a Members-created role we're about to remove, set default to subscriber.
+		if ( in_array( $default_role_option, $members_created_roles, true ) ) {
+			update_option( 'default_role', 'subscriber' );
+			$default_role_option = 'subscriber';
 		}
-		// Reassign users who have custom roles to the fallback role, then remove custom roles.
-		foreach ( $roles as $role_name => $role_label ) {
+
+		// Fallback for reassigning users: use site default if it's a core role, else subscriber.
+		$fallback_role = in_array( $default_role_option, $default_roles, true ) ? $default_role_option : 'subscriber';
+
+		foreach ( $members_created_roles as $role_name ) {
 			if ( in_array( $role_name, $default_roles, true ) ) {
+				continue;
+			}
+			if ( ! get_role( $role_name ) ) {
+				members_untrack_created_role( $role_name );
 				continue;
 			}
 			$users = get_users( array( 'role' => $role_name ) );
@@ -522,9 +530,10 @@ final class Members_Plugin {
 				}
 			}
 			remove_role( $role_name );
+			members_untrack_created_role( $role_name );
 		}
 
-		// Reset default WordPress roles
+		// Reset the five default WordPress roles to core defaults.
 		foreach ( $default_roles as $role_name ) {
 			remove_role( $role_name );
 		}
