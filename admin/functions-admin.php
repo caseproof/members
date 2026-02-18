@@ -113,6 +113,9 @@ function members_delete_role( $role ) {
 	// Remove the role.
 	remove_role( $role );
 
+	// Stop tracking as Members-created (if it was).
+	members_untrack_created_role( $role );
+
 	// Remove the role from the role factory.
 	members_unregister_role( $role );
 }

@@ -474,3 +474,63 @@ function members_get_role_users_url( $role ) {
 
 	return admin_url( add_query_arg( 'role', $role, 'users.php' ) );
 }
+
+/**
+ * Returns role slugs that were created via the Members plugin UI (Add New Role).
+ * Used by the reset-roles feature to only remove Members-created roles.
+ *
+ * @since  3.2.18
+ * @access public
+ * @return array
+ */
+function members_get_created_roles() {
+
+	$roles = get_option( 'members_created_roles', array() );
+
+	return is_array( $roles ) ? $roles : array();
+}
+
+/**
+ * Tracks a role as created by the Members plugin UI.
+ *
+ * @since  3.2.18
+ * @access public
+ * @param  string $role Role slug.
+ * @return void
+ */
+function members_track_created_role( $role ) {
+
+	if ( ! $role || ! is_string( $role ) ) {
+		return;
+	}
+
+	$roles = members_get_created_roles();
+
+	if ( ! in_array( $role, $roles, true ) ) {
+		$roles[] = $role;
+		update_option( 'members_created_roles', $roles );
+	}
+}
+
+/**
+ * Stops tracking a role as created by Members (e.g. after delete or reset).
+ *
+ * @since  3.2.18
+ * @access public
+ * @param  string $role Role slug.
+ * @return void
+ */
+function members_untrack_created_role( $role ) {
+
+	if ( ! $role || ! is_string( $role ) ) {
+		return;
+	}
+
+	$roles = members_get_created_roles();
+	$key   = array_search( $role, $roles, true );
+
+	if ( false !== $key ) {
+		array_splice( $roles, $key, 1 );
+		update_option( 'members_created_roles', $roles );
+	}
+}

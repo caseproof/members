@@ -230,6 +230,9 @@ final class Role_New {
 
 				add_role( $this->role, $this->role_name, $new_caps );
 
+				// Track as created by Members UI (for reset-roles to only remove these).
+				members_track_created_role( $this->role );
+
 				// Action hook for when a role is added.
 				do_action( 'members_role_added', $this->role );
 
