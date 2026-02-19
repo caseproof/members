@@ -276,6 +276,9 @@ final class Members_Plugin {
 
 		// Register activation hook.
 		register_activation_hook( __FILE__, array( $this, 'activation' ) );
+
+		// Reset roles
+		add_action( 'wp_ajax_members_reset_roles', array( $this, 'reset_roles' ) );
 	}
 
 	/**
@@ -471,6 +474,87 @@ final class Members_Plugin {
 				'message' => __( 'To protect this block by paid membership or centrally with a content protection rule, add MemberPress.', 'members' )
 			) );
 		}
+	}
+
+	/**
+	 * AJAX handler for resetting roles to default WordPress roles.
+	 * Only removes roles that were created via the Members UI; roles from other
+	 * plugins (e.g. WooCommerce) are left unchanged.
+	 *
+	 * @since  3.2.18
+	 * @access public
+	 * @return void
+	 */
+	public function reset_roles() {
+		
+		// Verify nonce
+		if ( ! wp_verify_nonce( $_POST['nonce'] ?? null, 'members_reset_roles' ) ) {
+			wp_send_json_error();
+		}
+
+		// Check user capabilities
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error();
+		}
+
+		$default_roles = array( 'administrator', 'editor', 'author', 'contributor', 'subscriber' );
+
+		$members_created_roles = members_get_created_roles();
+		$default_role_option   = get_option( 'default_role', 'subscriber' );
+
+		// If the site default is a Members-created role we're about to remove, set default to subscriber.
+		if ( in_array( $default_role_option, $members_created_roles, true ) ) {
+			update_option( 'default_role', 'subscriber' );
+			$default_role_option = 'subscriber';
+		}
+
+		// Fallback for reassigning users: use site default if it's a core role, else subscriber.
+		$fallback_role = in_array( $default_role_option, $default_roles, true ) ? $default_role_option : 'subscriber';
+
+		foreach ( $members_created_roles as $role_name ) {
+			if ( in_array( $role_name, $default_roles, true ) ) {
+				continue;
+			}
+			if ( ! get_role( $role_name ) ) {
+				members_untrack_created_role( $role_name );
+				continue;
+			}
+			$users = get_users( array( 'role' => $role_name ) );
+			if ( ! empty( $users ) ) {
+				foreach ( $users as $user ) {
+					if ( count( $user->roles ) <= 1 ) {
+						$user->set_role( $fallback_role );
+					} else {
+						$user->remove_role( $role_name );
+					}
+				}
+			}
+			remove_role( $role_name );
+			members_untrack_created_role( $role_name );
+		}
+
+		// Reset the five default WordPress roles to core defaults.
+		foreach ( $default_roles as $role_name ) {
+			remove_role( $role_name );
+		}
+
+		// Re-add default roles using WordPress core
+		require_once( ABSPATH . 'wp-admin/includes/schema.php' );
+		populate_roles();
+
+		// Add Members plugin capabilities back to administrator (mirror activation logic)
+		$admin_role = get_role( 'administrator' );
+		if ( $admin_role ) {
+			$admin_role->add_cap( 'restrict_content' ); // Edit per-post content permissions
+			$admin_role->add_cap( 'list_roles'       ); // View roles in backend
+			if ( ! is_multisite() ) {
+				$admin_role->add_cap( 'create_roles' ); // Create new roles
+				$admin_role->add_cap( 'delete_roles' ); // Delete existing roles
+				$admin_role->add_cap( 'edit_roles'   ); // Edit existing roles/caps
+			}
+		}
+
+		wp_send_json_success();
 	}
 }
 

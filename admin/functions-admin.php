@@ -40,9 +40,17 @@ function members_admin_register_scripts() {
 
 	$min = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
 
-	wp_register_script( 'members-settings',  members_plugin()->uri . "js/settings{$min}.js",  array( 'jquery'  ), '', true );
-	wp_register_script( 'members-edit-post', members_plugin()->uri . "js/edit-post{$min}.js", array( 'jquery'  ), '', true );
-	wp_register_script( 'members-edit-role', members_plugin()->uri . "js/edit-role{$min}.js", array( 'postbox', 'wp-util' ), '', true );
+	$settings_file = members_plugin()->dir . "js/settings{$min}.js";
+	$settings_ver  = file_exists( $settings_file ) ? filemtime( $settings_file ) : false;
+	wp_register_script( 'members-settings', members_plugin()->uri . "js/settings{$min}.js", array( 'jquery' ), $settings_ver, true );
+
+	$edit_post_file = members_plugin()->dir . "js/edit-post{$min}.js";
+	$edit_post_ver  = file_exists( $edit_post_file ) ? filemtime( $edit_post_file ) : false;
+	wp_register_script( 'members-edit-post', members_plugin()->uri . "js/edit-post{$min}.js", array( 'jquery' ), $edit_post_ver, true );
+
+	$edit_role_file = members_plugin()->dir . "js/edit-role{$min}.js";
+	$edit_role_ver  = file_exists( $edit_role_file ) ? filemtime( $edit_role_file ) : false;
+	wp_register_script( 'members-edit-role', members_plugin()->uri . "js/edit-role{$min}.js", array( 'postbox', 'wp-util' ), $edit_role_ver, true );
 
 	// Localize our script with some text we want to pass in.
 	$i18n = array(
@@ -111,6 +119,9 @@ function members_delete_role( $role ) {
 
 	// Remove the role.
 	remove_role( $role );
+
+	// Stop tracking as Members-created (if it was).
+	members_untrack_created_role( $role );
 
 	// Remove the role from the role factory.
 	members_unregister_role( $role );

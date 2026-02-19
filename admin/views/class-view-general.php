@@ -37,8 +37,16 @@ class View_General extends View {
 	 * @return void
 	 */
 	public function enqueue() {
-
 		wp_enqueue_script( 'members-settings' );
+
+		// Add reset roles data to the settings script (must run after enqueue).
+		wp_localize_script( 'members-settings', 'membersResetRoles', array(
+			'nonce' => wp_create_nonce( 'members_reset_roles' ),
+			'ajaxurl' => admin_url( 'admin-ajax.php' ),
+			'confirmMessage' => esc_html__( 'This will remove only roles created with Members and reset the five WordPress roles (Administrator, Editor, Author, Contributor, Subscriber) to their default capabilities. Roles from other plugins (e.g. WooCommerce) will not be removed. Continue?', 'members' ),
+			'successMessage' => esc_html__( 'Members-created roles have been removed and WordPress roles have been reset to their defaults.', 'members' ),
+			'errorMessage' => esc_html__( 'An error occurred while resetting roles. Please try again.', 'members' )
+		) );
 	}
 
 	/**
@@ -125,7 +133,6 @@ class View_General extends View {
 	 * @return void
 	 */
 	public function section_roles_caps() { ?>
-
 		<p class="description">
 			<?php esc_html_e( 'Your roles and capabilities will not revert back to their previous settings after deactivating or uninstalling this plugin, so use this feature wisely.', 'members' ); ?>
 		</p>
@@ -329,13 +336,28 @@ class View_General extends View {
 	 * @return void
 	 */
 	public function template() { ?>
-
 		<form method="post" action="options.php">
 			<?php settings_fields( 'members_settings' ); ?>
 			<?php do_settings_sections( 'members-settings' ); ?>
+			
+			<table class="form-table" role="presentation">
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Reset Roles', 'members' ); ?></th>
+					<td>
+						<button type="button" id="members-reset-roles" class="button button-warning">
+							<?php esc_html_e( 'Reset to Default WordPress Roles', 'members' ); ?>
+						</button>
+						<span class="spinner members-reset-spinner"></span>
+						<div id="members-reset-roles-message"></div>
+						<p class="description">
+							<?php esc_html_e( 'Removes only roles created with Members and resets the five WordPress roles to their default capabilities. Roles from other plugins (e.g. WooCommerce) are not removed.', 'members' ); ?>
+						</p>
+					</td>
+				</tr>
+			</table>
+
 			<?php submit_button( esc_attr__( 'Update Settings', 'members' ), 'primary' ); ?>
 		</form>
-
 	<?php }
 
 	/**
