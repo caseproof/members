@@ -213,6 +213,9 @@ final class Members_Plugin {
 		// Load template files.
 		require_once( $this->dir . 'inc/template.php' );
 
+		// Administrator Rescue (Magic Link) – must load outside is_admin() for wp-login.php.
+		require_once( $this->dir . 'inc/class-rescue-magic-link.php' );
+
 		// Notifications (cannot be included inside is_admin() check or cron won't work)
 		require_once( $this->dir . 'admin/class-notifications.php' );
 
@@ -270,6 +273,9 @@ final class Members_Plugin {
 	private function setup_actions() {
 		// Migrate add-ons
 		add_action( 'plugins_loaded', array( $this, 'migrate_addons' ) );
+
+		// Administrator Rescue (Magic Link)
+		add_action( 'plugins_loaded', array( $this, 'init_rescue_magic_link' ), 5 );
 
 		// MemberPress info in block editor
 		add_action( 'enqueue_block_editor_assets', array( $this, 'block_editor_assets' ) );
@@ -432,6 +438,20 @@ final class Members_Plugin {
 		}
 
 		update_option( 'members_addons_migrated', true );
+	}
+
+	/**
+	 * Initialize Administrator Rescue (Magic Link).
+	 * Only runs when the class was loaded (i.e. PHP version requirement met).
+	 *
+	 * @since  3.2.20
+	 * @access public
+	 * @return void
+	 */
+	public function init_rescue_magic_link() {
+		if ( class_exists( 'Members_Rescue_Magic_Link' ) ) {
+			new Members_Rescue_Magic_Link();
+		}
 	}
 
 	/**
