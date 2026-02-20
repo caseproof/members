@@ -66,17 +66,10 @@ class Members_Rescue_Magic_Link {
 			exit;
 		}
 
-		$message = '';
-		$check_email    = isset( $_GET['check_email'] ) ? sanitize_text_field( wp_unslash( $_GET['check_email'] ) ) : '';
-		$members_rescue = isset( $_GET['members_rescue'] ) ? sanitize_text_field( wp_unslash( $_GET['members_rescue'] ) ) : '';
+		$message   = '';
+		$check_email = isset( $_GET['check_email'] ) ? sanitize_text_field( wp_unslash( $_GET['check_email'] ) ) : '';
 		if ( '' !== $check_email ) {
 			$message = '<p class="message">' . __( 'If an administrator account exists for that email, we sent a rescue link. Please check your inbox.', 'members' ) . '</p>';
-		} elseif ( '' !== $members_rescue ) {
-			if ( 'success' === $members_rescue ) {
-				$message = '<p class="message">' . __( 'Your Administrator access has been restored. You can log in below.', 'members' ) . '</p>';
-			} elseif ( 'invalid' === $members_rescue ) {
-				$message = '<p class="message" id="login_error">' . __( 'That rescue link is invalid or has expired. Please request a new one.', 'members' ) . '</p>';
-			}
 		}
 
 		if ( empty( $message ) ) {
