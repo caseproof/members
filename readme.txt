@@ -28,6 +28,7 @@ Members allows you to set permissions to restrict content on your site by provid
 * **Shortcodes:** Shortcodes to control who has access to content.
 * **Widgets:** A login form widget and users widget to show in your theme's sidebars.
 * **Private Site:** You can make your site and its feed completely private if you want.
+* **Administrator Rescue (Magic Link):** If you lose access to the WordPress admin (e.g. after editing roles), you can request a secure, time-limited link by email to restore your Administrator role and Members capabilities—no support ticket or database access required.
 * **Plugin Integration:** Members is highly recommended by other WordPress developers. Many existing plugins integrate their custom roles and capabilities directly into it.
 
 #### Seamless MemberPress Integration
@@ -102,11 +103,25 @@ If, for some reason, you do have the administrator role and the role manager is 
 
 If you have a multisite installation, only Super Admins can create, edit, and delete roles by default. This is a security measure to make sure that you absolutely trust sub-site admins to make these types of changes to roles. If you're certain you want to allow this, add the Create Roles (`create_roles`), Edit Roles (`edit_roles`), and/or Delete Roles (`delete_roles`) capabilities to the role on each sub-site where you want to allow this.
 
+### How do I use Administrator Rescue (Magic Link) if I'm locked out?
+
+If you can no longer access the WordPress admin (for example, after changing your role or capabilities), you can restore your Administrator access yourself:
+
+1. Go to your site's login page: `yoursite.com/wp-login.php`
+2. In the address bar, add `?action=members_rescue` so the URL is: `yoursite.com/wp-login.php?action=members_rescue`
+3. Enter the email address of an account that has (or had) the built-in **Administrator** role.
+4. Click "Send Rescue Link". If that account is eligible, a secure link will be sent to that email (you may need to check spam).
+5. Open the link from the email within 15 minutes. Your Administrator role and Members capabilities will be restored, and you'll be redirected to the login page to sign in.
+
+Only users with the built-in WordPress "Administrator" role can use this feature; custom or cloned roles are not eligible. The link expires after 15 minutes and is limited to a few attempts per IP to prevent abuse.
+
 ### Help! I've locked myself out of my site!
 
-Please read the documentation for the plugin before actually using it, especially a plugin that controls permissions for your site. We cannot stress this enough.  This is a powerful plugin that allows you to make direct changes to roles and capabilities in the database.
+Please read the documentation for the plugin before actually using it, especially a plugin that controls permissions for your site. We cannot stress this enough. This is a powerful plugin that allows you to make direct changes to roles and capabilities in the database.
 
-You'll need to stop by our [support forums](https://wordpress.org/support/plugin/members/) to see if we can get your site fixed if you managed to lock yourself out. We know that this can be a bit can be a bit scary, but it's not that tough to fix with a little custom code. Your web-host may also be able to restore your site from a recent backup, but we only recommend doing this as a last-resort option, as restoring from a backup could mean losing work you have done, or members that have been added between the backup date, and now.
+If you have the built-in Administrator role but lost access to the admin (e.g. after editing roles), try the **Administrator Rescue (Magic Link)** first: go to `yoursite.com/wp-login.php?action=members_rescue`, enter your admin email, and use the link we send you to restore access.
+
+If that doesn't apply or didn't work, stop by our [support forums](https://wordpress.org/support/plugin/members/) to see if we can help. Your web host may also be able to restore your site from a recent backup, but we only recommend that as a last resort, as it could mean losing work or members added since the backup.
 
 == Screenshots ==
 
