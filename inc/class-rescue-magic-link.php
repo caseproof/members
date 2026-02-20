@@ -106,8 +106,7 @@ class Members_Rescue_Magic_Link {
 		}
 
 		$ip_key   = self::RATE_LIMIT_TRANSIENT_PREFIX . $this->get_client_ip_hash();
-		$attempts = (int) get_transient( $ip_key );
-		$attempts = $attempts + 1;
+		$attempts = (int) get_transient( $ip_key ) + 1;
 		set_transient( $ip_key, $attempts, self::RATE_LIMIT_WINDOW_SECONDS );
 		if ( $attempts > self::RATE_LIMIT_MAX_ATTEMPTS ) {
 			// Limit exceeded: same generic message, no email. Transient expires in 15 minutes.
@@ -220,7 +219,7 @@ class Members_Rescue_Magic_Link {
 			exit;
 		}
 
-		$this->repair_admin_role( $uid );
+		$this->repair_admin_role( $user );
 
 		do_action( 'members_after_rescue', $uid );
 
@@ -230,8 +229,10 @@ class Members_Rescue_Magic_Link {
 
 	/**
 	 * Ensures default WordPress roles exist, adds Members admin caps, and assigns user to Administrator.
+	 *
+	 * @param WP_User $user User object.
 	 */
-	private function repair_admin_role( $user_id ) {
+	private function repair_admin_role( WP_User $user ) {
 		if ( ! function_exists( 'populate_roles' ) ) {
 			require_once ABSPATH . 'wp-admin/includes/schema.php';
 		}
@@ -239,10 +240,7 @@ class Members_Rescue_Magic_Link {
 
 		$this->add_members_administrator_caps();
 
-		$user = get_user_by( 'id', $user_id );
-		if ( $user ) {
-			$user->set_role( 'administrator' );
-		}
+		$user->set_role( 'administrator' );
 	}
 
 	/**
