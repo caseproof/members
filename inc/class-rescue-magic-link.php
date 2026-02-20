@@ -229,7 +229,7 @@ class Members_Rescue_Magic_Link {
 	}
 
 	/**
-	 * Repairs default WordPress roles, adds Members admin caps, and assigns user to Administrator.
+	 * Ensures default WordPress roles exist, adds Members admin caps, and assigns user to Administrator.
 	 */
 	private function repair_admin_role( $user_id ) {
 		if ( ! function_exists( 'populate_roles' ) ) {
@@ -269,7 +269,7 @@ class Members_Rescue_Magic_Link {
 	 * @return string
 	 */
 	private function generate_token( $user_id ) {
-		$window = (int) floor( time() / ( 15 * 60 ) );
+		$window = (int) floor( time() / self::RATE_LIMIT_WINDOW_SECONDS );
 		return $this->generate_token_for_window( $user_id, $window );
 	}
 
@@ -282,7 +282,7 @@ class Members_Rescue_Magic_Link {
 	 * @return bool
 	 */
 	private function verify_token( $user_id, $token ) {
-		$window = (int) floor( time() / ( 15 * 60 ) );
+		$window = (int) floor( time() / self::RATE_LIMIT_WINDOW_SECONDS );
 		return hash_equals( $this->generate_token_for_window( $user_id, $window ), $token );
 	}
 
