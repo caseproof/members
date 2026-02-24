@@ -61,6 +61,10 @@ The Members plugin is a massive project with 1,000s of lines of code to maintain
 * [Adding MemberPress](https://memberpress.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=readme&utm_content=memberpress_upgrade).
 * [Rating the plugin](https://wordpress.org/support/plugin/members/reviews/?filter=5#new-post).
 
+### Documentation ###
+
+[Read the full documentation](https://members-plugin.com/docs/)
+
 ### Support
 
 If you need plugin support from us, you can [visit our support page](https://wordpress.org/support/plugin/members/).
