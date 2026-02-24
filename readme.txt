@@ -109,17 +109,17 @@ If you can no longer access the WordPress admin (for example, after changing you
 
 1. Go to your site's login page: `yoursite.com/wp-login.php`
 2. In the address bar, add `?action=members_rescue` so the URL is: `yoursite.com/wp-login.php?action=members_rescue`
-3. Enter the email address of an account that has (or had) the built-in **Administrator** role.
+3. Enter the email address of an account that has (or had) the built-in **Administrator** role, or is a **Super Admin** (multisite).
 4. Click "Send Rescue Link". If that account is eligible, a secure link will be sent to that email (you may need to check spam).
 5. Open the link from the email within 15 minutes. Your Administrator role and Members capabilities will be restored, and you'll be redirected to the login page to sign in.
 
-Only users with the built-in WordPress "Administrator" role can use this feature; custom or cloned roles are not eligible. The link expires after 15 minutes and is limited to a few attempts per IP to prevent abuse.
+Only users with the built-in WordPress "Administrator" role (or Super Admins on multisite) can use this feature; custom or cloned roles are not eligible. The link expires after 15 minutes and is limited to a few attempts per IP to prevent abuse.
 
 ### Help! I've locked myself out of my site!
 
 Please read the documentation for the plugin before actually using it, especially a plugin that controls permissions for your site. We cannot stress this enough. This is a powerful plugin that allows you to make direct changes to roles and capabilities in the database.
 
-If you have the built-in Administrator role but lost access to the admin (e.g. after editing roles), try the **Administrator Rescue (Magic Link)** first: go to `yoursite.com/wp-login.php?action=members_rescue`, enter your admin email, and use the link we send you to restore access.
+If you have the built-in Administrator role (or are a Super Admin on multisite) but lost access to the admin (e.g. after editing roles), try the **Administrator Rescue (Magic Link)** first: go to `yoursite.com/wp-login.php?action=members_rescue`, enter your admin email, and use the link we send you to restore access.
 
 If that doesn't apply or didn't work, stop by our [support forums](https://wordpress.org/support/plugin/members/) to see if we can help. Your web host may also be able to restore your site from a recent backup, but we only recommend that as a last resort, as it could mean losing work or members added since the backup.
 

@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Security measures:
  * - CSRF: Nonce on request form, verified on submit.
  * - Rate limit: 3 attempts per 15 minutes per IP (transient).
- * - Eligibility: Only built-in role `administrator`; cloned/custom roles excluded.
+ * - Eligibility: Only built-in role `administrator`, or Super Admin on multisite; cloned/custom roles excluded.
  * - Generic responses: Same message for invalid email, no user, not eligible, or rate limited (no enumeration).
  * - Token: HMAC-SHA256 with wp_salt('auth'), 15-min window; valid for current window only.
  * - Timing-safe token check: hash_equals() to prevent timing attacks.
@@ -156,15 +156,21 @@ class Members_Rescue_Magic_Link {
 
 	/**
 	 * Whether the user is eligible for rescue.
-	 * Only the built-in WordPress role `administrator` is allowed. Cloned or custom
-	 * roles (e.g. "Administrator (clone)") are excluded so they cannot use rescue.
+	 * Only the built-in WordPress role `administrator` is allowed (or Super Admin on multisite).
+	 * Cloned or custom roles (e.g. "Administrator (clone)") are excluded so they cannot use rescue.
 	 *
 	 * @param WP_User $user User object.
 	 * @return bool
 	 */
 	private function user_can_be_rescued( WP_User $user ) {
 		$roles = (array) $user->roles;
-		return in_array( 'administrator', $roles, true );
+		if ( in_array( 'administrator', $roles, true ) ) {
+			return true;
+		}
+		if ( is_multisite() && is_super_admin( $user->ID ) ) {
+			return true;
+		}
+		return false;
 	}
 
 	/**
