@@ -314,37 +314,45 @@ function members_get_role_user_count( $role = '' ) {
 
 	// If the count is not already set for all roles, let's get it.
 	if ( empty( members_plugin()->role_user_count ) ) {
-		// Count all users with each role anywhere in wp_capabilities (primary or secondary).
-		// Matches wp user list --role= behavior and fixes undercounting when multiple roles are enabled.
-		$blog_prefix = $wpdb->get_blog_prefix();
-		$meta_key    = $blog_prefix . 'capabilities';
+		// Use transient cache to avoid full table scan + PHP processing on every request.
+		$cached = get_transient( members_role_user_count_transient_key() );
+		if ( is_array( $cached ) ) {
+			members_plugin()->role_user_count = $cached;
+		} else {
+			// Count all users with each role anywhere in wp_capabilities (primary or secondary).
+			// Matches wp user list --role= behavior and fixes undercounting when multiple roles are enabled.
+			$blog_prefix = $wpdb->get_blog_prefix();
+			$meta_key    = $blog_prefix . 'capabilities';
 
-		$results = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT user_id, meta_value FROM {$wpdb->usermeta} WHERE meta_key = %s",
-				$meta_key
-			)
-		);
+			// Fetch only meta_value to reduce memory (no stdClass objects per row).
+			$results = $wpdb->get_col(
+				$wpdb->prepare(
+					"SELECT meta_value FROM {$wpdb->usermeta} WHERE meta_key = %s",
+					$meta_key
+				)
+			);
 
-		// Only count keys that are registered roles, not individual capabilities (e.g. edit_posts).
-		$all_roles   = array_keys( wp_roles()->get_names() );
-		$role_counts = array_fill_keys( $all_roles, 0 );
+			// Only count keys that are registered roles, not individual capabilities (e.g. edit_posts).
+			$all_roles   = array_keys( wp_roles()->get_names() );
+			$role_counts = array_fill_keys( $all_roles, 0 );
 
-		if ( is_array( $results ) ) {
-			foreach ( $results as $row ) {
-				// Safe deserialization: prevent object injection (allowed_classes => false).
-				$caps = @unserialize( trim( $row->meta_value ), array( 'allowed_classes' => false ) );
-				if ( ! is_array( $caps ) ) {
-					continue;
-				}
-				// Count only granted capabilities that are actual role names.
-				$user_roles = array_intersect_key( array_filter( $caps ), $role_counts );
-				foreach ( array_keys( $user_roles ) as $role_name ) {
-					$role_counts[ $role_name ]++;
+			if ( is_array( $results ) ) {
+				foreach ( $results as $meta_value ) {
+					// Safe deserialization: prevent object injection (allowed_classes => false).
+					$caps = @unserialize( trim( $meta_value ), array( 'allowed_classes' => false ) );
+					if ( ! is_array( $caps ) ) {
+						continue;
+					}
+					// Count only granted capabilities that are actual role names.
+					$user_roles = array_intersect_key( array_filter( $caps ), $role_counts );
+					foreach ( array_keys( $user_roles ) as $role_name ) {
+						$role_counts[ $role_name ]++;
+					}
 				}
 			}
+			members_plugin()->role_user_count = $role_counts;
+			set_transient( members_role_user_count_transient_key(), $role_counts, 12 * HOUR_IN_SECONDS );
 		}
-		members_plugin()->role_user_count = $role_counts;
 	}
 
 	// Return the role count.
@@ -355,6 +363,31 @@ function members_get_role_user_count( $role = '' ) {
 	// If the `$role` parameter wasn't passed into this function, return the array of user counts.
 	return members_plugin()->role_user_count;
 }
+
+/**
+ * Returns the transient key used for caching role user counts (multisite-safe).
+ *
+ * @since  3.2.20
+ * @return string
+ */
+function members_role_user_count_transient_key() {
+	return 'members_role_user_count_' . get_current_blog_id();
+}
+
+/**
+ * Clears the cached role user counts. Called when user roles change.
+ *
+ * @since  3.2.20
+ */
+function members_clear_role_user_count_cache() {
+	delete_transient( members_role_user_count_transient_key() );
+}
+
+add_action( 'set_user_role', 'members_clear_role_user_count_cache' );
+add_action( 'add_user_role', 'members_clear_role_user_count_cache' );
+add_action( 'remove_user_role', 'members_clear_role_user_count_cache' );
+add_action( 'add_user_to_blog', 'members_clear_role_user_count_cache' );
+add_action( 'remove_user_from_blog', 'members_clear_role_user_count_cache' );
 
 /**
  * Returns the number of granted capabilities that a role has.
