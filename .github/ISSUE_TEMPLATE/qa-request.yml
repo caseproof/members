@@ -1,0 +1,78 @@
+name: QA Testing Request
+description: "Request QA testing or review of a feature, bug fix, or open pull request"
+title: "[QA] {{Request Title}}"
+type: "Tests & QA"
+assignees:
+  - monikarao-12
+  - thomasplevy
+projects:
+  - caseproof/6 # Internal Projects
+body:
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How urgent is this testing request?
+      options:
+        - Critical (blocking release)
+        - High (needed soon)
+        - Medium (standard priority)
+        - Low (when time permits)
+    validations:
+      required: true
+
+  - type: input
+    id: pull-request
+    attributes:
+      label: Pull Request Link
+      description: Link to the PR that requires testing (if applicable)
+      placeholder: "https://github.com/org/repo/pull/###"
+
+  - type: textarea
+    id: feature-description
+    attributes:
+      label: Feature/Change Description
+      description: Clearly describe what feature or changes need to be tested
+
+  - type: textarea
+    id: testing-scenarios
+    attributes:
+      label: Testing Scenarios
+      description: Specific testing scenarios or areas that need to be covered
+      placeholder: |
+        - Test user registration flow
+        - Verify email notifications are sent
+        - Test edge cases with invalid input
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Expected Behavior / Acceptance Criteria
+      description: What should happen? What constitutes a successful test?
+      placeholder: |
+        - Users should be able to register with valid email
+        - Confirmation email should arrive within 5 minutes
+        - Error messages should display for invalid input
+
+  - type: textarea
+    id: known-issues
+    attributes:
+      label: Known Issues or Concerns
+      description: Are there any known issues, edge cases, or areas of concern to be aware of?
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any other information that would help with testing
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment Details
+      description: Where should this be tested? Any specific setup requirements?
+      placeholder: |
+        - Test on staging environment: https://staging.example.com
+        - Credentials: [provide separately via 1password or onetimesecret.com]
+        - Browser requirements: Chrome, Firefox, Safari
+
