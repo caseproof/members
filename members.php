@@ -25,6 +25,16 @@
  * You should have received a copy of the GNU General Public License along with this program; if not,
  * write to the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  */
+/**
+ * * * * * * * * * * * * * * * * * * * * * * *
+ *                                           *
+ * Reporting a Security Vulnerability        *
+ *                                           *
+ * Please disclose any security issues or    *
+ * vulnerabilities to security@caseproof.com *
+ *                                           *
+ * * * * * * * * * * * * * * * * * * * * * * *
+ */
 
 if (!defined('ABSPATH')) {
     die('You are not allowed to call this page directly.');
