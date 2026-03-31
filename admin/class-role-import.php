@@ -254,12 +254,6 @@ final class Role_Import {
 				remove_role( $original_slug );
 				add_role( $original_slug, $label, $sanitized_caps );
 
-				if ( isset( $wp_roles->roles[ $original_slug ] ) ) {
-					$wp_roles->roles[ $original_slug ]['name'] = $label;
-					$wp_roles->role_names[ $original_slug ]    = $label;
-					update_option( $wp_roles->role_key, $wp_roles->roles );
-				}
-
 				members_unregister_role( $original_slug );
 				members_register_role( $original_slug, array(
 					'label' => $label,
