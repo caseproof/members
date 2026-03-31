@@ -287,7 +287,8 @@ final class Role_Import {
 		if ( ! empty( $preview_data['import_settings'] ) && ! empty( $preview_data['settings'] ) && is_array( $preview_data['settings'] ) ) {
 
 			$defaults     = members_get_default_settings();
-			$new_settings = array();
+			$existing     = get_option( 'members_settings', array() );
+			$new_settings = is_array( $existing ) ? $existing : array();
 
 			foreach ( $defaults as $key => $default_value ) {
 
@@ -304,8 +305,6 @@ final class Role_Import {
 					} else {
 						$new_settings[ $key ] = $value;
 					}
-				} else {
-					$new_settings[ $key ] = $default_value;
 				}
 			}
 
