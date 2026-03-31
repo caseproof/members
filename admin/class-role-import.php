@@ -279,6 +279,11 @@ final class Role_Import {
 
 			} else if ( 'import' === $action_for_role ) {
 
+				if ( members_role_exists( $original_slug ) ) {
+					$skipped++;
+					continue;
+				}
+
 				add_role( $original_slug, $label, $sanitized_caps );
 
 				members_register_role( $original_slug, array(
