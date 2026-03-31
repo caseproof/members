@@ -297,7 +297,7 @@ final class Role_Import {
 					} elseif ( is_string( $default_value ) ) {
 						$new_settings[ $key ] = sanitize_text_field( (string) $value );
 					} else {
-						$new_settings[ $key ] = $value;
+						$new_settings[ $key ] = map_deep( $value, 'sanitize_text_field' );
 					}
 				}
 			}
