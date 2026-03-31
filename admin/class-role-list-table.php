@@ -511,6 +511,9 @@ class Role_List_Table extends \WP_List_Table {
 		if ( current_user_can( 'delete_roles' ) )
 			$actions['delete'] = esc_html__( 'Delete', 'members' );
 
+		if ( current_user_can( 'list_roles' ) )
+			$actions['export'] = esc_html__( 'Export', 'members' );
+
 		return apply_filters( 'members_manage_roles_bulk_actions', $actions );
 	}
 }
