@@ -91,7 +91,7 @@ final class Role_Import {
 		}
 
 		// Validate structure.
-		if ( empty( $data['meta']['plugin'] ) || 'members' !== $data['meta']['plugin'] || empty( $data['roles'] ) ) {
+		if ( empty( $data['meta']['plugin'] ) || 'members' !== $data['meta']['plugin'] || empty( $data['roles'] ) || ! is_array( $data['roles'] ) ) {
 			$this->redirect_with_error( 'invalid_format', __( 'The import file is not a valid Members export file.', 'members' ) );
 			return;
 		}
@@ -214,6 +214,12 @@ final class Role_Import {
 
 			$action_for_role = isset( $actions[ $original_slug ] ) ? sanitize_key( $actions[ $original_slug ] ) : 'skip';
 
+			// Prevent overwriting own role or default role to avoid accidental lockout or system issues.
+			if ( 'overwrite' === $action_for_role && ( in_array( $original_slug, wp_get_current_user()->roles, true ) || $original_slug === get_option( 'default_role' ) ) ) {
+				$skipped++;
+				continue;
+			}
+
 			if ( 'skip' === $action_for_role ) {
 				$skipped++;
 				continue;
@@ -246,6 +252,14 @@ final class Role_Import {
 				}
 
 				add_role( $new_slug, $label, $sanitized_caps );
+
+				members_register_role( $new_slug, array(
+					'label' => $label,
+					'caps'  => $sanitized_caps,
+				) );
+
+				members_track_created_role( $new_slug );
+
 				do_action( 'members_role_added', $new_slug );
 				$renamed++;
 
@@ -266,6 +280,14 @@ final class Role_Import {
 			} else if ( 'import' === $action_for_role ) {
 
 				add_role( $original_slug, $label, $sanitized_caps );
+
+				members_register_role( $original_slug, array(
+					'label' => $label,
+					'caps'  => $sanitized_caps,
+				) );
+
+				members_track_created_role( $original_slug );
+
 				do_action( 'members_role_added', $original_slug );
 				$imported++;
 
