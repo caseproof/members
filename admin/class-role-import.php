@@ -210,12 +210,15 @@ final class Role_Import {
 		$rename_failed = 0;
 		$dropped_caps  = 0;
 
+		$current_user_roles = wp_get_current_user()->roles;
+		$default_role       = get_option( 'default_role' );
+
 		foreach ( $preview_data['roles'] as $original_slug => $role_data ) {
 
 			$action_for_role = isset( $actions[ $original_slug ] ) ? sanitize_key( $actions[ $original_slug ] ) : 'skip';
 
 			// Prevent overwriting own role or default role to avoid accidental lockout or system issues.
-			if ( 'overwrite' === $action_for_role && ( in_array( $original_slug, wp_get_current_user()->roles, true ) || $original_slug === get_option( 'default_role' ) ) ) {
+			if ( 'overwrite' === $action_for_role && ( in_array( $original_slug, $current_user_roles, true ) || $original_slug === $default_role ) ) {
 				$skipped++;
 				continue;
 			}
