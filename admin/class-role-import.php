@@ -216,7 +216,7 @@ final class Role_Import {
 			$action_for_role = isset( $actions[ $original_slug ] ) ? sanitize_key( $actions[ $original_slug ] ) : 'skip';
 
 			// Prevent overwriting own role or default role to avoid accidental lockout or system issues.
-			if ( 'overwrite' === $action_for_role && ( in_array( $original_slug, $current_user_roles, true ) || $original_slug === $default_role || ! members_is_role_editable( $original_slug ) ) ) {
+			if ( 'overwrite' === $action_for_role && ( 'administrator' === $original_slug || in_array( $original_slug, $current_user_roles, true ) || $original_slug === $default_role || ! members_is_role_editable( $original_slug ) ) ) {
 				$skipped++;
 				continue;
 			}

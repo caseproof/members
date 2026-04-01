@@ -363,14 +363,18 @@ final class Roles {
 		$import_settings = ! empty( $preview_data['import_settings'] );
 		$meta            = ! empty( $preview_data['meta'] ) ? $preview_data['meta'] : array();
 		$duplicate_slugs = ! empty( $preview_data['duplicate_slugs'] ) ? (int) $preview_data['duplicate_slugs'] : 0;
-		$has_conflicts   = false;
-		$conflict_count  = 0;
+		$has_conflicts      = false;
+		$conflict_count     = 0;
+		$current_user_roles = wp_get_current_user()->roles;
+		$default_role       = get_option( 'default_role' );
 
-		foreach ( $roles as $role ) {
+		foreach ( $roles as $slug => $role ) {
 			if ( ! empty( $role['conflict'] ) ) {
 				$has_conflicts = true;
 				$conflict_count++;
 			}
+
+			$roles[ $slug ]['protected'] = ( 'administrator' === $slug || in_array( $slug, $current_user_roles, true ) || $slug === $default_role || ! members_is_role_editable( $slug ) );
 		}
 
 		$new_count = count( $roles ) - $conflict_count;
@@ -469,7 +473,10 @@ final class Roles {
 								<?php endif; ?>
 							</td>
 							<td>
-								<?php if ( $role['conflict'] ) : ?>
+								<?php if ( $role['conflict'] && ! empty( $role['protected'] ) ) : ?>
+									<input type="hidden" name="members_import_action[<?php echo esc_attr( $slug ); ?>]" value="skip" />
+									<span class="description"><?php esc_html_e( 'Skip (protected role)', 'members' ); ?></span>
+								<?php elseif ( $role['conflict'] ) : ?>
 									<select name="members_import_action[<?php echo esc_attr( $slug ); ?>]" class="members-import-action-select" aria-label="<?php echo esc_attr( sprintf( __( 'Action for %s', 'members' ), $role['label'] ) ); ?>">
 										<option value="skip"><?php esc_html_e( 'Skip (keep existing)', 'members' ); ?></option>
 										<option value="overwrite"><?php esc_html_e( 'Overwrite (replace all capabilities)', 'members' ); ?></option>
