@@ -198,8 +198,6 @@ final class Role_Import {
 		// Clean up the transient.
 		delete_transient( $transient_key );
 
-		global $wp_roles;
-
 		$actions = isset( $_POST['members_import_action'] ) && is_array( $_POST['members_import_action'] ) ? $_POST['members_import_action'] : array();
 		$renames = isset( $_POST['members_import_rename'] ) && is_array( $_POST['members_import_rename'] ) ? $_POST['members_import_rename'] : array();
 
