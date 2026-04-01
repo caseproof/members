@@ -218,7 +218,7 @@ final class Role_Import {
 			$action_for_role = isset( $actions[ $original_slug ] ) ? sanitize_key( $actions[ $original_slug ] ) : 'skip';
 
 			// Prevent overwriting own role or default role to avoid accidental lockout or system issues.
-			if ( 'overwrite' === $action_for_role && ( in_array( $original_slug, $current_user_roles, true ) || $original_slug === $default_role ) ) {
+			if ( 'overwrite' === $action_for_role && ( in_array( $original_slug, $current_user_roles, true ) || $original_slug === $default_role || ! members_is_role_editable( $original_slug ) ) ) {
 				$skipped++;
 				continue;
 			}
@@ -325,7 +325,7 @@ final class Role_Import {
 					} elseif ( is_int( $default_value ) ) {
 						$new_settings[ $key ] = (int) $value;
 					} elseif ( is_string( $default_value ) ) {
-						$new_settings[ $key ] = sanitize_text_field( (string) $value );
+						$new_settings[ $key ] = is_scalar( $value ) ? sanitize_text_field( (string) $value ) : $default_value;
 					} else {
 						$new_settings[ $key ] = map_deep( $value, 'sanitize_text_field' );
 					}
