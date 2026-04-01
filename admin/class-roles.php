@@ -227,7 +227,12 @@ final class Roles {
 			jQuery(document).ready(function($) {
 				$('#members-import-toggle').on('click', function(e) {
 					e.preventDefault();
-					$('#members-import-roles').slideToggle();
+					var panel = $('#members-import-roles');
+					panel.slideToggle(300, function() {
+						if (panel.is(':visible')) {
+							$('html, body').animate({ scrollTop: panel.offset().top - 40 }, 200);
+						}
+					});
 				});
 
 				$(document).on('change', '.members-import-action-select', function() {
@@ -295,20 +300,12 @@ final class Roles {
 
 			<?php settings_errors( 'members_roles' ); ?>
 
-			<div id="poststuff">
+			<?php if ( current_user_can( 'edit_roles' ) ) : ?>
+			<div id="members-import-roles" style="display:none; margin-top: 12px; margin-bottom: 20px;">
 
-				<form id="roles" action="<?php echo esc_url( members_get_edit_roles_url() ); ?>" method="post">
+				<div class="card" style="max-width: 800px;">
 
-					<?php $table = new Role_List_Table(); ?>
-					<?php $table->prepare_items(); ?>
-					<?php $table->display(); ?>
-
-				</form><!-- #roles -->
-
-				<?php if ( current_user_can( 'edit_roles' ) ) : ?>
-				<div id="members-import-roles" style="display:none; margin-top: 20px;">
-
-					<h2><?php esc_html_e( 'Import Roles', 'members' ); ?></h2>
+					<h2 style="margin-top: 0;"><?php esc_html_e( 'Import Roles', 'members' ); ?></h2>
 
 					<form method="post" enctype="multipart/form-data" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 
@@ -332,8 +329,20 @@ final class Roles {
 
 					</form>
 
-				</div><!-- #members-import-roles -->
-				<?php endif; ?>
+				</div>
+
+			</div><!-- #members-import-roles -->
+			<?php endif; ?>
+
+			<div id="poststuff">
+
+				<form id="roles" action="<?php echo esc_url( members_get_edit_roles_url() ); ?>" method="post">
+
+					<?php $table = new Role_List_Table(); ?>
+					<?php $table->prepare_items(); ?>
+					<?php $table->display(); ?>
+
+				</form><!-- #roles -->
 
 			</div><!-- #poststuff -->
 
