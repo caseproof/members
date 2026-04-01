@@ -88,6 +88,12 @@ final class Role_Import {
 		}
 
 		$json = file_get_contents( $_FILES['members_import_file']['tmp_name'] );
+
+		if ( false === $json ) {
+			$this->redirect_with_error( 'read_error', __( 'The import file could not be read.', 'members' ) );
+			return;
+		}
+
 		$data = json_decode( $json, true );
 
 		if ( json_last_error() !== JSON_ERROR_NONE || ! is_array( $data ) ) {
