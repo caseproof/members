@@ -122,7 +122,7 @@ final class Role_Import {
 				continue;
 			}
 
-			$label    = ! empty( $role_data['label'] ) ? wp_strip_all_tags( $role_data['label'] ) : $sanitized_slug;
+			$label    = ! empty( $role_data['label'] ) && is_string( $role_data['label'] ) ? wp_strip_all_tags( $role_data['label'] ) : $sanitized_slug;
 			$caps     = isset( $role_data['capabilities'] ) && is_array( $role_data['capabilities'] ) ? $role_data['capabilities'] : array();
 			$conflict = members_role_exists( $sanitized_slug ) || (bool) get_role( $sanitized_slug );
 
@@ -232,9 +232,9 @@ final class Role_Import {
 		foreach ( $preview_data['roles'] as $original_slug => $role_data ) {
 
 			$action_for_role = isset( $actions[ $original_slug ] ) ? sanitize_key( $actions[ $original_slug ] ) : 'skip';
+			$is_protected    = 'administrator' === $original_slug || in_array( $original_slug, $current_user_roles, true ) || $original_slug === $default_role || ! members_is_role_editable( $original_slug );
 
-			// Prevent overwriting own role or default role to avoid accidental lockout or system issues.
-			if ( 'overwrite' === $action_for_role && ( 'administrator' === $original_slug || in_array( $original_slug, $current_user_roles, true ) || $original_slug === $default_role || ! members_is_role_editable( $original_slug ) ) ) {
+			if ( $is_protected && 'skip' !== $action_for_role && 'import' !== $action_for_role ) {
 				$skipped++;
 				continue;
 			}
