@@ -63,6 +63,10 @@ function members_admin_register_scripts() {
 	);
 
 	wp_localize_script( 'members-edit-role', 'members_i18n', $i18n );
+
+	$import_export_file = members_plugin()->dir . "js/import-export{$min}.js";
+	$import_export_ver  = file_exists( $import_export_file ) ? filemtime( $import_export_file ) : false;
+	wp_register_script( 'members-import-export', members_plugin()->uri . "js/import-export{$min}.js", array( 'jquery' ), $import_export_ver, true );
 }
 
 /**

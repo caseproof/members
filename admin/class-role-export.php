@@ -105,14 +105,13 @@ final class Role_Export {
 			);
 		}
 
-		// Get plugin version from file header.
-		$plugin_data = get_plugin_data( members_plugin()->dir . 'members.php', false, false );
+		$file_headers = get_file_data( members_plugin()->dir . 'members.php', array( 'Version' => 'Version' ) );
 
 		// Build export data. Only include settings for full (non-selective) exports.
 		$data = array(
 			'meta' => array(
 				'plugin'      => 'members',
-				'version'     => ! empty( $plugin_data['Version'] ) ? $plugin_data['Version'] : '',
+				'version'     => ! empty( $file_headers['Version'] ) ? $file_headers['Version'] : '',
 				'export_date' => gmdate( 'c' ),
 				'site_url'    => site_url(),
 				'wp_version'  => get_bloginfo( 'version' ),

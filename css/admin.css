@@ -1054,3 +1054,8 @@
 	margin-top: 0;
 	vertical-align: middle;
 }
+
+/* Import / Export */
+.members-import-status { font-weight: 600; }
+.members-import-status--exists { color: #d63638; }
+.members-import-status--new { color: #00a32a; }
