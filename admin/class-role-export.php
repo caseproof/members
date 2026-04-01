@@ -108,7 +108,7 @@ final class Role_Export {
 		// Get plugin version from file header.
 		$plugin_data = get_plugin_data( members_plugin()->dir . 'members.php', false, false );
 
-		// Build export data.
+		// Build export data. Only include settings for full (non-selective) exports.
 		$data = array(
 			'meta' => array(
 				'plugin'      => 'members',
@@ -118,7 +118,7 @@ final class Role_Export {
 				'wp_version'  => get_bloginfo( 'version' ),
 			),
 			'roles'    => $roles,
-			'settings' => get_option( 'members_settings', members_get_default_settings() ),
+			'settings' => empty( $role_slugs ) ? get_option( 'members_settings', members_get_default_settings() ) : array(),
 		);
 
 		// Send file download.

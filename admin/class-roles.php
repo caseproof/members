@@ -487,8 +487,10 @@ final class Roles {
 											<?php esc_html_e( 'New slug:', 'members' ); ?>
 											<?php
 											$suggested_slug = $slug . '_imported';
-											while ( members_role_exists( $suggested_slug ) || ( isset( $roles[ $suggested_slug ] ) && $suggested_slug !== $slug ) ) {
-												$suggested_slug .= '_copy';
+											$suffix_counter = 2;
+											while ( ( members_role_exists( $suggested_slug ) || get_role( $suggested_slug ) || ( isset( $roles[ $suggested_slug ] ) && $suggested_slug !== $slug ) ) && $suffix_counter <= 100 ) {
+												$suggested_slug = $slug . '_imported_' . $suffix_counter;
+												$suffix_counter++;
 											}
 											?>
 											<input type="text" name="members_import_rename[<?php echo esc_attr( $slug ); ?>]" value="<?php echo esc_attr( $suggested_slug ); ?>" size="30" />

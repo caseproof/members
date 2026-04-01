@@ -82,6 +82,11 @@ final class Role_Import {
 		}
 
 		// Parse JSON.
+		if ( ! is_uploaded_file( $_FILES['members_import_file']['tmp_name'] ) ) {
+			$this->redirect_with_error( 'no_file', __( 'Invalid file upload.', 'members' ) );
+			return;
+		}
+
 		$json = file_get_contents( $_FILES['members_import_file']['tmp_name'] );
 		$data = json_decode( $json, true );
 
@@ -119,7 +124,7 @@ final class Role_Import {
 
 			$label    = ! empty( $role_data['label'] ) ? wp_strip_all_tags( $role_data['label'] ) : $sanitized_slug;
 			$caps     = isset( $role_data['capabilities'] ) && is_array( $role_data['capabilities'] ) ? $role_data['capabilities'] : array();
-			$conflict = members_role_exists( $sanitized_slug );
+			$conflict = members_role_exists( $sanitized_slug ) || (bool) get_role( $sanitized_slug );
 
 			$preview_roles[ $sanitized_slug ] = array(
 				'slug'     => $sanitized_slug,
@@ -138,9 +143,22 @@ final class Role_Import {
 		// Store in a transient keyed by user ID.
 		$transient_key = 'members_import_preview_' . get_current_user_id();
 
+		// Only keep settings that match known default keys to limit what's stored in the transient.
+		$filtered_settings = array();
+
+		if ( isset( $data['settings'] ) && is_array( $data['settings'] ) ) {
+			$allowed_keys = array_keys( members_get_default_settings() );
+
+			foreach ( $allowed_keys as $key ) {
+				if ( isset( $data['settings'][ $key ] ) ) {
+					$filtered_settings[ $key ] = $data['settings'][ $key ];
+				}
+			}
+		}
+
 		$transient_data = array(
 			'roles'           => $preview_roles,
-			'settings'        => isset( $data['settings'] ) ? $data['settings'] : array(),
+			'settings'        => $filtered_settings,
 			'import_settings' => $import_settings,
 			'meta'            => array(
 				'plugin'      => isset( $data['meta']['plugin'] ) ? sanitize_text_field( $data['meta']['plugin'] ) : '',
@@ -247,7 +265,7 @@ final class Role_Import {
 
 				$new_slug = isset( $renames[ $original_slug ] ) ? members_sanitize_role( $renames[ $original_slug ] ) : '';
 
-				if ( ! $new_slug || members_role_exists( $new_slug ) ) {
+				if ( ! $new_slug || members_role_exists( $new_slug ) || get_role( $new_slug ) ) {
 					$rename_failed++;
 					continue;
 				}
@@ -280,7 +298,7 @@ final class Role_Import {
 
 			} else if ( 'import' === $action_for_role ) {
 
-				if ( members_role_exists( $original_slug ) ) {
+				if ( members_role_exists( $original_slug ) || get_role( $original_slug ) ) {
 					$skipped++;
 					continue;
 				}
