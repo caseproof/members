@@ -51,13 +51,31 @@ function filter_menu_order( $menu_order ) {
 	if ( empty( $cfg['order'] ) || ! is_array( $cfg['order'] ) ) {
 		return $menu_order;
 	}
-	$non_sep = array_values( array_filter( $cfg['order'], function( $s ) {
-		return is_string( $s ) && strpos( $s, 'sep-' ) !== 0;
-	} ) );
-	if ( empty( $non_sep ) ) {
+
+	// Build the ordered slug list, converting sep-* tokens to actual separator slugs.
+	$result = array();
+	$sep_i  = 0;
+	$has_real = false;
+	foreach ( $cfg['order'] as $token ) {
+		$token = (string) $token;
+		if ( 0 === strpos( $token, 'sep-' ) ) {
+			$result[] = 'separator-members-am-' . $sep_i;
+			$sep_i++;
+		} elseif ( false !== strpos( $token, '::' ) ) {
+			$parts    = explode( '::', $token, 2 );
+			$result[] = $parts[1];
+			$has_real  = true;
+		} else {
+			$result[] = $token;
+			$has_real  = true;
+		}
+	}
+	if ( ! $has_real ) {
 		return $menu_order;
 	}
-	$merged = array_merge( $non_sep, array_diff( $menu_order, $non_sep ) );
+
+	// Append any WP menu items not in our order.
+	$merged = array_merge( $result, array_diff( $menu_order, $result ) );
 	return $merged;
 }
 

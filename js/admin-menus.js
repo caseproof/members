@@ -570,16 +570,20 @@
 				return;
 			}
 			renderItemRow(role, node, null, $ul);
-			if (node.children && node.children.length) {
-				var corder = getChildOrder(role, node.id);
-				corder.forEach(function (cslug) {
-					var cid = childFullId(node.id, cslug);
-					var child = findNode(cid);
-					if (child) {
-						renderItemRow(role, child, node.id, $ul);
+		if (node.children && node.children.length) {
+			var corder = getChildOrder(role, node.id);
+			corder.forEach(function (cslug) {
+				var cid = childFullId(node.id, cslug);
+				var child = findNode(cid);
+				if (child) {
+					var childOv = getRoleConfig(role).overrides[cid] || {};
+					if (childOv.parent === '__promote__') {
+						return;
 					}
-				});
-			}
+					renderItemRow(role, child, node.id, $ul);
+				}
+			});
+		}
 		});
 		$wrap.append($ul);
 	}
@@ -968,7 +972,8 @@
 	}
 
 	function moveItemVertical(role, itemId, dir) {
-		var parentId = findParentId(itemId);
+		var ov = getRoleConfig(role).overrides[itemId] || {};
+		var parentId = (ov.parent === '__promote__') ? null : findParentId(itemId);
 		if (!parentId) {
 			if (!getRoleConfig(role).order || !getRoleConfig(role).order.length) {
 				getRoleConfig(role).order = defaultTopOrder();
@@ -1485,7 +1490,31 @@
 		$('#members-am-add-sep').on('click', addSeparator);
 
 		$('#members-am-promote').on('click', function () {
+			if (!state.selectedId) return;
 			setOverrideField('parent', '__promote__');
+
+			// Add the promoted item to the top-level order right after its original parent.
+			var parentId = findParentId(state.selectedId);
+			var roles = getTargetRoles();
+			roles.forEach(function (role) {
+				var rc = getRoleConfig(role);
+				if (!rc.order || !rc.order.length) {
+					rc.order = defaultTopOrder();
+				}
+				if (rc.order.indexOf(state.selectedId) === -1) {
+					if (parentId) {
+						var pIdx = rc.order.indexOf(parentId);
+						if (pIdx !== -1) {
+							rc.order.splice(pIdx + 1, 0, state.selectedId);
+						} else {
+							rc.order.push(state.selectedId);
+						}
+					} else {
+						rc.order.push(state.selectedId);
+					}
+				}
+			});
+
 			pushOverridesFromForm();
 		});
 
