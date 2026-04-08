@@ -832,7 +832,8 @@
 		var ov = getOverrideForEdit() || {};
 		$('#members-am-edit-title').text(node ? node.title : state.selectedId);
 		$('#members-am-edit-label').val(ov.label || (node && node.title) || '');
-		$('#members-am-edit-url').attr('placeholder', (node && node.url) || '').val(ov.url || '');
+		$('#members-am-edit-url').attr('placeholder', 'Override URL (leave empty for default)').val(ov.url || (node && node.url) || '');
+		$('#members-am-edit-url').data('default-url', (node && node.url) || '');
 		$('#members-am-icon-type').val(ov.icon_type || 'dashicon');
 		$('#members-am-icon-value').val(ov.icon || (node && node.icon) || '');
 		// Show image preview if the icon is a URL.
@@ -846,23 +847,32 @@
 		$('#members-am-color-bg').val(ov.color_bg || '');
 		$('#members-am-color-text').val(ov.color_text || '');
 		$('#members-am-color-icon').val(ov.color_icon || '');
-		$('#members-am-item-cap').val(state.settings.capabilities[state.selectedId] || '');
+		$('#members-am-item-cap')
+			.attr('placeholder', (node && node.cap) ? node.cap + ' (default)' : '')
+			.val(state.settings.capabilities[state.selectedId] || '');
 
 		var custom = node && node.custom;
 		$('#members-am-remove-custom').toggle(!!custom);
 
 		$('#members-am-visibility-toggles').empty();
+		var itemCap = (node && node.cap) || 'read';
 		getRolesList().forEach(function (r) {
 			if (r.slug === 'administrator' && !state.settings._meta.admin_editable) {
 				return;
 			}
 			var hid = isHidden(r.slug, state.selectedId);
-			var $l = $('<label class="members-am-vis-row"/>').append(
-				$('<input type="checkbox" class="members-am-vis-cb"/>')
-					.attr('data-role', r.slug)
-					.prop('checked', !hid),
-				$('<span/>').text(r.label)
-			);
+			var hasCap = roleHasCap(r.slug, itemCap);
+			var $cb = $('<input type="checkbox" class="members-am-vis-cb"/>')
+				.attr('data-role', r.slug)
+				.prop('checked', !hid && hasCap);
+			if (!hasCap) {
+				$cb.prop('disabled', true);
+			}
+			var $l = $('<label class="members-am-vis-row"/>').append($cb, $('<span/>').text(r.label));
+			if (!hasCap) {
+				$l.append($('<small/>').text(' — no capability').css({ color: '#999', fontStyle: 'italic', marginLeft: '4px' }));
+				$l.css('opacity', '0.5');
+			}
 			$('#members-am-visibility-toggles').append($l);
 		});
 
@@ -902,7 +912,9 @@
 			return;
 		}
 		setOverrideField('label', $('#members-am-edit-label').val());
-		setOverrideField('url', $('#members-am-edit-url').val());
+		var urlVal = $('#members-am-edit-url').val();
+		var defaultUrl = $('#members-am-edit-url').data('default-url') || '';
+		setOverrideField('url', (urlVal === defaultUrl) ? '' : urlVal);
 		// Auto-detect icon type from icon value to stay consistent.
 		var iconVal = $('#members-am-icon-value').val();
 		var iconType = effectiveIconType(iconVal, $('#members-am-icon-type').val());
