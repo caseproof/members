@@ -379,8 +379,14 @@ function apply_menu_overrides( $overrides ) {
 			$badge_html = ' <span class="members-am-menu-badge" style="display:inline-block;background:' . esc_attr( $badge_bg ) . ';color:#fff;font-size:9px;padding:1px 5px;border-radius:2px;line-height:1.4;vertical-align:middle;">' . $badge_text . '</span>';
 			$menu[ $k ][0] .= $badge_html;
 		}
-		if ( ! empty( $o['url'] ) ) {
-			$menu[ $k ][2] = esc_url_raw( $o['url'] );
+		if ( ! empty( $o['url'] ) && members_am_is_custom_menu_item_slug( $slug ) ) {
+			$new_slug = esc_url_raw( $o['url'] );
+			$menu[ $k ][2] = $new_slug;
+			// Submenus are keyed by the parent slug; keep them attached when the slug changes.
+			if ( $new_slug && $new_slug !== $slug && isset( $submenu[ $slug ] ) ) {
+				$submenu[ $new_slug ] = $submenu[ $slug ];
+				unset( $submenu[ $slug ] );
+			}
 		}
 		if ( ! empty( $o['icon'] ) ) {
 			$icon      = $o['icon'];
@@ -429,7 +435,7 @@ function apply_menu_overrides( $overrides ) {
 				$badge_html = ' <span class="members-am-menu-badge" style="display:inline-block;background:' . esc_attr( $badge_bg ) . ';color:#fff;font-size:9px;padding:1px 5px;border-radius:2px;line-height:1.4;vertical-align:middle;">' . $badge_text . '</span>';
 				$submenu[ $parent ][ $idx ][0] .= $badge_html;
 			}
-			if ( ! empty( $o['url'] ) ) {
+			if ( ! empty( $o['url'] ) && members_am_is_custom_menu_item_slug( $item[2] ) ) {
 				$submenu[ $parent ][ $idx ][2] = esc_url_raw( $o['url'] );
 			}
 		}
@@ -857,6 +863,19 @@ function get_current_screen_slugs() {
 function members_admin_menus_is_protected_slug( $slug ) {
 	$s = (string) $slug;
 	return ( false !== stripos( $s, 'members-settings' ) || false !== stripos( $s, 'page=members' ) );
+}
+
+/**
+ * Whether a menu slug is a Members-added custom item (see inject_custom_menu_items).
+ *
+ * Only these items support overriding the admin menu link via URL in $menu / $submenu.
+ *
+ * @param string $slug Top-level slug or submenu file/slug segment.
+ * @return bool
+ */
+function members_am_is_custom_menu_item_slug( $slug ) {
+	$slug = (string) $slug;
+	return ( '' !== $slug && 0 === strpos( $slug, 'members-am-' ) );
 }
 
 /**

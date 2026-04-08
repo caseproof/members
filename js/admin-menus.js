@@ -191,6 +191,15 @@
 		return 'members-am-' + String(id).replace(/[^a-z0-9_-]/gi, '-').toLowerCase();
 	}
 
+	/** Custom items registered by this add-on use slugs starting with members-am- (see inject_custom_menu_items). */
+	function isCustomMenuUrlTarget(itemId) {
+		if (!itemId) {
+			return false;
+		}
+		var part = itemId.indexOf('::') !== -1 ? itemId.split('::').pop() : itemId;
+		return part.indexOf('members-am-') === 0;
+	}
+
 	function buildTreeWithCustoms() {
 		var base = $.extend(true, [], membersAdminMenus.menuTree || []);
 		// Build a set of existing IDs so we don't add duplicates.
@@ -844,8 +853,12 @@
 		var ov = getOverrideForEdit() || {};
 		$('#members-am-edit-title').text(node ? node.title : state.selectedId);
 		$('#members-am-edit-label').val(ov.label || (node && node.title) || '');
-		$('#members-am-edit-url').attr('placeholder', 'Override URL (leave empty for default)').val(ov.url || (node && node.url) || '');
-		$('#members-am-edit-url').data('default-url', (node && node.url) || '');
+		var allowUrl = isCustomMenuUrlTarget(state.selectedId);
+		$('#members-am-edit-url-wrap').toggle(allowUrl);
+		$('#members-am-edit-url')
+			.attr('placeholder', 'Override URL (leave empty for default)')
+			.val(allowUrl ? ov.url || (node && node.url) || '' : '')
+			.data('default-url', (node && node.url) || '');
 		$('#members-am-icon-type').val(ov.icon_type || 'dashicon');
 		$('#members-am-icon-value').val(ov.icon || (node && node.icon) || '');
 		// Show image preview if the icon is a URL.
@@ -926,9 +939,13 @@
 			return;
 		}
 		setOverrideField('label', $('#members-am-edit-label').val());
-		var urlVal = $('#members-am-edit-url').val();
-		var defaultUrl = $('#members-am-edit-url').data('default-url') || '';
-		setOverrideField('url', (urlVal === defaultUrl) ? '' : urlVal);
+		if (isCustomMenuUrlTarget(state.selectedId)) {
+			var urlVal = $('#members-am-edit-url').val();
+			var defaultUrl = $('#members-am-edit-url').data('default-url') || '';
+			setOverrideField('url', urlVal === defaultUrl ? '' : urlVal);
+		} else {
+			setOverrideField('url', '');
+		}
 		// Auto-detect icon type from icon value to stay consistent.
 		var iconVal = $('#members-am-icon-value').val();
 		var iconType = effectiveIconType(iconVal, $('#members-am-icon-type').val());

@@ -268,8 +268,10 @@ function render_admin_menus_page() {
 				<div class="members-am-edit-col">
 					<label><?php esc_html_e( 'Title', 'members' ); ?></label>
 					<input type="text" id="members-am-edit-label" class="widefat" />
-					<label><?php esc_html_e( 'URL', 'members' ); ?></label>
-					<input type="text" id="members-am-edit-url" class="widefat" />
+					<div id="members-am-edit-url-wrap">
+						<label><?php esc_html_e( 'URL', 'members' ); ?></label>
+						<input type="text" id="members-am-edit-url" class="widefat" />
+					</div>
 				</div>
 				<div class="members-am-edit-col members-am-icons">
 					<label><?php esc_html_e( 'Icon', 'members' ); ?></label>
