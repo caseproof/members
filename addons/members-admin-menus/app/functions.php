@@ -1,0 +1,942 @@
+<?php
+/**
+ * Front-end and shared Admin Menus logic (applies to admin requests).
+ *
+ * @package    Members
+ * @subpackage AddOns
+ */
+
+namespace Members\AddOns\AdminMenus;
+
+defined( 'ABSPATH' ) || exit;
+
+/** Option name. */
+const OPTION_KEY = 'members_admin_menus_settings';
+
+add_action( 'admin_menu', __NAMESPACE__ . '\apply_menu_modifications', 999 );
+add_action( 'admin_menu', __NAMESPACE__ . '\inject_custom_menu_items_late', 100 );
+add_action( 'admin_init', __NAMESPACE__ . '\block_restricted_pages', 1 );
+add_action( 'admin_enqueue_scripts', __NAMESPACE__ . '\maybe_enqueue_fontawesome' );
+add_filter( 'custom_menu_order', __NAMESPACE__ . '\enable_custom_menu_order' );
+add_filter( 'menu_order', __NAMESPACE__ . '\filter_menu_order', 999 );
+
+/**
+ * Enable custom menu order when we have per-role order stored.
+ *
+ * @param mixed $enabled Previous value.
+ * @return bool
+ */
+function enable_custom_menu_order( $enabled ) {
+	if ( ! is_admin() || ! get_current_user_id() ) {
+		return $enabled;
+	}
+	$cfg = get_resolved_config_for_user( get_current_user_id() );
+	if ( ! empty( $cfg['order'] ) ) {
+		return true;
+	}
+	return $enabled;
+}
+
+/**
+ * WordPress core menu_order filter — merge with stored order for current user.
+ *
+ * @param array $menu_order Menu slugs in order.
+ * @return array
+ */
+function filter_menu_order( $menu_order ) {
+	if ( ! is_admin() || ! get_current_user_id() ) {
+		return $menu_order;
+	}
+	$cfg = get_resolved_config_for_user( get_current_user_id() );
+	if ( empty( $cfg['order'] ) || ! is_array( $cfg['order'] ) ) {
+		return $menu_order;
+	}
+	$non_sep = array_values( array_filter( $cfg['order'], function( $s ) {
+		return is_string( $s ) && strpos( $s, 'sep-' ) !== 0;
+	} ) );
+	if ( empty( $non_sep ) ) {
+		return $menu_order;
+	}
+	$merged = array_merge( $non_sep, array_diff( $menu_order, $non_sep ) );
+	return $merged;
+}
+
+/**
+ * Enqueue Font Awesome 6 on admin pages when any override uses FA icons.
+ *
+ * @return void
+ */
+function maybe_enqueue_fontawesome() {
+	if ( ! is_admin() || ! get_current_user_id() ) {
+		return;
+	}
+	$user_id = get_current_user_id();
+	if ( is_user_exempt( $user_id ) ) {
+		return;
+	}
+	$cfg = get_resolved_config_for_user( $user_id );
+	if ( empty( $cfg['overrides'] ) || ! is_array( $cfg['overrides'] ) ) {
+		return;
+	}
+	foreach ( $cfg['overrides'] as $ov ) {
+		if ( is_array( $ov ) && isset( $ov['icon_type'] ) && 'fontawesome' === $ov['icon_type'] ) {
+			wp_enqueue_style(
+				'members-fontawesome',
+				'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
+				array(),
+				'6.5.1'
+			);
+			return;
+		}
+	}
+}
+
+/**
+ * Apply reorder, overrides, hiding, custom items (late).
+ *
+ * @return void
+ */
+function apply_menu_modifications() {
+	if ( ! is_admin() || ! get_current_user_id() ) {
+		return;
+	}
+	$user_id = get_current_user_id();
+	if ( is_user_exempt( $user_id ) ) {
+		return;
+	}
+
+	$cfg = get_resolved_config_for_user( $user_id );
+	if ( empty( $cfg ) ) {
+		return;
+	}
+
+	global $menu, $submenu;
+
+	// Phase 2+: reorder top-level menu array (after menu_order filter runs, still need physical reorder).
+	if ( ! empty( $cfg['order'] ) && is_array( $menu ) ) {
+		$menu = reorder_menu_by_slug_list( $menu, $cfg['order'] );
+		$menu = inject_separators( $menu, $cfg['order'] );
+	}
+
+	// Submenu order per parent.
+	if ( ! empty( $cfg['submenu_order'] ) && is_array( $submenu ) ) {
+		foreach ( $cfg['submenu_order'] as $parent => $child_order ) {
+			if ( ! isset( $submenu[ $parent ] ) || ! is_array( $child_order ) ) {
+				continue;
+			}
+			$submenu[ $parent ] = reorder_submenu_items( $submenu[ $parent ], $child_order );
+		}
+	}
+
+	// Phase 2: label, icon, URL, colors.
+	if ( ! empty( $cfg['overrides'] ) && is_array( $cfg['overrides'] ) ) {
+		apply_menu_overrides( $cfg['overrides'] );
+		apply_color_overrides( $cfg['overrides'] );
+		apply_level_moves( $cfg['overrides'] );
+	}
+
+	// Phase 3: capability-based hiding (independent of role hidden lists).
+	$cap_map = isset( $cfg['capabilities'] ) ? $cfg['capabilities'] : array();
+	if ( ! empty( $cap_map ) && is_array( $cap_map ) ) {
+		foreach ( $cap_map as $slug => $cap ) {
+			$slug = sanitize_text_field( $slug );
+			$cap  = sanitize_key( $cap );
+			if ( ! $slug || ! $cap || current_user_can( $cap ) || members_admin_menus_is_protected_slug( $slug ) ) {
+				continue;
+			}
+			if ( false !== strpos( $slug, '::' ) ) {
+				$parts = explode( '::', $slug, 2 );
+				if ( count( $parts ) === 2 ) {
+					remove_submenu_page( $parts[0], $parts[1] );
+				}
+			} else {
+				remove_menu_page( $slug );
+			}
+		}
+	}
+
+	// Hide items (last).
+	$hidden = isset( $cfg['hidden'] ) ? $cfg['hidden'] : array();
+	if ( empty( $hidden ) || ! is_array( $hidden ) ) {
+		return;
+	}
+
+	foreach ( $hidden as $slug ) {
+		$slug = sanitize_text_field( $slug );
+		if ( ! $slug || members_admin_menus_is_protected_slug( $slug ) ) {
+			continue;
+		}
+		if ( false !== strpos( $slug, '::' ) ) {
+			$parts = explode( '::', $slug, 2 );
+			if ( count( $parts ) === 2 ) {
+				remove_submenu_page( $parts[0], $parts[1] );
+			}
+		} else {
+			remove_menu_page( $slug );
+		}
+	}
+}
+
+/**
+ * Late registration for custom menu entries (after core menus).
+ *
+ * @return void
+ */
+function inject_custom_menu_items_late() {
+	if ( ! is_admin() || ! get_current_user_id() || is_user_exempt( get_current_user_id() ) ) {
+		return;
+	}
+	$cfg = get_resolved_config_for_user( get_current_user_id() );
+	if ( empty( $cfg['custom_items'] ) ) {
+		return;
+	}
+	inject_custom_menu_items( $cfg['custom_items'] );
+}
+
+/**
+ * Reorder $menu array by slug list.
+ *
+ * @param array $menu   Admin menu global.
+ * @param array $order  Ordered slugs.
+ * @return array
+ */
+function reorder_menu_by_slug_list( $menu, $order ) {
+	$by_slug = array();
+	foreach ( $menu as $key => $item ) {
+		if ( isset( $item[2] ) ) {
+			$by_slug[ $item[2] ] = $item;
+		}
+	}
+	$new  = array();
+	$used = array();
+	$pos  = 1;
+	$order = array_map( 'strval', $order );
+	foreach ( $order as $slug ) {
+		if ( ! isset( $by_slug[ $slug ] ) || isset( $used[ $slug ] ) ) {
+			continue;
+		}
+		$new[ $pos ] = $by_slug[ $slug ];
+		$used[ $slug ] = true;
+		$pos++;
+	}
+	// Append items not in our order list.
+	foreach ( $menu as $k => $item ) {
+		if ( isset( $item[2] ) && ! isset( $used[ $item[2] ] ) ) {
+			$new[ $pos ] = $item;
+			$pos++;
+		} elseif ( ! isset( $item[2] ) ) {
+			// Separators and other items without a slug.
+			$new[ $pos ] = $item;
+			$pos++;
+		}
+	}
+	return $new;
+}
+
+/**
+ * Reorder submenu items array.
+ *
+ * @param array $items       Submenu items.
+ * @param array $child_order Slugs in order.
+ * @return array
+ */
+function reorder_submenu_items( $items, $child_order ) {
+	$by_slug = array();
+	foreach ( $items as $idx => $item ) {
+		if ( isset( $item[2] ) ) {
+			$by_slug[ $item[2] ] = array( 'idx' => $idx, 'item' => $item );
+		}
+	}
+	$new  = array();
+	$seen = array();
+	foreach ( $child_order as $slug ) {
+		if ( isset( $by_slug[ $slug ] ) ) {
+			$i = $by_slug[ $slug ]['idx'];
+			if ( ! isset( $seen[ $i ] ) ) {
+				$new[] = $by_slug[ $slug ]['item'];
+				$seen[ $i ] = true;
+			}
+		}
+	}
+	foreach ( $items as $idx => $item ) {
+		if ( empty( $seen[ $idx ] ) ) {
+			$new[] = $item;
+		}
+	}
+	return $new;
+}
+
+/**
+ * Inject real WordPress separator entries into $menu based on sep-* tokens
+ * in the order array.
+ *
+ * Walks through the order array and, whenever a sep-* token is encountered,
+ * inserts a proper WP separator entry at the corresponding position in $menu.
+ *
+ * @param array $menu  The admin menu array (already reordered by slug list).
+ * @param array $order The full order array including sep-* tokens.
+ * @return array Modified menu array with separators injected.
+ */
+function inject_separators( $menu, $order ) {
+	$sep_positions = array();
+	$real_idx      = 0;
+
+	foreach ( $order as $token ) {
+		$token = (string) $token;
+		if ( 0 === strpos( $token, 'sep-' ) ) {
+			$sep_positions[] = $real_idx;
+		} else {
+			$real_idx++;
+		}
+	}
+
+	if ( empty( $sep_positions ) ) {
+		return $menu;
+	}
+
+	$items  = array_values( $menu );
+	$result = array();
+	$pos    = 1;
+	$item_i = 0;
+	$sep_i  = 0;
+	$total  = count( $items );
+	$placed = 0;
+
+	for ( $slot = 0; $placed < $total || $sep_i < count( $sep_positions ); $slot++ ) {
+		if ( $sep_i < count( $sep_positions ) && $sep_positions[ $sep_i ] === $item_i ) {
+			$result[ $pos ] = array(
+				'',
+				'read',
+				'separator-members-am-' . $sep_i,
+				'',
+				'wp-menu-separator',
+			);
+			$pos++;
+			$sep_i++;
+		} elseif ( $item_i < $total ) {
+			$result[ $pos ] = $items[ $item_i ];
+			$pos++;
+			$item_i++;
+			$placed++;
+		} else {
+			break;
+		}
+	}
+
+	while ( $item_i < $total ) {
+		$result[ $pos ] = $items[ $item_i ];
+		$pos++;
+		$item_i++;
+	}
+
+	return $result;
+}
+
+/**
+ * Apply label, icon, URL, colors to menu globals.
+ *
+ * @param array $overrides Overrides keyed by canonical slug.
+ * @return void
+ */
+function apply_menu_overrides( $overrides ) {
+	global $menu, $submenu;
+	$fa_icons = array();
+
+	foreach ( $menu as $k => $item ) {
+		if ( empty( $item[2] ) ) {
+			continue;
+		}
+		$slug = $item[2];
+		if ( empty( $overrides[ $slug ] ) || ! is_array( $overrides[ $slug ] ) ) {
+			continue;
+		}
+		$o = $overrides[ $slug ];
+		if ( ! empty( $o['label'] ) ) {
+			$menu[ $k ][0] = wp_strip_all_tags( $o['label'] );
+		}
+		if ( ! empty( $o['url'] ) ) {
+			$menu[ $k ][2] = esc_url_raw( $o['url'] );
+		}
+		if ( ! empty( $o['icon_type'] ) && ! empty( $o['icon'] ) ) {
+			$icon_type = $o['icon_type'];
+			$icon      = $o['icon'];
+
+			if ( 'dashicon' === $icon_type ) {
+				$menu[ $k ][6] = sanitize_text_field( $icon );
+			} elseif ( 'fontawesome' === $icon_type ) {
+				$menu[ $k ][6] = 'none';
+				$id = isset( $item[5] ) ? sanitize_html_class( $item[5] ) : '';
+				if ( $id ) {
+					$fa_icons[ $id ] = esc_attr( $icon );
+				}
+			} elseif ( 'custom' === $icon_type || 'image' === $icon_type ) {
+				$menu[ $k ][6] = esc_url( $icon );
+			}
+		}
+	}
+
+	foreach ( $submenu as $parent => $items ) {
+		foreach ( $items as $idx => $item ) {
+			if ( empty( $item[2] ) ) {
+				continue;
+			}
+			$canon = $parent . '::' . $item[2];
+			if ( empty( $overrides[ $canon ] ) || ! is_array( $overrides[ $canon ] ) ) {
+				continue;
+			}
+			$o = $overrides[ $canon ];
+			if ( ! empty( $o['label'] ) ) {
+				$submenu[ $parent ][ $idx ][0] = wp_strip_all_tags( $o['label'] );
+			}
+			if ( ! empty( $o['url'] ) ) {
+				$submenu[ $parent ][ $idx ][2] = esc_url_raw( $o['url'] );
+			}
+		}
+	}
+
+	if ( ! empty( $fa_icons ) ) {
+		$GLOBALS['members_am_fa_icons'] = $fa_icons;
+		add_action( 'admin_head', __NAMESPACE__ . '\output_fa_icon_styles', 998 );
+	}
+}
+
+/**
+ * Output CSS + HTML to render Font Awesome icons in the admin sidebar.
+ *
+ * Hides the default dashicon/image and places the FA icon via ::before pseudo-element.
+ *
+ * @return void
+ */
+function output_fa_icon_styles() {
+	if ( empty( $GLOBALS['members_am_fa_icons'] ) ) {
+		return;
+	}
+	$css = '';
+	$js  = '';
+	foreach ( $GLOBALS['members_am_fa_icons'] as $menu_id => $fa_class ) {
+		$sel = '#adminmenu #' . $menu_id . ' .wp-menu-image';
+		$css .= $sel . ':before { content: "" !important; }' . "\n";
+		$css .= $sel . ' img { display: none !important; }' . "\n";
+		$css .= $sel . ' .members-am-fa { font-size: 20px; line-height: 1; }' . "\n";
+		$js  .= 'jQuery("#' . esc_js( $menu_id ) . ' .wp-menu-image").html(\'<i class="members-am-fa ' . esc_js( $fa_class ) . '"></i>\');' . "\n";
+	}
+	echo '<style id="members-am-fa-overrides">' . "\n" . $css . "</style>\n";
+	echo '<script>' . "\n" . 'jQuery(function(){' . "\n" . $js . '});' . "\n" . '</script>' . "\n";
+}
+
+/**
+ * Move items between menu levels based on 'parent' override field.
+ *
+ * - If a submenu item has parent = '' (empty string), promote it to top-level.
+ * - If a top-level item has a parent slug set, demote it to a submenu of that parent.
+ *
+ * @param array $overrides Overrides keyed by canonical slug.
+ * @return void
+ */
+function apply_level_moves( $overrides ) {
+	global $menu, $submenu;
+
+	foreach ( $overrides as $slug => $o ) {
+		if ( ! is_array( $o ) || ! array_key_exists( 'parent', $o ) ) {
+			continue;
+		}
+		$target_parent = $o['parent'];
+		$is_submenu    = ( false !== strpos( $slug, '::' ) );
+
+		if ( $is_submenu && '' === $target_parent ) {
+			$parts = explode( '::', $slug, 2 );
+			if ( count( $parts ) !== 2 ) {
+				continue;
+			}
+			$old_parent = $parts[0];
+			$child_slug = $parts[1];
+
+			$label = $child_slug;
+			$cap   = 'read';
+			if ( isset( $submenu[ $old_parent ] ) && is_array( $submenu[ $old_parent ] ) ) {
+				foreach ( $submenu[ $old_parent ] as $idx => $sub ) {
+					if ( isset( $sub[2] ) && $sub[2] === $child_slug ) {
+						$label = $sub[0];
+						$cap   = isset( $sub[1] ) ? $sub[1] : 'read';
+						unset( $submenu[ $old_parent ][ $idx ] );
+						break;
+					}
+				}
+			}
+			if ( ! empty( $o['label'] ) ) {
+				$label = $o['label'];
+			}
+			$icon = 'dashicons-admin-generic';
+			if ( ! empty( $o['icon'] ) ) {
+				$icon = $o['icon'];
+			}
+			add_menu_page( wp_strip_all_tags( $label ), wp_strip_all_tags( $label ), $cap, $child_slug, '', $icon );
+
+		} elseif ( ! $is_submenu && is_string( $target_parent ) && '' !== $target_parent ) {
+			$found_key  = false;
+			$found_item = null;
+			foreach ( $menu as $k => $item ) {
+				if ( isset( $item[2] ) && $item[2] === $slug ) {
+					$found_key  = $k;
+					$found_item = $item;
+					break;
+				}
+			}
+			if ( false === $found_key ) {
+				continue;
+			}
+			$label = isset( $found_item[0] ) ? $found_item[0] : $slug;
+			$cap   = isset( $found_item[1] ) ? $found_item[1] : 'read';
+			if ( ! empty( $o['label'] ) ) {
+				$label = $o['label'];
+			}
+			remove_menu_page( $slug );
+			add_submenu_page( $target_parent, wp_strip_all_tags( $label ), wp_strip_all_tags( $label ), $cap, $slug );
+		}
+	}
+}
+
+/**
+ * Apply color overrides via admin_head CSS rules.
+ *
+ * Instead of wrapping titles in styled spans (which only affects text),
+ * this injects a <style> block targeting each menu item by its HTML ID
+ * so background, text, and icon colors all apply correctly.
+ *
+ * @param array $overrides Overrides keyed by slug.
+ * @return void
+ */
+function apply_color_overrides( $overrides ) {
+	global $menu, $submenu;
+	$rules = array();
+
+	foreach ( $menu as $k => $item ) {
+		if ( empty( $item[2] ) || empty( $item[5] ) ) {
+			continue;
+		}
+		$slug = $item[2];
+		if ( empty( $overrides[ $slug ] ) || ! is_array( $overrides[ $slug ] ) ) {
+			continue;
+		}
+		$o  = $overrides[ $slug ];
+		$id = sanitize_html_class( $item[5] );
+		if ( ! $id ) {
+			continue;
+		}
+		$sel = '#adminmenu #' . $id;
+		if ( ! empty( $o['color_bg'] ) ) {
+			$bg = sanitize_hex_color( $o['color_bg'] );
+			if ( $bg ) {
+				$rules[] = $sel . ' > a { background-color: ' . $bg . ' !important; }';
+			}
+		}
+		if ( ! empty( $o['color_text'] ) ) {
+			$tc = sanitize_hex_color( $o['color_text'] );
+			if ( $tc ) {
+				$rules[] = $sel . ' > a .wp-menu-name { color: ' . $tc . ' !important; }';
+			}
+		}
+		if ( ! empty( $o['color_icon'] ) ) {
+			$ic = sanitize_hex_color( $o['color_icon'] );
+			if ( $ic ) {
+				$rules[] = $sel . ' .wp-menu-image:before { color: ' . $ic . ' !important; }';
+				$rules[] = $sel . ' .wp-menu-image svg { fill: ' . $ic . ' !important; }';
+				$rules[] = $sel . ' .wp-menu-image svg * { fill: ' . $ic . ' !important; }';
+				$rules[] = $sel . ' .wp-menu-image img { filter: none !important; }';
+			}
+		}
+	}
+
+	// Submenu items: target by parent ID + child href.
+	foreach ( $menu as $k => $item ) {
+		if ( empty( $item[2] ) || empty( $item[5] ) ) {
+			continue;
+		}
+		$parent_slug = $item[2];
+		$parent_id   = sanitize_html_class( $item[5] );
+		if ( ! $parent_id || empty( $submenu[ $parent_slug ] ) ) {
+			continue;
+		}
+		foreach ( $submenu[ $parent_slug ] as $idx => $sub ) {
+			if ( empty( $sub[2] ) ) {
+				continue;
+			}
+			$canon = $parent_slug . '::' . $sub[2];
+			if ( empty( $overrides[ $canon ] ) || ! is_array( $overrides[ $canon ] ) ) {
+				continue;
+			}
+			$o    = $overrides[ $canon ];
+			$href = esc_attr( $sub[2] );
+			if ( ! empty( $o['color_text'] ) ) {
+				$tc = sanitize_hex_color( $o['color_text'] );
+				if ( $tc ) {
+					$rules[] = '#' . $parent_id . ' .wp-submenu a[href*="' . $href . '"] { color: ' . $tc . ' !important; }';
+				}
+			}
+			if ( ! empty( $o['color_bg'] ) ) {
+				$bg = sanitize_hex_color( $o['color_bg'] );
+				if ( $bg ) {
+					$rules[] = '#' . $parent_id . ' .wp-submenu a[href*="' . $href . '"] { background-color: ' . $bg . ' !important; }';
+				}
+			}
+		}
+	}
+
+	if ( empty( $rules ) ) {
+		return;
+	}
+
+	$GLOBALS['members_am_color_css'] = implode( "\n", $rules );
+	add_action( 'admin_head', __NAMESPACE__ . '\output_color_styles', 999 );
+}
+
+/**
+ * Output the collected color override CSS in <head>.
+ *
+ * @return void
+ */
+function output_color_styles() {
+	if ( ! empty( $GLOBALS['members_am_color_css'] ) ) {
+		echo '<style id="members-am-color-overrides">' . "\n" . $GLOBALS['members_am_color_css'] . "\n</style>\n";
+	}
+}
+
+/**
+ * Register custom top/sub menu items from stored config.
+ *
+ * @param array $items Custom items.
+ * @return void
+ */
+function inject_custom_menu_items( $items ) {
+	if ( ! is_array( $items ) ) {
+		return;
+	}
+	global $members_am_custom_redirects;
+	if ( ! is_array( $members_am_custom_redirects ) ) {
+		$members_am_custom_redirects = array();
+	}
+	foreach ( $items as $item ) {
+		if ( empty( $item['id'] ) || empty( $item['label'] ) ) {
+			continue;
+		}
+		$cap  = ! empty( $item['cap'] ) ? $item['cap'] : 'read';
+		$url  = ! empty( $item['url'] ) ? esc_url_raw( $item['url'] ) : admin_url();
+		$hook = 'members-am-' . sanitize_key( $item['id'] );
+		$members_am_custom_redirects[ $hook ] = $url;
+		if ( empty( $item['parent'] ) ) {
+			add_menu_page(
+				$item['label'],
+				$item['label'],
+				$cap,
+				$hook,
+				__NAMESPACE__ . '\members_am_custom_menu_callback',
+				! empty( $item['icon'] ) ? $item['icon'] : 'dashicons-admin-generic',
+				isset( $item['position'] ) ? (int) $item['position'] : null
+			);
+		} else {
+			add_submenu_page(
+				$item['parent'],
+				$item['label'],
+				$item['label'],
+				$cap,
+				$hook,
+				__NAMESPACE__ . '\members_am_custom_menu_callback'
+			);
+		}
+	}
+}
+
+/**
+ * Redirects custom menu items to their target URL.
+ *
+ * @return void
+ */
+function members_am_custom_menu_callback() {
+	global $members_am_custom_redirects;
+	if ( empty( $_GET['page'] ) || ! is_array( $members_am_custom_redirects ) ) {
+		return;
+	}
+	$page = sanitize_key( wp_unslash( $_GET['page'] ) );
+	if ( isset( $members_am_custom_redirects[ $page ] ) ) {
+		wp_safe_redirect( $members_am_custom_redirects[ $page ] );
+		exit;
+	}
+}
+
+/**
+ * Block direct access to hidden admin pages.
+ *
+ * @return void
+ */
+function block_restricted_pages() {
+	if ( ! is_admin() || wp_doing_ajax() || wp_doing_cron() ) {
+		return;
+	}
+	if ( isset( $_GET['page'] ) && 'members-settings' === sanitize_key( wp_unslash( $_GET['page'] ) ) ) {
+		return;
+	}
+	$user_id = get_current_user_id();
+	if ( ! $user_id || is_user_exempt( $user_id ) ) {
+		return;
+	}
+
+	$cfg = get_resolved_config_for_user( $user_id );
+
+	$cap_map = isset( $cfg['capabilities'] ) ? $cfg['capabilities'] : array();
+	if ( ! empty( $cap_map ) && is_array( $cap_map ) ) {
+		$current = get_current_screen_slugs();
+		foreach ( $current as $cslug ) {
+			if ( members_admin_menus_is_protected_slug( $cslug ) ) {
+				continue;
+			}
+			foreach ( $cap_map as $slug => $cap ) {
+				if ( ! $slug || ! $cap || current_user_can( $cap ) ) {
+					continue;
+				}
+				if ( $slug === $cslug || members_admin_menus_slug_matches( $cslug, $slug ) ) {
+					$url = apply_filters( app()->namespace . '/redirect_url', admin_url(), $user_id );
+					wp_safe_redirect( $url );
+					exit;
+				}
+			}
+		}
+	}
+
+	$hidden = isset( $cfg['hidden'] ) ? $cfg['hidden'] : array();
+	if ( empty( $hidden ) || ! is_array( $hidden ) ) {
+		return;
+	}
+
+	$current = get_current_screen_slugs();
+	foreach ( $current as $cslug ) {
+		if ( members_admin_menus_is_protected_slug( $cslug ) ) {
+			continue;
+		}
+		foreach ( $hidden as $h ) {
+			if ( $h === $cslug || members_admin_menus_slug_matches( $cslug, $h ) ) {
+				$url = apply_filters( app()->namespace . '/redirect_url', admin_url(), $user_id );
+				wp_safe_redirect( $url );
+				exit;
+			}
+		}
+	}
+}
+
+/**
+ * Loose match for submenu vs top-level.
+ *
+ * @param string $current Current screen id.
+ * @param string $stored  Stored hidden id.
+ * @return bool
+ */
+function members_admin_menus_slug_matches( $current, $stored ) {
+	if ( $stored === $current ) {
+		return true;
+	}
+	if ( false !== strpos( $stored, '::' ) ) {
+		$parts = explode( '::', $stored, 2 );
+		if ( isset( $parts[1] ) && ( $parts[1] === $current || false !== strpos( $current, $parts[1] ) ) ) {
+			return true;
+		}
+	}
+	return false;
+}
+
+/**
+ * Build list of slug identifiers for the current admin screen.
+ *
+ * @return array
+ */
+function get_current_screen_slugs() {
+	global $pagenow;
+	$slugs = array();
+
+	if ( ! empty( $_GET['page'] ) && is_string( $_GET['page'] ) ) {
+		$page    = sanitize_text_field( wp_unslash( $_GET['page'] ) );
+		$slugs[] = $page;
+		if ( ! empty( $pagenow ) ) {
+			$slugs[] = $pagenow . '?page=' . $page;
+		}
+	}
+
+	if ( ! empty( $_GET['post_type'] ) && in_array( $pagenow, array( 'edit.php', 'post-new.php', 'post.php' ), true ) ) {
+		$pt      = sanitize_key( wp_unslash( $_GET['post_type'] ) );
+		$slugs[] = 'edit.php?post_type=' . $pt;
+	} elseif ( ! empty( $pagenow ) && empty( $_GET['page'] ) ) {
+		$slugs[] = $pagenow;
+	}
+
+	if ( ! empty( $_GET['taxonomy'] ) && in_array( $pagenow, array( 'edit-tags.php', 'term.php' ), true ) ) {
+		$tax     = sanitize_key( wp_unslash( $_GET['taxonomy'] ) );
+		$slugs[] = 'edit-tags.php?taxonomy=' . $tax;
+	}
+
+	// Also block related pages when a top-level menu is hidden.
+	// e.g. if edit.php is hidden, also block post-new.php and post.php (for default post type).
+	if ( in_array( $pagenow, array( 'post-new.php', 'post.php' ), true ) && empty( $_GET['post_type'] ) ) {
+		$slugs[] = 'edit.php';
+	}
+
+	/**
+	 * Filter current screen slug list for URL blocking.
+	 *
+	 * @param array $slugs Slugs.
+	 */
+	return array_unique( array_filter( apply_filters( app()->namespace . '/current_screen_slugs', $slugs ) ) );
+}
+
+/**
+ * Slugs that cannot be hidden (Members settings / safety).
+ *
+ * @param string $slug Slug.
+ * @return bool
+ */
+function members_admin_menus_is_protected_slug( $slug ) {
+	$s = (string) $slug;
+	return ( false !== stripos( $s, 'members-settings' ) || false !== stripos( $s, 'page=members' ) );
+}
+
+/**
+ * Default option structure.
+ *
+ * @return array
+ */
+function get_default_settings() {
+	return array(
+		'_meta'         => array(
+			'version'        => 3,
+			'admin_editable' => false,
+		),
+		'roles'         => array(),
+		'users'         => array(),
+		'custom_items'  => array(),
+		'capabilities'  => array(),
+		'_defaults'     => array(
+			'captured' => false,
+		),
+	);
+}
+
+/**
+ * Get plugin settings.
+ *
+ * @return array
+ */
+function get_settings() {
+	static $cache = null;
+	if ( null !== $cache ) {
+		return $cache;
+	}
+	$settings = get_option( OPTION_KEY, array() );
+	if ( ! is_array( $settings ) ) {
+		$settings = array();
+	}
+	$cache = wp_parse_args( $settings, get_default_settings() );
+	return $cache;
+}
+
+/**
+ * Whether user is exempt from all restrictions.
+ *
+ * @param int $user_id User ID.
+ * @return bool
+ */
+function is_user_exempt( $user_id ) {
+	$user = get_userdata( $user_id );
+	if ( ! $user ) {
+		return true;
+	}
+	if ( is_multisite() && is_super_admin( $user_id ) ) {
+		return true;
+	}
+
+	$meta = get_settings();
+	$admin_editable = ! empty( $meta['_meta']['admin_editable'] );
+
+	if ( in_array( 'administrator', (array) $user->roles, true ) && ! $admin_editable ) {
+		return true;
+	}
+
+	return (bool) apply_filters( app()->namespace . '/is_user_exempt', false, $user_id );
+}
+
+/**
+ * Resolved config for a user: roles merged + user overrides + hidden intersect + merged order.
+ *
+ * @param int $user_id User ID.
+ * @return array
+ */
+function get_resolved_config_for_user( $user_id ) {
+	$settings = get_settings();
+	$user     = get_userdata( $user_id );
+	if ( ! $user ) {
+		return array();
+	}
+
+	$roles = (array) $user->roles;
+	sort( $roles );
+
+	$base = get_resolved_config_for_user_from_roles_only( $settings, $roles );
+
+	// Phase 3: user-specific overrides replace role-merged blocks.
+	if ( ! empty( $settings['users'][ $user_id ] ) && is_array( $settings['users'][ $user_id ] ) ) {
+		$u = $settings['users'][ $user_id ];
+		foreach ( array( 'hidden', 'order', 'submenu_order', 'overrides', 'custom_items', 'capabilities' ) as $k ) {
+			if ( isset( $u[ $k ] ) ) {
+				$base[ $k ] = $u[ $k ];
+			}
+		}
+	}
+
+	return $base;
+}
+
+/**
+ * Resolve hidden from roles only (for merge helper).
+ *
+ * @param array $settings Settings.
+ * @param array $roles    Role slugs.
+ * @return array
+ */
+function get_resolved_config_for_user_from_roles_only( $settings, $roles ) {
+	sort( $roles );
+	$merged_hidden = array();
+	$first         = true;
+	foreach ( $roles as $role ) {
+		$rh = isset( $settings['roles'][ $role ]['hidden'] ) ? (array) $settings['roles'][ $role ]['hidden'] : array();
+		if ( $first ) {
+			$merged_hidden = $rh;
+			$first         = false;
+		} else {
+			$merged_hidden = array_values( array_intersect( $merged_hidden, $rh ) );
+		}
+	}
+	$order          = array();
+	$submenu_order  = array();
+	$overrides      = array();
+	foreach ( $roles as $role ) {
+		if ( empty( $settings['roles'][ $role ] ) ) {
+			continue;
+		}
+		$r = $settings['roles'][ $role ];
+		if ( ! empty( $r['order'] ) && empty( $order ) ) {
+			$order = (array) $r['order'];
+		}
+		if ( ! empty( $r['submenu_order'] ) && empty( $submenu_order ) ) {
+			$submenu_order = (array) $r['submenu_order'];
+		}
+	}
+	foreach ( $roles as $role ) {
+		if ( ! empty( $settings['roles'][ $role ]['overrides'] ) ) {
+			$overrides = array_merge( $overrides, (array) $settings['roles'][ $role ]['overrides'] );
+		}
+	}
+	return array(
+		'hidden'         => $merged_hidden,
+		'order'          => $order,
+		'submenu_order'  => $submenu_order,
+		'overrides'      => $overrides,
+		'custom_items'   => isset( $settings['custom_items'] ) ? (array) $settings['custom_items'] : array(),
+		'capabilities'   => isset( $settings['capabilities'] ) ? (array) $settings['capabilities'] : array(),
+	);
+}
