@@ -13,6 +13,9 @@ defined( 'ABSPATH' ) || exit;
 /** Option name. */
 const OPTION_KEY = 'members_admin_menus_settings';
 
+/** Font Awesome CDN release (cdnjs) — used by maybe_enqueue_fontawesome() and enqueue_admin_menus_assets(). */
+const FONT_AWESOME_CDN_VERSION = '6.5.2';
+
 add_action( 'admin_menu', __NAMESPACE__ . '\apply_menu_modifications', 999 );
 add_action( 'admin_menu', __NAMESPACE__ . '\inject_custom_menu_items_late', 100 );
 add_action( 'admin_init', __NAMESPACE__ . '\block_restricted_pages', 1 );
@@ -80,6 +83,23 @@ function filter_menu_order( $menu_order ) {
 }
 
 /**
+ * HTML id for a top-level $menu row (matches #adminmenu #… in the DOM).
+ *
+ * @param array $item Menu row from global $menu.
+ * @return string
+ */
+function members_am_menu_item_dom_id( $item ) {
+	if ( ! empty( $item[5] ) ) {
+		return sanitize_html_class( $item[5] );
+	}
+	if ( empty( $item[2] ) || ! function_exists( 'get_plugin_page_hookname' ) ) {
+		return '';
+	}
+	$hook = get_plugin_page_hookname( $item[2], '' );
+	return $hook ? sanitize_html_class( $hook ) : '';
+}
+
+/**
  * Enqueue Font Awesome 6 on admin pages when any override uses FA icons.
  *
  * @return void
@@ -100,9 +120,9 @@ function maybe_enqueue_fontawesome() {
 		if ( is_array( $ov ) && isset( $ov['icon_type'] ) && 'fontawesome' === $ov['icon_type'] ) {
 			wp_enqueue_style(
 				'members-fontawesome',
-				'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
+				'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/' . FONT_AWESOME_CDN_VERSION . '/css/all.min.css',
 				array(),
-				'6.5.1'
+				FONT_AWESOME_CDN_VERSION
 			);
 			return;
 		}
@@ -402,13 +422,13 @@ function apply_menu_overrides( $overrides ) {
 				$menu[ $k ][6] = sanitize_text_field( $icon );
 			} elseif ( 'fontawesome' === $icon_type ) {
 				$menu[ $k ][6] = 'none';
-				$id = isset( $item[5] ) ? sanitize_html_class( $item[5] ) : '';
+				$id = members_am_menu_item_dom_id( $item );
 				if ( $id ) {
 					$fa_icons[ $id ] = esc_attr( $icon );
 				}
 			} elseif ( 'custom' === $icon_type || 'image' === $icon_type ) {
 				$menu[ $k ][6] = esc_url( $icon );
-				$id = isset( $item[5] ) ? sanitize_html_class( $item[5] ) : '';
+				$id = members_am_menu_item_dom_id( $item );
 				if ( $id ) {
 					$img_icon_ids[] = $id;
 				}
@@ -454,7 +474,7 @@ function apply_menu_overrides( $overrides ) {
 /**
  * Output CSS + HTML to render Font Awesome icons in the admin sidebar.
  *
- * Hides the default dashicon/image and places the FA icon via ::before pseudo-element.
+ * Hides the default Dashicon (and img/svg) and injects a Font Awesome <i>. FA glyphs render on that element, not on .wp-menu-image::before.
  *
  * @return void
  */
@@ -466,10 +486,12 @@ function output_fa_icon_styles() {
 	$js  = '';
 	foreach ( $GLOBALS['members_am_fa_icons'] as $menu_id => $fa_class ) {
 		$sel = '#adminmenu #' . $menu_id . ' .wp-menu-image';
-		$css .= $sel . ':before { content: "" !important; }' . "\n";
-		$css .= $sel . ' img { display: none !important; }' . "\n";
-		$css .= $sel . ' .members-am-fa { font-size: 20px; line-height: 1; }' . "\n";
-		$js  .= 'jQuery("#' . esc_js( $menu_id ) . ' .wp-menu-image").html(\'<i class="members-am-fa ' . esc_js( $fa_class ) . '"></i>\');' . "\n";
+		// Hide the core Dashicon pseudo-element without setting content: "" (clearer for devtools and avoids edge cases with icon fonts).
+		$css .= $sel . ':before { display: none !important; }' . "\n";
+		$css .= $sel . ' img, ' . $sel . ' svg { display: none !important; }' . "\n";
+		$css .= $sel . ' { display: flex !important; align-items: center !important; justify-content: center !important; min-width: 20px !important; }' . "\n";
+		$css .= $sel . ' .members-am-fa { font-size: 20px; line-height: 1; display: inline-block; width: 20px; text-align: center; font-style: normal; font-weight: 900; vertical-align: middle; }' . "\n";
+		$js  .= 'jQuery("#' . esc_js( $menu_id ) . ' .wp-menu-image").html(\'<i class="members-am-fa ' . esc_js( $fa_class ) . '" aria-hidden="true"></i>\');' . "\n";
 	}
 	echo '<style id="members-am-fa-overrides">' . "\n" . $css . "</style>\n";
 	echo '<script>' . "\n" . 'jQuery(function(){' . "\n" . $js . '});' . "\n" . '</script>' . "\n";
@@ -624,7 +646,7 @@ function apply_color_overrides( $overrides ) {
 	$rules = array();
 
 	foreach ( $menu as $k => $item ) {
-		if ( empty( $item[2] ) || empty( $item[5] ) ) {
+		if ( empty( $item[2] ) ) {
 			continue;
 		}
 		$slug = $item[2];
@@ -632,7 +654,7 @@ function apply_color_overrides( $overrides ) {
 			continue;
 		}
 		$o  = $overrides[ $slug ];
-		$id = sanitize_html_class( $item[5] );
+		$id = members_am_menu_item_dom_id( $item );
 		if ( ! $id ) {
 			continue;
 		}
@@ -652,21 +674,28 @@ function apply_color_overrides( $overrides ) {
 		if ( ! empty( $o['color_icon'] ) ) {
 			$ic = sanitize_hex_color( $o['color_icon'] );
 			if ( $ic ) {
-				$rules[] = $sel . ' .wp-menu-image:before { color: ' . $ic . ' !important; }';
-				$rules[] = $sel . ' .wp-menu-image svg { fill: ' . $ic . ' !important; }';
-				$rules[] = $sel . ' .wp-menu-image svg * { fill: ' . $ic . ' !important; }';
-				$rules[] = $sel . ' .wp-menu-image img { filter: none !important; }';
+				// Font Awesome glyphs live on <i.members-am-fa>, not .wp-menu-image:before (we clear that for Dashicons).
+				$is_fa = ( ! empty( $o['icon_type'] ) && 'fontawesome' === $o['icon_type'] )
+					|| ( ! empty( $o['icon'] ) && is_string( $o['icon'] ) && false !== strpos( $o['icon'], 'fa-' ) );
+				if ( $is_fa ) {
+					$rules[] = $sel . ' .wp-menu-image .members-am-fa { color: ' . $ic . ' !important; }';
+				} else {
+					$rules[] = $sel . ' .wp-menu-image:before { color: ' . $ic . ' !important; }';
+					$rules[] = $sel . ' .wp-menu-image svg { fill: ' . $ic . ' !important; }';
+					$rules[] = $sel . ' .wp-menu-image svg * { fill: ' . $ic . ' !important; }';
+					$rules[] = $sel . ' .wp-menu-image img { filter: none !important; }';
+				}
 			}
 		}
 	}
 
 	// Submenu items: target by parent ID + child href.
 	foreach ( $menu as $k => $item ) {
-		if ( empty( $item[2] ) || empty( $item[5] ) ) {
+		if ( empty( $item[2] ) ) {
 			continue;
 		}
 		$parent_slug = $item[2];
-		$parent_id   = sanitize_html_class( $item[5] );
+		$parent_id   = members_am_menu_item_dom_id( $item );
 		if ( ! $parent_id || empty( $submenu[ $parent_slug ] ) ) {
 			continue;
 		}

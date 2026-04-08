@@ -125,9 +125,9 @@ function enqueue_admin_menus_assets() {
 	wp_enqueue_style( 'wp-color-picker' );
 	wp_enqueue_style(
 		'members-admin-menus-fa',
-		'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css',
+		'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/' . FONT_AWESOME_CDN_VERSION . '/css/all.min.css',
 		array(),
-		'6.5.2'
+		FONT_AWESOME_CDN_VERSION
 	);
 	wp_enqueue_script( 'members-admin-menus' );
 
