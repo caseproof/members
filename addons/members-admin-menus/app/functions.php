@@ -505,6 +505,10 @@ function output_img_icon_styles() {
 function apply_level_moves( $overrides ) {
 	global $menu, $submenu;
 
+	if ( ! isset( $GLOBALS['members_am_promoted_redirects'] ) || ! is_array( $GLOBALS['members_am_promoted_redirects'] ) ) {
+		$GLOBALS['members_am_promoted_redirects'] = array();
+	}
+
 	foreach ( $overrides as $slug => $o ) {
 		if ( ! is_array( $o ) || ! array_key_exists( 'parent', $o ) ) {
 			continue;
@@ -520,17 +524,23 @@ function apply_level_moves( $overrides ) {
 			$old_parent = $parts[0];
 			$child_slug = $parts[1];
 
-			$label = $child_slug;
-			$cap   = 'read';
+			$label              = $child_slug;
+			$cap                = 'read';
+			$promoted_redirect  = '';
 			if ( isset( $submenu[ $old_parent ] ) && is_array( $submenu[ $old_parent ] ) ) {
 				foreach ( $submenu[ $old_parent ] as $idx => $sub ) {
 					if ( isset( $sub[2] ) && $sub[2] === $child_slug ) {
 						$label = $sub[0];
 						$cap   = isset( $sub[1] ) ? $sub[1] : 'read';
+						// Resolve the real admin URL while this item is still registered as a submenu.
+						$promoted_redirect = menu_page_url( $child_slug, false );
 						unset( $submenu[ $old_parent ][ $idx ] );
 						break;
 					}
 				}
+			}
+			if ( ! $promoted_redirect && is_string( $child_slug ) && preg_match( '/^[a-zA-Z0-9_.-]+\.php$/', $child_slug ) ) {
+				$promoted_redirect = admin_url( $child_slug );
 			}
 			if ( ! empty( $o['label'] ) ) {
 				$label = $o['label'];
@@ -539,7 +549,17 @@ function apply_level_moves( $overrides ) {
 			if ( ! empty( $o['icon'] ) ) {
 				$icon = $o['icon'];
 			}
-			add_menu_page( wp_strip_all_tags( $label ), wp_strip_all_tags( $label ), $cap, $child_slug, '', $icon );
+			if ( $promoted_redirect ) {
+				$GLOBALS['members_am_promoted_redirects'][ $child_slug ] = $promoted_redirect;
+			}
+			add_menu_page(
+				wp_strip_all_tags( $label ),
+				wp_strip_all_tags( $label ),
+				$cap,
+				$child_slug,
+				$promoted_redirect ? __NAMESPACE__ . '\members_am_promoted_menu_callback' : '',
+				$icon
+			);
 
 		} elseif ( ! $is_submenu && is_string( $target_parent ) && '' !== $target_parent ) {
 			$found_key  = false;
@@ -562,6 +582,30 @@ function apply_level_moves( $overrides ) {
 			remove_menu_page( $slug );
 			add_submenu_page( $target_parent, wp_strip_all_tags( $label ), wp_strip_all_tags( $label ), $cap, $slug );
 		}
+	}
+}
+
+/**
+ * Render callback for a submenu item promoted to top-level via apply_level_moves().
+ *
+ * Redirects to the canonical URL WordPress would use for that submenu, so the original screen loads.
+ *
+ * @return void
+ */
+function members_am_promoted_menu_callback() {
+	$map = isset( $GLOBALS['members_am_promoted_redirects'] ) && is_array( $GLOBALS['members_am_promoted_redirects'] ) ? $GLOBALS['members_am_promoted_redirects'] : array();
+	global $plugin_page, $pagenow;
+	$slug = '';
+	if ( is_string( $plugin_page ) && '' !== $plugin_page ) {
+		$slug = $plugin_page;
+	} elseif ( isset( $_GET['page'] ) ) {
+		$slug = sanitize_text_field( wp_unslash( $_GET['page'] ) );
+	} elseif ( ! empty( $pagenow ) ) {
+		$slug = $pagenow;
+	}
+	if ( $slug && isset( $map[ $slug ] ) && $map[ $slug ] ) {
+		wp_safe_redirect( $map[ $slug ] );
+		exit;
 	}
 }
 
