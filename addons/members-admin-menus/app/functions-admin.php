@@ -20,6 +20,15 @@ add_action( 'admin_menu', __NAMESPACE__ . '\register_admin_menus_submenu', 21 );
 add_action( 'admin_init', __NAMESPACE__ . '\redirect_old_admin_menus_url' );
 
 /**
+ * Capability required for Admin Menus and Members settings screens.
+ *
+ * @return string
+ */
+function get_members_settings_capability() {
+	return apply_filters( 'members_settings_capability', 'manage_options' );
+}
+
+/**
  * Register "Admin Menus" as a standalone submenu page under Members.
  *
  * @return void
@@ -29,7 +38,7 @@ function register_admin_menus_submenu() {
 		'members',
 		esc_html__( 'Admin Menus', 'members' ),
 		esc_html__( 'Admin Menus', 'members' ),
-		apply_filters( 'members_settings_capability', 'manage_options' ),
+		get_members_settings_capability(),
 		'members-admin-menus',
 		__NAMESPACE__ . '\render_admin_menus_page'
 	);
@@ -440,7 +449,7 @@ function ajax_save_settings() {
 	if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'members_admin_menus' ) ) {
 		wp_send_json_error( array( 'message' => __( 'Invalid security token.', 'members' ) ), 403 );
 	}
-	if ( ! current_user_can( 'manage_options' ) ) {
+	if ( ! current_user_can( get_members_settings_capability() ) ) {
 		wp_send_json_error( array( 'message' => __( 'Permission denied.', 'members' ) ), 403 );
 	}
 	$raw = isset( $_POST['settings'] ) ? wp_unslash( $_POST['settings'] ) : '';
@@ -630,7 +639,7 @@ function ajax_reset_settings() {
 	if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'members_admin_menus' ) ) {
 		wp_send_json_error( array( 'message' => __( 'Invalid security token.', 'members' ) ), 403 );
 	}
-	if ( ! current_user_can( 'manage_options' ) ) {
+	if ( ! current_user_can( get_members_settings_capability() ) ) {
 		wp_send_json_error( array( 'message' => __( 'Permission denied.', 'members' ) ), 403 );
 	}
 	$scope = isset( $_POST['scope'] ) ? sanitize_key( wp_unslash( $_POST['scope'] ) ) : 'all';
@@ -657,7 +666,7 @@ function ajax_export_settings() {
 	if ( ! isset( $_GET['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['nonce'] ) ), 'members_admin_menus' ) ) {
 		wp_die( esc_html__( 'Invalid security token.', 'members' ) );
 	}
-	if ( ! current_user_can( 'manage_options' ) ) {
+	if ( ! current_user_can( get_members_settings_capability() ) ) {
 		wp_die( esc_html__( 'Permission denied.', 'members' ) );
 	}
 	$data = get_settings();
@@ -677,7 +686,7 @@ function ajax_import_settings() {
 	if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'members_admin_menus' ) ) {
 		wp_send_json_error( array( 'message' => __( 'Invalid security token.', 'members' ) ), 403 );
 	}
-	if ( ! current_user_can( 'manage_options' ) ) {
+	if ( ! current_user_can( get_members_settings_capability() ) ) {
 		wp_send_json_error( array( 'message' => __( 'Permission denied.', 'members' ) ), 403 );
 	}
 	$raw = isset( $_POST['settings'] ) ? wp_unslash( $_POST['settings'] ) : '';
@@ -698,7 +707,7 @@ function ajax_user_search() {
 	if ( ! isset( $_GET['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['nonce'] ) ), 'members_admin_menus' ) ) {
 		wp_send_json_error( array( 'message' => __( 'Invalid security token.', 'members' ) ), 403 );
 	}
-	if ( ! current_user_can( 'manage_options' ) ) {
+	if ( ! current_user_can( get_members_settings_capability() ) ) {
 		wp_send_json_error( array( 'message' => __( 'Permission denied.', 'members' ) ), 403 );
 	}
 	$term = isset( $_GET['term'] ) ? sanitize_text_field( wp_unslash( $_GET['term'] ) ) : '';
