@@ -18,6 +18,12 @@ return array(
 		'excerpt'     => 'Allows site administrators to control which users have access to the WordPress admin via role.',
 	),
 
+	'members-admin-menus' => array(
+		'url'     => '',
+		'title'   => 'Members - Admin Menus',
+		'excerpt' => 'Full admin menu editor: hide, reorder, rename, and customize menu items per role with a visual sidebar editor.',
+	),
+
 	'members-core-create-caps' => array(
 		'url'         => '',
 		'title'       => 'Members - Core Create Caps',

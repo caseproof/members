@@ -52,6 +52,16 @@ function members_admin_register_scripts() {
 	$edit_role_ver  = file_exists( $edit_role_file ) ? filemtime( $edit_role_file ) : false;
 	wp_register_script( 'members-edit-role', members_plugin()->uri . "js/edit-role{$min}.js", array( 'postbox', 'wp-util' ), $edit_role_ver, true );
 
+	$admin_menus_file = members_plugin()->dir . "js/admin-menus{$min}.js";
+	$admin_menus_ver  = file_exists( $admin_menus_file ) ? filemtime( $admin_menus_file ) : false;
+	wp_register_script(
+		'members-admin-menus',
+		members_plugin()->uri . "js/admin-menus{$min}.js",
+		array( 'jquery', 'wp-color-picker', 'wp-util' ),
+		$admin_menus_ver,
+		true
+	);
+
 	// Localize our script with some text we want to pass in.
 	$i18n = array(
 		'button_role_edit' => esc_html__( 'Edit',                'members' ),
