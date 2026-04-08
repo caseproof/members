@@ -340,7 +340,8 @@ function inject_separators( $menu, $order ) {
  */
 function apply_menu_overrides( $overrides ) {
 	global $menu, $submenu;
-	$fa_icons = array();
+	$fa_icons     = array();
+	$img_icon_ids = array();
 
 	foreach ( $menu as $k => $item ) {
 		if ( empty( $item[2] ) ) {
@@ -357,9 +358,15 @@ function apply_menu_overrides( $overrides ) {
 		if ( ! empty( $o['url'] ) ) {
 			$menu[ $k ][2] = esc_url_raw( $o['url'] );
 		}
-		if ( ! empty( $o['icon_type'] ) && ! empty( $o['icon'] ) ) {
-			$icon_type = $o['icon_type'];
+		if ( ! empty( $o['icon'] ) ) {
 			$icon      = $o['icon'];
+			$icon_type = ! empty( $o['icon_type'] ) ? $o['icon_type'] : 'dashicon';
+			// Auto-detect: if icon is a URL, treat as image regardless of declared type.
+			if ( 0 === strpos( $icon, 'http://' ) || 0 === strpos( $icon, 'https://' ) || 0 === strpos( $icon, '//' ) ) {
+				$icon_type = 'image';
+			} elseif ( 0 === strpos( $icon, 'data:image/' ) ) {
+				$icon_type = 'svg';
+			}
 
 			if ( 'dashicon' === $icon_type ) {
 				$menu[ $k ][6] = sanitize_text_field( $icon );
@@ -371,6 +378,10 @@ function apply_menu_overrides( $overrides ) {
 				}
 			} elseif ( 'custom' === $icon_type || 'image' === $icon_type ) {
 				$menu[ $k ][6] = esc_url( $icon );
+				$id = isset( $item[5] ) ? sanitize_html_class( $item[5] ) : '';
+				if ( $id ) {
+					$img_icon_ids[] = $id;
+				}
 			}
 		}
 	}
@@ -398,6 +409,10 @@ function apply_menu_overrides( $overrides ) {
 		$GLOBALS['members_am_fa_icons'] = $fa_icons;
 		add_action( 'admin_head', __NAMESPACE__ . '\output_fa_icon_styles', 998 );
 	}
+	if ( ! empty( $img_icon_ids ) ) {
+		$GLOBALS['members_am_img_icon_ids'] = $img_icon_ids;
+		add_action( 'admin_head', __NAMESPACE__ . '\output_img_icon_styles', 998 );
+	}
 }
 
 /**
@@ -422,6 +437,24 @@ function output_fa_icon_styles() {
 	}
 	echo '<style id="members-am-fa-overrides">' . "\n" . $css . "</style>\n";
 	echo '<script>' . "\n" . 'jQuery(function(){' . "\n" . $js . '});' . "\n" . '</script>' . "\n";
+}
+
+/**
+ * Output CSS to properly style custom image icons in the admin sidebar.
+ *
+ * @return void
+ */
+function output_img_icon_styles() {
+	if ( empty( $GLOBALS['members_am_img_icon_ids'] ) ) {
+		return;
+	}
+	$css = '';
+	foreach ( $GLOBALS['members_am_img_icon_ids'] as $menu_id ) {
+		$sel = '#adminmenu #' . $menu_id . ' .wp-menu-image img';
+		$css .= $sel . ' { width: 20px !important; height: 20px !important; display: inline-block !important; vertical-align: middle !important; object-fit: contain !important; filter: none !important; padding: 0 !important; }' . "\n";
+		$css .= '#adminmenu #' . $menu_id . ' .wp-menu-image { padding: 0 !important; display: flex !important; align-items: center !important; justify-content: center !important; }' . "\n";
+	}
+	echo '<style id="members-am-img-icon-overrides">' . "\n" . $css . "</style>\n";
 }
 
 /**

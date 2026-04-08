@@ -350,6 +350,24 @@
 		return false;
 	}
 
+	/**
+	 * Detect effective icon type from value + declared type.
+	 * URLs and data URIs always render as images regardless of declared type.
+	 */
+	function effectiveIconType(icon, declaredType) {
+		if (!icon) return declaredType || 'dashicon';
+		if (icon.indexOf('http://') === 0 || icon.indexOf('https://') === 0 || icon.indexOf('//') === 0 || icon.indexOf('data:image/') === 0) {
+			return 'image';
+		}
+		if (icon.indexOf('fa-') !== -1 || icon.indexOf('fa ') === 0 || icon.indexOf('fas ') === 0 || icon.indexOf('far ') === 0 || icon.indexOf('fab ') === 0 || icon.indexOf('fal ') === 0) {
+			return 'fontawesome';
+		}
+		if (icon.indexOf('dashicons-') === 0) {
+			return 'dashicon';
+		}
+		return declaredType || 'dashicon';
+	}
+
 	function toggleHidden(role, itemId) {
 		var h = getRoleConfig(role).hidden;
 		var i = h.indexOf(itemId);
@@ -581,13 +599,11 @@
 		var $main = $('<div class="members-am-item-main"/>');
 		if (!parentId) {
 			var icon = ov.icon || node.icon;
-			var itype = ov.icon_type || node.icon_type || 'dashicon';
+			var itype = effectiveIconType(icon, ov.icon_type || node.icon_type);
 			if (itype === 'fontawesome' && icon) {
 				$main.append($('<span class="members-am-fa-icon"><i class="' + icon + '"></i></span>'));
-			} else if ((itype === 'svg' || itype === 'image') && icon) {
-				$main.append($('<img/>').attr('src', icon).css({ width: '18px', height: '18px', display: 'inline-block', verticalAlign: 'middle', filter: 'brightness(0) invert(1)' }));
-			} else if (itype === 'custom' && icon) {
-				$main.append($('<img/>').attr('src', icon).css({ width: '18px', height: '18px', display: 'inline-block', verticalAlign: 'middle', filter: 'brightness(0) invert(1)' }));
+			} else if ((itype === 'svg' || itype === 'image' || itype === 'custom') && icon) {
+				$main.append($('<img/>').attr('src', icon).css({ width: '20px', height: '20px', display: 'inline-block', verticalAlign: 'middle', objectFit: 'contain', filter: 'none' }));
 			} else {
 				var cls = (icon && icon.indexOf('dashicons-') === 0) ? icon : 'dashicons-admin-generic';
 				$main.append($('<span class="dashicons ' + cls + '"/>'));
@@ -604,6 +620,20 @@
 			$main.append($('<span class="members-am-badge members-am-badge-nocap" title="This role does not have the \'' + (node.cap || 'read') + '\' capability. Manage capabilities in Members > Roles.">&#128274; no access</span>'));
 		}
 		$row.append($main);
+
+		// Apply color overrides preview.
+		if (ov.color_bg) {
+			$row.css('background-color', ov.color_bg);
+		}
+		if (ov.color_text) {
+			$row.find('.members-am-item-label').css('color', ov.color_text);
+		}
+		if (ov.color_icon) {
+			$row.find('.dashicons').css('color', ov.color_icon);
+			$row.find('.members-am-fa-icon i').css('color', ov.color_icon);
+			$row.find('img').css('filter', 'none'); // Don't tint uploaded images with icon color
+		}
+
 		var $hover = $('<div class="members-am-item-actions"/>');
 		$hover.append(
 			$('<button type="button" class="members-am-eye" title="Toggle"/>').text('◉'),
@@ -632,11 +662,11 @@
 
 		if (!parentId) {
 			var icon = ov.icon || node.icon;
-			var itype = ov.icon_type || node.icon_type || 'dashicon';
+			var itype = effectiveIconType(icon, ov.icon_type || node.icon_type);
 			if (itype === 'fontawesome' && icon) {
 				$main.append($('<span class="members-am-fa-icon"><i class="' + icon + '"></i></span>'));
 			} else if ((itype === 'svg' || itype === 'image' || itype === 'custom') && icon) {
-				$main.append($('<img/>').attr('src', icon).css({ width: '18px', height: '18px', display: 'inline-block', verticalAlign: 'middle', filter: 'brightness(0) invert(1)' }));
+				$main.append($('<img/>').attr('src', icon).css({ width: '20px', height: '20px', display: 'inline-block', verticalAlign: 'middle', objectFit: 'contain', filter: 'none' }));
 			} else if (icon && icon.indexOf('dashicons-') === 0) {
 				$main.append($('<span class="dashicons ' + icon + '"/>'));
 			} else {
@@ -655,6 +685,18 @@
 			$main.append($('<span class="members-am-badge members-am-badge-nocap" title="This user does not have the \'' + (node.cap || 'read') + '\' capability.">&#128274; no access</span>'));
 		}
 		$row.append($main);
+
+		// Apply color overrides preview.
+		if (ov.color_bg) {
+			$row.css('background-color', ov.color_bg);
+		}
+		if (ov.color_text) {
+			$row.find('.members-am-item-label').css('color', ov.color_text);
+		}
+		if (ov.color_icon) {
+			$row.find('.dashicons').css('color', ov.color_icon);
+			$row.find('.members-am-fa-icon i').css('color', ov.color_icon);
+		}
 
 		var $actions = $('<div class="members-am-item-actions"/>');
 		$actions.append(
@@ -793,6 +835,14 @@
 		$('#members-am-edit-url').attr('placeholder', (node && node.url) || '').val(ov.url || '');
 		$('#members-am-icon-type').val(ov.icon_type || 'dashicon');
 		$('#members-am-icon-value').val(ov.icon || (node && node.icon) || '');
+		// Show image preview if the icon is a URL.
+		var iconPreviewUrl = ov.icon || (node && node.icon) || '';
+		var iconPreviewType = effectiveIconType(iconPreviewUrl, ov.icon_type || (node && node.icon_type) || '');
+		if ((iconPreviewType === 'image' || iconPreviewType === 'custom' || iconPreviewType === 'svg') && iconPreviewUrl) {
+			$('#members-am-icon-preview').show().attr('src', iconPreviewUrl);
+		} else {
+			$('#members-am-icon-preview').hide();
+		}
 		$('#members-am-color-bg').val(ov.color_bg || '');
 		$('#members-am-color-text').val(ov.color_text || '');
 		$('#members-am-color-icon').val(ov.color_icon || '');
@@ -831,8 +881,18 @@
 	function initColorPickers() {
 		destroyColorPickers();
 		$('.members-am-color').wpColorPicker({
-			change: function () {
-				pushOverridesFromForm();
+			change: function (event, ui) {
+				// wpColorPicker fires change BEFORE writing to the input,
+				// so we defer reading until the value is committed.
+				setTimeout(function () {
+					pushOverridesFromForm();
+				}, 20);
+			},
+			clear: function () {
+				// "Clear" button doesn't fire change — handle it separately.
+				setTimeout(function () {
+					pushOverridesFromForm();
+				}, 20);
 			},
 		});
 	}
@@ -843,8 +903,11 @@
 		}
 		setOverrideField('label', $('#members-am-edit-label').val());
 		setOverrideField('url', $('#members-am-edit-url').val());
-		setOverrideField('icon_type', $('#members-am-icon-type').val());
-		setOverrideField('icon', $('#members-am-icon-value').val());
+		// Auto-detect icon type from icon value to stay consistent.
+		var iconVal = $('#members-am-icon-value').val();
+		var iconType = effectiveIconType(iconVal, $('#members-am-icon-type').val());
+		setOverrideField('icon_type', iconType);
+		setOverrideField('icon', iconVal);
 		setOverrideField('color_bg', $('#members-am-color-bg').val());
 		setOverrideField('color_text', $('#members-am-color-text').val());
 		setOverrideField('color_icon', $('#members-am-color-icon').val());
@@ -1367,14 +1430,24 @@
 				return;
 			}
 			state.mediaFrame = wp.media({
-				title: 'Choose icon',
-				button: { text: 'Use image' },
+				title: 'Choose menu icon',
+				button: { text: 'Use as icon' },
 				multiple: false,
+				library: { type: 'image' },
 			});
 			state.mediaFrame.on('select', function () {
 				var att = state.mediaFrame.state().get('selection').first().toJSON();
+				// Prefer smaller sizes for menu icons (WP menu icons are 20x20px).
+				var iconUrl = att.url || '';
+				if (att.sizes) {
+					if (att.sizes.thumbnail) {
+						iconUrl = att.sizes.thumbnail.url;
+					} else if (att.sizes.medium) {
+						iconUrl = att.sizes.medium.url;
+					}
+				}
 				$('#members-am-icon-type').val('custom');
-				$('#members-am-icon-value').val(att.url || '');
+				$('#members-am-icon-value').val(iconUrl);
 				pushOverridesFromForm();
 			});
 			state.mediaFrame.open();

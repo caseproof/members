@@ -282,7 +282,9 @@ function render_admin_menus_page() {
 					<div class="members-am-icon-grid" id="members-am-icon-grid"></div>
 					<input type="hidden" id="members-am-icon-type" value="dashicon" />
 					<input type="text" id="members-am-icon-value" class="widefat" placeholder="dashicons-admin-post" />
+					<img id="members-am-icon-preview" src="" alt="" style="display:none;width:32px;height:32px;object-fit:contain;margin-bottom:6px;border:1px solid #ddd;border-radius:3px;padding:2px;background:#f0f0f1;" />
 					<button type="button" class="button" id="members-am-media-upload"><?php esc_html_e( 'Choose image', 'members' ); ?></button>
+					<p class="description" style="margin-top:4px;"><?php esc_html_e( 'Recommended: 20×20px PNG or SVG. Larger images will be scaled down.', 'members' ); ?></p>
 				</div>
 				<div class="members-am-edit-col">
 					<label><?php esc_html_e( 'Colors', 'members' ); ?></label>
