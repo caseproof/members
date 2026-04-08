@@ -190,6 +190,7 @@ function enqueue_admin_menus_assets() {
 				'adminEditable'     => __( 'Allow editing administrator menus', 'members' ),
 				'adminEditableWarn' => __( 'This can lock administrators out of menus. Continue?', 'members' ),
 				'saved'             => __( 'Settings saved.', 'members' ),
+				'networkError'      => __( 'Could not save settings. Check your connection and try again.', 'members' ),
 				'visibility'        => __( 'Visibility per role', 'members' ),
 				'title'             => __( 'Title', 'members' ),
 				'url'               => __( 'URL', 'members' ),
@@ -670,9 +671,11 @@ function ajax_export_settings() {
 		wp_die( esc_html__( 'Permission denied.', 'members' ) );
 	}
 	$data = get_settings();
-	nocache_headers();
-	header( 'Content-Type: application/json; charset=utf-8' );
-	header( 'Content-Disposition: attachment; filename="members-admin-menus-export.json"' );
+	if ( ! headers_sent() ) {
+		nocache_headers();
+		header( 'Content-Type: application/json; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename="members-admin-menus-export.json"' );
+	}
 	echo wp_json_encode( $data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE );
 	exit;
 }
@@ -714,10 +717,12 @@ function ajax_user_search() {
 	if ( strlen( $term ) < 2 ) {
 		wp_send_json_success( array() );
 	}
+	// Prefix search (e.g. jo*) is cheaper on large user tables than *jo*. Override via members/addons/admin_menus/user_search_pattern.
+	$search = apply_filters( app()->namespace . '/user_search_pattern', $term . '*', $term );
 	$query = new \WP_User_Query(
 		array(
 			'number'         => 20,
-			'search'         => '*' . $term . '*',
+			'search'         => $search,
 			'search_columns' => array( 'user_login', 'user_nicename', 'user_email', 'display_name' ),
 			'fields'         => array( 'ID', 'user_login', 'display_name' ),
 		)

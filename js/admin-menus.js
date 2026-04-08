@@ -1078,9 +1078,16 @@
 			} else {
 				alert(res.data && res.data.message ? res.data.message : 'Error');
 			}
-		}).always(function () {
-			$b.prop('disabled', false);
-		});
+		})
+			.fail(function () {
+				alert(
+					membersAdminMenus.i18n.networkError ||
+						'Could not save settings. Check your connection and try again.'
+				);
+			})
+			.always(function () {
+				$b.prop('disabled', false);
+			});
 	}
 
 	function resetSettings(scope, role) {

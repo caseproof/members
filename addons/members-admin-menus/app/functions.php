@@ -1117,9 +1117,20 @@ function is_user_exempt( $user_id ) {
  * @return array
  */
 function get_resolved_config_for_user( $user_id ) {
+	static $cache = array();
+
+	$uid = absint( $user_id );
+	if ( $uid < 1 ) {
+		return array();
+	}
+	if ( isset( $cache[ $uid ] ) ) {
+		return $cache[ $uid ];
+	}
+
 	$settings = get_settings();
-	$user     = get_userdata( $user_id );
+	$user     = get_userdata( $uid );
 	if ( ! $user ) {
+		$cache[ $uid ] = array();
 		return array();
 	}
 
@@ -1129,8 +1140,8 @@ function get_resolved_config_for_user( $user_id ) {
 	$base = get_resolved_config_for_user_from_roles_only( $settings, $roles );
 
 	// Phase 3: user-specific overrides replace role-merged blocks.
-	if ( ! empty( $settings['users'][ $user_id ] ) && is_array( $settings['users'][ $user_id ] ) ) {
-		$u = $settings['users'][ $user_id ];
+	if ( ! empty( $settings['users'][ $uid ] ) && is_array( $settings['users'][ $uid ] ) ) {
+		$u = $settings['users'][ $uid ];
 		foreach ( array( 'hidden', 'order', 'submenu_order', 'overrides', 'custom_items', 'capabilities' ) as $k ) {
 			if ( isset( $u[ $k ] ) ) {
 				$base[ $k ] = $u[ $k ];
@@ -1138,6 +1149,7 @@ function get_resolved_config_for_user( $user_id ) {
 		}
 	}
 
+	$cache[ $uid ] = $base;
 	return $base;
 }
 
