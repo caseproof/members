@@ -1485,7 +1485,7 @@
 		$('#members-am-add-sep').on('click', addSeparator);
 
 		$('#members-am-promote').on('click', function () {
-			setOverrideField('parent', '');
+			setOverrideField('parent', '__promote__');
 			pushOverridesFromForm();
 		});
 

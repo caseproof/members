@@ -460,7 +460,7 @@ function output_img_icon_styles() {
 /**
  * Move items between menu levels based on 'parent' override field.
  *
- * - If a submenu item has parent = '' (empty string), promote it to top-level.
+ * - If a submenu item has parent = '__promote__', promote it to top-level.
  * - If a top-level item has a parent slug set, demote it to a submenu of that parent.
  *
  * @param array $overrides Overrides keyed by canonical slug.
@@ -476,7 +476,7 @@ function apply_level_moves( $overrides ) {
 		$target_parent = $o['parent'];
 		$is_submenu    = ( false !== strpos( $slug, '::' ) );
 
-		if ( $is_submenu && '' === $target_parent ) {
+		if ( $is_submenu && '__promote__' === $target_parent ) {
 			$parts = explode( '::', $slug, 2 );
 			if ( count( $parts ) !== 2 ) {
 				continue;

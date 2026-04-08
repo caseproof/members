@@ -571,7 +571,7 @@ function sanitize_role_config( $cfg ) {
 			if ( ! $s || ! is_array( $ov ) ) {
 				continue;
 			}
-			$out['overrides'][ $s ] = array(
+			$entry = array(
 				'label'      => isset( $ov['label'] ) ? sanitize_text_field( $ov['label'] ) : '',
 				'icon_type'  => isset( $ov['icon_type'] ) ? sanitize_key( $ov['icon_type'] ) : '',
 				'icon'       => isset( $ov['icon'] ) ? sanitize_text_field( $ov['icon'] ) : '',
@@ -579,8 +579,12 @@ function sanitize_role_config( $cfg ) {
 				'color_bg'   => isset( $ov['color_bg'] ) ? sanitize_hex_color( $ov['color_bg'] ) : '',
 				'color_text' => isset( $ov['color_text'] ) ? sanitize_hex_color( $ov['color_text'] ) : '',
 				'color_icon' => isset( $ov['color_icon'] ) ? sanitize_hex_color( $ov['color_icon'] ) : '',
-				'parent'     => isset( $ov['parent'] ) ? sanitize_text_field( $ov['parent'] ) : '',
 			);
+			// Only include 'parent' when explicitly set — prevents accidental promotion.
+			if ( isset( $ov['parent'] ) && '' !== $ov['parent'] ) {
+				$entry['parent'] = sanitize_text_field( $ov['parent'] );
+			}
+			$out['overrides'][ $s ] = $entry;
 		}
 	}
 	return $out;
