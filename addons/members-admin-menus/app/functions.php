@@ -777,6 +777,101 @@ function members_am_custom_menu_callback() {
 }
 
 /**
+ * Slug-like identifiers derived from an admin URL for matching hidden / capability maps.
+ *
+ * @param string $url Admin URL.
+ * @return array
+ */
+function members_am_slugs_for_admin_redirect_url( $url ) {
+	$path  = (string) wp_parse_url( $url, PHP_URL_PATH );
+	$query = (string) wp_parse_url( $url, PHP_URL_QUERY );
+	$slugs = array();
+	if ( '' !== $query ) {
+		wp_parse_str( $query, $args );
+		if ( ! empty( $args['page'] ) ) {
+			$slugs[] = sanitize_text_field( $args['page'] );
+		}
+	}
+	if ( '' !== $path ) {
+		$base = basename( $path );
+		if ( $base && 'admin.php' !== $base ) {
+			$slugs[] = $base;
+		}
+	}
+	return array_unique( array_filter( $slugs ) );
+}
+
+/**
+ * Whether the user's Admin Menus config would block this URL if it were the current screen.
+ *
+ * @param int    $user_id User ID.
+ * @param string $url     Full admin URL.
+ * @return bool
+ */
+function members_am_redirect_target_is_blocked_for_user( $user_id, $url ) {
+	$slugs   = members_am_slugs_for_admin_redirect_url( $url );
+	$cfg     = get_resolved_config_for_user( $user_id );
+	$hidden  = isset( $cfg['hidden'] ) ? (array) $cfg['hidden'] : array();
+	$cap_map = isset( $cfg['capabilities'] ) ? (array) $cfg['capabilities'] : array();
+
+	foreach ( $slugs as $cslug ) {
+		if ( ! $cslug ) {
+			continue;
+		}
+		if ( members_admin_menus_is_protected_slug( $cslug ) ) {
+			return false;
+		}
+		foreach ( $hidden as $h ) {
+			if ( $h === $cslug || members_admin_menus_slug_matches( $cslug, $h ) ) {
+				return true;
+			}
+		}
+		foreach ( $cap_map as $slug => $cap ) {
+			if ( ! $slug || ! $cap || user_can( $user_id, $cap ) ) {
+				continue;
+			}
+			if ( $slug === $cslug || members_admin_menus_slug_matches( $cslug, $slug ) ) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+/**
+ * Default redirect when access to a restricted admin screen is denied.
+ *
+ * Avoids using the dashboard home URL, which may also be hidden and cause a redirect loop.
+ *
+ * @param int $user_id User ID.
+ * @return string
+ */
+function members_am_blocked_redirect_fallback_url( $user_id ) {
+	$candidates = array();
+
+	$settings_cap = apply_filters( 'members_settings_capability', 'manage_options' );
+	if ( user_can( $user_id, $settings_cap ) ) {
+		$candidates[] = admin_url( 'admin.php?page=members-settings' );
+	}
+
+	$candidates[] = admin_url( 'profile.php' );
+
+	foreach ( $candidates as $candidate ) {
+		if ( ! members_am_redirect_target_is_blocked_for_user( $user_id, $candidate ) ) {
+			return $candidate;
+		}
+	}
+
+	/**
+	 * Filter last-resort redirect when every admin fallback would still be blocked.
+	 *
+	 * @param string $url     Default front-end home URL.
+	 * @param int    $user_id User ID.
+	 */
+	return apply_filters( app()->namespace . '/blocked_redirect_last_resort_url', home_url( '/' ), $user_id );
+}
+
+/**
  * Block direct access to hidden admin pages.
  *
  * @return void
@@ -807,7 +902,7 @@ function block_restricted_pages() {
 					continue;
 				}
 				if ( $slug === $cslug || members_admin_menus_slug_matches( $cslug, $slug ) ) {
-					$url = apply_filters( app()->namespace . '/redirect_url', admin_url(), $user_id );
+					$url = apply_filters( app()->namespace . '/redirect_url', members_am_blocked_redirect_fallback_url( $user_id ), $user_id );
 					wp_safe_redirect( $url );
 					exit;
 				}
@@ -827,7 +922,7 @@ function block_restricted_pages() {
 		}
 		foreach ( $hidden as $h ) {
 			if ( $h === $cslug || members_admin_menus_slug_matches( $cslug, $h ) ) {
-				$url = apply_filters( app()->namespace . '/redirect_url', admin_url(), $user_id );
+				$url = apply_filters( app()->namespace . '/redirect_url', members_am_blocked_redirect_fallback_url( $user_id ), $user_id );
 				wp_safe_redirect( $url );
 				exit;
 			}
