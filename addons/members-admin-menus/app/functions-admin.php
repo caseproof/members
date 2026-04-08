@@ -293,6 +293,11 @@ function render_admin_menus_page() {
 					<p><label><?php esc_html_e( 'Icon', 'members' ); ?></label><input type="text" class="members-am-color" id="members-am-color-icon" /></p>
 				</div>
 				<div class="members-am-edit-col">
+					<label><?php esc_html_e( 'Badge', 'members' ); ?></label>
+					<p><label><?php esc_html_e( 'Text', 'members' ); ?></label><input type="text" id="members-am-badge-text" class="widefat" placeholder="<?php esc_attr_e( 'e.g. New, Beta, Pro', 'members' ); ?>" /></p>
+					<p><label><?php esc_html_e( 'Color', 'members' ); ?></label><input type="text" class="members-am-color" id="members-am-badge-bg" /></p>
+				</div>
+				<div class="members-am-edit-col">
 					<label><?php esc_html_e( 'Visibility per role', 'members' ); ?></label>
 					<div id="members-am-visibility-toggles"></div>
 					<label><?php esc_html_e( 'Required capability', 'members' ); ?></label>
@@ -579,6 +584,8 @@ function sanitize_role_config( $cfg ) {
 				'color_bg'   => isset( $ov['color_bg'] ) ? sanitize_hex_color( $ov['color_bg'] ) : '',
 				'color_text' => isset( $ov['color_text'] ) ? sanitize_hex_color( $ov['color_text'] ) : '',
 				'color_icon' => isset( $ov['color_icon'] ) ? sanitize_hex_color( $ov['color_icon'] ) : '',
+				'badge'      => isset( $ov['badge'] ) ? sanitize_text_field( $ov['badge'] ) : '',
+				'badge_bg'   => isset( $ov['badge_bg'] ) ? sanitize_hex_color( $ov['badge_bg'] ) : '',
 			);
 			// Only include 'parent' when explicitly set — prevents accidental promotion.
 			if ( isset( $ov['parent'] ) && '' !== $ov['parent'] ) {

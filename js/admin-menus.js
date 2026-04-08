@@ -620,6 +620,10 @@
 			$main.append($('<span class="members-am-badge members-am-badge-edit">edit</span>'));
 		}
 		$main.append($('<span class="members-am-item-label"/>').text(label));
+		if (ov.badge) {
+			var badgeBg = ov.badge_bg || '#d63638';
+			$main.append($('<span class="members-am-badge members-am-badge-custom"/>').text(ov.badge).css({ backgroundColor: badgeBg, color: '#fff', fontSize: '9px', padding: '1px 5px', borderRadius: '2px', marginLeft: '4px', whiteSpace: 'nowrap' }));
+		}
 		if (noCap) {
 			$main.append($('<span class="members-am-badge members-am-badge-nocap" title="This role does not have the \'' + (node.cap || 'read') + '\' capability. Manage capabilities in Members > Roles.">&#128274; no access</span>'));
 		}
@@ -635,7 +639,7 @@
 		if (ov.color_icon) {
 			$row.find('.dashicons').css('color', ov.color_icon);
 			$row.find('.members-am-fa-icon i').css('color', ov.color_icon);
-			$row.find('img').css('filter', 'none'); // Don't tint uploaded images with icon color
+			$row.find('img').css('filter', 'none');
 		}
 
 		var $hover = $('<div class="members-am-item-actions"/>');
@@ -685,6 +689,10 @@
 			$main.append($('<span class="members-am-badge members-am-badge-edit">edit</span>'));
 		}
 		$main.append($('<span class="members-am-item-label"/>').text(label));
+		if (ov.badge) {
+			var badgeBg = ov.badge_bg || '#d63638';
+			$main.append($('<span class="members-am-badge members-am-badge-custom"/>').text(ov.badge).css({ backgroundColor: badgeBg, color: '#fff', fontSize: '9px', padding: '1px 5px', borderRadius: '2px', marginLeft: '4px', whiteSpace: 'nowrap' }));
+		}
 		if (noCap) {
 			$main.append($('<span class="members-am-badge members-am-badge-nocap" title="This user does not have the \'' + (node.cap || 'read') + '\' capability.">&#128274; no access</span>'));
 		}
@@ -851,6 +859,8 @@
 		$('#members-am-color-bg').val(ov.color_bg || '');
 		$('#members-am-color-text').val(ov.color_text || '');
 		$('#members-am-color-icon').val(ov.color_icon || '');
+		$('#members-am-badge-text').val(ov.badge || '');
+		$('#members-am-badge-bg').val(ov.badge_bg || '');
 		$('#members-am-item-cap')
 			.attr('placeholder', (node && node.cap) ? node.cap + ' (default)' : '')
 			.val(state.settings.capabilities[state.selectedId] || '');
@@ -927,6 +937,8 @@
 		setOverrideField('color_bg', $('#members-am-color-bg').val());
 		setOverrideField('color_text', $('#members-am-color-text').val());
 		setOverrideField('color_icon', $('#members-am-color-icon').val());
+		setOverrideField('badge', $('#members-am-badge-text').val());
+		setOverrideField('badge_bg', $('#members-am-badge-bg').val());
 		state.settings.capabilities[state.selectedId] = $('#members-am-item-cap').val() || '';
 		renderColumns();
 	}
@@ -1423,7 +1435,7 @@
 
 		$('#members-am-edit-target-role').on('change', openEditPanel);
 
-		$('#members-am-edit-label, #members-am-edit-url, #members-am-icon-value').on('input', function () {
+		$('#members-am-edit-label, #members-am-edit-url, #members-am-icon-value, #members-am-badge-text').on('input', function () {
 			pushOverridesFromForm();
 		});
 

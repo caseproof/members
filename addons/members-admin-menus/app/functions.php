@@ -373,6 +373,12 @@ function apply_menu_overrides( $overrides ) {
 		if ( ! empty( $o['label'] ) ) {
 			$menu[ $k ][0] = wp_strip_all_tags( $o['label'] );
 		}
+		if ( ! empty( $o['badge'] ) ) {
+			$badge_text = esc_html( $o['badge'] );
+			$badge_bg   = ! empty( $o['badge_bg'] ) ? sanitize_hex_color( $o['badge_bg'] ) : '#d63638';
+			$badge_html = ' <span class="members-am-menu-badge" style="display:inline-block;background:' . esc_attr( $badge_bg ) . ';color:#fff;font-size:9px;padding:1px 5px;border-radius:2px;line-height:1.4;vertical-align:middle;">' . $badge_text . '</span>';
+			$menu[ $k ][0] .= $badge_html;
+		}
 		if ( ! empty( $o['url'] ) ) {
 			$menu[ $k ][2] = esc_url_raw( $o['url'] );
 		}
@@ -416,6 +422,12 @@ function apply_menu_overrides( $overrides ) {
 			$o = $overrides[ $canon ];
 			if ( ! empty( $o['label'] ) ) {
 				$submenu[ $parent ][ $idx ][0] = wp_strip_all_tags( $o['label'] );
+			}
+			if ( ! empty( $o['badge'] ) ) {
+				$badge_text = esc_html( $o['badge'] );
+				$badge_bg   = ! empty( $o['badge_bg'] ) ? sanitize_hex_color( $o['badge_bg'] ) : '#d63638';
+				$badge_html = ' <span class="members-am-menu-badge" style="display:inline-block;background:' . esc_attr( $badge_bg ) . ';color:#fff;font-size:9px;padding:1px 5px;border-radius:2px;line-height:1.4;vertical-align:middle;">' . $badge_text . '</span>';
+				$submenu[ $parent ][ $idx ][0] .= $badge_html;
 			}
 			if ( ! empty( $o['url'] ) ) {
 				$submenu[ $parent ][ $idx ][2] = esc_url_raw( $o['url'] );
