@@ -16,10 +16,61 @@
 		previewUserRoles: [],
 		userSuggestions: [],
 		mediaFrame: null,
+		allowUnload: false,
 		syncScroll: (function () {
 			try { return localStorage.getItem('members_am_sync_scroll') !== '0'; } catch (e) { return true; }
 		})(),
 	};
+
+	/** Snapshot of persisted settings for unsaved-change detection (object key order–independent). */
+	var initialSettingsSerialized = '';
+
+	/**
+	 * Stable JSON string for comparing settings payloads (sorts object keys recursively).
+	 *
+	 * @param {*} value Value from state.settings tree.
+	 * @return {string}
+	 */
+	function stableStringify(value) {
+		if (value === null) {
+			return 'null';
+		}
+		var t = typeof value;
+		if (t === 'string' || t === 'number' || t === 'boolean') {
+			return JSON.stringify(value);
+		}
+		if (t === 'undefined') {
+			return 'null';
+		}
+		if (Array.isArray(value)) {
+			return '[' + value.map(function (v) { return stableStringify(v); }).join(',') + ']';
+		}
+		if (t === 'object') {
+			var keys = Object.keys(value).sort();
+			return '{' + keys.map(function (k) {
+				return JSON.stringify(k) + ':' + stableStringify(value[k]);
+			}).join(',') + '}';
+		}
+		return JSON.stringify(value);
+	}
+
+	function getSettingsSnapshot() {
+		return stableStringify(state.settings);
+	}
+
+	function isSettingsDirty() {
+		if (state.allowUnload) {
+			return false;
+		}
+		return getSettingsSnapshot() !== initialSettingsSerialized;
+	}
+
+	function getBeforeUnloadPrompt() {
+		if (!isSettingsDirty()) {
+			return;
+		}
+		return (membersAdminMenus.i18n && membersAdminMenus.i18n.unsavedChanges) || '';
+	}
 
 	var DASHICONS = [
 		'dashicons-menu', 'dashicons-admin-dashboard', 'dashicons-admin-post', 'dashicons-admin-page',
@@ -1073,6 +1124,7 @@
 			}
 		).done(function (res) {
 			if (res.success) {
+				state.allowUnload = true;
 				alert(membersAdminMenus.i18n.saved);
 				location.reload();
 			} else {
@@ -1108,6 +1160,7 @@
 			},
 			function (res) {
 				if (res.success) {
+					state.allowUnload = true;
 					location.reload();
 				} else {
 					alert(res.data && res.data.message ? res.data.message : 'Reset failed.');
@@ -1127,6 +1180,7 @@
 					settings: JSON.stringify(data),
 				}).done(function (res) {
 					if (res.success) {
+						state.allowUnload = true;
 						location.reload();
 					} else {
 						alert(res.data && res.data.message ? res.data.message : 'Error');
@@ -1591,6 +1645,10 @@
 		renderChips();
 		bind();
 		renderAll();
+		initialSettingsSerialized = getSettingsSnapshot();
+		$(window).on('beforeunload', function () {
+			return getBeforeUnloadPrompt();
+		});
 	}
 
 	$(init);

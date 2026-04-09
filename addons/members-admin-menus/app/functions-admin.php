@@ -191,6 +191,7 @@ function enqueue_admin_menus_assets() {
 				'adminEditableWarn' => __( 'This can lock administrators out of menus. Continue?', 'members' ),
 				'saved'             => __( 'Settings saved.', 'members' ),
 				'networkError'      => __( 'Could not save settings. Check your connection and try again.', 'members' ),
+				'unsavedChanges'    => __( 'You have unsaved changes. If you leave this page, those changes will be lost.', 'members' ),
 				'visibility'        => __( 'Visibility per role', 'members' ),
 				'title'             => __( 'Title', 'members' ),
 				'url'               => __( 'URL', 'members' ),
