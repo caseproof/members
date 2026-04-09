@@ -57,7 +57,7 @@ function members_admin_register_scripts() {
 	wp_register_script(
 		'members-admin-menus',
 		members_plugin()->uri . "js/admin-menus{$min}.js",
-		array( 'jquery', 'wp-color-picker', 'wp-util' ),
+		array( 'jquery', 'jquery-ui-sortable', 'wp-color-picker', 'wp-util' ),
 		$admin_menus_ver,
 		true
 	);

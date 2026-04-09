@@ -1181,6 +1181,23 @@
 	padding-left: 36px;
 }
 
+.members-am-sidebar-list .members-am-item {
+	cursor: grab;
+}
+
+.members-am-sidebar-list .members-am-item:active {
+	cursor: grabbing;
+}
+
+.members-am-sort-placeholder {
+	box-sizing: border-box;
+	min-height: 36px;
+	margin: 2px 0;
+	background: rgba(34, 113, 177, 0.08);
+	border: 1px dashed #2271b1;
+	border-radius: 2px;
+}
+
 .members-am-item.is-hidden {
 	opacity: 0.18;
 }

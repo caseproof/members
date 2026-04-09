@@ -844,7 +844,7 @@
 		var order = getTopOrder(role);
 		order.forEach(function (tid) {
 			if (tid.indexOf('sep-') === 0) {
-				$ul.append($('<div class="members-am-sep"/>').text('—'));
+				$ul.append($('<div class="members-am-sep"/>').attr('data-sep-id', tid).text('—'));
 				return;
 			}
 			var node = findNode(tid);
@@ -865,6 +865,7 @@
 		var label = ov.label || node.title || itemId;
 		var $row = $('<div class="members-am-item"/>')
 			.attr('data-id', itemId)
+			.attr('data-menu-parent', parentMenuId || '')
 			.toggleClass('is-hidden', hidden)
 			.toggleClass('is-no-cap', noCap)
 			.toggleClass('is-selected', state.selectedId === itemId)
@@ -937,7 +938,7 @@
 		if (selected) cls += ' is-selected';
 		if (noCap) cls += ' is-no-cap';
 
-		var $row = $('<div/>').addClass(cls).attr('data-id', node.id);
+		var $row = $('<div/>').addClass(cls).attr('data-id', node.id).attr('data-menu-parent', parentMenuId || '');
 		var $main = $('<div class="members-am-item-main"/>');
 
 		if (depth === 0) {
@@ -999,6 +1000,110 @@
 		return $row;
 	}
 
+	function submenuSlugFromItemId(itemId) {
+		return itemId.indexOf('::') !== -1 ? itemId.split('::').pop() : itemId;
+	}
+
+	function serializeRoleColumnFromDom($list, role) {
+		var topOrder = [];
+		var submenuOrder = {};
+		$list.children().each(function () {
+			var $el = $(this);
+			if ($el.hasClass('members-am-sep')) {
+				var sid = $el.attr('data-sep-id');
+				if (sid) {
+					topOrder.push(sid);
+				}
+				return;
+			}
+			if (!$el.hasClass('members-am-item')) {
+				return;
+			}
+			var id = $el.attr('data-id');
+			if (!id) {
+				return;
+			}
+			var parent = $el.attr('data-menu-parent');
+			if (parent === undefined || parent === '') {
+				topOrder.push(id);
+			} else {
+				if (!submenuOrder[parent]) {
+					submenuOrder[parent] = [];
+				}
+				submenuOrder[parent].push(submenuSlugFromItemId(id));
+			}
+		});
+		var rc = getRoleConfig(role);
+		rc.order = topOrder;
+		rc.submenu_order = submenuOrder;
+	}
+
+	function serializeUserColumnFromDom($list, uid) {
+		var topOrder = [];
+		var submenuOrder = {};
+		$list.children().each(function () {
+			var $el = $(this);
+			if ($el.hasClass('members-am-sep')) {
+				var sid = $el.attr('data-sep-id');
+				if (sid) {
+					topOrder.push(sid);
+				}
+				return;
+			}
+			if (!$el.hasClass('members-am-item')) {
+				return;
+			}
+			var id = $el.attr('data-id');
+			if (!id) {
+				return;
+			}
+			var parent = $el.attr('data-menu-parent');
+			if (parent === undefined || parent === '') {
+				topOrder.push(id);
+			} else {
+				if (!submenuOrder[parent]) {
+					submenuOrder[parent] = [];
+				}
+				submenuOrder[parent].push(submenuSlugFromItemId(id));
+			}
+		});
+		var ucfg = getUserConfig(uid);
+		ucfg.order = topOrder;
+		ucfg.submenu_order = submenuOrder;
+	}
+
+	function initMembersAmSortables() {
+		if (!$.fn.sortable) {
+			return;
+		}
+		$('#members-am-columns .members-am-sidebar-list').each(function () {
+			var $list = $(this);
+			if ($list.data('ui-sortable')) {
+				$list.sortable('destroy');
+			}
+			var $col = $list.closest('.members-am-column');
+			var role = $col.data('role');
+			var uid = $col.data('user');
+			$list.sortable({
+				axis: 'y',
+				distance: 6,
+				items: '> .members-am-item, > .members-am-sep',
+				cancel: '.members-am-item-actions button',
+				placeholder: 'members-am-sort-placeholder',
+				forcePlaceholderSize: true,
+				tolerance: 'pointer',
+				update: function () {
+					if (uid) {
+						serializeUserColumnFromDom($list, uid);
+					} else if (role) {
+						serializeRoleColumnFromDom($list, role);
+					}
+					openEditPanel();
+				}
+			});
+		});
+	}
+
 	function renderColumns() {
 		var $cols = $('#members-am-columns');
 		// Save scroll positions before re-render.
@@ -1046,7 +1151,7 @@
 
 			topOrder.forEach(function (nodeId) {
 				if (nodeId.indexOf('sep-') === 0) {
-					$list.append($('<div class="members-am-sep"/>').text('——'));
+					$list.append($('<div class="members-am-sep"/>').attr('data-sep-id', nodeId).text('——'));
 					return;
 				}
 				var node = findNode(nodeId);
@@ -1070,6 +1175,7 @@
 		}
 
 		renderCarouselStatus();
+		initMembersAmSortables();
 	}
 
 	function renderCopySelect() {
