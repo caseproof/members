@@ -1177,6 +1177,10 @@
 	opacity: 0.95;
 }
 
+.members-am-item.is-sub-deep {
+	padding-left: 36px;
+}
+
 .members-am-item.is-hidden {
 	opacity: 0.18;
 }
@@ -1337,6 +1341,19 @@
 
 .members-am-level-actions .button {
 	margin-right: 6px;
+}
+
+.members-am-demote-wrap {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+	margin-right: 6px;
+}
+
+.members-am-demote-wrap .members-am-demote-select {
+	min-width: 200px;
+	max-width: min(320px, 100%);
 }
 
 .members-am-edit-grid {

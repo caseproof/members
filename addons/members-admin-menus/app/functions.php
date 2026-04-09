@@ -139,12 +139,18 @@ function apply_menu_modifications() {
 		return;
 	}
 	$user_id = get_current_user_id();
-	if ( is_user_exempt( $user_id ) ) {
+	$cfg     = get_resolved_config_for_user( $user_id );
+	if ( empty( $cfg ) ) {
 		return;
 	}
 
-	$cfg = get_resolved_config_for_user( $user_id );
-	if ( empty( $cfg ) ) {
+	// Exempt users (e.g. administrators when "Allow editing administrator menus" is unchecked)
+	// skip most customization so they are not locked out of menus — but "Move to submenu" /
+	// "Make top-level" must still run or the dashboard sidebar never matches saved settings.
+	if ( is_user_exempt( $user_id ) ) {
+		if ( ! empty( $cfg['overrides'] ) && is_array( $cfg['overrides'] ) ) {
+			apply_level_moves( $cfg['overrides'] );
+		}
 		return;
 	}
 
@@ -516,6 +522,73 @@ function output_img_icon_styles() {
 }
 
 /**
+ * After demoting a top-level menu under another parent, merge its former submenu (e.g. Updates under Dashboard)
+ * into the parent's submenu. WordPress only renders one submenu list per flyout ($submenu[ parent ]), so children
+ * that stayed in $submenu[ index.php ] would not appear until merged into $submenu[ edit.php ].
+ *
+ * @param string $target_parent Parent file slug (e.g. edit.php).
+ * @param string $demoted_slug  Former top-level slug (e.g. index.php).
+ * @param array  $nested_items  Copy of $submenu[ $demoted_slug ] before it is cleared.
+ * @return void
+ */
+function merge_demoted_submenu_into_parent( $target_parent, $demoted_slug, $nested_items ) {
+	global $submenu, $_parent_pages;
+
+	$target_parent = plugin_basename( $target_parent );
+	$demoted_slug  = plugin_basename( $demoted_slug );
+
+	unset( $submenu[ $demoted_slug ] );
+
+	if ( empty( $nested_items ) || ! is_array( $nested_items ) ) {
+		return;
+	}
+
+	$to_insert = array();
+	foreach ( $nested_items as $sub ) {
+		if ( ! isset( $sub[2] ) ) {
+			continue;
+		}
+		$child_slug = plugin_basename( $sub[2] );
+		// Skip the duplicate row that matches the parent file (WP adds "same as parent" for top-level screens).
+		if ( $child_slug === $demoted_slug ) {
+			continue;
+		}
+		$to_insert[] = $sub;
+	}
+
+	if ( empty( $to_insert ) || ! isset( $submenu[ $target_parent ] ) || ! is_array( $submenu[ $target_parent ] ) ) {
+		return;
+	}
+
+	$flat = array_values( $submenu[ $target_parent ] );
+	$pos  = false;
+	foreach ( $flat as $i => $sub ) {
+		if ( isset( $sub[2] ) && plugin_basename( $sub[2] ) === $demoted_slug ) {
+			$pos = $i;
+			break;
+		}
+	}
+	if ( false === $pos ) {
+		return;
+	}
+
+	$before = array_slice( $flat, 0, $pos + 1 );
+	$after  = array_slice( $flat, $pos + 1 );
+	$merged = array_merge( $before, $to_insert, $after );
+
+	$submenu[ $target_parent ] = array();
+	foreach ( array_values( $merged ) as $i => $row ) {
+		$submenu[ $target_parent ][ $i ] = $row;
+	}
+
+	foreach ( $to_insert as $row ) {
+		if ( ! empty( $row[2] ) ) {
+			$_parent_pages[ plugin_basename( $row[2] ) ] = $target_parent;
+		}
+	}
+}
+
+/**
  * Move items between menu levels based on 'parent' override field.
  *
  * - If a submenu item has parent = '__promote__', promote it to top-level.
@@ -601,8 +674,15 @@ function apply_level_moves( $overrides ) {
 			if ( ! empty( $o['label'] ) ) {
 				$label = $o['label'];
 			}
+
+			$nested_submenu = isset( $submenu[ $slug ] ) && is_array( $submenu[ $slug ] ) ? $submenu[ $slug ] : array();
+
 			remove_menu_page( $slug );
 			add_submenu_page( $target_parent, wp_strip_all_tags( $label ), wp_strip_all_tags( $label ), $cap, $slug );
+
+			if ( ! empty( $nested_submenu ) ) {
+				merge_demoted_submenu_into_parent( $target_parent, $slug, $nested_submenu );
+			}
 		}
 	}
 }

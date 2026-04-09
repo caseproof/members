@@ -197,6 +197,8 @@ function enqueue_admin_menus_assets() {
 				'url'               => __( 'URL', 'members' ),
 				'selectRole'        => __( 'Select source role', 'members' ),
 				'of'                => __( 'of', 'members' ),
+				'selectParentMenu'  => __( 'Select parent menu…', 'members' ),
+				'selectParentFirst' => __( 'Please choose a parent menu from the list.', 'members' ),
 			),
 		)
 	);
@@ -272,7 +274,11 @@ function render_admin_menus_page() {
 				<span class="members-am-level-actions">
 					<button type="button" class="button" id="members-am-add-sep"><?php esc_html_e( 'Add separator', 'members' ); ?></button>
 					<button type="button" class="button" id="members-am-promote"><?php esc_html_e( 'Make top-level', 'members' ); ?></button>
-					<button type="button" class="button" id="members-am-demote"><?php esc_html_e( 'Move to submenu', 'members' ); ?></button>
+					<span class="members-am-demote-wrap" hidden>
+						<label for="members-am-demote-parent" class="screen-reader-text"><?php esc_html_e( 'Parent menu', 'members' ); ?></label>
+						<select id="members-am-demote-parent" class="members-am-demote-select" aria-label="<?php esc_attr_e( 'Parent menu', 'members' ); ?>"></select>
+						<button type="button" class="button" id="members-am-demote"><?php esc_html_e( 'Move to submenu', 'members' ); ?></button>
+					</span>
 				</span>
 			</div>
 			<div class="members-am-edit-grid">
