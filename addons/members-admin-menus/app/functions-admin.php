@@ -417,10 +417,6 @@ function build_menu_tree_for_js() {
 					continue;
 				}
 				$subslug = $subitem[2];
-				// Skip the redundant first child that matches the parent slug (WP convention).
-				if ( $subslug === $slug ) {
-					continue;
-				}
 				// Skip duplicate submenu slugs (some plugins register multiple entries for the same slug).
 				if ( isset( $seen_subslugs[ $subslug ] ) ) {
 					continue;
