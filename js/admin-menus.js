@@ -1480,8 +1480,27 @@
 		renderAll();
 	}
 
+	function beginAjaxToolbarLoading(message) {
+		var $w = $('#members-am-toolbar-loading');
+		$w.removeAttr('hidden');
+		$w.find('.spinner').addClass('is-active');
+		$w.find('.members-am-loading-text').text(message || '');
+		$('#members-am-save, #members-am-reset, #members-am-import, #members-am-copy-apply').prop('disabled', true);
+	}
+
+	function endAjaxToolbarLoading() {
+		var $w = $('#members-am-toolbar-loading');
+		$w.attr('hidden', true);
+		$w.find('.spinner').removeClass('is-active');
+		$w.find('.members-am-loading-text').text('');
+		$('#members-am-save, #members-am-reset, #members-am-import, #members-am-copy-apply').prop('disabled', false);
+	}
+
 	function saveSettings() {
-		var $b = $('#members-am-save').prop('disabled', true);
+		var saving =
+			(membersAdminMenus.i18n && membersAdminMenus.i18n.saving) || 'Saving…';
+		beginAjaxToolbarLoading(saving);
+		var willReload = false;
 		$.post(
 			membersAdminMenus.ajaxUrl,
 			{
@@ -1489,15 +1508,17 @@
 				nonce: membersAdminMenus.nonce,
 				settings: JSON.stringify(state.settings),
 			}
-		).done(function (res) {
-			if (res.success) {
-				state.allowUnload = true;
-				alert(membersAdminMenus.i18n.saved);
-				location.reload();
-			} else {
+		)
+			.done(function (res) {
+				if (res.success) {
+					state.allowUnload = true;
+					alert(membersAdminMenus.i18n.saved);
+					willReload = true;
+					location.reload();
+					return;
+				}
 				alert(res.data && res.data.message ? res.data.message : 'Error');
-			}
-		})
+			})
 			.fail(function () {
 				alert(
 					membersAdminMenus.i18n.networkError ||
@@ -1505,7 +1526,9 @@
 				);
 			})
 			.always(function () {
-				$b.prop('disabled', false);
+				if (!willReload) {
+					endAjaxToolbarLoading();
+				}
 			});
 	}
 
@@ -1517,6 +1540,10 @@
 		if (!confirm(msg)) {
 			return;
 		}
+		var resetting =
+			(membersAdminMenus.i18n && membersAdminMenus.i18n.resetting) || 'Resetting…';
+		beginAjaxToolbarLoading(resetting);
+		var willReload = false;
 		$.post(
 			membersAdminMenus.ajaxUrl,
 			{
@@ -1524,36 +1551,73 @@
 				nonce: membersAdminMenus.nonce,
 				scope: scope || 'all',
 				role: role || '',
-			},
-			function (res) {
+			}
+		)
+			.done(function (res) {
 				if (res.success) {
 					state.allowUnload = true;
+					willReload = true;
 					location.reload();
-				} else {
-					alert(res.data && res.data.message ? res.data.message : 'Reset failed.');
+					return;
 				}
-			}
-		);
+				alert(res.data && res.data.message ? res.data.message : 'Reset failed.');
+			})
+			.fail(function () {
+				alert(
+					membersAdminMenus.i18n.networkError ||
+						'Could not reset settings. Check your connection and try again.'
+				);
+			})
+			.always(function () {
+				if (!willReload) {
+					endAjaxToolbarLoading();
+				}
+			});
 	}
 
 	function importFile(file) {
+		var importing =
+			(membersAdminMenus.i18n && membersAdminMenus.i18n.importing) || 'Importing…';
+		beginAjaxToolbarLoading(importing);
 		var reader = new FileReader();
+		reader.onerror = function () {
+			endAjaxToolbarLoading();
+			alert(
+				(membersAdminMenus.i18n && membersAdminMenus.i18n.networkError) ||
+					'Could not read the file.'
+			);
+		};
 		reader.onload = function () {
 			try {
 				var data = JSON.parse(reader.result);
+				var willReload = false;
 				$.post(membersAdminMenus.ajaxUrl, {
 					action: 'members_admin_menus_import',
 					nonce: membersAdminMenus.nonce,
 					settings: JSON.stringify(data),
-				}).done(function (res) {
-					if (res.success) {
-						state.allowUnload = true;
-						location.reload();
-					} else {
+				})
+					.done(function (res) {
+						if (res.success) {
+							state.allowUnload = true;
+							willReload = true;
+							location.reload();
+							return;
+						}
 						alert(res.data && res.data.message ? res.data.message : 'Error');
-					}
-				});
+					})
+					.fail(function () {
+						alert(
+							membersAdminMenus.i18n.networkError ||
+								'Could not import settings. Check your connection and try again.'
+						);
+					})
+					.always(function () {
+						if (!willReload) {
+							endAjaxToolbarLoading();
+						}
+					});
 			} catch (e) {
+				endAjaxToolbarLoading();
 				alert('Invalid JSON');
 			}
 		};

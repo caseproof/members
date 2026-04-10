@@ -199,6 +199,9 @@ function enqueue_admin_menus_assets() {
 				'of'                => __( 'of', 'members' ),
 				'selectParentMenu'  => __( 'Select parent menu…', 'members' ),
 				'selectParentFirst' => __( 'Please choose a parent menu from the list.', 'members' ),
+				'saving'            => __( 'Saving…', 'members' ),
+				'resetting'         => __( 'Resetting…', 'members' ),
+				'importing'         => __( 'Importing…', 'members' ),
 			),
 		)
 	);
@@ -243,6 +246,10 @@ function render_admin_menus_page() {
 				<input type="checkbox" id="members-am-admin-editable" />
 				<?php esc_html_e( 'Allow editing administrator menus', 'members' ); ?>
 			</label>
+			<span class="members-am-toolbar-loading" id="members-am-toolbar-loading" hidden aria-live="polite">
+				<span class="spinner"></span>
+				<span class="members-am-loading-text"></span>
+			</span>
 		</div>
 
 		<p class="members-am-legend">
