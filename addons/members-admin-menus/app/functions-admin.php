@@ -200,6 +200,7 @@ function enqueue_admin_menus_assets() {
 				'selectParentMenu'  => __( 'Select parent menu…', 'members' ),
 				'selectParentFirst' => __( 'Please choose a parent menu from the list.', 'members' ),
 				'saving'            => __( 'Saving…', 'members' ),
+				'copying'           => __( 'Copying…', 'members' ),
 				'resetting'         => __( 'Resetting…', 'members' ),
 				'importing'         => __( 'Importing…', 'members' ),
 			),

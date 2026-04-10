@@ -1496,9 +1496,11 @@
 		$('#members-am-save, #members-am-reset, #members-am-import, #members-am-copy-apply').prop('disabled', false);
 	}
 
-	function saveSettings() {
+	function saveSettings(loadingMessage) {
 		var saving =
-			(membersAdminMenus.i18n && membersAdminMenus.i18n.saving) || 'Saving…';
+			loadingMessage ||
+			(membersAdminMenus.i18n && membersAdminMenus.i18n.saving) ||
+			'Saving…';
 		beginAjaxToolbarLoading(saving);
 		var willReload = false;
 		$.post(
@@ -1879,7 +1881,10 @@
 			}
 
 			renderAll();
-			saveSettings();
+			var copying =
+				(membersAdminMenus.i18n && membersAdminMenus.i18n.copying) ||
+				'Copying…';
+			saveSettings(copying);
 		});
 
 		$('#members-am-admin-editable').on('change', function () {
