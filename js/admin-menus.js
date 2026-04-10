@@ -1503,15 +1503,25 @@
 			'Saving…';
 		beginAjaxToolbarLoading(saving);
 		var willReload = false;
-		$.post(
-			membersAdminMenus.ajaxUrl,
-			{
+		var fallbackNetwork =
+			(membersAdminMenus.i18n && membersAdminMenus.i18n.networkError) ||
+			'Could not save settings. Check your connection and try again.';
+		$.ajax({
+			url: membersAdminMenus.ajaxUrl,
+			type: 'POST',
+			dataType: 'json',
+			timeout: 60000,
+			data: {
 				action: 'members_admin_menus_save',
 				nonce: membersAdminMenus.nonce,
 				settings: JSON.stringify(state.settings),
-			}
-		)
+			},
+		})
 			.done(function (res) {
+				if (!res || typeof res.success === 'undefined') {
+					alert(fallbackNetwork);
+					return;
+				}
 				if (res.success) {
 					state.allowUnload = true;
 					alert(membersAdminMenus.i18n.saved);
@@ -1521,11 +1531,20 @@
 				}
 				alert(res.data && res.data.message ? res.data.message : 'Error');
 			})
-			.fail(function () {
-				alert(
-					membersAdminMenus.i18n.networkError ||
-						'Could not save settings. Check your connection and try again.'
-				);
+			.fail(function (jqXHR, textStatus /* , errorThrown */) {
+				if (textStatus === 'abort') {
+					return;
+				}
+				var msg = fallbackNetwork;
+				if (jqXHR && jqXHR.responseJSON && jqXHR.responseJSON.data !== undefined) {
+					var d = jqXHR.responseJSON.data;
+					if (typeof d === 'string' && d) {
+						msg = d;
+					} else if (d && typeof d.message === 'string' && d.message) {
+						msg = d.message;
+					}
+				}
+				alert(msg);
 			})
 			.always(function () {
 				if (!willReload) {
