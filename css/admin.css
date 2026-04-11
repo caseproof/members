@@ -1165,6 +1165,41 @@
 	letter-spacing: 0.04em;
 }
 
+.members-am-col-filter {
+	padding: 6px 8px 8px;
+	border-bottom: 1px solid #3c434a;
+	flex-shrink: 0;
+}
+
+.members-am-col-filter-input {
+	width: 100%;
+	max-width: 100%;
+	box-sizing: border-box;
+	font-size: 12px;
+	line-height: 1.4;
+	padding: 4px 8px;
+	border-radius: 2px;
+	border: 1px solid #50575e;
+	background: #1d2327;
+	color: #f0f0f1;
+}
+
+.members-am-col-filter-input::placeholder {
+	color: #8c8f94;
+	opacity: 1;
+}
+
+.members-am-col-filter-input:focus {
+	border-color: #2271b1;
+	outline: 1px solid transparent;
+	box-shadow: 0 0 0 1px #2271b1;
+}
+
+.members-am-item.members-am-filter-hidden,
+.members-am-sep.members-am-filter-hidden {
+	display: none !important;
+}
+
 .members-am-col-move button {
 	margin-left: 4px;
 	padding: 0 6px;

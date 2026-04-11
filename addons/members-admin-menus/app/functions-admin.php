@@ -203,6 +203,8 @@ function enqueue_admin_menus_assets() {
 				'copying'           => __( 'Copying…', 'members' ),
 				'resetting'         => __( 'Resetting…', 'members' ),
 				'importing'         => __( 'Importing…', 'members' ),
+				'filterItems'       => __( 'Filter items…', 'members' ),
+				'filterItemsLabel'  => __( 'Filter menu items in this column', 'members' ),
 			),
 		)
 	);

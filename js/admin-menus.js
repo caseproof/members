@@ -20,6 +20,8 @@
 		syncScroll: (function () {
 			try { return localStorage.getItem('members_am_sync_scroll') !== '0'; } catch (e) { return true; }
 		})(),
+		/** Per-column list filter query (role slug, or `u:` + user id for preview column). */
+		columnFilters: {},
 	};
 
 	/** Snapshot of persisted settings for unsaved-change detection (object key order–independent). */
@@ -826,6 +828,85 @@
 		});
 	}
 
+	/**
+	 * Show/hide menu rows in a column by label or id; keep ancestors visible when a child matches.
+	 *
+	 * @param {jQuery} $list Column .members-am-sidebar-list.
+	 * @param {string} query Filter text.
+	 */
+	function applyColumnListFilter($list, query) {
+		var q = (query || '').trim().toLowerCase();
+		var $items = $list.children('.members-am-item');
+		if (!q) {
+			$items.removeClass('members-am-filter-hidden');
+			$list.children('.members-am-sep').removeClass('members-am-filter-hidden');
+			return;
+		}
+		var matchSelf = {};
+		$items.each(function () {
+			var $row = $(this);
+			var id = $row.attr('data-id');
+			var label = ($row.find('.members-am-item-label').first().text() || '').toLowerCase();
+			var idLower = (id || '').toLowerCase();
+			matchSelf[id] = label.indexOf(q) !== -1 || idLower.indexOf(q) !== -1;
+		});
+		var children = {};
+		$items.each(function () {
+			var id = $(this).attr('data-id');
+			var p = $(this).attr('data-menu-parent') || '';
+			if (!children[p]) {
+				children[p] = [];
+			}
+			children[p].push(id);
+		});
+		var show = {};
+		function dfs(id) {
+			var self = matchSelf[id];
+			var subs = children[id] || [];
+			var childVisible = false;
+			var i;
+			for (i = 0; i < subs.length; i++) {
+				if (dfs(subs[i])) {
+					childVisible = true;
+				}
+			}
+			var v = self || childVisible;
+			show[id] = v;
+			return v;
+		}
+		var roots = children[''] || [];
+		for (var r = 0; r < roots.length; r++) {
+			dfs(roots[r]);
+		}
+		$items.each(function () {
+			var id = $(this).attr('data-id');
+			$(this).toggleClass('members-am-filter-hidden', !show[id]);
+		});
+		$list.children('.members-am-sep').addClass('members-am-filter-hidden');
+	}
+
+	function bindColumnFilter($wrap, $list, filterKey) {
+		var saved = state.columnFilters[filterKey] || '';
+		var ph =
+			(membersAdminMenus.i18n && membersAdminMenus.i18n.filterItems) ||
+			'Filter items…';
+		var aria =
+			(membersAdminMenus.i18n && membersAdminMenus.i18n.filterItemsLabel) ||
+			'Filter menu items in this column';
+		var $row = $('<div class="members-am-col-filter"/>');
+		var $input = $('<input type="search" class="members-am-col-filter-input" autocomplete="off" />')
+			.attr('placeholder', ph)
+			.attr('aria-label', aria)
+			.val(saved);
+		$row.append($input);
+		$wrap.find('.members-am-sidebar-head').first().after($row);
+		$input.on('input', function () {
+			state.columnFilters[filterKey] = $(this).val();
+			applyColumnListFilter($list, $(this).val());
+		});
+		applyColumnListFilter($list, saved);
+	}
+
 	function renderSidebar(role, $wrap) {
 		$wrap.empty();
 		var $head = $('<div class="members-am-sidebar-head"/>');
@@ -854,6 +935,7 @@
 			renderRoleBranch(role, node, null, $ul, 0);
 		});
 		$wrap.append($ul);
+		bindColumnFilter($wrap, $ul, role);
 	}
 
 	function renderItemRow(role, node, parentMenuId, $container, depth) {
@@ -1160,6 +1242,7 @@
 			});
 
 			$uc.append($list);
+			bindColumnFilter($uc, $list, 'u:' + uid);
 			$cols.append($uc);
 		}
 		if (state.syncScroll) {
