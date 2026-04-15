@@ -11,6 +11,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 return array(
-	'dir'       => trailingslashit( realpath( trailingslashit( __DIR__ ) . '../' ) ),
+	'dir'       => trailingslashit( dirname( __DIR__ ) ),
 	'namespace' => 'members/addons/admin_menus',
 );
