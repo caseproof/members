@@ -22,6 +22,10 @@
 		})(),
 		/** Per-column list filter query (role slug, or `u:` + user id for preview column). */
 		columnFilters: {},
+		/** Per-column bulk checkbox selection: key -> { ids: { [itemId]: true } }. */
+		columnBulkSelection: {},
+		/** Per-column collapsed parent ids: key -> { [parentItemId]: true } when children are folded away. */
+		collapsedParents: {},
 	};
 
 	/** Snapshot of persisted settings for unsaved-change detection (object key order–independent). */
@@ -636,6 +640,306 @@
 		}
 	}
 
+	function collectAllMenuItemIds() {
+		var out = [];
+		function walk(nodes) {
+			var i;
+			for (i = 0; i < nodes.length; i++) {
+				out.push(nodes[i].id);
+				if (nodes[i].children && nodes[i].children.length) {
+					walk(nodes[i].children);
+				}
+			}
+		}
+		walk(state.tree || []);
+		return out;
+	}
+
+	function ensureBulkSelection(columnKey) {
+		if (!state.columnBulkSelection[columnKey]) {
+			state.columnBulkSelection[columnKey] = { ids: {} };
+		}
+		if (!state.columnBulkSelection[columnKey].ids) {
+			state.columnBulkSelection[columnKey].ids = {};
+		}
+	}
+
+	function getBulkCheckedIds(columnKey) {
+		ensureBulkSelection(columnKey);
+		return Object.keys(state.columnBulkSelection[columnKey].ids).filter(function (k) {
+			return state.columnBulkSelection[columnKey].ids[k];
+		});
+	}
+
+	/** All descendant menu node ids under `itemId` in the snapshot tree (not including `itemId`). */
+	function collectDescendantIdsFromTree(itemId) {
+		var node = findNode(itemId);
+		if (!node || !node.children || !node.children.length) {
+			return [];
+		}
+		var out = [];
+		function walk(n) {
+			if (!n) {
+				return;
+			}
+			out.push(n.id);
+			if (n.children && n.children.length) {
+				n.children.forEach(walk);
+			}
+		}
+		node.children.forEach(walk);
+		return out;
+	}
+
+	function setBulkCheckedCascade(columnKey, itemId, checked) {
+		ensureBulkSelection(columnKey);
+		var ids = state.columnBulkSelection[columnKey].ids;
+		if (checked) {
+			ids[itemId] = true;
+			collectDescendantIdsFromTree(itemId).forEach(function (did) {
+				ids[did] = true;
+			});
+		} else {
+			delete ids[itemId];
+			collectDescendantIdsFromTree(itemId).forEach(function (did) {
+				delete ids[did];
+			});
+		}
+	}
+
+	function ensureCollapsedParents(columnKey) {
+		if (!state.collapsedParents[columnKey]) {
+			state.collapsedParents[columnKey] = {};
+		}
+	}
+
+	function isItemDescendantOfParent($item, ancestorId, $list) {
+		var p = $item.attr('data-menu-parent') || '';
+		while (p) {
+			if (p === ancestorId) {
+				return true;
+			}
+			var $parentRow = $list.find('.members-am-item').filter(function () {
+				return $(this).attr('data-id') === p;
+			}).first();
+			if (!$parentRow.length) {
+				return false;
+			}
+			p = $parentRow.attr('data-menu-parent') || '';
+		}
+		return false;
+	}
+
+	function applyCollapsedState($list, columnKey) {
+		var col = state.collapsedParents[columnKey];
+		var $items = $list.children('.members-am-item');
+		if (!col || !Object.keys(col).some(function (k) {
+			return col[k];
+		})) {
+			$items.removeClass('members-am-collapse-hidden');
+			return;
+		}
+		var collapsedIds = Object.keys(col).filter(function (k) {
+			return col[k];
+		});
+		$items.each(function () {
+			var $item = $(this);
+			var id = $item.attr('data-id');
+			var hide = false;
+			var i;
+			for (i = 0; i < collapsedIds.length; i++) {
+				if (collapsedIds[i] !== id && isItemDescendantOfParent($item, collapsedIds[i], $list)) {
+					hide = true;
+					break;
+				}
+			}
+			$item.toggleClass('members-am-collapse-hidden', hide);
+		});
+	}
+
+	/** Every menu node id in the snapshot tree that has at least one child (any depth). */
+	function collectParentIdsWithChildrenFromTree() {
+		var out = [];
+		function walk(nodes) {
+			if (!nodes || !nodes.length) {
+				return;
+			}
+			var i;
+			for (i = 0; i < nodes.length; i++) {
+				var n = nodes[i];
+				if (n.children && n.children.length) {
+					out.push(n.id);
+					walk(n.children);
+				}
+			}
+		}
+		walk(state.tree || []);
+		return out;
+	}
+
+	function collapseAllInColumn(columnKey) {
+		ensureCollapsedParents(columnKey);
+		collectParentIdsWithChildrenFromTree().forEach(function (id) {
+			state.collapsedParents[columnKey][id] = true;
+		});
+	}
+
+	function expandAllInColumn(columnKey) {
+		state.collapsedParents[columnKey] = {};
+	}
+
+	function ensureHiddenRole(role, itemId) {
+		var h = getRoleConfig(role).hidden;
+		if (h.indexOf(itemId) === -1) {
+			h.push(itemId);
+		}
+		var node = findNode(itemId);
+		if (node && node.children && node.children.length) {
+			node.children.forEach(function (child) {
+				if (h.indexOf(child.id) === -1) {
+					h.push(child.id);
+				}
+			});
+		}
+	}
+
+	function ensureShownRole(role, itemId) {
+		var h = getRoleConfig(role).hidden;
+		var ix = h.indexOf(itemId);
+		if (ix !== -1) {
+			h.splice(ix, 1);
+		}
+		var node = findNode(itemId);
+		if (node && node.children && node.children.length) {
+			node.children.forEach(function (child) {
+				var ci = h.indexOf(child.id);
+				if (ci !== -1) {
+					h.splice(ci, 1);
+				}
+			});
+		}
+	}
+
+	function ensureHiddenUser(uid, itemId) {
+		var h = getUserConfig(uid).hidden;
+		if (h.indexOf(itemId) === -1) {
+			h.push(itemId);
+		}
+		var node = findNode(itemId);
+		if (node && node.children && node.children.length) {
+			node.children.forEach(function (child) {
+				if (h.indexOf(child.id) === -1) {
+					h.push(child.id);
+				}
+			});
+		}
+	}
+
+	function ensureShownUser(uid, itemId) {
+		var h = getUserConfig(uid).hidden;
+		var ix = h.indexOf(itemId);
+		if (ix !== -1) {
+			h.splice(ix, 1);
+		}
+		var node = findNode(itemId);
+		if (node && node.children && node.children.length) {
+			node.children.forEach(function (child) {
+				var ci = h.indexOf(child.id);
+				if (ci !== -1) {
+					h.splice(ci, 1);
+				}
+			});
+		}
+	}
+
+	function bulkShowAllRole(role) {
+		getRoleConfig(role).hidden = [];
+	}
+
+	function bulkHideAllRole(role) {
+		var all = collectAllMenuItemIds();
+		getRoleConfig(role).hidden = all.slice();
+	}
+
+	function bulkKeepOnlyCheckedRole(columnKey, role) {
+		var ids = getBulkCheckedIds(columnKey);
+		if (!ids.length) {
+			return;
+		}
+		var keep = {};
+		ids.forEach(function (id) {
+			var cur = id;
+			while (cur) {
+				keep[cur] = true;
+				cur = getEffectiveParentId(cur, role);
+			}
+		});
+		var all = collectAllMenuItemIds();
+		var h = getRoleConfig(role).hidden;
+		h.length = 0;
+		all.forEach(function (id) {
+			if (!keep[id]) {
+				h.push(id);
+			}
+		});
+	}
+
+	function bulkHideCheckedRole(columnKey, role) {
+		getBulkCheckedIds(columnKey).forEach(function (id) {
+			ensureHiddenRole(role, id);
+		});
+	}
+
+	function bulkShowCheckedRole(columnKey, role) {
+		getBulkCheckedIds(columnKey).forEach(function (id) {
+			ensureShownRole(role, id);
+		});
+	}
+
+	function bulkShowAllUser(uid) {
+		getUserConfig(uid).hidden = [];
+	}
+
+	function bulkHideAllUser(uid) {
+		var all = collectAllMenuItemIds();
+		getUserConfig(uid).hidden = all.slice();
+	}
+
+	function bulkKeepOnlyCheckedUser(columnKey, uid) {
+		var ids = getBulkCheckedIds(columnKey);
+		if (!ids.length) {
+			return;
+		}
+		var keep = {};
+		ids.forEach(function (id) {
+			var cur = id;
+			while (cur) {
+				keep[cur] = true;
+				cur = getEffectiveParentIdForUser(cur, uid);
+			}
+		});
+		var all = collectAllMenuItemIds();
+		var h = getUserConfig(uid).hidden;
+		h.length = 0;
+		all.forEach(function (id) {
+			if (!keep[id]) {
+				h.push(id);
+			}
+		});
+	}
+
+	function bulkHideCheckedUser(columnKey, uid) {
+		getBulkCheckedIds(columnKey).forEach(function (id) {
+			ensureHiddenUser(uid, id);
+		});
+	}
+
+	function bulkShowCheckedUser(columnKey, uid) {
+		getBulkCheckedIds(columnKey).forEach(function (id) {
+			ensureShownUser(uid, id);
+		});
+	}
+
 	function getTargetRole() {
 		var v = $('#members-am-edit-target-role').val();
 		return v || (state.activeRoleSlugs[0] || '');
@@ -883,6 +1187,16 @@
 			$(this).toggleClass('members-am-filter-hidden', !show[id]);
 		});
 		$list.children('.members-am-sep').addClass('members-am-filter-hidden');
+		var $col = $list.closest('.members-am-column');
+		if ($col.length) {
+			var fk =
+				$col.data('user') != null && $col.data('user') !== ''
+					? 'u:' + $col.data('user')
+					: $col.data('role');
+			if (fk) {
+				applyCollapsedState($list, fk);
+			}
+		}
 	}
 
 	function bindColumnFilter($wrap, $list, filterKey) {
@@ -905,6 +1219,140 @@
 			applyColumnListFilter($list, $(this).val());
 		});
 		applyColumnListFilter($list, saved);
+	}
+
+	function bindColumnBulk($wrap, filterKey) {
+		var isUser = String(filterKey).indexOf('u:') === 0;
+		var uid = isUser ? parseInt(filterKey.replace(/^u:/, ''), 10) : 0;
+		var role = isUser ? null : filterKey;
+		var columnKey = filterKey;
+		var i18n = membersAdminMenus.i18n || {};
+		var $bulk = $('<div class="members-am-col-bulk"/>').attr('data-column-key', columnKey);
+		var $toolbar = $('<div class="members-am-col-bulk-toolbar"/>');
+		$toolbar.append(
+			$('<button type="button" class="button button-small members-am-bulk-select-visible"/>').text(
+				i18n.bulkSelectVisible || 'Select visible'
+			),
+			$('<button type="button" class="button button-small members-am-bulk-clear-selection"/>').text(
+				i18n.bulkClearSelection || 'Clear selection'
+			)
+		);
+		var $collapseBar = $('<div class="members-am-col-collapse-toolbar"/>');
+		$collapseBar.append(
+			$('<button type="button" class="button button-small members-am-collapse-all"/>').text(
+				i18n.collapseAllMenus || 'Collapse all'
+			),
+			$('<button type="button" class="button button-small members-am-expand-all"/>').text(
+				i18n.expandAllMenus || 'Expand all'
+			)
+		);
+		var $sel = $('<select class="members-am-bulk-select"/>').attr(
+			'aria-label',
+			i18n.bulkVisibilityLabel || 'Menu visibility for this column'
+		);
+		$sel.append(
+			$('<option value=""/>').text(i18n.bulkActionsPlaceholder || 'Choose visibility…')
+		);
+		var $ogWhole = $('<optgroup/>').attr(
+			'label',
+			i18n.bulkGroupWholeColumn || 'Whole column'
+		);
+		$ogWhole.append(
+			$('<option value="show-all"/>').text(i18n.bulkShowAllItems || 'Show every menu item'),
+			$('<option value="hide-all"/>').text(i18n.bulkHideAllItems || 'Hide every menu item')
+		);
+		var $ogChecked = $('<optgroup/>').attr(
+			'label',
+			i18n.bulkGroupCheckedRows || 'Checked rows'
+		);
+		$ogChecked.append(
+			$('<option value="keep-only-checked"/>').text(
+				i18n.bulkKeepOnlyCheckedVisible || 'Keep only checked visible'
+			),
+			$('<option value="hide-checked"/>').text(
+				i18n.bulkHideCheckedItems || 'Hide checked items'
+			),
+			$('<option value="show-checked"/>').text(
+				i18n.bulkShowCheckedItems || 'Show checked items'
+			)
+		);
+		$sel.append($ogWhole, $ogChecked);
+		$bulk.append($toolbar, $collapseBar, $sel);
+		var $filter = $wrap.find('.members-am-col-filter').first();
+		if ($filter.length) {
+			$filter.after($bulk);
+		} else {
+			$wrap.find('.members-am-sidebar-head').first().after($bulk);
+		}
+		$sel.on('change', function () {
+			var v = $(this).val();
+			$(this).val('');
+			if (!v) {
+				return;
+			}
+			var needChecked =
+				v === 'keep-only-checked' || v === 'hide-checked' || v === 'show-checked';
+			if (needChecked && !getBulkCheckedIds(columnKey).length) {
+				alert(
+					i18n.bulkSelectCheckedFirst || 'Check one or more menu items first.'
+				);
+				return;
+			}
+			if (v === 'keep-only-checked') {
+				if (
+					!window.confirm(
+						i18n.bulkConfirmKeepOnlyChecked ||
+							'Hide all items except checked items and their parent menus?'
+					)
+				) {
+					return;
+				}
+			} else if (v === 'hide-all') {
+				if (
+					!window.confirm(
+						i18n.bulkConfirmHideAll ||
+							'Hide every menu item in this column?'
+					)
+				) {
+					return;
+				}
+			} else if (v === 'hide-checked') {
+				if (
+					!window.confirm(
+						i18n.bulkConfirmHideChecked ||
+							'Hide the checked items (and their submenus where applicable)?'
+					)
+				) {
+					return;
+				}
+			}
+			if (isUser) {
+				if (v === 'show-all') {
+					bulkShowAllUser(uid);
+				} else if (v === 'hide-all') {
+					bulkHideAllUser(uid);
+				} else if (v === 'keep-only-checked') {
+					bulkKeepOnlyCheckedUser(columnKey, uid);
+				} else if (v === 'hide-checked') {
+					bulkHideCheckedUser(columnKey, uid);
+				} else if (v === 'show-checked') {
+					bulkShowCheckedUser(columnKey, uid);
+				}
+			} else {
+				if (v === 'show-all') {
+					bulkShowAllRole(role);
+				} else if (v === 'hide-all') {
+					bulkHideAllRole(role);
+				} else if (v === 'keep-only-checked') {
+					bulkKeepOnlyCheckedRole(columnKey, role);
+				} else if (v === 'hide-checked') {
+					bulkHideCheckedRole(columnKey, role);
+				} else if (v === 'show-checked') {
+					bulkShowCheckedRole(columnKey, role);
+				}
+			}
+			renderAll();
+		});
 	}
 
 	function renderSidebar(role, $wrap) {
@@ -935,7 +1383,9 @@
 			renderRoleBranch(role, node, null, $ul, 0);
 		});
 		$wrap.append($ul);
+		applyCollapsedState($ul, role);
 		bindColumnFilter($wrap, $ul, role);
+		bindColumnBulk($wrap, role);
 	}
 
 	function renderItemRow(role, node, parentMenuId, $container, depth) {
@@ -953,6 +1403,51 @@
 			.toggleClass('is-selected', state.selectedId === itemId)
 			.toggleClass('is-sub', depth > 0)
 			.toggleClass('is-sub-deep', depth > 1);
+		var columnKey = role;
+		ensureBulkSelection(columnKey);
+		var i18nRow = membersAdminMenus.i18n || {};
+		var hasKids = node.children && node.children.length;
+		var $lead = $('<span class="members-am-item-lead"/>');
+		if (hasKids) {
+			ensureCollapsedParents(columnKey);
+			var isCol = !!state.collapsedParents[columnKey][itemId];
+			var expandLbl = i18nRow.expandSubmenus || 'Expand submenu items';
+			var collapseLbl = i18nRow.collapseSubmenus || 'Collapse submenu items';
+			$('<button type="button" class="members-am-collapse-toggle"/>')
+				.attr('aria-expanded', !isCol)
+				.attr('aria-label', (isCol ? expandLbl : collapseLbl) + ': ' + label)
+				.append(
+					$('<span class="dashicons"/>').addClass(
+						isCol ? 'dashicons-arrow-right-alt2' : 'dashicons-arrow-down-alt2'
+					)
+				)
+				.on('click', function (e) {
+					e.stopPropagation();
+					ensureCollapsedParents(columnKey);
+					state.collapsedParents[columnKey][itemId] = !state.collapsedParents[columnKey][itemId];
+					renderColumns();
+				})
+				.appendTo($lead);
+			$row.toggleClass('is-collapse-collapsed', isCol);
+		} else {
+			$lead.append($('<span class="members-am-collapse-spacer"/>'));
+		}
+		$row.append($lead);
+		var cbPrefix = i18nRow.bulkCheckboxAria || 'Include in bulk actions';
+		var $cbWrap = $('<span class="members-am-item-cb-wrap"/>');
+		var $cb = $('<input type="checkbox" class="members-am-item-cb" />')
+			.prop('checked', !!state.columnBulkSelection[columnKey].ids[itemId])
+			.attr('aria-label', cbPrefix + ': ' + label)
+			.on('click', function (e) {
+				e.stopPropagation();
+			})
+			.on('change', function (e) {
+				e.stopPropagation();
+				setBulkCheckedCascade(columnKey, itemId, $(this).prop('checked'));
+				renderColumns();
+			});
+		$cbWrap.append($cb);
+		$row.append($cbWrap);
 		var $main = $('<div class="members-am-item-main"/>');
 		if (depth === 0) {
 			var icon = ov.icon || node.icon;
@@ -1021,6 +1516,51 @@
 		if (noCap) cls += ' is-no-cap';
 
 		var $row = $('<div/>').addClass(cls).attr('data-id', node.id).attr('data-menu-parent', parentMenuId || '');
+		var uColKey = 'u:' + uid;
+		ensureBulkSelection(uColKey);
+		var i18nURow = membersAdminMenus.i18n || {};
+		var hasKidsU = node.children && node.children.length;
+		var $leadU = $('<span class="members-am-item-lead"/>');
+		if (hasKidsU) {
+			ensureCollapsedParents(uColKey);
+			var isColU = !!state.collapsedParents[uColKey][node.id];
+			var expandLblU = i18nURow.expandSubmenus || 'Expand submenu items';
+			var collapseLblU = i18nURow.collapseSubmenus || 'Collapse submenu items';
+			$('<button type="button" class="members-am-collapse-toggle"/>')
+				.attr('aria-expanded', !isColU)
+				.attr('aria-label', (isColU ? expandLblU : collapseLblU) + ': ' + label)
+				.append(
+					$('<span class="dashicons"/>').addClass(
+						isColU ? 'dashicons-arrow-right-alt2' : 'dashicons-arrow-down-alt2'
+					)
+				)
+				.on('click', function (e) {
+					e.stopPropagation();
+					ensureCollapsedParents(uColKey);
+					state.collapsedParents[uColKey][node.id] = !state.collapsedParents[uColKey][node.id];
+					renderColumns();
+				})
+				.appendTo($leadU);
+			$row.toggleClass('is-collapse-collapsed', isColU);
+		} else {
+			$leadU.append($('<span class="members-am-collapse-spacer"/>'));
+		}
+		$row.append($leadU);
+		var cbPrefixU = i18nURow.bulkCheckboxAria || 'Include in bulk actions';
+		var $cbWrapU = $('<span class="members-am-item-cb-wrap"/>');
+		var $cbU = $('<input type="checkbox" class="members-am-item-cb" />')
+			.prop('checked', !!state.columnBulkSelection[uColKey].ids[node.id])
+			.attr('aria-label', cbPrefixU + ': ' + label)
+			.on('click', function (e) {
+				e.stopPropagation();
+			})
+			.on('change', function (e) {
+				e.stopPropagation();
+				setBulkCheckedCascade(uColKey, node.id, $(this).prop('checked'));
+				renderColumns();
+			});
+		$cbWrapU.append($cbU);
+		$row.append($cbWrapU);
 		var $main = $('<div class="members-am-item-main"/>');
 
 		if (depth === 0) {
@@ -1074,7 +1614,7 @@
 		$row.append($actions);
 
 		$row.on('click', function (e) {
-			if ($(e.target).closest('button').length) return;
+			if ($(e.target).closest('button, .members-am-item-cb, .members-am-collapse-toggle').length) return;
 			state.selectedId = node.id;
 			renderAll();
 		});
@@ -1170,7 +1710,7 @@
 				axis: 'y',
 				distance: 6,
 				items: '> .members-am-item, > .members-am-sep',
-				cancel: '.members-am-item-actions button',
+				cancel: '.members-am-item-actions button, .members-am-item-cb, .members-am-item-cb-wrap, .members-am-collapse-toggle',
 				placeholder: 'members-am-sort-placeholder',
 				forcePlaceholderSize: true,
 				tolerance: 'pointer',
@@ -1242,7 +1782,9 @@
 			});
 
 			$uc.append($list);
+			applyCollapsedState($list, 'u:' + uid);
 			bindColumnFilter($uc, $list, 'u:' + uid);
+			bindColumnBulk($uc, 'u:' + uid);
 			$cols.append($uc);
 		}
 		if (state.syncScroll) {
@@ -1805,8 +2347,57 @@
 		});
 
 		$('#members-am-columns')
+			.on('click', '.members-am-bulk-select-visible', function (e) {
+				e.preventDefault();
+				e.stopPropagation();
+				var key = $(this).closest('.members-am-col-bulk').attr('data-column-key');
+				if (!key) {
+					return;
+				}
+				var $list = $(this).closest('.members-am-column').find('.members-am-sidebar-list');
+				ensureBulkSelection(key);
+				$list.find(
+					'.members-am-item:not(.members-am-filter-hidden):not(.members-am-collapse-hidden)'
+				).each(function () {
+					var id = $(this).attr('data-id');
+					if (id) {
+						setBulkCheckedCascade(key, id, true);
+					}
+				});
+				renderColumns();
+			})
+			.on('click', '.members-am-bulk-clear-selection', function (e) {
+				e.preventDefault();
+				e.stopPropagation();
+				var key = $(this).closest('.members-am-col-bulk').attr('data-column-key');
+				if (!key) {
+					return;
+				}
+				state.columnBulkSelection[key] = { ids: {} };
+				renderColumns();
+			})
+			.on('click', '.members-am-collapse-all', function (e) {
+				e.preventDefault();
+				e.stopPropagation();
+				var key = $(this).closest('.members-am-col-bulk').attr('data-column-key');
+				if (!key) {
+					return;
+				}
+				collapseAllInColumn(key);
+				renderColumns();
+			})
+			.on('click', '.members-am-expand-all', function (e) {
+				e.preventDefault();
+				e.stopPropagation();
+				var key = $(this).closest('.members-am-col-bulk').attr('data-column-key');
+				if (!key) {
+					return;
+				}
+				expandAllInColumn(key);
+				renderColumns();
+			})
 			.on('click', '.members-am-item', function (e) {
-				if ($(e.target).closest('button').length) {
+				if ($(e.target).closest('button, .members-am-item-cb, .members-am-collapse-toggle').length) {
 					return;
 				}
 				state.selectedId = $(this).data('id');
