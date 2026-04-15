@@ -1055,9 +1055,17 @@
 	vertical-align: middle;
 }
 
-/* Members — Admin Menus add-on */
+/* Members — Admin Menus add-on (inherits active admin color scheme via --members-am-*; aligns with wp-admin theme variables when present) */
 .members-admin-menus-wrap {
 	max-width: 1400px;
+	/* Prefer palette from wp_admin_css_color (inline) over :root defaults from other admin bundles. */
+	--members-am-accent-use: var(--members-am-accent, var(--wp-admin-theme-color, #2271b1));
+	--members-am-surface-use: var(--members-am-surface, color-mix(in srgb, var(--members-am-base, #1d2327) 88%, #fff 12%));
+	/* Inline rules set --members-am-fg-on-base / --members-am-border-on-base from scheme luminance (e.g. Light = dark text). */
+	--members-am-border-on-base-fallback: color-mix(in srgb, var(--members-am-base, #1d2327) 62%, #fff 38%);
+	--members-am-chrome-bg: var(--wp-components-color-gray-100, #f6f7f7);
+	--members-am-chrome-border: var(--wp-components-color-gray-400, #c3c4c7);
+	--members-am-muted: var(--wp-components-color-gray-600, #646970);
 }
 
 .members-admin-menus-toolbar {
@@ -1073,7 +1081,7 @@
 	align-items: center;
 	gap: 8px;
 	margin-left: 4px;
-	color: #50575e;
+	color: var(--members-am-muted, #646970);
 	font-size: 13px;
 	line-height: 1;
 }
@@ -1101,15 +1109,15 @@
 .members-am-chip {
 	border-radius: 999px;
 	padding: 4px 12px;
-	border: 1px solid #c3c4c7;
-	background: #f6f7f7;
+	border: 1px solid var(--members-am-chrome-border, #c3c4c7);
+	background: var(--members-am-chrome-bg, #f6f7f7);
 	cursor: pointer;
 }
 
 .members-am-chip.is-active {
-	background: #2271b1;
-	border-color: #2271b1;
-	color: #fff;
+	background: var(--members-am-accent-use);
+	border-color: var(--members-am-accent-use);
+	color: var(--wp-components-color-accent-inverted, #fff);
 }
 
 .members-am-carousel-wrap {
@@ -1125,8 +1133,8 @@
 	width: 36px;
 	height: 36px;
 	border-radius: 50%;
-	border: 1px solid #c3c4c7;
-	background: #fff;
+	border: 1px solid var(--members-am-chrome-border, #c3c4c7);
+	background: var(--wp-components-color-background, #fff);
 	cursor: pointer;
 }
 
@@ -1141,15 +1149,15 @@
 .members-am-column {
 	flex: 1;
 	min-width: 0;
-	background: #1d2327;
+	background: var(--members-am-base, #1d2327);
 	border-radius: 4px;
-	color: #f0f0f1;
+	color: var(--members-am-fg-on-base, #f0f0f1);
 	display: flex;
 	flex-direction: column;
 }
 
 .members-am-user-column {
-	border: 2px dashed #8c8f94;
+	border: 2px dashed var(--wp-components-color-gray-700, #8c8f94);
 }
 
 .members-am-sidebar-head {
@@ -1157,17 +1165,18 @@
 	justify-content: space-between;
 	align-items: center;
 	padding: 8px 10px;
-	background: #2c3338;
+	background: var(--members-am-surface-use);
 	border-radius: 4px 4px 0 0;
 	font-weight: 600;
 	font-size: 12px;
 	text-transform: uppercase;
 	letter-spacing: 0.04em;
+	color: var(--members-am-fg-on-surface, var(--members-am-fg-on-base, #f0f0f1));
 }
 
 .members-am-col-filter {
 	padding: 6px 8px 8px;
-	border-bottom: 1px solid #3c434a;
+	border-bottom: 1px solid var(--members-am-border-on-base, var(--members-am-border-on-base-fallback));
 	flex-shrink: 0;
 }
 
@@ -1179,25 +1188,25 @@
 	line-height: 1.4;
 	padding: 4px 8px;
 	border-radius: 2px;
-	border: 1px solid #50575e;
-	background: #1d2327;
-	color: #f0f0f1;
+	border: 1px solid var(--members-am-border-on-base, var(--members-am-border-on-base-fallback));
+	background: var(--members-am-base, #1d2327);
+	color: var(--members-am-fg-on-base, #f0f0f1);
 }
 
 .members-am-col-filter-input::placeholder {
-	color: #8c8f94;
+	color: var(--members-am-fg-muted-on-base, var(--wp-components-color-gray-700, #8c8f94));
 	opacity: 1;
 }
 
 .members-am-col-filter-input:focus {
-	border-color: #2271b1;
+	border-color: var(--members-am-accent-use);
 	outline: 1px solid transparent;
-	box-shadow: 0 0 0 1px #2271b1;
+	box-shadow: 0 0 0 var(--wp-admin-border-width-focus, 1px) var(--members-am-accent-use);
 }
 
 .members-am-col-bulk {
 	padding: 0 8px 8px;
-	border-bottom: 1px solid #3c434a;
+	border-bottom: 1px solid var(--members-am-border-on-base, var(--members-am-border-on-base-fallback));
 	flex-shrink: 0;
 }
 
@@ -1216,16 +1225,16 @@
 	min-height: 26px;
 	line-height: 24px;
 	padding: 0 8px;
-	background: #2c3338;
-	border-color: #50575e;
-	color: #f0f0f1;
+	background: var(--members-am-surface-use);
+	border-color: var(--members-am-border-on-surface, var(--members-am-border-on-base, var(--members-am-border-on-base-fallback)));
+	color: var(--members-am-fg-on-surface, var(--members-am-fg-on-base, #f0f0f1));
 }
 
 .members-am-col-bulk-toolbar .button.button-small:hover,
 .members-am-col-collapse-toolbar .button.button-small:hover {
-	background: #3c434a;
-	border-color: #8c8f94;
-	color: #fff;
+	background: color-mix(in srgb, var(--members-am-surface-use) 85%, #fff 15%);
+	border-color: var(--wp-components-color-gray-700, #8c8f94);
+	color: var(--members-am-fg-on-surface, var(--members-am-fg-on-base, #f0f0f1));
 }
 
 .members-am-item-lead {
@@ -1254,7 +1263,7 @@
 	padding: 0;
 	border: none;
 	background: transparent;
-	color: #c3c4c7;
+	color: var(--members-am-fg-muted-on-base, var(--members-am-chrome-border, #c3c4c7));
 	border-radius: 2px;
 	cursor: pointer;
 	flex-shrink: 0;
@@ -1262,8 +1271,8 @@
 
 .members-am-collapse-toggle:hover,
 .members-am-collapse-toggle:focus {
-	color: #f0f0f1;
-	background: rgba(255, 255, 255, 0.08);
+	color: var(--members-am-fg-on-base, #f0f0f1);
+	background: color-mix(in srgb, var(--members-am-fg-on-base, #f0f0f1) 12%, transparent);
 	outline: none;
 }
 
@@ -1295,15 +1304,15 @@
 	line-height: 1.4;
 	padding: 4px 8px;
 	border-radius: 2px;
-	border: 1px solid #50575e;
-	background: #1d2327;
-	color: #f0f0f1;
+	border: 1px solid var(--members-am-border-on-base, var(--members-am-border-on-base-fallback));
+	background: var(--members-am-base, #1d2327);
+	color: var(--members-am-fg-on-base, #f0f0f1);
 }
 
 .members-am-bulk-select:focus {
-	border-color: #2271b1;
+	border-color: var(--members-am-accent-use);
 	outline: 1px solid transparent;
-	box-shadow: 0 0 0 1px #2271b1;
+	box-shadow: 0 0 0 var(--wp-admin-border-width-focus, 1px) var(--members-am-accent-use);
 }
 
 .members-am-item.members-am-filter-hidden,
@@ -1360,8 +1369,8 @@
 	box-sizing: border-box;
 	min-height: 36px;
 	margin: 2px 0;
-	background: rgba(34, 113, 177, 0.08);
-	border: 1px dashed #2271b1;
+	background: color-mix(in srgb, var(--members-am-accent-use) 8%, transparent);
+	border: 1px dashed var(--members-am-accent-use);
 	border-radius: 2px;
 }
 
@@ -1378,8 +1387,8 @@
 }
 
 .members-am-item.is-selected {
-	border-left-color: #2271b1;
-	background: rgba(34, 113, 177, 0.15);
+	border-left-color: var(--members-am-accent-use);
+	background: color-mix(in srgb, var(--members-am-accent-use) 15%, transparent);
 }
 
 .members-am-item-main {
@@ -1437,17 +1446,17 @@
 	border: none;
 	margin: 0 4px;
 	padding: 0;
-	background: #c3c4c7;
+	background: var(--members-am-chrome-border, #c3c4c7);
 	cursor: pointer;
 }
 
 .members-am-dot.is-active {
-	background: #2271b1;
+	background: var(--members-am-accent-use);
 }
 
 .members-am-carousel-status {
 	text-align: center;
-	color: #646970;
+	color: var(--members-am-muted, #646970);
 	font-size: 12px;
 	margin-top: 0;
 }
@@ -1462,18 +1471,18 @@
 }
 
 .members-am-badge-new {
-	background: #2271b1;
-	color: #fff;
+	background: var(--members-am-accent-use);
+	color: var(--wp-components-color-accent-inverted, #fff);
 }
 
 .members-am-badge-edit {
 	background: #dba617;
-	color: #1d2327;
+	color: var(--members-am-base, #1d2327);
 }
 
 .members-am-badge-nocap {
-	background: #8c8f94;
-	color: #fff;
+	background: var(--wp-components-color-gray-700, #8c8f94);
+	color: var(--wp-components-color-accent-inverted, #fff);
 }
 
 .members-am-legend {
@@ -1483,7 +1492,7 @@
 	margin: 0 0 8px;
 	padding: 0;
 	font-size: 12px;
-	color: #646970;
+	color: var(--members-am-muted, #646970);
 }
 
 .members-am-legend-item {
@@ -1495,8 +1504,8 @@
 .members-am-edit-panel {
 	margin-top: 20px;
 	padding: 16px;
-	border: 1px solid #c3c4c7;
-	background: #fff;
+	border: 1px solid var(--members-am-chrome-border, #c3c4c7);
+	background: var(--wp-components-color-background, #fff);
 	border-radius: 4px;
 }
 
@@ -1563,9 +1572,9 @@
 }
 
 .members-am-icon-tabs .button.is-active {
-	background: #2271b1;
-	border-color: #2271b1;
-	color: #fff;
+	background: var(--members-am-accent-use);
+	border-color: var(--members-am-accent-use);
+	color: var(--wp-components-color-accent-inverted, #fff);
 }
 
 .members-am-icon-grid {
@@ -1574,9 +1583,9 @@
 	gap: 4px;
 	max-height: 160px;
 	overflow-y: auto;
-	border: 1px solid #dcdcde;
+	border: 1px solid var(--wp-components-color-gray-200, #dcdcde);
 	padding: 8px;
-	background: #f6f7f7;
+	background: var(--members-am-chrome-bg, #f6f7f7);
 	margin-bottom: 8px;
 }
 
@@ -1587,8 +1596,8 @@
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	border: 1px solid #c3c4c7;
-	background: #fff;
+	border: 1px solid var(--members-am-chrome-border, #c3c4c7);
+	background: var(--wp-components-color-background, #fff);
 	cursor: pointer;
 }
 
@@ -1601,8 +1610,8 @@
 .members-am-reset-dropdown {
 	position: absolute;
 	z-index: 100;
-	background: #fff;
-	border: 1px solid #c3c4c7;
+	background: var(--wp-components-color-background, #fff);
+	border: 1px solid var(--members-am-chrome-border, #c3c4c7);
 	border-radius: 6px;
 	padding: 0;
 	display: flex;
@@ -1619,8 +1628,8 @@
 	padding: 10px 14px;
 	font-weight: 600;
 	font-size: 13px;
-	border-bottom: 1px solid #f0f0f0;
-	color: #1d2327;
+	border-bottom: 1px solid var(--wp-components-color-gray-200, #f0f0f0);
+	color: var(--wp-components-color-foreground, #1d2327);
 }
 
 .members-am-reset-option {
@@ -1633,7 +1642,7 @@
 	cursor: pointer;
 	text-align: left;
 	width: 100%;
-	border-bottom: 1px solid #f0f0f0;
+	border-bottom: 1px solid var(--wp-components-color-gray-200, #f0f0f0);
 	transition: background 0.15s;
 }
 
@@ -1642,12 +1651,12 @@
 }
 
 .members-am-reset-option:hover {
-	background: #f6f7f7;
+	background: var(--members-am-chrome-bg, #f6f7f7);
 }
 
 .members-am-reset-option .dashicons {
 	margin-top: 2px;
-	color: #646970;
+	color: var(--members-am-muted, #646970);
 }
 
 .members-am-reset-option-text {
@@ -1658,12 +1667,12 @@
 
 .members-am-reset-option-text strong {
 	font-size: 13px;
-	color: #1d2327;
+	color: var(--wp-components-color-foreground, #1d2327);
 }
 
 .members-am-reset-option-text small {
 	font-size: 12px;
-	color: #646970;
+	color: var(--members-am-muted, #646970);
 }
 
 .members-am-reset-danger:hover {
@@ -1687,8 +1696,8 @@
 .members-am-user-suggestions {
 	position: absolute;
 	z-index: 100;
-	background: #fff;
-	border: 1px solid #c3c4c7;
+	background: var(--wp-components-color-background, #fff);
+	border: 1px solid var(--members-am-chrome-border, #c3c4c7);
 	border-radius: 4px;
 	max-height: 200px;
 	overflow-y: auto;
@@ -1702,11 +1711,11 @@
 	padding: 8px 12px;
 	cursor: pointer;
 	font-size: 13px;
-	border-bottom: 1px solid #f0f0f0;
+	border-bottom: 1px solid var(--wp-components-color-gray-200, #f0f0f0);
 }
 
 .members-am-user-suggestion:hover {
-	background: #f0f6fc;
+	background: color-mix(in srgb, var(--members-am-accent-use) 8%, var(--wp-components-color-background, #fff));
 }
 
 .members-am-user-suggestion:last-child {

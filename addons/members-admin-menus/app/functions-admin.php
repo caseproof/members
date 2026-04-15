@@ -115,6 +115,140 @@ function ensure_objects_for_js( $settings ) {
 }
 
 /**
+ * WCAG relative luminance for a 6-digit hex color (after {@see sanitize_hex_color()}).
+ *
+ * @param string $hex Hex color, may include leading #.
+ * @return float Value in 0–1.
+ */
+function members_am_relative_luminance( $hex ) {
+	$hex = ltrim( $hex, '#' );
+	if ( 3 === strlen( $hex ) ) {
+		$hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+	}
+	if ( 6 !== strlen( $hex ) || ! ctype_xdigit( $hex ) ) {
+		return 0.5;
+	}
+
+	$r = hexdec( substr( $hex, 0, 2 ) ) / 255;
+	$g = hexdec( substr( $hex, 2, 2 ) ) / 255;
+	$b = hexdec( substr( $hex, 4, 2 ) ) / 255;
+
+	$to_linear = static function ( $c ) {
+		return $c <= 0.03928 ? $c / 12.92 : pow( ( $c + 0.055 ) / 1.055, 2.4 );
+	};
+
+	$r = $to_linear( $r );
+	$g = $to_linear( $g );
+	$b = $to_linear( $b );
+
+	return 0.2126 * $r + 0.7152 * $g + 0.0722 * $b;
+}
+
+/**
+ * Primary text color on a solid background (e.g. Light scheme uses dark text on pale base).
+ *
+ * @param string $bg_hex Background hex.
+ * @return string Hex foreground.
+ */
+function members_am_contrast_fg_for_bg( $bg_hex ) {
+	return members_am_relative_luminance( $bg_hex ) > 0.45 ? '#1d2327' : '#f0f0f1';
+}
+
+/**
+ * Secondary/muted text on a solid background.
+ *
+ * @param string $bg_hex Background hex.
+ * @return string Hex foreground.
+ */
+function members_am_contrast_muted_for_bg( $bg_hex ) {
+	return members_am_relative_luminance( $bg_hex ) > 0.45 ? '#646970' : '#a7aaad';
+}
+
+/**
+ * Border color that reads on a given background (admin-style neutrals).
+ *
+ * @param string $bg_hex Background hex.
+ * @return string Hex border.
+ */
+function members_am_border_for_bg( $bg_hex ) {
+	return members_am_relative_luminance( $bg_hex ) > 0.45 ? '#c3c4c7' : '#50575e';
+}
+
+/**
+ * Inline CSS custom properties for the Admin Menus UI, derived from the active admin color scheme.
+ *
+ * Maps {@see wp_admin_css_color()} palette entries to semantic variables. Three-color schemes (e.g. Modern)
+ * use the second and third swatches as accents; four-color schemes use the full base/surface/accent layout.
+ *
+ * @return string Safe CSS (no user input; hex values sanitized).
+ */
+function get_admin_menus_color_scheme_css() {
+	global $_wp_admin_css_colors;
+
+	$scheme = get_user_option( 'admin_color' );
+	if ( empty( $scheme ) || empty( $_wp_admin_css_colors[ $scheme ] ) ) {
+		$scheme = 'fresh';
+	}
+
+	$raw = isset( $_wp_admin_css_colors[ $scheme ]->colors ) ? (array) $_wp_admin_css_colors[ $scheme ]->colors : array();
+	$colors = array();
+	foreach ( $raw as $hex ) {
+		if ( ! is_string( $hex ) ) {
+			continue;
+		}
+		$sanitized = sanitize_hex_color( $hex );
+		if ( $sanitized ) {
+			$colors[] = $sanitized;
+		}
+	}
+
+	$n = count( $colors );
+
+	$base       = $colors[0] ?? '#1d2327';
+	$surface    = null;
+	$accent     = '#2271b1';
+	$accent_alt = '#72aee6';
+
+	if ( $n >= 4 ) {
+		$surface    = $colors[1];
+		$accent     = $colors[2];
+		$accent_alt = $colors[3];
+	} elseif ( 3 === $n ) {
+		$accent     = $colors[1];
+		$accent_alt = $colors[2];
+	} elseif ( 2 === $n ) {
+		$accent     = $colors[1];
+		$accent_alt = $colors[1];
+	}
+
+	$fg_base   = members_am_contrast_fg_for_bg( $base );
+	$fg_muted  = members_am_contrast_muted_for_bg( $base );
+	$border_bg = members_am_border_for_bg( $base );
+
+	$props = array(
+		'--members-am-base'             => $base,
+		'--members-am-accent'           => $accent,
+		'--members-am-accent-alt'       => $accent_alt,
+		'--members-am-fg-on-base'       => $fg_base,
+		'--members-am-fg-muted-on-base' => $fg_muted,
+		'--members-am-border-on-base'   => $border_bg,
+	);
+
+	if ( $surface ) {
+		$props['--members-am-surface']          = $surface;
+		$props['--members-am-fg-on-surface']   = members_am_contrast_fg_for_bg( $surface );
+		$props['--members-am-border-on-surface'] = members_am_border_for_bg( $surface );
+	}
+
+	$decl = '';
+	foreach ( $props as $name => $value ) {
+		$decl .= $name . ':' . $value . ';';
+	}
+
+	return '.members-admin-menus-wrap{' . $decl . '}';
+}
+
+/**
  * Enqueue scripts and styles for the Admin Menus page.
  *
  * @return void
@@ -122,6 +256,7 @@ function ensure_objects_for_js( $settings ) {
 function enqueue_admin_menus_assets() {
 	wp_enqueue_media();
 	wp_enqueue_style( 'members-admin' );
+	wp_add_inline_style( 'members-admin', get_admin_menus_color_scheme_css() );
 	wp_enqueue_style( 'wp-color-picker' );
 	wp_enqueue_style(
 		'members-admin-menus-fa',
