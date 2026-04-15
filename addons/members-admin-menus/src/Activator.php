@@ -16,11 +16,6 @@ defined( 'ABSPATH' ) || exit;
 class Activator {
 
 	/**
-	 * Default option version.
-	 */
-	const OPTION_VERSION = 3;
-
-	/**
 	 * On activation, seed empty settings if missing.
 	 *
 	 * @return void
@@ -33,23 +28,12 @@ class Activator {
 	}
 
 	/**
-	 * Default empty structure.
+	 * Default empty structure (same as get_default_settings() in app/functions.php).
 	 *
 	 * @return array
 	 */
 	public static function get_default_option() {
-		return array(
-			'_meta'         => array(
-				'version'        => self::OPTION_VERSION,
-				'admin_editable' => false,
-			),
-			'roles'         => array(),
-			'users'         => array(),
-			'custom_items'  => array(),
-			'capabilities'  => array(),
-			'_defaults'     => array(
-				'captured' => false,
-			),
-		);
+		require_once dirname( __DIR__ ) . '/app/defaults.php';
+		return members_admin_menus_default_settings_data();
 	}
 }

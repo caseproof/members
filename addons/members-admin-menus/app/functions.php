@@ -10,6 +10,8 @@ namespace Members\AddOns\AdminMenus;
 
 defined( 'ABSPATH' ) || exit;
 
+require_once __DIR__ . '/defaults.php';
+
 /** Option name. */
 const OPTION_KEY = 'members_admin_menus_settings';
 
@@ -1132,19 +1134,7 @@ function members_am_is_custom_menu_item_slug( $slug ) {
  * @return array
  */
 function get_default_settings() {
-	return array(
-		'_meta'         => array(
-			'version'        => 3,
-			'admin_editable' => false,
-		),
-		'roles'         => array(),
-		'users'         => array(),
-		'custom_items'  => array(),
-		'capabilities'  => array(),
-		'_defaults'     => array(
-			'captured' => false,
-		),
-	);
+	return members_admin_menus_default_settings_data();
 }
 
 /**
