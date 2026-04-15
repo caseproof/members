@@ -60,7 +60,9 @@ function register_admin_menus_submenu() {
  * @return void
  */
 function redirect_old_admin_menus_url() {
-	if ( ! empty( $_GET['page'] ) && 'members-settings' === $_GET['page'] && ! empty( $_GET['view'] ) && 'admin-menus' === $_GET['view'] ) {
+	$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+	$view = isset( $_GET['view'] ) ? sanitize_key( wp_unslash( $_GET['view'] ) ) : '';
+	if ( 'members-settings' === $page && 'admin-menus' === $view ) {
 		wp_safe_redirect( admin_url( 'admin.php?page=members-admin-menus' ) );
 		exit;
 	}
