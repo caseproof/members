@@ -1743,3 +1743,63 @@
 .members-am-user-suggestion:last-child {
 	border-bottom: none;
 }
+
+/* Admin Menus screen — toolbar & edit panel (moved from inline styles in functions-admin.php) */
+#members-am-import-file.members-am-import-file-hidden {
+	display: none;
+}
+
+.members-am-user-search-wrap {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+#members-am-user-search.members-am-user-search-input {
+	width: 200px;
+	max-width: 100%;
+}
+
+.members-am-legend-visibility-icon {
+	font-size: 14px;
+	width: 14px;
+	height: 14px;
+	vertical-align: middle;
+}
+
+.members-am-legend-nocap-badge {
+	display: inline-block;
+	background: #8c8f94;
+	color: #fff;
+	font-size: 9px;
+	padding: 1px 4px;
+	border-radius: 2px;
+	vertical-align: middle;
+}
+
+#members-am-icon-preview.members-am-icon-preview {
+	display: none;
+	width: 32px;
+	height: 32px;
+	object-fit: contain;
+	margin-bottom: 6px;
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	padding: 2px;
+	background: #f0f0f1;
+}
+
+.members-am-icons .members-am-icon-upload-desc {
+	margin-top: 4px;
+}
+
+/* Admin sidebar menu badges (dynamic background-color still set inline in PHP) */
+#adminmenu .members-am-menu-badge {
+	display: inline-block;
+	color: #fff;
+	font-size: 9px;
+	padding: 1px 5px;
+	border-radius: 2px;
+	line-height: 1.4;
+	vertical-align: middle;
+}

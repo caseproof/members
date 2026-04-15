@@ -409,10 +409,10 @@ function render_admin_menus_page() {
 			</span>
 			<a href="#" class="button" id="members-am-export"><?php esc_html_e( 'Export', 'members' ); ?></a>
 			<button type="button" class="button" id="members-am-import"><?php esc_html_e( 'Import', 'members' ); ?></button>
-			<input type="file" id="members-am-import-file" accept="application/json" style="display:none;" />
-			<span class="members-am-user-search-wrap" style="display:inline-flex;align-items:center;gap:6px;">
+			<input type="file" id="members-am-import-file" class="members-am-import-file-hidden" accept="application/json" />
+			<span class="members-am-user-search-wrap">
 				<label for="members-am-user-search"><?php esc_html_e( 'User:', 'members' ); ?></label>
-				<input type="text" id="members-am-user-search" placeholder="<?php esc_attr_e( 'Search users…', 'members' ); ?>" style="width:200px;" />
+				<input type="text" id="members-am-user-search" class="members-am-user-search-input" placeholder="<?php esc_attr_e( 'Search users…', 'members' ); ?>" />
 			</span>
 			<label class="members-am-sync-scroll">
 				<input type="checkbox" id="members-am-sync-scroll" checked />
@@ -429,8 +429,8 @@ function render_admin_menus_page() {
 		</div>
 
 		<p class="members-am-legend">
-			<span class="members-am-legend-item"><span class="dashicons dashicons-visibility" style="font-size:14px;width:14px;height:14px;vertical-align:middle;"></span> <?php esc_html_e( 'Eye icon: manually show/hide menu items', 'members' ); ?></span>
-			<span class="members-am-legend-item"><span style="display:inline-block;background:#8c8f94;color:#fff;font-size:9px;padding:1px 4px;border-radius:2px;vertical-align:middle;">&#128274; no access</span> <?php esc_html_e( 'Role lacks the required WordPress capability (manage in Roles page)', 'members' ); ?></span>
+			<span class="members-am-legend-item"><span class="dashicons dashicons-visibility members-am-legend-visibility-icon" aria-hidden="true"></span> <?php esc_html_e( 'Eye icon: manually show/hide menu items', 'members' ); ?></span>
+			<span class="members-am-legend-item"><span class="members-am-legend-nocap-badge">&#128274; no access</span> <?php esc_html_e( 'Role lacks the required WordPress capability (manage in Roles page)', 'members' ); ?></span>
 		</p>
 
 		<div class="members-am-chips" id="members-am-role-chips"></div>
@@ -484,9 +484,9 @@ function render_admin_menus_page() {
 					<div class="members-am-icon-grid" id="members-am-icon-grid"></div>
 					<input type="hidden" id="members-am-icon-type" value="dashicon" />
 					<input type="text" id="members-am-icon-value" class="widefat" placeholder="dashicons-admin-post" />
-					<img id="members-am-icon-preview" src="" alt="" style="display:none;width:32px;height:32px;object-fit:contain;margin-bottom:6px;border:1px solid #ddd;border-radius:3px;padding:2px;background:#f0f0f1;" />
+					<img id="members-am-icon-preview" class="members-am-icon-preview" src="" alt="" />
 					<button type="button" class="button" id="members-am-media-upload"><?php esc_html_e( 'Choose image', 'members' ); ?></button>
-					<p class="description" style="margin-top:4px;"><?php esc_html_e( 'Recommended: 20×20px PNG or SVG. Larger images will be scaled down.', 'members' ); ?></p>
+					<p class="description members-am-icon-upload-desc"><?php esc_html_e( 'Recommended: 20×20px PNG or SVG. Larger images will be scaled down.', 'members' ); ?></p>
 				</div>
 				<div class="members-am-edit-col">
 					<label><?php esc_html_e( 'Colors', 'members' ); ?></label>
