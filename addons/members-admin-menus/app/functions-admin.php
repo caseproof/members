@@ -369,6 +369,11 @@ function enqueue_admin_menus_assets() {
 				'expandSubmenus'         => __( 'Expand submenu items', 'members' ),
 				'collapseAllMenus'       => __( 'Collapse submenus', 'members' ),
 				'expandAllMenus'         => __( 'Expand submenus', 'members' ),
+				'undo'                   => __( 'Undo last change', 'members' ),
+				'undoRestored'           => __( 'Last change reverted.', 'members' ),
+				'bulkVisibilityHint'     => __( 'For bulk visibility (whole column or checked rows), use the tools above each role column.', 'members' ),
+				'filterRolesVisibility'  => __( 'Filter roles…', 'members' ),
+				'filterRolesVisibilityLabel' => __( 'Filter roles in this list', 'members' ),
 			),
 		)
 	);
@@ -386,6 +391,7 @@ function render_admin_menus_page() {
 		<div id="members-am-notices" class="members-am-notices"></div>
 		<div class="members-admin-menus-toolbar">
 			<button type="button" class="button button-primary" id="members-am-save"><?php esc_html_e( 'Save changes', 'members' ); ?></button>
+			<button type="button" class="button" id="members-am-undo" disabled aria-disabled="true"><?php esc_html_e( 'Undo last change', 'members' ); ?></button>
 			<button type="button" class="button" id="members-am-reset"><?php esc_html_e( 'Reset', 'members' ); ?></button>
 			<button type="button" class="button" id="members-am-add-item"><?php esc_html_e( 'Add custom item', 'members' ); ?></button>
 			<span class="members-am-copy-wrap">
@@ -493,6 +499,7 @@ function render_admin_menus_page() {
 				</div>
 				<div class="members-am-edit-col">
 					<label><?php esc_html_e( 'Visibility per role', 'members' ); ?></label>
+					<p class="description members-am-bulk-visibility-hint"><?php esc_html_e( 'For bulk visibility (whole column or checked rows), use the tools above each role column.', 'members' ); ?></p>
 					<div id="members-am-visibility-toggles"></div>
 					<label><?php esc_html_e( 'Required capability', 'members' ); ?></label>
 					<input type="text" id="members-am-item-cap" class="widefat" placeholder="read" />

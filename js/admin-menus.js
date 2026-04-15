@@ -174,6 +174,39 @@
 		return JSON.parse(JSON.stringify(o));
 	}
 
+	/** One-level undo: deep clone of `state.settings` before the last undoable operation. */
+	var undoSettingsSnapshot = null;
+
+	function pushUndoSnapshot() {
+		undoSettingsSnapshot = deepClone(state.settings);
+		updateUndoButton();
+	}
+
+	function updateUndoButton() {
+		var $btn = $('#members-am-undo');
+		if (!$btn.length) {
+			return;
+		}
+		var has = !!undoSettingsSnapshot;
+		$btn.prop('disabled', !has).attr('aria-disabled', has ? 'false' : 'true');
+	}
+
+	function performUndo() {
+		if (!undoSettingsSnapshot) {
+			return;
+		}
+		state.settings = deepClone(undoSettingsSnapshot);
+		undoSettingsSnapshot = null;
+		ensureSettings();
+		state.tree = buildTreeWithCustoms();
+		updateUndoButton();
+		renderAll();
+		var msg =
+			(membersAdminMenus.i18n && membersAdminMenus.i18n.undoRestored) ||
+			'Last change reverted.';
+		showMembersAmNotice('success', msg);
+	}
+
 	function getRolesList() {
 		return membersAdminMenus.roles || [];
 	}
@@ -349,6 +382,7 @@
 		if (idx === -1) return;
 		var newIdx = idx + direction;
 		if (newIdx < 0 || newIdx >= arr.length) return;
+		pushUndoSnapshot();
 		arr.splice(idx, 1);
 		arr.splice(newIdx, 0, effectiveParent ? slugForOrder : itemId);
 	}
@@ -1381,6 +1415,7 @@
 					return;
 				}
 			}
+			pushUndoSnapshot();
 			if (isUser) {
 				if (v === 'show-all') {
 					bulkShowAllUser(uid);
@@ -1769,6 +1804,9 @@
 				placeholder: 'members-am-sort-placeholder',
 				forcePlaceholderSize: true,
 				tolerance: 'pointer',
+				start: function () {
+					pushUndoSnapshot();
+				},
 				update: function () {
 					if (uid) {
 						serializeUserColumnFromDom($list, uid);
@@ -1925,10 +1963,38 @@
 
 		$('#members-am-visibility-toggles').empty();
 		var itemCap = (node && node.cap) || 'read';
+		var visRolesForPanel = [];
 		getRolesList().forEach(function (r) {
 			if (r.slug === 'administrator' && !state.settings._meta.admin_editable) {
 				return;
 			}
+			visRolesForPanel.push(r);
+		});
+		if (visRolesForPanel.length >= 10) {
+			var filterPh =
+				(membersAdminMenus.i18n && membersAdminMenus.i18n.filterRolesVisibility) ||
+				'Filter roles…';
+			var filterAria =
+				(membersAdminMenus.i18n && membersAdminMenus.i18n.filterRolesVisibilityLabel) ||
+				'Filter roles in this list';
+			var $fw = $('<div class="members-am-vis-role-filter-wrap"/>');
+			var $fin = $('<input type="search" class="members-am-vis-role-filter widefat" autocomplete="off" />')
+				.attr('placeholder', filterPh)
+				.attr('aria-label', filterAria);
+			$fw.append($fin);
+			$('#members-am-visibility-toggles').append($fw);
+			$fin.on('input', function () {
+				var q = ($(this).val() || '').trim().toLowerCase();
+				$('#members-am-visibility-toggles .members-am-vis-row').each(function () {
+					var $row = $(this);
+					var t = ($row.find('span').first().text() || '').toLowerCase();
+					var slug = String($row.find('.members-am-vis-cb').data('role') || '').toLowerCase();
+					var show = !q || t.indexOf(q) !== -1 || slug.indexOf(q) !== -1;
+					$row.toggleClass('members-am-vis-filter-hidden', !show);
+				});
+			});
+		}
+		visRolesForPanel.forEach(function (r) {
 			var hid = isHidden(r.slug, state.selectedId);
 			var hasCap = roleHasCap(r.slug, itemCap);
 			var $cb = $('<input type="checkbox" class="members-am-vis-cb"/>')
@@ -2085,6 +2151,7 @@
 		if (ni < 0 || ni >= state.activeRoleSlugs.length) {
 			return;
 		}
+		pushUndoSnapshot();
 		var tmp = state.activeRoleSlugs[idx];
 		state.activeRoleSlugs[idx] = state.activeRoleSlugs[ni];
 		state.activeRoleSlugs[ni] = tmp;
@@ -2115,6 +2182,7 @@
 			if (nx < 0 || nx >= o.length) {
 				return;
 			}
+			pushUndoSnapshot();
 			var t = o[ix];
 			o[ix] = o[nx];
 			o[nx] = t;
@@ -2133,6 +2201,7 @@
 			if (nx < 0 || nx >= arr.length) {
 				return;
 			}
+			pushUndoSnapshot();
 			var tmp = arr[ix];
 			arr[ix] = arr[nx];
 			arr[nx] = tmp;
@@ -2145,6 +2214,7 @@
 		if (!roles.length) {
 			return;
 		}
+		pushUndoSnapshot();
 		var sid = 'sep-' + Date.now();
 		roles.forEach(function (role) {
 			if (!getRoleConfig(role).order || !getRoleConfig(role).order.length) {
@@ -2165,7 +2235,7 @@
 		$w.removeAttr('hidden');
 		$w.find('.spinner').addClass('is-active');
 		$w.find('.members-am-loading-text').text(message || '');
-		$('#members-am-save, #members-am-reset, #members-am-import, #members-am-copy-apply').prop('disabled', true);
+		$('#members-am-save, #members-am-reset, #members-am-import, #members-am-copy-apply, #members-am-undo').prop('disabled', true);
 	}
 
 	function endAjaxToolbarLoading() {
@@ -2174,6 +2244,7 @@
 		$w.find('.spinner').removeClass('is-active');
 		$w.find('.members-am-loading-text').text('');
 		$('#members-am-save, #members-am-reset, #members-am-import, #members-am-copy-apply').prop('disabled', false);
+		updateUndoButton();
 	}
 
 	function saveSettings(loadingMessage) {
@@ -2203,6 +2274,8 @@
 				}
 				if (res.success) {
 					initialSettingsSerialized = getSettingsSnapshot();
+					undoSettingsSnapshot = null;
+					updateUndoButton();
 					var savedMsg =
 						(res.data && res.data.message) ||
 						(membersAdminMenus.i18n && membersAdminMenus.i18n.saved) ||
@@ -2493,6 +2566,7 @@
 				e.stopPropagation();
 				var role = $(this).closest('.members-am-column').data('role');
 				var id = $(this).closest('.members-am-item').data('id');
+				pushUndoSnapshot();
 				toggleHidden(role, id);
 				renderAll();
 			})
@@ -2521,6 +2595,7 @@
 				var uid = $(this).closest('.members-am-column').data('user');
 				var itemId = $(this).closest('.members-am-item').data('id');
 				if (!uid || !itemId) return;
+				pushUndoSnapshot();
 				toggleUserHidden(uid, itemId);
 				renderColumns();
 			})
@@ -2537,6 +2612,10 @@
 			});
 
 		$('#members-am-save').on('click', saveSettings);
+		$('#members-am-undo').on('click', function (e) {
+			e.preventDefault();
+			performUndo();
+		});
 		$('#members-am-reset').on('click', function (e) {
 			e.stopPropagation();
 			$('.members-am-reset-dropdown').remove();
@@ -2629,6 +2708,7 @@
 				return;
 			}
 
+			pushUndoSnapshot();
 			var srcCfg = getRoleConfig(from);
 
 			var newCfg = {
@@ -2693,6 +2773,7 @@
 		});
 
 		$('#members-am-add-item').on('click', function () {
+			pushUndoSnapshot();
 			var id = 'c' + Date.now();
 			state.settings.custom_items.push({
 				id: id,
@@ -2715,6 +2796,7 @@
 			if (!node || !node.customId) {
 				return;
 			}
+			pushUndoSnapshot();
 			state.settings.custom_items = (state.settings.custom_items || []).filter(function (c) {
 				return c.id !== node.customId;
 			});
@@ -2780,6 +2862,7 @@
 		});
 
 		$(document).on('change', '.members-am-vis-cb', function () {
+			pushUndoSnapshot();
 			var role = $(this).data('role');
 			var vis = $(this).is(':checked');
 			if (vis) {
@@ -2800,6 +2883,7 @@
 
 		$('#members-am-promote').on('click', function () {
 			if (!state.selectedId) return;
+			pushUndoSnapshot();
 			var sid = state.selectedId;
 			var ov0 = getOverrideForEdit() || {};
 			// Undo "Move to submenu" for a former top-level slug (matches PHP demote of top-level pages).
@@ -2896,6 +2980,7 @@
 				);
 				return;
 			}
+			pushUndoSnapshot();
 			setOverrideField('parent', p);
 			pushOverridesFromForm();
 			openEditPanel();
@@ -2932,6 +3017,7 @@
 		bind();
 		renderAll();
 		initialSettingsSerialized = getSettingsSnapshot();
+		updateUndoButton();
 		$(window).on('beforeunload', function () {
 			return getBeforeUnloadPrompt();
 		});

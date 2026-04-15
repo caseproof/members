@@ -1609,6 +1609,20 @@
 	cursor: pointer;
 }
 
+.members-am-bulk-visibility-hint {
+	margin: 0 0 8px;
+	font-size: 12px;
+	color: var(--members-am-fg-muted-on-base, #646970);
+}
+
+.members-am-vis-role-filter-wrap {
+	margin-bottom: 8px;
+}
+
+.members-am-vis-row.members-am-vis-filter-hidden {
+	display: none;
+}
+
 .members-am-vis-row {
 	display: block;
 	margin-bottom: 6px;
