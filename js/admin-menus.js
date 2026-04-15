@@ -78,6 +78,60 @@
 		return (membersAdminMenus.i18n && membersAdminMenus.i18n.unsavedChanges) || '';
 	}
 
+	var NOTICE_STORAGE_KEY = 'members_am_notice';
+
+	/**
+	 * WordPress admin–style dismissible notice.
+	 *
+	 * Do not add `.notice-dismiss` yourself: `makeNoticesDismissible()` in wp-admin/common.js
+	 * skips binding when a dismiss button already exists (see #4.4.0). Trigger `wp-notice-added`
+	 * so core appends the button and wires fade/slide dismissal.
+	 *
+	 * @param {string} type success|error|warning|info
+	 * @param {string} message Plain text.
+	 */
+	function showMembersAmNotice(type, message) {
+		if (!message) {
+			return;
+		}
+		var $container = $('#members-am-notices');
+		if (!$container.length) {
+			$('.members-admin-menus-wrap h1').first().after(
+				'<div id="members-am-notices" class="members-am-notices"></div>'
+			);
+			$container = $('#members-am-notices');
+		}
+		var $notice = $('<div/>', {
+			class: 'notice is-dismissible',
+		}).addClass('notice-' + (type || 'info'));
+		$notice.append($('<p/>').text(message));
+		$container.prepend($notice);
+		$(document).trigger('wp-notice-added');
+	}
+
+	function flashNoticeAfterReload(type, message) {
+		try {
+			sessionStorage.setItem(
+				NOTICE_STORAGE_KEY,
+				JSON.stringify({ type: type || 'success', message: message })
+			);
+		} catch (e) {}
+	}
+
+	function consumeFlashNotice() {
+		try {
+			var raw = sessionStorage.getItem(NOTICE_STORAGE_KEY);
+			if (!raw) {
+				return;
+			}
+			sessionStorage.removeItem(NOTICE_STORAGE_KEY);
+			var data = JSON.parse(raw);
+			if (data && data.message) {
+				showMembersAmNotice(data.type, data.message);
+			}
+		} catch (e) {}
+	}
+
 	var DASHICONS = [
 		'dashicons-menu', 'dashicons-admin-dashboard', 'dashicons-admin-post', 'dashicons-admin-page',
 		'dashicons-admin-media', 'dashicons-admin-comments', 'dashicons-admin-appearance', 'dashicons-admin-plugins',
@@ -1293,7 +1347,8 @@
 			var needChecked =
 				v === 'keep-only-checked' || v === 'hide-checked' || v === 'show-checked';
 			if (needChecked && !getBulkCheckedIds(columnKey).length) {
-				alert(
+				showMembersAmNotice(
+					'warning',
 					i18n.bulkSelectCheckedFirst || 'Check one or more menu items first.'
 				);
 				return;
@@ -2127,7 +2182,6 @@
 			(membersAdminMenus.i18n && membersAdminMenus.i18n.saving) ||
 			'Saving…';
 		beginAjaxToolbarLoading(saving);
-		var willReload = false;
 		var fallbackNetwork =
 			(membersAdminMenus.i18n && membersAdminMenus.i18n.networkError) ||
 			'Could not save settings. Check your connection and try again.';
@@ -2144,17 +2198,22 @@
 		})
 			.done(function (res) {
 				if (!res || typeof res.success === 'undefined') {
-					alert(fallbackNetwork);
+					showMembersAmNotice('error', fallbackNetwork);
 					return;
 				}
 				if (res.success) {
-					state.allowUnload = true;
-					alert(membersAdminMenus.i18n.saved);
-					willReload = true;
-					location.reload();
+					initialSettingsSerialized = getSettingsSnapshot();
+					var savedMsg =
+						(res.data && res.data.message) ||
+						(membersAdminMenus.i18n && membersAdminMenus.i18n.saved) ||
+						'Settings saved.';
+					showMembersAmNotice('success', savedMsg);
 					return;
 				}
-				alert(res.data && res.data.message ? res.data.message : 'Error');
+				showMembersAmNotice(
+					'error',
+					res.data && res.data.message ? res.data.message : 'Error'
+				);
 			})
 			.fail(function (jqXHR, textStatus /* , errorThrown */) {
 				if (textStatus === 'abort') {
@@ -2169,12 +2228,10 @@
 						msg = d.message;
 					}
 				}
-				alert(msg);
+				showMembersAmNotice('error', msg);
 			})
 			.always(function () {
-				if (!willReload) {
-					endAjaxToolbarLoading();
-				}
+				endAjaxToolbarLoading();
 			});
 	}
 
@@ -2201,16 +2258,29 @@
 		)
 			.done(function (res) {
 				if (res.success) {
+					var resetMsg =
+						(res.data && res.data.message) ||
+						(membersAdminMenus.i18n && membersAdminMenus.i18n.resetComplete) ||
+						'Reset complete.';
+					flashNoticeAfterReload('success', resetMsg);
 					state.allowUnload = true;
 					willReload = true;
 					location.reload();
 					return;
 				}
-				alert(res.data && res.data.message ? res.data.message : 'Reset failed.');
+				showMembersAmNotice(
+					'error',
+					res.data && res.data.message
+						? res.data.message
+						: (membersAdminMenus.i18n && membersAdminMenus.i18n.resetFailed) ||
+								'Reset failed.'
+				);
 			})
 			.fail(function () {
-				alert(
-					membersAdminMenus.i18n.networkError ||
+				showMembersAmNotice(
+					'error',
+					(membersAdminMenus.i18n && membersAdminMenus.i18n.resetNetworkError) ||
+						membersAdminMenus.i18n.networkError ||
 						'Could not reset settings. Check your connection and try again.'
 				);
 			})
@@ -2228,8 +2298,9 @@
 		var reader = new FileReader();
 		reader.onerror = function () {
 			endAjaxToolbarLoading();
-			alert(
-				(membersAdminMenus.i18n && membersAdminMenus.i18n.networkError) ||
+			showMembersAmNotice(
+				'error',
+				(membersAdminMenus.i18n && membersAdminMenus.i18n.readFileFailed) ||
 					'Could not read the file.'
 			);
 		};
@@ -2244,16 +2315,26 @@
 				})
 					.done(function (res) {
 						if (res.success) {
+							var impMsg =
+								(res.data && res.data.message) ||
+								(membersAdminMenus.i18n && membersAdminMenus.i18n.imported) ||
+								'Settings imported.';
+							flashNoticeAfterReload('success', impMsg);
 							state.allowUnload = true;
 							willReload = true;
 							location.reload();
 							return;
 						}
-						alert(res.data && res.data.message ? res.data.message : 'Error');
+						showMembersAmNotice(
+							'error',
+							res.data && res.data.message ? res.data.message : 'Error'
+						);
 					})
 					.fail(function () {
-						alert(
-							membersAdminMenus.i18n.networkError ||
+						showMembersAmNotice(
+							'error',
+							(membersAdminMenus.i18n && membersAdminMenus.i18n.importNetworkError) ||
+								membersAdminMenus.i18n.networkError ||
 								'Could not import settings. Check your connection and try again.'
 						);
 					})
@@ -2264,7 +2345,11 @@
 					});
 			} catch (e) {
 				endAjaxToolbarLoading();
-				alert('Invalid JSON');
+				showMembersAmNotice(
+					'error',
+					(membersAdminMenus.i18n && membersAdminMenus.i18n.invalidJson) ||
+						'Invalid JSON.'
+				);
 			}
 		};
 		reader.readAsText(file);
@@ -2527,7 +2612,11 @@
 				return;
 			}
 			if (from === to) {
-				alert('Source and target roles must be different.');
+				showMembersAmNotice(
+					'error',
+					(membersAdminMenus.i18n && membersAdminMenus.i18n.rolesMustDiffer) ||
+						'Source and target roles must be different.'
+				);
 				return;
 			}
 			var fromLabel = '';
@@ -2800,7 +2889,8 @@
 		$('#members-am-demote').on('click', function () {
 			var p = $('#members-am-demote-parent').val();
 			if (!p) {
-				window.alert(
+				showMembersAmNotice(
+					'warning',
 					(membersAdminMenus.i18n && membersAdminMenus.i18n.selectParentFirst) ||
 						'Please choose a parent menu from the list.'
 				);
@@ -2832,6 +2922,7 @@
 	}
 
 	function init() {
+		consumeFlashNotice();
 		ensureSettings();
 		state.tree = buildTreeWithCustoms();
 		initActiveRoles();

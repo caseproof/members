@@ -325,6 +325,14 @@ function enqueue_admin_menus_assets() {
 				'adminEditable'     => __( 'Allow editing administrator menus', 'members' ),
 				'adminEditableWarn' => __( 'This can lock administrators out of menus. Continue?', 'members' ),
 				'saved'             => __( 'Settings saved.', 'members' ),
+				'invalidJson'       => __( 'Invalid JSON.', 'members' ),
+				'resetComplete'     => __( 'Reset complete.', 'members' ),
+				'imported'          => __( 'Settings imported.', 'members' ),
+				'resetFailed'       => __( 'Reset failed.', 'members' ),
+				'rolesMustDiffer'   => __( 'Source and target roles must be different.', 'members' ),
+				'resetNetworkError' => __( 'Could not reset settings. Check your connection and try again.', 'members' ),
+				'importNetworkError' => __( 'Could not import settings. Check your connection and try again.', 'members' ),
+				'readFileFailed'    => __( 'Could not read the file.', 'members' ),
 				'networkError'      => __( 'Could not save settings. Check your connection and try again.', 'members' ),
 				'unsavedChanges'    => __( 'You have unsaved changes. If you leave this page, those changes will be lost.', 'members' ),
 				'visibility'        => __( 'Visibility per role', 'members' ),
@@ -375,6 +383,7 @@ function render_admin_menus_page() {
 	?>
 	<div class="members-admin-menus-wrap wrap">
 		<h1><?php esc_html_e( 'Admin Menus', 'members' ); ?></h1>
+		<div id="members-am-notices" class="members-am-notices"></div>
 		<div class="members-admin-menus-toolbar">
 			<button type="button" class="button button-primary" id="members-am-save"><?php esc_html_e( 'Save changes', 'members' ); ?></button>
 			<button type="button" class="button" id="members-am-reset"><?php esc_html_e( 'Reset', 'members' ); ?></button>
