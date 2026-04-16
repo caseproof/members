@@ -1,4 +1,13 @@
 # Change Log
+## 3.2.20 - 2026-04-16
+### Changed
+- Refreshed branding: updated WordPress.org banner and icon assets, header SVG, and logo
+- Updated About page design
+### Fixed
+- Missing header banner on some admin pages
+### Removed
+- Bundled POT file (translations now delivered via WordPress.org language packs)
+
 ## 3.2.19 - 2026-02-13
 ### Fixed
 - Added support for WF 2FA error messages

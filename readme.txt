@@ -6,7 +6,7 @@ Tags: permissions, memberships, roles, capabilities, access
 Requires at least: 6.0
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 3.2.19
+Stable tag: 3.2.20
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -138,3 +138,9 @@ If that doesn't apply or didn't work, stop by our [support forums](https://wordp
 == Changelog ==
 
 The change log is located in the `changelog.md` file in the plugin folder. You may also [view the change log](https://github.com/caseproof/members/blob/master/changelog.md) online.
+
+= 3.2.20 =
+* Changed: Refreshed branding with updated WordPress.org banner and icon assets, header SVG, and logo
+* Changed: Updated About page design
+* Fixed: Missing header banner on some admin pages
+* Removed: Bundled POT file (translations now delivered via WordPress.org language packs)
