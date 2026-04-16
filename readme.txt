@@ -140,6 +140,8 @@ If that doesn't apply or didn't work, stop by our [support forums](https://wordp
 The change log is located in the `changelog.md` file in the plugin folder. You may also [view the change log](https://github.com/caseproof/members/blob/master/changelog.md) online.
 
 = 3.2.20 =
+* Added: Reset roles
+* Added: Add rescue link for Administrator roles only
 * Changed: Refreshed branding with updated WordPress.org banner and icon assets, header SVG, and logo
 * Changed: Updated About page design
 * Fixed: Missing header banner on some admin pages

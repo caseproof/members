@@ -1,5 +1,8 @@
 # Change Log
 ## 3.2.20 - 2026-04-16
+### Added
+- Reset roles
+- Add rescue link for Administrator roles only
 ### Changed
 - Refreshed branding: updated WordPress.org banner and icon assets, header SVG, and logo
 - Updated About page design
