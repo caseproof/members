@@ -6,7 +6,7 @@ Tags: permissions, memberships, roles, capabilities, access
 Requires at least: 6.0
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 3.2.20
+Stable tag: 3.2.21
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -136,6 +136,10 @@ If that doesn't apply or didn't work, stop by our [support forums](https://wordp
 5. Select multiple roles per user (edit user screen)
 
 == Changelog ==
+
+= 3.2.21 =
+* Fixed: Privacy Caps add-on not granting privacy capabilities to administrators on fresh activations
+* Removed: Legacy standalone-plugin code from bundled add-ons (dead activation hooks, obsolete build scripts, orphaned readme/uninstall files)
 
 = 3.2.20 =
 * Added: Reset roles
