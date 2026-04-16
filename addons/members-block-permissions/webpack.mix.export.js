@@ -9,7 +9,6 @@ let exportPath = 'members-block-permissions';
 
 // Theme root-level files to include.
 let files = [
-	'changelog.md',
 	'license.md',
 	'plugin.php',
 	'readme.md',
