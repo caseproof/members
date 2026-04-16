@@ -453,7 +453,14 @@ class Notifications {
 
       <script>
         jQuery(document).ready(function($) {
-          $('#wpbody-content .wrap > h1').append(`<?php echo $messages_toggle_output; ?>`);
+          var $header = $('#members-admin-header');
+          var $button = $(`<?php echo $messages_toggle_output; ?>`);
+          if ($header.length) {
+            $header.append($button);
+          } else {
+            // Fallback: original behavior for non-branded pages.
+            $('#wpbody-content .wrap > h1').append($button);
+          }
         });
       </script>
       <?php
@@ -471,10 +478,6 @@ class Notifications {
     }
 
     $notifications = $this->get();
-
-    if ( empty( $notifications['active'] ) && empty( $notifications['dismissed'] ) ) {
-      return;
-    }
 
     $notifications_html = '<div class="active-messages">';
       if ( ! empty( $notifications['active'] ) ) {
