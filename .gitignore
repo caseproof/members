@@ -3,3 +3,8 @@ node_modules
 /vendor/
 .nova/
 /script/
+
+# Local dev tooling (not shipped)
+/.claude/
+/CLAUDE.md
+/bin/

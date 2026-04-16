@@ -643,110 +643,131 @@ final class Settings_Page {
 		wp_enqueue_style( 'members-admin' );
 		wp_enqueue_script( 'members-settings' );
 
+		$products = array(
+			array(
+				'slug'        => 'memberpress',
+				'name'        => 'MemberPress',
+				'icon'        => 'mp-icon-RGB.jpg',
+				'description' => 'Build astounding WordPress membership sites, accept payments securely, and control who sees your content — without the difficult setup.',
+				'plugin_file' => 'memberpress/memberpress.php',
+				'is_active'   => members_is_memberpress_active(),
+				'url_title'   => 'https://memberpress.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=memberpress_icon_title',
+				'url_learn'   => 'https://memberpress.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=memberpress_learn_more',
+				'url_install' => 'https://memberpress.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=memberpress_install',
+			),
+			array(
+				'slug'        => 'pretty-links',
+				'name'        => 'Pretty Links',
+				'icon'        => 'pl-icon-RGB.jpg',
+				'description' => 'Monetize your content effortlessly. Pretty Links helps you unlock more affiliate revenue from the content you already have.',
+				'plugin_file' => 'pretty-link/pretty-link.php',
+				'is_active'   => is_plugin_active( 'pretty-link/pretty-link.php' ),
+				'url_title'   => 'https://prettylinks.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=prettylinks_icon_title',
+				'url_learn'   => 'https://prettylinks.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=prettylinks_learn_more',
+				'url_install' => 'https://prettylinks.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=prettylinks_install',
+			),
+			array(
+				'slug'        => 'easy-affiliate',
+				'name'        => 'Easy Affiliate',
+				'icon'        => 'bee.png',
+				'description' => 'A full-featured affiliate program plugin for WordPress. Launch your own program to drive traffic, attention, and sales.',
+				'plugin_file' => 'affiliate-royale/affiliate-royale.php',
+				'is_active'   => is_plugin_active( 'affiliate-royale/affiliate-royale.php' ),
+				'url_title'   => 'https://easyaffiliate.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=easyaffiliate_icon_title',
+				'url_learn'   => 'https://easyaffiliate.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=easyaffiliate_learn_more',
+				'url_install' => 'https://easyaffiliate.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=easyaffiliate_install',
+			),
+		);
+
+		$plugin_uri = members_plugin()->uri;
+
 		?>
 
-		<div class="wrap">
-			<h1><?php echo esc_html_x( 'About Us', 'admin screen', 'members' ); ?></h1>
-			<div class="welcome-panel memberpress-welcome-panel">
-				<div class="welcome-panel-content memberpress-about">
-					<div class="welcome-panel-column-container">
-						<div class="mp-desc">
-							<p style="font-weight: bold;">Hello and welcome to Members by <a href="https://memberpress.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=link_1" target="_blank">MemberPress</a>, the simplest WordPress membership and role editor plugin. Our team here at MemberPress builds software that helps you to easily add powerful membership features to your website in minutes.</p>
-							<p>Over the years, we found that most WordPress membership plugins were bloated, buggy, slow, very hard to use and expensive. So, we started with a simple goal: build a WordPress membership plugin that’s both easy and powerful.</p>
-							<p>Our goal is to take the pain out of creating membership sites and make it easy.</p>
-							<p>Members is brought to you by the same team that’s behind the most powerful, full-featured membership plugin, <a href="https://memberpress.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=link_2" target="_blank">MemberPress</a>, the best Affiliate Program plugin, <a href="https://easyaffiliate.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=link_3" target="_blank">Easy Affiliate</a>, and the best Affiliate Link Management plugin on the market, <a href="https://prettylinks.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=link_4" target="_blank">Pretty Links</a>.</p>
-							<p>So, you can see that we know a thing or two about building great products that customers love.</p>
-						</div>
-						<div class="mp-logo-wrap">
-							<a href="https://memberpress.com/?utm_source=members_plugin&utm_medium=banner&utm_campaign=about_us&utm_content=memberpress_logo_large">
-								<img src="<?php echo members_plugin()->uri . "img/mp-logo-stacked-RGB.jpg"; ?>" class="mp-logo" alt="">
-							</a>
-						</div>	
-					</div>
-				</div>
-			</div>
-			<div class="members-about-addons">
-				<div class="members-plugin-card plugin-card plugin-card-memberpress" style="margin-left: 0;">
-					<div class="plugin-card-top">
-						<div class="name column-name">
-							<h3>
-								<a href="https://memberpress.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=memberpress_icon_title" target="_blank" rel="noopener noreferrer">
-									MemberPress <img src="<?php echo members_plugin()->uri . "img/mp-icon-RGB.jpg"; ?>" class="plugin-icon" alt="">
-								</a>
-							</h3>
-						</div>
-						<div class="desc column-description">
-							<p>MemberPress will help you build astounding WordPress membership sites, accept credit cards securely, control who sees your content and sell digital downloads... all without the difficult setup.</p>
-						</div>
-					</div>
-					<div class="plugin-card-bottom">
-						<?php if ( members_is_memberpress_active() ) : // Installed and active ?>
-							<div class="column-rating column-status">Status: <span class="active">Active</span></div>
-							<div class="column-updated"><a href="https://memberpress.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=memberpress_learn_more" target="_blank" class="button button-secondary">Learn More</a></div>
-						<?php elseif ( array_key_exists( 'memberpress/memberpress.php', $installed_plugins ) ) : // Installed but inactive ?>
-							<div class="column-rating column-status">Status: <span class="inactive">Inactive</span></div>
-							<div class="column-updated"><a href="<?php echo wp_nonce_url( admin_url( 'plugins.php?action=activate&plugin=memberpress/memberpress.php' ), 'activate-plugin_memberpress/memberpress.php' ); ?>" class="button button-secondary">Activate</a></div>
-						<?php else : // Not installed ?>
-							<div class="column-rating column-status">Status: Not Installed</div>
-							<div class="column-updated"><a href="https://memberpress.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=memberpress_install" target="_blank" class="button button-primary">Install Plugin</a></div>
-						<?php endif; ?>
-					</div>
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+		<div class="wrap members-about">
+			<h1 class="screen-reader-text"><?php echo esc_html_x( 'About Us', 'admin screen', 'members' ); ?></h1>
+
+			<article class="members-about__hero">
+				<header class="members-about__hero-head">
+					<span class="members-about__eyebrow">About · <?php echo esc_html( date( 'Y' ) ); ?></span>
+					<h2 class="members-about__title">
+						Hello &amp; <em>welcome</em>
+						<br>to Members<span class="members-about__title-dot">.</span>
+					</h2>
+				</header>
+
+				<div class="members-about__body">
+					<p class="members-about__lead">
+						The simplest WordPress membership and role editor plugin — built by the team at <a href="https://memberpress.com/?utm_source=members_plugin&amp;utm_medium=link&amp;utm_campaign=about_us&amp;utm_content=link_1" target="_blank" rel="noopener">MemberPress</a>.
+					</p>
+					<p>Over the years we found that most WordPress membership plugins were bloated, buggy, slow, hard to use — and expensive. So we started with a simple goal: build a plugin that's both easy <em>and</em> powerful.</p>
+					<p>Our goal is to take the pain out of creating membership sites and make it easy.</p>
+					<p>Members is brought to you by the same team behind <a href="https://memberpress.com/?utm_source=members_plugin&amp;utm_medium=link&amp;utm_campaign=about_us&amp;utm_content=link_2" target="_blank" rel="noopener">MemberPress</a>, <a href="https://easyaffiliate.com/?utm_source=members_plugin&amp;utm_medium=link&amp;utm_campaign=about_us&amp;utm_content=link_3" target="_blank" rel="noopener">Easy Affiliate</a>, and <a href="https://prettylinks.com/?utm_source=members_plugin&amp;utm_medium=link&amp;utm_campaign=about_us&amp;utm_content=link_4" target="_blank" rel="noopener">Pretty Links</a>.</p>
+					<p>So — you can see we know a thing or two about building products that customers love.</p>
 				</div>
 
-				<div class="members-plugin-card plugin-card plugin-card-pretty-links">
-					<div class="plugin-card-top">
-						<div class="name column-name">
-							<h3>
-								<a href="https://prettylinks.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=prettylinks_icon_title" target="_blank" rel="noopener noreferrer">
-									Pretty Links <img src="<?php echo members_plugin()->uri . "img/pl-icon-RGB.jpg"; ?>" class="plugin-icon" alt="">
-								</a>
-							</h3>
-						</div>
-						<div class="desc column-description">
-							<p>The easiest way to monetize your content. Are you tired of managing affiliate offers manually? Pretty Links helps you unlock more affiliate revenue from your existing content ... it’s like a surprise inheritance!</p>
-						</div>
-					</div>
-					<div class="plugin-card-bottom">
-						<?php if ( is_plugin_active( 'pretty-link/pretty-link.php' ) ) : // Installed and active ?>
-							<div class="column-rating column-status">Status: <span class="active">Active</span></div>
-							<div class="column-updated"><a href="https://prettylinks.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=prettylinks_learn_more" target="_blank" class="button button-secondary">Learn More</a></div>
-						<?php elseif ( array_key_exists( 'pretty-link/pretty-link.php', $installed_plugins ) ) : // Installed but inactive ?>
-							<div class="column-rating column-status">Status: <span class="inactive">Inactive</span></div>
-							<div class="column-updated"><a href="<?php echo wp_nonce_url( admin_url( 'plugins.php?action=activate&plugin=pretty-link/pretty-link.php' ), 'activate-plugin_pretty-link/pretty-link.php' ); ?>" class="button button-secondary">Activate</a></div>
-						<?php else : // Not installed ?>
-							<div class="column-rating column-status">Status: Not Installed</div>
-							<div class="column-updated"><a href="https://prettylinks.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=prettylinks_install" target="_blank" class="button button-primary">Install Plugin</a></div>
-						<?php endif; ?>
-					</div>
-				</div>
+				<aside class="members-about__mark">
+					<a href="https://memberpress.com/?utm_source=members_plugin&amp;utm_medium=banner&amp;utm_campaign=about_us&amp;utm_content=memberpress_logo_large" target="_blank" rel="noopener">
+						<img src="<?php echo esc_url( $plugin_uri . 'img/mp-logo-stacked-RGB.jpg' ); ?>" alt="MemberPress">
+					</a>
+				</aside>
+			</article>
 
-				<div class="members-plugin-card plugin-card plugin-card-easy-affiliate" style="margin-right: 0;">
-					<div class="plugin-card-top">
-						<div class="name column-name">
-							<h3>
-								<a href="https://easyaffiliate.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=easyaffiliate_icon_title" target="_blank" rel="noopener noreferrer">
-									Easy Affiliate <img src="<?php echo members_plugin()->uri . "img/bee.png"; ?>" class="plugin-icon" alt="">
+			<section class="members-about__products" aria-label="More from our team">
+				<header class="members-about__products-head">
+					<h3>From our team</h3>
+				</header>
+
+				<div class="members-about__grid">
+					<?php foreach ( $products as $p ) :
+						$is_installed = array_key_exists( $p['plugin_file'], $installed_plugins );
+						if ( $p['is_active'] ) {
+							$status_label = 'Active';
+							$status_class = 'is-active';
+							$cta_label    = 'Learn More';
+							$cta_href     = $p['url_learn'];
+							$cta_class    = 'is-secondary';
+							$cta_target   = '_blank';
+						} elseif ( $is_installed ) {
+							$status_label = 'Inactive';
+							$status_class = 'is-inactive';
+							$cta_label    = 'Activate';
+							$cta_href     = wp_nonce_url( admin_url( 'plugins.php?action=activate&plugin=' . $p['plugin_file'] ), 'activate-plugin_' . $p['plugin_file'] );
+							$cta_class    = 'is-secondary';
+							$cta_target   = '_self';
+						} else {
+							$status_label = 'Not installed';
+							$status_class = 'is-missing';
+							$cta_label    = 'Install Plugin';
+							$cta_href     = $p['url_install'];
+							$cta_class    = 'is-primary';
+							$cta_target   = '_blank';
+						}
+						?>
+						<article class="members-about__card" data-slug="<?php echo esc_attr( $p['slug'] ); ?>">
+							<header class="members-about__card-head">
+								<span class="members-about__card-icon">
+									<img src="<?php echo esc_url( $plugin_uri . 'img/' . $p['icon'] ); ?>" alt="">
+								</span>
+								<h4 class="members-about__card-title">
+									<a href="<?php echo esc_url( $p['url_title'] ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $p['name'] ); ?></a>
+								</h4>
+							</header>
+							<p class="members-about__card-desc"><?php echo esc_html( $p['description'] ); ?></p>
+							<footer class="members-about__card-foot">
+								<span class="members-about__status <?php echo esc_attr( $status_class ); ?>"><?php echo esc_html( $status_label ); ?></span>
+								<a class="members-about__cta <?php echo esc_attr( $cta_class ); ?>" href="<?php echo esc_url( $cta_href ); ?>"<?php echo $cta_target === '_blank' ? ' target="_blank" rel="noopener"' : ''; ?>>
+									<?php echo esc_html( $cta_label ); ?>
+									<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 8L8 2M8 2H3.5M8 2V6.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
 								</a>
-							</h3>
-						</div>
-						<div class="desc column-description">
-							<p>Easy Affiliate is a full-featured Affiliate Program plugin for WordPress. Use it to start an Affiliate Program for your products to dramatically increase traffic, attention and sales.</p>
-						</div>
-					</div>
-					<div class="plugin-card-bottom">
-						<?php if ( is_plugin_active( 'affiliate-royale/affiliate-royale.php' ) ) : // Installed and active ?>
-							<div class="column-rating column-status">Status: <span class="active">Active</span></div>
-							<div class="column-updated"><a href="https://easyaffiliate.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=easyaffiliate_learn_more" target="_blank" class="button button-secondary">Learn More</a></div>
-						<?php elseif ( array_key_exists( 'affiliate-royale/affiliate-royale.php', $installed_plugins ) ) : // Installed but inactive ?>
-							<div class="column-rating column-status">Status: <span class="inactive">Inactive</span></div>
-							<div class="column-updated"><a href="<?php echo wp_nonce_url( admin_url( 'plugins.php?action=activate&plugin=affiliate-royale/affiliate-royale.php' ), 'activate-plugin_affiliate-royale/affiliate-royale.php' ); ?>" class="button button-secondary">Activate</a></div>
-						<?php else : // Not installed ?>
-							<div class="column-rating column-status">Status: Not Installed</div>
-							<div class="column-updated"><a href="https://easyaffiliate.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=about_us&utm_content=easyaffiliate_install" target="_blank" class="button button-primary">Install Plugin</a></div>
-						<?php endif; ?>
-					</div>
+							</footer>
+						</article>
+					<?php endforeach; ?>
 				</div>
-			</div>
+			</section>
 		</div><!-- wrap -->
 	<?php }
 
