@@ -142,6 +142,7 @@ If that doesn't apply or didn't work, stop by our [support forums](https://wordp
 * Added: Add rescue link for Administrator roles only
 * Changed: Refreshed branding with updated WordPress.org banner and icon assets, header SVG, and logo
 * Changed: Updated About page design
+* Changed: Optimized role user count retrieval using transients for improved performance
 * Fixed: Missing header banner on some admin pages
 * Removed: Bundled POT file (translations now delivered via WordPress.org language packs)
 
