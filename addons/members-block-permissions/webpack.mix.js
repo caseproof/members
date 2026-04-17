@@ -17,12 +17,6 @@ const mix = require( 'laravel-mix' );
 // Set dev path.
 const devPath  = 'resources';
 
-// Run the export process.
-if ( process.env.export ) {
-	const exportTheme = require( './webpack.mix.export.js' );
-	return;
-}
-
 // Set public path.
 mix.setPublicPath( 'public' );
 

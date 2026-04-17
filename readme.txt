@@ -6,7 +6,7 @@ Tags: permissions, memberships, roles, capabilities, access
 Requires at least: 6.0
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 3.2.20
+Stable tag: 3.2.21
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -137,10 +137,172 @@ If that doesn't apply or didn't work, stop by our [support forums](https://wordp
 
 == Changelog ==
 
-The change log is located in the `changelog.md` file in the plugin folder. You may also [view the change log](https://github.com/caseproof/members/blob/master/changelog.md) online.
+= 3.2.21 =
+* Fixed: Privacy Caps add-on not granting privacy capabilities to administrators on fresh activations
+* Removed: Legacy standalone-plugin code from bundled add-ons (dead activation hooks, obsolete build scripts, orphaned readme/uninstall files)
 
 = 3.2.20 =
+* Added: Reset roles
+* Added: Add rescue link for Administrator roles only
 * Changed: Refreshed branding with updated WordPress.org banner and icon assets, header SVG, and logo
 * Changed: Updated About page design
+* Changed: Optimized role user count retrieval using transients for improved performance
 * Fixed: Missing header banner on some admin pages
 * Removed: Bundled POT file (translations now delivered via WordPress.org language packs)
+
+= 3.2.19 =
+* Fixed: Added support for WF 2FA error messages
+* Fixed: Missing "you are already logged in" string
+* Fixed: Add-on page RTL CSS fix
+* Fixed: Block permissions fixes
+* Fixed: Fix redirect_to issue on shortcode
+* Fixed: Other minor bugfixes
+
+= 3.2.18 =
+* Fixed: Add-on activate toggle display issue on narrow screens
+* Fixed: Login error redirection
+* Fixed: Outdated Login form styling
+* Fixed: Allow changing display name for some Roles
+
+= 3.2.17 =
+* Added: Bulk select/unselect checkboxes on Role capabilities
+
+= 3.2.16 =
+* Fixed: Protected posts being forced-hidden from API search even if setting was off
+
+= 3.2.15 =
+* Added: Growth Tools menu item
+* Fixed: Translation errors
+* Fixed: Styles and formatting on add-ons and about pages
+
+= 3.2.14 =
+* Fixed: Error in REST API calls when posts results not an array
+
+= 3.2.12 =
+* Fixed: Cleaned up prior author name and links
+* Fixed: Cleaned up broken or incorrect links
+* Fixed: Removed some unnecessary files
+* Fixed: Incorrect gettext calls
+* Fixed: Removed unneeded load_plugin_textdomain calls
+* Fixed: Updated POT translation file
+
+= 3.2.11 =
+* Fixed: Translation warnings after WP 6.7
+* Fixed: Add option to hide protected content from REST API searches
+* Fixed: Add support for Loco Translate plugin (via new loco.xml file)
+
+= 3.2.10 =
+* Fixed: Capability checks on AJAX calls
+* Fixed: PHP warning for $wp_embed
+* Changed: Now requires PHP 7.4 minimum
+
+= 3.2.9 =
+* Fixed: PHP 8.1 deprecation notice on ACF integration (props @DSGND)
+
+= 3.2.8 =
+* Added: members_wp_roles filter to WP roles in Content Permission box
+* Fixed: Content Permission icon in Panel block
+* Fixed: Position of Field Group menu item in ACF
+
+= 3.2.6-7 =
+* Fixed: PHP 8+ compatibility
+* Added: members_show_roles_page_cap filter for edit_roles_cap
+* Fixed: Improperly named variable
+
+= 3.2.5 =
+* Fixed: WP Cron task for in-plugin notifications running unnecessarily
+
+= 3.2.4 =
+* Fixed: More package deployment fixes
+
+= 3.2.3 =
+* Added: Footer with helpful links
+* Fixed: Package files deployed unnecessarily
+* Fixed: Debug warnings
+* Fixed: Correct bootstrap file required
+
+= 3.2.2 =
+* Fixed: Undefined index notice
+
+= 3.2.1 =
+* Fixed: Uncaught TypeError: in_array()
+
+= 3.2.0 =
+* Added: Members Notifications
+* Changed: Converted `jQuery.fn.click()` (deprecated) to `jQuery.fn.on('click')`
+* Changed: Replaced references to Affiliate Royale with Easy Affiliate
+* Changed: WP Tested Up To version (5.9)
+
+= 3.1.7 =
+* Fixed: Hierarchical roles missing settings
+* Changed: Refactored checks for whether MemberPress is active; added `members_is_memberpress_active()`
+* Changed: "Paid Memberships" section of Content Permissions meta box should not show when MemberPress is active
+* Changed: Wording from "Upgrade to MemberPress" to "Add MemberPress"
+
+= 3.1.6 =
+* Added: "Miscellaneous" settings section
+* Added: "Disable Review Prompt" setting to permanently remove the review prompt
+* Added: `MEMBERS_DISABLE_REVIEW_PROMPT` constant to permanently remove the review prompt
+* Changed: WP Tested Up To version (5.8)
+* Fixed: Using transients for review prompt caused the prompt to persist when dismissed; switched to using options instead
+* Fixed: Users widget not working in new block-based widgets editor
+
+= 3.1.5 =
+* Fixed: Block permissions not working for nested blocks (e.g. columns)
+
+= 3.1.4 =
+* Changed: Converted instance of wp.editor to wp.blockEditor
+* Changed: Check for MemberPress constant instead of using `is_plugin_active()`
+* Fixed: Compatibility for PHP 8
+
+= 3.1.3 =
+* Changed: Disabled Content Permissions side meta box
+* Fixed: Issue with comma-separated roles that include spaces
+
+= 3.1.2 =
+* Fixed: Review prompt should only show to admins
+
+= 3.1.1 =
+* Changed: Admin UI cleanup
+
+= 3.1.0 =
+* Changed: Admin UI
+* Fixed: Issue with custom capabilities not saving to custom roles
+
+= 3.0.10 =
+* Fixed: Users who can promote should be able to assign roles to their own account
+
+= 3.0.9 =
+* Fixed: ACF integration trying to bump priority on ACF menu
+
+= 3.0.8 =
+* Fixed: Settings page error
+
+= 3.0.7 =
+* Fixed: Issues related to translated admin menu slug
+
+= 3.0.6 =
+* Fixed: Settings page throwing error on non-English sites
+
+= 3.0.5 =
+* Fixed: Collapse Permissions block editor section by default
+
+= 3.0.4 =
+* Added: Filter for applying custom validation to settings
+* Fixed: Inaccessible settings page in Admin Access
+
+= 3.0.3 =
+* Changed: Display icons using file_get_contents() instead of include() to prevent executing them as PHP
+* Fixed: PHP warnings being thrown
+* Fixed: Make sure admin menu is always accessible
+
+= 3.0.2 =
+* Fixed: Minimized SVG icons to fix issues with parsing them
+
+= 3.0.1 =
+* Fixed: Some JS and image files weren't checked in via SVN; bumped version to add them
+
+= 3.0 =
+* Added: Rolled all add-ons into core
+* Changed: Consolidated all Members-related settings under one admin menu item
+* Changed: Made login and user widgets enabled by default, and removed settings
