@@ -89,6 +89,24 @@ We weren't satisfied with the current user, role, and permissions plugins availa
 
 So, we just built something we actually enjoyed using.
 
+### What's the difference between Members and MemberPress?
+
+Members and [MemberPress](https://memberpress.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=readme&utm_content=members_vs_memberpress) solve different problems and are designed to work together.
+
+**Members** is a free roles and capabilities plugin. It gives you a UI on top of WordPress' native roles and capabilities system so you can create and edit roles, assign multiple roles to users, and restrict content by role or capability. It's the right tool when you need to control *who can do what* inside your site—dashboard access, content permissions, and capability management—without charging for access.
+
+**MemberPress** is a premium, all-in-one WordPress membership platform built for monetization and much more. In addition to paid subscriptions, payment processing (Stripe, PayPal, and more), recurring billing, coupons, and drip content, MemberPress also includes:
+
+* **Courses** — a built-in LMS for creating and selling online courses with lessons, quizzes, and progress tracking.
+* **CoachKit** — tools for running coaching programs, including milestones, habits, and client check-ins.
+* **Community Groups** — private member communities and discussion spaces tied to your memberships.
+* **Member Profiles & Directories** — customizable front-end profiles and searchable member directories.
+* **Email marketing integrations**, affiliate program support, and many more premium features.
+
+It's the right tool when you need to *sell* access to content, courses, coaching, or communities—and grow a full membership business around it.
+
+The two plugins are complementary, not competing. Many sites use Members for fine-grained role and capability management alongside MemberPress for everything membership-business related. For a full side-by-side comparison, see [Members vs MemberPress](https://members-plugin.com/members-vs-memberpress/).
+
 ### How do I use it?
 
 Most things should be fairly straightforward, but you can also [view the docs](https://members-plugin.com/docs/) online.
