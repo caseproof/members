@@ -1172,11 +1172,13 @@
 	border-left: 1px solid var(--members-am-chrome-border, #c3c4c7);
 }
 
+/* Override core .button-link underline (it can fragment and appear only under the SVG chevron). */
 .members-am-more-tools,
 .members-am-more-tools:hover,
 .members-am-more-tools:focus,
+.members-am-more-tools:focus-visible,
 .members-am-more-tools:active {
-	text-decoration: none;
+	text-decoration: none !important;
 }
 
 .members-am-more-tools {
@@ -1189,11 +1191,22 @@
 	line-height: 1.4;
 }
 
+.members-am-more-tools .members-am-more-tools-text,
+.members-am-more-tools:hover .members-am-more-tools-text,
+.members-am-more-tools:focus .members-am-more-tools-text,
+.members-am-more-tools:focus-visible .members-am-more-tools-text,
+.members-am-more-tools:active .members-am-more-tools-text,
 .members-am-more-tools .members-am-more-tools-chevron,
 .members-am-more-tools:hover .members-am-more-tools-chevron,
 .members-am-more-tools:focus .members-am-more-tools-chevron,
-.members-am-more-tools:active .members-am-more-tools-chevron {
-	text-decoration: none;
+.members-am-more-tools:focus-visible .members-am-more-tools-chevron,
+.members-am-more-tools:active .members-am-more-tools-chevron,
+.members-am-more-tools .members-am-more-tools-chevron-svg,
+.members-am-more-tools:hover .members-am-more-tools-chevron-svg,
+.members-am-more-tools:focus .members-am-more-tools-chevron-svg,
+.members-am-more-tools:focus-visible .members-am-more-tools-chevron-svg,
+.members-am-more-tools:active .members-am-more-tools-chevron-svg {
+	text-decoration: none !important;
 }
 
 .members-am-more-tools .members-am-more-tools-text {
@@ -1214,8 +1227,14 @@
 
 .members-am-more-tools .members-am-more-tools-chevron-svg {
 	display: block;
+	overflow: visible;
 	transition: transform 0.15s ease;
 	transform-origin: 50% 50%;
+	shape-rendering: geometricPrecision;
+}
+
+.members-am-more-tools .members-am-more-tools-chevron-svg polygon {
+	stroke: none;
 }
 
 .members-am-more-tools.is-open .members-am-more-tools-chevron-svg {
