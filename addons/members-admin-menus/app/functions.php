@@ -1042,6 +1042,52 @@ function block_restricted_pages() {
 }
 
 /**
+ * Whether a stored submenu child slug matches a runtime screen slug.
+ *
+ * Avoids false positives when the child is a bare admin PHP basename that is only a prefix of
+ * another screen (e.g. Posts submenu child `edit.php` matching the Pages list `edit.php?post_type=page`).
+ *
+ * @param string $current    Current screen id from get_current_screen_slugs().
+ * @param string $child_slug Submenu file/slug segment after `parent::`.
+ * @return bool
+ */
+function members_admin_menus_submenu_child_matches_current( $current, $child_slug ) {
+	$child_slug = (string) $child_slug;
+	$current    = (string) $current;
+	if ( '' === $child_slug || '' === $current ) {
+		return false;
+	}
+	if ( $child_slug === $current ) {
+		return true;
+	}
+	// Child includes query args — classic submenu ids (e.g. edit-tags.php?taxonomy=post_tag).
+	if ( false !== strpos( $child_slug, '?' ) ) {
+		return false !== strpos( $current, $child_slug );
+	}
+	if ( 0 !== strpos( $current, $child_slug ) ) {
+		return false;
+	}
+	$len = strlen( $child_slug );
+	if ( strlen( $current ) === $len ) {
+		return true;
+	}
+	$nxt = $current[ $len ];
+	// Require a real path/query boundary (not `edit.php` matching a longer basename).
+	if ( '?' !== $nxt && '&' !== $nxt ) {
+		return false;
+	}
+	// CPT list / "Add New" screens share filenames; default Posts menu items map to post_type `post`.
+	$post_type_screens = array( 'edit.php', 'post-new.php' );
+	if ( ! in_array( $child_slug, $post_type_screens, true ) ) {
+		return true;
+	}
+	if ( ! preg_match( '/(?:^|[?&])post_type=([^&]+)/', $current, $m ) ) {
+		return true;
+	}
+	return 'post' === $m[1];
+}
+
+/**
  * Loose match for submenu vs top-level.
  *
  * @param string $current Current screen id.
@@ -1054,8 +1100,8 @@ function members_admin_menus_slug_matches( $current, $stored ) {
 	}
 	if ( false !== strpos( $stored, '::' ) ) {
 		$parts = explode( '::', $stored, 2 );
-		if ( isset( $parts[1] ) && ( $parts[1] === $current || false !== strpos( $current, $parts[1] ) ) ) {
-			return true;
+		if ( isset( $parts[1] ) ) {
+			return members_admin_menus_submenu_child_matches_current( $current, $parts[1] );
 		}
 	}
 	return false;
