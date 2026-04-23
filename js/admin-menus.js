@@ -2642,7 +2642,9 @@
 						$('<small/>').text('Clear all menu settings for this role only')
 					)
 				);
-				$roleBtn.on('click', function () {
+				$roleBtn.on('click', function (e) {
+					e.preventDefault();
+					e.stopPropagation();
 					$('.members-am-reset-dropdown').remove();
 					resetSettings('role', firstRole);
 				});
@@ -2657,18 +2659,23 @@
 					$('<small/>').text('Clear all menu settings for every role')
 				)
 			);
-			$allBtn.on('click', function () {
+			$allBtn.on('click', function (e) {
+				e.preventDefault();
+				e.stopPropagation();
 				$('.members-am-reset-dropdown').remove();
 				resetSettings('all');
 			});
 			$drop.append($allBtn);
 
-			$btn.parent().css('position', 'relative');
 			$drop.insertAfter($btn);
 
-			$(document).one('click', function () {
-				$('.members-am-reset-dropdown').remove();
-			});
+			// Defer so the same click that opened the menu does not hit document first,
+			// and so the menu is not removed before option buttons receive the click.
+			setTimeout(function () {
+				$(document).one('click', function () {
+					$('.members-am-reset-dropdown').remove();
+				});
+			}, 0);
 		});
 		$('#members-am-export').on('click', function (e) {
 			e.preventDefault();

@@ -1085,7 +1085,8 @@
 	border: 1px solid var(--members-am-chrome-border, #c3c4c7);
 	border-radius: 2px;
 	background: var(--wp-components-color-background, #fff);
-	overflow: hidden;
+	/* Must not clip the Reset dropdown (position absolute, extends below this box). */
+	overflow: visible;
 }
 
 .members-am-toolbar-row {
@@ -1109,6 +1110,8 @@
 }
 
 .members-am-toolbar-group--document {
+	position: relative;
+	z-index: 5;
 	padding-right: 12px;
 	border-right: 1px solid var(--members-am-chrome-border, #c3c4c7);
 }
@@ -1812,7 +1815,7 @@
 
 .members-am-reset-dropdown {
 	position: absolute;
-	z-index: 100;
+	z-index: 100000;
 	background: var(--wp-components-color-background, #fff);
 	border: 1px solid var(--members-am-chrome-border, #c3c4c7);
 	border-radius: 6px;
