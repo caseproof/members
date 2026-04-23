@@ -250,6 +250,11 @@ final class Role_Import {
 				continue;
 			}
 
+			if ( in_array( $action_for_role, array( 'import', 'rename' ), true ) && ! current_user_can( 'create_roles' ) ) {
+				$skipped++;
+				continue;
+			}
+
 			$label = isset( $role_data['label'] ) ? $role_data['label'] : $original_slug;
 			$caps  = isset( $role_data['caps'] ) && is_array( $role_data['caps'] ) ? $role_data['caps'] : array();
 

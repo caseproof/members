@@ -110,11 +110,12 @@ final class Role_Export {
 		// Build export data. Only include settings for full (non-selective) exports.
 		$data = array(
 			'meta' => array(
-				'plugin'      => 'members',
-				'version'     => ! empty( $file_headers['Version'] ) ? $file_headers['Version'] : '',
-				'export_date' => gmdate( 'c' ),
-				'site_url'    => site_url(),
-				'wp_version'  => get_bloginfo( 'version' ),
+				'plugin'         => 'members',
+				'schema_version' => 1,
+				'version'        => ! empty( $file_headers['Version'] ) ? $file_headers['Version'] : '',
+				'export_date'    => gmdate( 'c' ),
+				'site_url'       => site_url(),
+				'wp_version'     => get_bloginfo( 'version' ),
 			),
 			'roles'    => $roles,
 			'settings' => empty( $role_slugs ) ? get_option( 'members_settings', members_get_default_settings() ) : array(),
