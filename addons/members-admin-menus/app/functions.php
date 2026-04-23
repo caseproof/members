@@ -499,7 +499,7 @@ function output_fa_icon_styles() {
 		$css .= $sel . ' img, ' . $sel . ' svg { display: none !important; }' . "\n";
 		$css .= $sel . ' { display: flex !important; align-items: center !important; justify-content: center !important; min-width: 20px !important; }' . "\n";
 		$css .= $sel . ' .members-am-fa { font-size: 20px; line-height: 1; display: inline-block; width: 20px; text-align: center; font-style: normal; font-weight: 900; vertical-align: middle; }' . "\n";
-		$js  .= 'jQuery("#' . esc_js( $menu_id ) . ' .wp-menu-image").html(\'<i class="members-am-fa ' . esc_js( $fa_class ) . '" aria-hidden="true"></i>\');' . "\n";
+		$js  .= '(function(mid, faCls){var $w=jQuery("#"+mid+" .wp-menu-image");$w.empty();$w.append(jQuery("<i></i>").attr("class","members-am-fa "+faCls).attr("aria-hidden","true"));})(' . wp_json_encode( (string) $menu_id ) . ', ' . wp_json_encode( (string) $fa_class ) . ');' . "\n";
 	}
 	echo '<style id="members-am-fa-overrides">' . "\n" . $css . "</style>\n";
 	echo '<script>' . "\n" . 'jQuery(function(){' . "\n" . $js . '});' . "\n" . '</script>' . "\n";
@@ -1112,7 +1112,11 @@ function get_current_screen_slugs() {
  */
 function members_admin_menus_is_protected_slug( $slug ) {
 	$s = (string) $slug;
-	return ( false !== stripos( $s, 'members-settings' ) || false !== stripos( $s, 'page=members' ) );
+	return (
+		false !== stripos( $s, 'members-settings' )
+		|| false !== stripos( $s, 'members-admin-menus' )
+		|| false !== stripos( $s, 'page=members' )
+	);
 }
 
 /**
