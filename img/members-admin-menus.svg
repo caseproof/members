@@ -1,0 +1,11 @@
+<svg width="120" height="120" viewBox="0 0 120 120" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>Members – Admin Menus</title>
+<circle cx="35" cy="30" r="18" fill="white"/>
+<path d="M2 70 Q2 52 35 52 Q68 52 68 70" fill="white"/>
+<rect x="52" y="38" width="68" height="68" rx="7" fill="none" stroke="white" stroke-width="3" opacity="0.5"/>
+<rect x="52" y="38" width="22" height="68" rx="7" fill="white" opacity="0.22"/>
+<line x1="74" y1="38" x2="74" y2="106" stroke="white" stroke-width="2" opacity="0.3"/>
+<line x1="83" y1="57" x2="114" y2="57" stroke="white" stroke-width="6" stroke-linecap="round"/>
+<line x1="83" y1="74" x2="114" y2="74" stroke="white" stroke-width="6" stroke-linecap="round" opacity="0.25" stroke-dasharray="5 3"/>
+<line x1="83" y1="91" x2="110" y2="91" stroke="white" stroke-width="6" stroke-linecap="round"/>
+</svg>
