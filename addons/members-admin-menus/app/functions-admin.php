@@ -412,7 +412,9 @@ function render_admin_menus_page() {
 					</label>
 					<button type="button" class="button button-link members-am-more-tools" id="members-am-more-tools" aria-expanded="false" aria-controls="members-am-toolbar-extra">
 						<span class="members-am-more-tools-text"><?php esc_html_e( 'More tools', 'members' ); ?></span>
-						<span class="dashicons dashicons-arrow-down-alt2 members-am-more-tools-chevron" aria-hidden="true"></span>
+						<span class="members-am-more-tools-chevron" aria-hidden="true">
+							<svg class="members-am-more-tools-chevron-svg" width="12" height="12" viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg" focusable="false"><polygon fill="currentColor" points="2,4.5 10,4.5 6,8.5"/></svg>
+						</span>
 					</button>
 					<span class="members-am-toolbar-loading" id="members-am-toolbar-loading" hidden aria-live="polite">
 						<span class="spinner"></span>

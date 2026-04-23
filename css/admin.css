@@ -1182,10 +1182,11 @@
 .members-am-more-tools {
 	display: inline-flex;
 	align-items: center;
-	gap: 2px;
+	gap: 4px;
 	white-space: nowrap;
 	padding: 2px 2px 2px 4px;
 	vertical-align: middle;
+	line-height: 1.4;
 }
 
 .members-am-more-tools .members-am-more-tools-chevron,
@@ -1195,22 +1196,34 @@
 	text-decoration: none;
 }
 
-.members-am-more-tools .members-am-more-tools-chevron {
-	width: 18px;
-	height: 18px;
-	font-size: 18px;
-	line-height: 1;
-	opacity: 0.88;
-	padding-top: 6px;
-	transition: transform 0.15s ease;
+.members-am-more-tools .members-am-more-tools-text {
+	display: inline-flex;
+	align-items: center;
+	line-height: 1.4;
 }
 
-.members-am-more-tools.is-open .members-am-more-tools-chevron {
-	transform: rotate(-180deg);
+/* Inline SVG chevron (replaces Dashicon) so collapsed/expanded states share the same vertical metrics as the label. */
+.members-am-more-tools .members-am-more-tools-chevron {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	line-height: 0;
+	opacity: 0.88;
+}
+
+.members-am-more-tools .members-am-more-tools-chevron-svg {
+	display: block;
+	transition: transform 0.15s ease;
+	transform-origin: 50% 50%;
+}
+
+.members-am-more-tools.is-open .members-am-more-tools-chevron-svg {
+	transform: rotate(180deg);
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.members-am-more-tools .members-am-more-tools-chevron {
+	.members-am-more-tools .members-am-more-tools-chevron-svg {
 		transition: none;
 	}
 }
