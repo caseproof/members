@@ -1198,6 +1198,7 @@
 	font-size: 18px;
 	line-height: 1;
 	opacity: 0.88;
+	padding-top: 6px;
 	transition: transform 0.15s ease;
 }
 
