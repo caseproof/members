@@ -176,7 +176,7 @@ final class Role_Import {
 			'duplicate_slugs' => $duplicate_slugs,
 		);
 
-		set_transient( $transient_key, $transient_data, 30 * MINUTE_IN_SECONDS );
+		set_transient( $transient_key, $transient_data, 5 * MINUTE_IN_SECONDS );
 
 		// Redirect to the preview page.
 		wp_safe_redirect( add_query_arg(
