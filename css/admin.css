@@ -1078,10 +1078,190 @@
 
 .members-admin-menus-toolbar {
 	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: 0;
+	margin-bottom: 16px;
+	border: 1px solid var(--members-am-chrome-border, #c3c4c7);
+	border-radius: 2px;
+	background: var(--wp-components-color-background, #fff);
+	overflow: hidden;
+}
+
+.members-am-toolbar-row {
+	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
 	gap: 8px;
-	margin-bottom: 16px;
+}
+
+.members-am-toolbar-row--primary {
+	padding: 10px 12px;
+	justify-content: space-between;
+	row-gap: 10px;
+}
+
+.members-am-toolbar-group {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.members-am-toolbar-group--document {
+	padding-right: 12px;
+	border-right: 1px solid var(--members-am-chrome-border, #c3c4c7);
+}
+
+.members-am-toolbar-row--primary .members-am-toolbar-primary-user {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	margin-left: 8px;
+	flex: 0 1 auto;
+	min-width: 0;
+}
+
+.members-am-toolbar-row--primary .members-am-toolbar-primary-user #members-am-user-search.members-am-user-search-input {
+	width: 168px;
+	max-width: 100%;
+	min-width: 0;
+}
+
+.members-am-toolbar-group--view {
+	margin-left: auto;
+	flex-wrap: nowrap;
+}
+
+.members-am-toolbar-extra {
+	background: var(--members-am-chrome-bg, #f6f7f7);
+	border-top: 1px solid var(--members-am-chrome-border, #c3c4c7);
+	padding: 10px 12px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.members-am-toolbar-extra[hidden] {
+	display: none !important;
+}
+
+.members-am-toolbar-row--extra-tools {
+	justify-content: flex-start;
+	align-items: center;
+	flex-wrap: wrap;
+	row-gap: 10px;
+}
+
+.members-am-toolbar-row--extra-tools .members-am-copy-wrap {
+	margin-left: 4px;
+	padding-left: 12px;
+	border-left: 1px solid var(--members-am-chrome-border, #c3c4c7);
+}
+
+.members-am-toolbar-row--extra-tools .members-am-toolbar-group--io {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin-left: 8px;
+	padding-left: 12px;
+	border-left: 1px solid var(--members-am-chrome-border, #c3c4c7);
+}
+
+.members-am-more-tools,
+.members-am-more-tools:hover,
+.members-am-more-tools:focus,
+.members-am-more-tools:active {
+	text-decoration: none;
+}
+
+.members-am-more-tools {
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+	white-space: nowrap;
+	padding: 2px 2px 2px 4px;
+	vertical-align: middle;
+}
+
+.members-am-more-tools .members-am-more-tools-chevron,
+.members-am-more-tools:hover .members-am-more-tools-chevron,
+.members-am-more-tools:focus .members-am-more-tools-chevron,
+.members-am-more-tools:active .members-am-more-tools-chevron {
+	text-decoration: none;
+}
+
+.members-am-more-tools .members-am-more-tools-chevron {
+	width: 18px;
+	height: 18px;
+	font-size: 18px;
+	line-height: 1;
+	opacity: 0.88;
+	transition: transform 0.15s ease;
+}
+
+.members-am-more-tools.is-open .members-am-more-tools-chevron {
+	transform: rotate(-180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.members-am-more-tools .members-am-more-tools-chevron {
+		transition: none;
+	}
+}
+
+@media screen and (max-width: 782px) {
+	.members-am-toolbar-group--document {
+		border-right: none;
+		padding-right: 0;
+		border-bottom: 1px solid var(--members-am-chrome-border, #c3c4c7);
+		padding-bottom: 10px;
+		width: 100%;
+	}
+
+	.members-am-toolbar-group--view {
+		margin-left: 0;
+		width: 100%;
+		justify-content: space-between;
+	}
+
+	.members-am-toolbar-row--primary .members-am-toolbar-primary-user {
+		margin-left: 0;
+		padding-left: 0;
+		border-left: none;
+		padding-top: 8px;
+		border-top: 1px solid var(--members-am-chrome-border, #c3c4c7);
+		width: 100%;
+		max-width: none;
+	}
+
+	.members-am-toolbar-row--primary .members-am-toolbar-primary-user #members-am-user-search.members-am-user-search-input {
+		width: 100%;
+		max-width: 100%;
+	}
+
+	.members-am-toolbar-row--extra-tools .members-am-admin-editable {
+		width: 100%;
+	}
+
+	.members-am-toolbar-row--extra-tools .members-am-copy-wrap {
+		margin-left: 0;
+		padding-left: 0;
+		border-left: none;
+		padding-top: 8px;
+		border-top: 1px solid var(--members-am-chrome-border, #c3c4c7);
+		width: 100%;
+	}
+
+	.members-am-toolbar-row--extra-tools .members-am-toolbar-group--io {
+		margin-left: 0;
+		padding-left: 0;
+		border-left: none;
+		padding-top: 8px;
+		border-top: 1px solid var(--members-am-chrome-border, #c3c4c7);
+		width: 100%;
+	}
 }
 
 .members-am-toolbar-loading {
@@ -1756,7 +1936,7 @@
 }
 
 #members-am-user-search.members-am-user-search-input {
-	width: 200px;
+	width: 168px;
 	max-width: 100%;
 }
 

@@ -2772,6 +2772,37 @@
 			renderColumns();
 		});
 
+		var MORE_TOOLS_KEY = 'members_am_more_tools';
+		function membersAmSetMoreToolsOpen(open) {
+			var $extra = $('#members-am-toolbar-extra');
+			var $btn = $('#members-am-more-tools');
+			if (!$extra.length || !$btn.length) {
+				return;
+			}
+			$extra.prop('hidden', !open);
+			$btn.attr('aria-expanded', open ? 'true' : 'false').toggleClass('is-open', !!open);
+			var i18n = membersAdminMenus.i18n || {};
+			if (open && i18n.moreToolsHideAria) {
+				$btn.attr('aria-label', i18n.moreToolsHideAria);
+			} else if (!open && i18n.moreToolsShowAria) {
+				$btn.attr('aria-label', i18n.moreToolsShowAria);
+			} else {
+				$btn.removeAttr('aria-label');
+			}
+			try {
+				sessionStorage.setItem(MORE_TOOLS_KEY, open ? '1' : '0');
+			} catch (e) {}
+		}
+		var moreToolsInitiallyOpen = false;
+		try {
+			moreToolsInitiallyOpen = sessionStorage.getItem(MORE_TOOLS_KEY) === '1';
+		} catch (e) {}
+		membersAmSetMoreToolsOpen(moreToolsInitiallyOpen);
+
+		$('#members-am-more-tools').on('click', function () {
+			membersAmSetMoreToolsOpen($('#members-am-toolbar-extra').prop('hidden'));
+		});
+
 		$('#members-am-add-item').on('click', function () {
 			pushUndoSnapshot();
 			var id = 'c' + Date.now();

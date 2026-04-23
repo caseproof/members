@@ -376,6 +376,8 @@ function enqueue_admin_menus_assets() {
 				'bulkVisibilityHint'     => __( 'For bulk visibility (whole column or checked rows), use the tools above each role column.', 'members' ),
 				'filterRolesVisibility'  => __( 'Filter roles…', 'members' ),
 				'filterRolesVisibilityLabel' => __( 'Filter roles in this list', 'members' ),
+				'moreToolsShowAria'      => __( 'Show additional tools: copy between roles, import and export', 'members' ),
+				'moreToolsHideAria'      => __( 'Hide additional tools', 'members' ),
 			),
 		)
 	);
@@ -392,40 +394,56 @@ function render_admin_menus_page() {
 		<h1><?php esc_html_e( 'Admin Menus', 'members' ); ?></h1>
 		<div id="members-am-notices" class="members-am-notices"></div>
 		<div class="members-admin-menus-toolbar">
-			<button type="button" class="button button-primary" id="members-am-save"><?php esc_html_e( 'Save changes', 'members' ); ?></button>
-			<button type="button" class="button" id="members-am-undo" disabled aria-disabled="true"><?php esc_html_e( 'Undo last change', 'members' ); ?></button>
-			<button type="button" class="button" id="members-am-reset"><?php esc_html_e( 'Reset', 'members' ); ?></button>
-			<button type="button" class="button" id="members-am-add-item"><?php esc_html_e( 'Add custom item', 'members' ); ?></button>
-			<span class="members-am-copy-wrap">
-				<label>
-					<?php esc_html_e( 'Copy from role', 'members' ); ?>
-					<select id="members-am-copy-from"></select>
-				</label>
-				<label>
-					<?php esc_html_e( 'to', 'members' ); ?>
-					<select id="members-am-copy-to"></select>
-				</label>
-				<button type="button" class="button" id="members-am-copy-apply"><?php esc_html_e( 'Copy', 'members' ); ?></button>
-			</span>
-			<a href="#" class="button" id="members-am-export"><?php esc_html_e( 'Export', 'members' ); ?></a>
-			<button type="button" class="button" id="members-am-import"><?php esc_html_e( 'Import', 'members' ); ?></button>
-			<input type="file" id="members-am-import-file" class="members-am-import-file-hidden" accept="application/json" />
-			<span class="members-am-user-search-wrap">
-				<label for="members-am-user-search"><?php esc_html_e( 'User:', 'members' ); ?></label>
-				<input type="text" id="members-am-user-search" class="members-am-user-search-input" placeholder="<?php esc_attr_e( 'Search users…', 'members' ); ?>" />
-			</span>
-			<label class="members-am-sync-scroll">
-				<input type="checkbox" id="members-am-sync-scroll" checked />
-				<?php esc_html_e( 'Sync scroll', 'members' ); ?>
-			</label>
-			<label class="members-am-admin-editable">
-				<input type="checkbox" id="members-am-admin-editable" />
-				<?php esc_html_e( 'Allow editing administrator menus', 'members' ); ?>
-			</label>
-			<span class="members-am-toolbar-loading" id="members-am-toolbar-loading" hidden aria-live="polite">
-				<span class="spinner"></span>
-				<span class="members-am-loading-text"></span>
-			</span>
+			<div class="members-am-toolbar-row members-am-toolbar-row--primary">
+				<div class="members-am-toolbar-group members-am-toolbar-group--document">
+					<button type="button" class="button button-primary" id="members-am-save"><?php esc_html_e( 'Save changes', 'members' ); ?></button>
+					<button type="button" class="button" id="members-am-undo" disabled aria-disabled="true"><?php esc_html_e( 'Undo last change', 'members' ); ?></button>
+					<button type="button" class="button" id="members-am-reset"><?php esc_html_e( 'Reset', 'members' ); ?></button>
+					<button type="button" class="button" id="members-am-add-item"><?php esc_html_e( 'Add custom item', 'members' ); ?></button>
+				</div>
+				<span class="members-am-user-search-wrap members-am-toolbar-primary-user">
+					<label for="members-am-user-search"><?php esc_html_e( 'User:', 'members' ); ?></label>
+					<input type="text" id="members-am-user-search" class="members-am-user-search-input" placeholder="<?php esc_attr_e( 'Search users…', 'members' ); ?>" />
+				</span>
+				<div class="members-am-toolbar-group members-am-toolbar-group--view">
+					<label class="members-am-sync-scroll">
+						<input type="checkbox" id="members-am-sync-scroll" checked />
+						<?php esc_html_e( 'Sync scroll', 'members' ); ?>
+					</label>
+					<button type="button" class="button button-link members-am-more-tools" id="members-am-more-tools" aria-expanded="false" aria-controls="members-am-toolbar-extra">
+						<span class="members-am-more-tools-text"><?php esc_html_e( 'More tools', 'members' ); ?></span>
+						<span class="dashicons dashicons-arrow-down-alt2 members-am-more-tools-chevron" aria-hidden="true"></span>
+					</button>
+					<span class="members-am-toolbar-loading" id="members-am-toolbar-loading" hidden aria-live="polite">
+						<span class="spinner"></span>
+						<span class="members-am-loading-text"></span>
+					</span>
+				</div>
+			</div>
+			<div id="members-am-toolbar-extra" class="members-am-toolbar-extra" hidden>
+				<div class="members-am-toolbar-row members-am-toolbar-row--extra-tools">
+					<label class="members-am-admin-editable">
+						<input type="checkbox" id="members-am-admin-editable" />
+						<?php esc_html_e( 'Allow editing administrator menus', 'members' ); ?>
+					</label>
+					<span class="members-am-copy-wrap">
+						<label>
+							<?php esc_html_e( 'Copy from role', 'members' ); ?>
+							<select id="members-am-copy-from"></select>
+						</label>
+						<label>
+							<?php esc_html_e( 'to', 'members' ); ?>
+							<select id="members-am-copy-to"></select>
+						</label>
+						<button type="button" class="button" id="members-am-copy-apply"><?php esc_html_e( 'Copy', 'members' ); ?></button>
+					</span>
+					<div class="members-am-toolbar-group members-am-toolbar-group--io">
+						<a href="#" class="button" id="members-am-export"><?php esc_html_e( 'Export', 'members' ); ?></a>
+						<button type="button" class="button" id="members-am-import"><?php esc_html_e( 'Import', 'members' ); ?></button>
+						<input type="file" id="members-am-import-file" class="members-am-import-file-hidden" accept="application/json" />
+					</div>
+				</div>
+			</div>
 		</div>
 
 		<p class="members-am-legend">
