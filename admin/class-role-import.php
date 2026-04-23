@@ -23,6 +23,13 @@ defined('ABSPATH') || exit;
 final class Role_Import {
 
 	/**
+	 * Highest import schema version this class understands.
+	 *
+	 * @since 3.4.0
+	 */
+	const SUPPORTED_SCHEMA_VERSION = 1;
+
+	/**
 	 * Holds the instances of this class.
 	 *
 	 * @since  3.3.0
@@ -104,6 +111,14 @@ final class Role_Import {
 		// Validate structure.
 		if ( empty( $data['meta']['plugin'] ) || 'members' !== $data['meta']['plugin'] || empty( $data['roles'] ) || ! is_array( $data['roles'] ) ) {
 			$this->redirect_with_error( 'invalid_format', __( 'The import file is not a valid Members export file.', 'members' ) );
+			return;
+		}
+
+		if ( isset( $data['meta']['schema_version'] ) && (int) $data['meta']['schema_version'] > self::SUPPORTED_SCHEMA_VERSION ) {
+			$this->redirect_with_error(
+				'unsupported_version',
+				__( 'This export was created by a newer version of Members. Please update the Members plugin to import it.', 'members' )
+			);
 			return;
 		}
 

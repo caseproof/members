@@ -22,6 +22,13 @@ defined('ABSPATH') || exit;
 final class Role_Export {
 
 	/**
+	 * Schema version written to the export JSON `meta.schema_version` field.
+	 *
+	 * @since 3.4.0
+	 */
+	const SCHEMA_VERSION = 1;
+
+	/**
 	 * Holds the instances of this class.
 	 *
 	 * @since  3.3.0
@@ -111,7 +118,7 @@ final class Role_Export {
 		$data = array(
 			'meta' => array(
 				'plugin'         => 'members',
-				'schema_version' => 1,
+				'schema_version' => self::SCHEMA_VERSION,
 				'version'        => ! empty( $file_headers['Version'] ) ? $file_headers['Version'] : '',
 				'export_date'    => gmdate( 'c' ),
 				'site_url'       => site_url(),
