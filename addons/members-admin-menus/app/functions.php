@@ -1373,16 +1373,24 @@ function get_default_settings() {
  * @return array
  */
 function get_settings() {
-	static $cache = null;
-	if ( null !== $cache ) {
-		return $cache;
+	if ( isset( $GLOBALS['members_am_settings_runtime_cache'] ) && is_array( $GLOBALS['members_am_settings_runtime_cache'] ) ) {
+		return $GLOBALS['members_am_settings_runtime_cache'];
 	}
 	$settings = get_option( OPTION_KEY, array() );
 	if ( ! is_array( $settings ) ) {
 		$settings = array();
 	}
-	$cache = wp_parse_args( $settings, get_default_settings() );
-	return $cache;
+	$GLOBALS['members_am_settings_runtime_cache'] = wp_parse_args( $settings, get_default_settings() );
+	return $GLOBALS['members_am_settings_runtime_cache'];
+}
+
+/**
+ * Clear the in-request settings cache after option updates.
+ *
+ * @return void
+ */
+function members_am_invalidate_settings_cache() {
+	unset( $GLOBALS['members_am_settings_runtime_cache'] );
 }
 
 /**
@@ -1434,8 +1442,8 @@ function get_resolved_config_for_user( $user_id ) {
 		return array();
 	}
 
-	$roles = (array) $user->roles;
-	sort( $roles );
+	// Preserve role order from the user object (deterministic merge; first role wins override conflicts).
+	$roles = array_values( array_unique( array_filter( (array) $user->roles ) ) );
 
 	$base = get_resolved_config_for_user_from_roles_only( $settings, $roles );
 
@@ -1478,21 +1486,22 @@ function get_resolved_config_for_user( $user_id ) {
  * @return array
  */
 function get_resolved_config_for_user_from_roles_only( $settings, $roles ) {
-	sort( $roles );
+	$roles = is_array( $roles ) ? array_values( array_filter( $roles ) ) : array();
+
+	// Union: if any role hides a menu slug, the combined user view treats it as hidden (matches deny-by-any-role).
 	$merged_hidden = array();
-	$first         = true;
 	foreach ( $roles as $role ) {
 		$rh = isset( $settings['roles'][ $role ]['hidden'] ) ? (array) $settings['roles'][ $role ]['hidden'] : array();
-		if ( $first ) {
-			$merged_hidden = $rh;
-			$first         = false;
-		} else {
-			$merged_hidden = array_values( array_intersect( $merged_hidden, $rh ) );
+		foreach ( $rh as $h ) {
+			$h = sanitize_text_field( $h );
+			if ( $h && ! in_array( $h, $merged_hidden, true ) ) {
+				$merged_hidden[] = $h;
+			}
 		}
 	}
-	$order          = array();
-	$submenu_order  = array();
-	$overrides      = array();
+
+	$order         = array();
+	$submenu_order = array();
 	foreach ( $roles as $role ) {
 		if ( empty( $settings['roles'][ $role ] ) ) {
 			continue;
@@ -1505,9 +1514,12 @@ function get_resolved_config_for_user_from_roles_only( $settings, $roles ) {
 			$submenu_order = (array) $r['submenu_order'];
 		}
 	}
-	foreach ( $roles as $role ) {
+
+	// First role in $roles wins per slug: merge from last role toward first so earlier roles overwrite later ones on conflicts.
+	$overrides = array();
+	foreach ( array_reverse( $roles ) as $role ) {
 		if ( ! empty( $settings['roles'][ $role ]['overrides'] ) ) {
-			$overrides = array_merge( $overrides, (array) $settings['roles'][ $role ]['overrides'] );
+			$overrides = array_merge( (array) $settings['roles'][ $role ]['overrides'], $overrides );
 		}
 	}
 	return array(

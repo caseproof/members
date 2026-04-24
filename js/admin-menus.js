@@ -267,22 +267,22 @@
 	}
 
 	/**
-	 * Merged role override for one menu id (matches PHP array_merge across sorted roles: last role wins the row).
+	 * Merged role override for one menu id (matches PHP: first role in the user's role list wins per field).
 	 *
 	 * @param {string[]} roles
 	 * @param {string} itemId
 	 * @return {Object}
 	 */
 	function getRoleMergedOverrideForItem(roles, itemId) {
-		var sorted = (roles || []).slice().sort();
-		var out = null;
-		for (var i = 0; i < sorted.length; i++) {
-			var o = getRoleConfig(sorted[i]).overrides[itemId];
+		var list = (roles || []).slice().reverse();
+		var merged = {};
+		for (var i = 0; i < list.length; i++) {
+			var o = getRoleConfig(list[i]).overrides[itemId];
 			if (o && typeof o === 'object') {
-				out = o;
+				merged = $.extend(true, {}, o, merged);
 			}
 		}
-		return out ? $.extend(true, {}, out) : {};
+		return $.extend(true, {}, merged);
 	}
 
 	/**
@@ -345,9 +345,33 @@
 
 	function isUserHidden(uid, itemId) {
 		var ucfg = getUserConfig(uid);
-		if (ucfg.hidden.indexOf(itemId) !== -1) return true;
+		if (ucfg.hidden.indexOf(itemId) !== -1) {
+			return true;
+		}
+		// Preview column: match PHP — hidden if any preview role hides the item (union).
+		if (uid === state.previewUserId && state.previewUserRoles && state.previewUserRoles.length) {
+			var pr = state.previewUserRoles;
+			var ri;
+			for (ri = 0; ri < pr.length; ri++) {
+				if (isHidden(pr[ri], itemId)) {
+					return true;
+				}
+			}
+		}
 		var parentId = getEffectiveParentIdForUser(itemId, uid);
-		if (parentId && ucfg.hidden.indexOf(parentId) !== -1) return true;
+		if (!parentId) {
+			return false;
+		}
+		if (ucfg.hidden.indexOf(parentId) !== -1) {
+			return true;
+		}
+		if (uid === state.previewUserId && state.previewUserRoles && state.previewUserRoles.length) {
+			for (var rj = 0; rj < state.previewUserRoles.length; rj++) {
+				if (isHidden(state.previewUserRoles[rj], parentId)) {
+					return true;
+				}
+			}
+		}
 		return false;
 	}
 
@@ -940,6 +964,143 @@
 			return 'dashicon';
 		}
 		return declaredType || 'dashicon';
+	}
+
+	var DASHICON_CLASS_RE = /^dashicons-[a-z0-9_-]{1,100}$/i;
+
+	/**
+	 * Allow only a single Dashicons class token (prevents attribute breakout / XSS).
+	 *
+	 * @param {string} icon Raw icon string.
+	 * @return {string} Safe class or ''.
+	 */
+	function sanitizeDashiconClass(icon) {
+		if (!icon || typeof icon !== 'string') {
+			return '';
+		}
+		var s = icon.trim();
+		return DASHICON_CLASS_RE.test(s) ? s : '';
+	}
+
+	/**
+	 * Font Awesome token allowlist (FA5/FA6 style + common utility classes).
+	 *
+	 * @param {string} t Single class token.
+	 * @return {boolean}
+	 */
+	function isValidFaToken(t) {
+		if (!t || typeof t !== 'string') {
+			return false;
+		}
+		var s = t.trim();
+		if (!s) {
+			return false;
+		}
+		if (/^(fa-solid|fa-regular|fa-brands|fa-light|fa-thin|fas|far|fab|fal|fad|fat|fa-fw|fa-spin|fa-pulse|fa-inverse|fa-lg|fa-xs|fa-sm|fa-xl|fa-2xs|fa-2xl|fa-(1x|2x|3x|4x|5x|6x|7x|8x|9x|10x))$/i.test(s)) {
+			return true;
+		}
+		return /^fa-[a-z0-9-]{1,64}$/i.test(s);
+	}
+
+	/**
+	 * Return a space-separated FA class string or '' if any token is invalid.
+	 *
+	 * @param {string} icon Raw classes.
+	 * @return {string}
+	 */
+	function sanitizeFaIconClasses(icon) {
+		if (!icon || typeof icon !== 'string') {
+			return '';
+		}
+		var parts = icon.trim().split(/\s+/).filter(Boolean);
+		if (!parts.length) {
+			return '';
+		}
+		var i;
+		for (i = 0; i < parts.length; i++) {
+			if (!isValidFaToken(parts[i])) {
+				return '';
+			}
+		}
+		return parts.join(' ');
+	}
+
+	/**
+	 * Safe URL/data-URI for <img src> in the Admin Menus UI.
+	 *
+	 * @param {string} src Raw src.
+	 * @return {string} Safe src or ''.
+	 */
+	function sanitizeIconImgSrc(src) {
+		if (!src || typeof src !== 'string') {
+			return '';
+		}
+		var s = src.trim();
+		if (!s) {
+			return '';
+		}
+		if (s.indexOf('data:image/') === 0) {
+			if (s.length > 200000) {
+				return '';
+			}
+			if (!/^data:image\/(png|jpeg|jpg|gif|webp|svg\+xml);base64,/i.test(s)) {
+				return '';
+			}
+			return s;
+		}
+		if (/^https?:\/\/[^\s"'<>]+$/i.test(s)) {
+			return s;
+		}
+		if (s.indexOf('//') === 0 && /^\/\/[a-z0-9.-]+\/?/i.test(s)) {
+			return 'https:' + s;
+		}
+		return '';
+	}
+
+	/**
+	 * Append a menu-row icon using DOM APIs only (no HTML string concatenation).
+	 *
+	 * @param {jQuery} $main .members-am-item-main
+	 * @param {string} icon Raw icon value.
+	 * @param {string} declaredType Stored icon_type.
+	 */
+	function appendSafeMenuRowIcon($main, icon, declaredType) {
+		var itype = effectiveIconType(icon, declaredType);
+		if (itype === 'fontawesome' && icon) {
+			var fa = sanitizeFaIconClasses(icon);
+			if (fa) {
+				var $wrap = $('<span/>', { class: 'members-am-fa-icon' });
+				var $i = $('<i/>', { 'aria-hidden': 'true' });
+				fa.split(/\s+/).forEach(function (c) {
+					$i.addClass(c);
+				});
+				$wrap.append($i);
+				$main.append($wrap);
+			} else {
+				$main.append($('<span/>', { class: 'dashicons dashicons-admin-generic' }));
+			}
+			return;
+		}
+		if ((itype === 'svg' || itype === 'image' || itype === 'custom') && icon) {
+			var imgSrc = sanitizeIconImgSrc(icon);
+			if (imgSrc) {
+				$main.append(
+					$('<img/>', { src: imgSrc, alt: '' }).css({
+						width: '20px',
+						height: '20px',
+						display: 'inline-block',
+						verticalAlign: 'middle',
+						objectFit: 'contain',
+						filter: 'none',
+					})
+				);
+			} else {
+				$main.append($('<span/>', { class: 'dashicons dashicons-admin-generic' }));
+			}
+			return;
+		}
+		var dcls = sanitizeDashiconClass(icon);
+		$main.append($('<span/>', { class: 'dashicons ' + (dcls || 'dashicons-admin-generic') }));
 	}
 
 	function toggleHidden(role, itemId) {
@@ -1812,16 +1973,7 @@
 		$row.append($cbWrap);
 		var $main = $('<div class="members-am-item-main"/>');
 		if (depth === 0) {
-			var icon = ov.icon || node.icon;
-			var itype = effectiveIconType(icon, ov.icon_type || node.icon_type);
-			if (itype === 'fontawesome' && icon) {
-				$main.append($('<span class="members-am-fa-icon"><i class="' + icon + '"></i></span>'));
-			} else if ((itype === 'svg' || itype === 'image' || itype === 'custom') && icon) {
-				$main.append($('<img/>').attr('src', icon).css({ width: '20px', height: '20px', display: 'inline-block', verticalAlign: 'middle', objectFit: 'contain', filter: 'none' }));
-			} else {
-				var cls = (icon && icon.indexOf('dashicons-') === 0) ? icon : 'dashicons-admin-generic';
-				$main.append($('<span class="dashicons ' + cls + '"/>'));
-			}
+			appendSafeMenuRowIcon($main, ov.icon || node.icon, ov.icon_type || node.icon_type);
 		}
 		if (node.custom) {
 			$main.append($('<span class="members-am-badge members-am-badge-new">custom</span>'));
@@ -1844,7 +1996,7 @@
 			$main.append(
 				$('<span class="members-am-badge members-am-badge-nocap"/>')
 					.attr('title', nocapTitle)
-					.html('&#128274; no access')
+					.text('\uD83D\uDD12 no access')
 			);
 		}
 		$row.append($main);
@@ -1936,17 +2088,7 @@
 		var $main = $('<div class="members-am-item-main"/>');
 
 		if (depth === 0) {
-			var icon = ov.icon || node.icon;
-			var itype = effectiveIconType(icon, ov.icon_type || node.icon_type);
-			if (itype === 'fontawesome' && icon) {
-				$main.append($('<span class="members-am-fa-icon"><i class="' + icon + '"></i></span>'));
-			} else if ((itype === 'svg' || itype === 'image' || itype === 'custom') && icon) {
-				$main.append($('<img/>').attr('src', icon).css({ width: '20px', height: '20px', display: 'inline-block', verticalAlign: 'middle', objectFit: 'contain', filter: 'none' }));
-			} else if (icon && icon.indexOf('dashicons-') === 0) {
-				$main.append($('<span class="dashicons ' + icon + '"/>'));
-			} else {
-				$main.append($('<span class="dashicons dashicons-admin-generic"/>'));
-			}
+			appendSafeMenuRowIcon($main, ov.icon || node.icon, ov.icon_type || node.icon_type);
 		}
 
 		if (node.custom) {
@@ -1961,7 +2103,15 @@
 			$main.append($('<span class="members-am-badge members-am-badge-custom"/>').text(ov.badge).css({ backgroundColor: badgeBg, color: '#fff', fontSize: '9px', padding: '1px 5px', borderRadius: '2px', marginLeft: '4px', whiteSpace: 'nowrap' }));
 		}
 		if (noCap) {
-			$main.append($('<span class="members-am-badge members-am-badge-nocap" title="This user does not have the \'' + (node.cap || 'read') + '\' capability.">&#128274; no access</span>'));
+			var i18nUN = membersAdminMenus.i18n || {};
+			var userNocapTitle =
+				(i18nUN.noAccessTitlePattern && i18nUN.noAccessTitlePattern.replace('%s', node.cap || 'read')) ||
+				'This user does not have the \'' + (node.cap || 'read') + '\' capability.';
+			$main.append(
+				$('<span class="members-am-badge members-am-badge-nocap"/>')
+					.attr('title', userNocapTitle)
+					.text('\uD83D\uDD12 no access')
+			);
 		}
 		$row.append($main);
 
@@ -2118,7 +2268,7 @@
 		var start = state.carouselPage * state.columnsPerPage;
 		var slice = state.activeRoleSlugs.slice(start, start + state.columnsPerPage);
 		slice.forEach(function (role) {
-			var $c = $('<div class="members-am-column" data-role="' + role + '"/>');
+			var $c = $('<div/>', { class: 'members-am-column' }).attr('data-role', role);
 			renderSidebar(role, $c);
 			$cols.append($c);
 			// Restore scroll position.
@@ -2128,7 +2278,7 @@
 		});
 		if (state.previewUserId) {
 			var uid = state.previewUserId;
-			var $uc = $('<div class="members-am-column members-am-user-column" data-user="' + uid + '"/>');
+			var $uc = $('<div/>', { class: 'members-am-column members-am-user-column' }).attr('data-user', String(uid));
 			var $head = $('<div class="members-am-sidebar-head"/>');
 			$head.append($('<span/>').text(state.previewUserLabel || ('User #' + uid)));
 			$head.append(
@@ -2227,9 +2377,14 @@
 		var iconPreviewUrl = ov.icon || (node && node.icon) || '';
 		var iconPreviewType = effectiveIconType(iconPreviewUrl, ov.icon_type || (node && node.icon_type) || '');
 		if ((iconPreviewType === 'image' || iconPreviewType === 'custom' || iconPreviewType === 'svg') && iconPreviewUrl) {
-			$('#members-am-icon-preview').show().attr('src', iconPreviewUrl);
+			var safePreviewSrc = sanitizeIconImgSrc(iconPreviewUrl);
+			if (safePreviewSrc) {
+				$('#members-am-icon-preview').show().attr('src', safePreviewSrc);
+			} else {
+				$('#members-am-icon-preview').hide().removeAttr('src');
+			}
 		} else {
-			$('#members-am-icon-preview').hide();
+			$('#members-am-icon-preview').hide().removeAttr('src');
 		}
 		$('#members-am-color-bg').val(ov.color_bg || '');
 		$('#members-am-color-text').val(ov.color_text || '');
@@ -2485,9 +2640,13 @@
 			}
 			var $b = $('<button type="button" class="members-am-icon-pick"/>');
 			if (tab === 'dashicons') {
-				$b.append($('<span class="dashicons ' + ic + '"/>'));
+				$b.append($('<span/>', { class: 'dashicons ' + ic }));
 			} else {
-				$b.append($('<i class="' + ic + '"/>'));
+				var $fi = $('<i/>', { 'aria-hidden': 'true' });
+				ic.split(/\s+/).forEach(function (tok) {
+					$fi.addClass(tok);
+				});
+				$b.append($fi);
 			}
 			$b.on('click', function () {
 				$('#members-am-icon-value').val(ic);

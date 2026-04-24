@@ -18,6 +18,16 @@ defined( 'ABSPATH' ) || exit;
 const SETTINGS_SCHEMA_VERSION = 3;
 
 /**
+ * Maximum JSON payload size for save/import (bytes).
+ */
+const SETTINGS_JSON_MAX_BYTES = 2097152;
+
+/**
+ * Maximum nesting depth for json_decode on save/import.
+ */
+const SETTINGS_JSON_MAX_DEPTH = 128;
+
+/**
  * Default option array for members_admin_menus_settings.
  *
  * @return array

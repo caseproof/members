@@ -78,6 +78,133 @@ function load_admin_menus_page() {
 }
 
 /**
+ * Whether a single Font Awesome class token is allowed (FA5/FA6 + common utilities).
+ *
+ * @param string $t Token.
+ * @return bool
+ */
+function members_am_is_valid_fa_token( $t ) {
+	$t = is_string( $t ) ? trim( $t ) : '';
+	if ( '' === $t ) {
+		return false;
+	}
+	if ( preg_match( '/^(fa-solid|fa-regular|fa-brands|fa-light|fa-thin|fas|far|fab|fal|fad|fat|fa-fw|fa-spin|fa-pulse|fa-inverse|fa-lg|fa-xs|fa-sm|fa-xl|fa-2xs|fa-2xl|fa-(1x|2x|3x|4x|5x|6x|7x|8x|9x|10x))$/i', $t ) ) {
+		return true;
+	}
+	return (bool) preg_match( '/^fa-[a-z0-9-]{1,64}$/i', $t );
+}
+
+/**
+ * Sanitize a space-separated Font Awesome class list; returns '' if any token is invalid.
+ *
+ * @param string $icon Raw classes.
+ * @return string
+ */
+function members_am_sanitize_fa_icon_classes( $icon ) {
+	if ( ! is_string( $icon ) ) {
+		return '';
+	}
+	$parts = preg_split( '/\s+/', trim( $icon ), -1, PREG_SPLIT_NO_EMPTY );
+	if ( empty( $parts ) ) {
+		return '';
+	}
+	foreach ( $parts as $p ) {
+		if ( ! members_am_is_valid_fa_token( $p ) ) {
+			return '';
+		}
+	}
+	return implode( ' ', $parts );
+}
+
+/**
+ * Allow a single Dashicons class token.
+ *
+ * @param string $icon Raw class.
+ * @return string Safe class or ''.
+ */
+function members_am_sanitize_dashicon_class( $icon ) {
+	$icon = is_string( $icon ) ? trim( $icon ) : '';
+	if ( '' === $icon ) {
+		return '';
+	}
+	return preg_match( '/^dashicons-[a-z0-9_-]{1,100}$/i', $icon ) ? $icon : '';
+}
+
+/**
+ * Safe image URL or data URI for stored menu icons.
+ *
+ * @param string $raw Raw value.
+ * @return string
+ */
+function members_am_sanitize_icon_image_value( $raw ) {
+	$raw = is_string( $raw ) ? trim( $raw ) : '';
+	if ( '' === $raw ) {
+		return '';
+	}
+	if ( 0 === strpos( $raw, 'data:image/' ) ) {
+		if ( strlen( $raw ) > 200000 ) {
+			return '';
+		}
+		if ( ! preg_match( '/^data:image\/(png|jpeg|jpg|gif|webp|svg\+xml);base64,[A-Za-z0-9+\/=\s]+$/i', $raw ) ) {
+			return '';
+		}
+		return $raw;
+	}
+	$url = esc_url_raw( $raw );
+	if ( $url && preg_match( '#^https?://#i', $url ) ) {
+		return $url;
+	}
+	if ( 0 === strpos( $raw, '//' ) ) {
+		$url = esc_url_raw( 'https:' . $raw );
+		if ( $url && preg_match( '#^https://#i', $url ) ) {
+			return $url;
+		}
+	}
+	return '';
+}
+
+/**
+ * Normalize icon_type + icon for persistence (matches Admin Menus JS validation).
+ *
+ * @param string $icon_type Stored type (dashicon, fontawesome, image, svg, custom, …).
+ * @param string $icon      Raw icon string.
+ * @return array{icon_type:string,icon:string}
+ */
+function members_am_sanitize_stored_icon( $icon_type, $icon ) {
+	$icon_type = sanitize_key( $icon_type );
+	$icon      = is_string( $icon ) ? $icon : '';
+
+	if ( '' === trim( $icon ) ) {
+		return array(
+			'icon_type' => 'dashicon',
+			'icon'      => '',
+		);
+	}
+
+	if ( preg_match( '/^(https?:)?\/\//i', $icon ) || 0 === strpos( $icon, 'data:image/' ) ) {
+		$img = members_am_sanitize_icon_image_value( $icon );
+		return array(
+			'icon_type' => $img ? 'image' : 'dashicon',
+			'icon'      => $img,
+		);
+	}
+
+	if ( 'fontawesome' === $icon_type || false !== strpos( $icon, 'fa-' ) || preg_match( '/^(fa|fas|far|fab|fal)\s/i', $icon ) ) {
+		$fa = members_am_sanitize_fa_icon_classes( $icon );
+		return array(
+			'icon_type' => $fa ? 'fontawesome' : 'dashicon',
+			'icon'      => $fa,
+		);
+	}
+
+	$d = members_am_sanitize_dashicon_class( $icon );
+	return array(
+		'icon_type' => 'dashicon',
+		'icon'      => $d,
+	);
+}
+
+/**
  * Ensure associative-array keys are stdClass objects so json_encode
  * produces {} instead of [] for empty collections.
  *
@@ -386,13 +513,7 @@ function enqueue_admin_menus_assets() {
 	$settings = get_settings();
 	$tree     = build_menu_tree_for_js();
 
-	if ( empty( $settings['_defaults']['captured'] ) && ! empty( $tree ) ) {
-		$settings['_defaults'] = array(
-			'captured' => true,
-			'tree'     => $tree,
-		);
-		update_option( OPTION_KEY, $settings );
-	}
+	// Do not persist on GET: live menuTree is localized below; baseline snapshot is saved on explicit Save only.
 
 	$roles = array();
 	foreach ( \members_get_roles() as $role_obj ) {
@@ -506,6 +627,7 @@ function enqueue_admin_menus_assets() {
 				'moreToolsHideAria'      => __( 'Hide additional tools', 'members' ),
 				'colorsReadableNeedBg'   => __( 'Choose a background color first.', 'members' ),
 				'noAccessTitlePattern'   => __( 'This role does not have the stored capability “%s”. Users with multiple roles may still reach the screen if another role grants it. Tags use manage_post_tags when Category & Tag Caps is active (Members → Roles, Taxonomy).', 'members' ),
+				'multiRoleMergeHelp'     => __( 'Users with multiple roles: a menu item is hidden if any of their roles hides it. When two roles define different labels, icons, or colors for the same item, the first role in the user’s role list wins.', 'members' ),
 			),
 		)
 	);
@@ -580,6 +702,7 @@ function render_admin_menus_page() {
 			<span class="members-am-legend-item"><span class="dashicons dashicons-visibility members-am-legend-visibility-icon" aria-hidden="true"></span> <?php esc_html_e( 'Eye icon: manually show/hide menu items', 'members' ); ?></span>
 			<span class="members-am-legend-item"><span class="members-am-legend-nocap-badge">&#128274; no access</span> <?php esc_html_e( 'This role does not have the menu item’s capability on the role object alone; users with multiple roles may still have access. Hover the badge for details.', 'members' ); ?></span>
 		</p>
+		<p class="members-am-legend members-am-legend--note description"><?php esc_html_e( 'Users with multiple roles: a menu item is hidden if any of their roles hides it. When two roles define different labels, icons, or colors for the same item, the first role in the user’s role list wins.', 'members' ); ?></p>
 
 		<div class="members-am-chips" id="members-am-role-chips"></div>
 
@@ -781,6 +904,30 @@ function build_menu_tree_for_js() {
 }
 
 /**
+ * Decode JSON settings payload with size and depth limits.
+ *
+ * @param mixed  $raw Raw POST value (string or array).
+ * @param string $too_large_message Message when payload exceeds byte limit.
+ * @return array|\WP_Error Decoded array or error.
+ */
+function members_am_decode_settings_json( $raw, $too_large_message ) {
+	if ( is_array( $raw ) ) {
+		return $raw;
+	}
+	if ( ! is_string( $raw ) ) {
+		return new \WP_Error( 'members_am_invalid_json', __( 'Invalid data.', 'members' ) );
+	}
+	if ( strlen( $raw ) > SETTINGS_JSON_MAX_BYTES ) {
+		return new \WP_Error( 'members_am_payload_too_large', $too_large_message );
+	}
+	$data = json_decode( $raw, true, SETTINGS_JSON_MAX_DEPTH );
+	if ( JSON_ERROR_NONE !== json_last_error() || ! is_array( $data ) ) {
+		return new \WP_Error( 'members_am_json_error', __( 'Invalid JSON.', 'members' ) );
+	}
+	return $data;
+}
+
+/**
  * AJAX: save full settings JSON.
  *
  * @return void
@@ -792,17 +939,17 @@ function ajax_save_settings() {
 	if ( ! current_user_can( get_members_settings_capability() ) ) {
 		wp_send_json_error( array( 'message' => __( 'Permission denied.', 'members' ) ), 403 );
 	}
-	$raw = isset( $_POST['settings'] ) ? wp_unslash( $_POST['settings'] ) : '';
-	if ( is_string( $raw ) ) {
-		$data = json_decode( $raw, true );
-	} else {
-		$data = $raw;
-	}
-	if ( ! is_array( $data ) ) {
-		wp_send_json_error( array( 'message' => __( 'Invalid data.', 'members' ) ), 400 );
+	$raw  = isset( $_POST['settings'] ) ? wp_unslash( $_POST['settings'] ) : '';
+	$data = members_am_decode_settings_json(
+		$raw,
+		__( 'Settings payload is too large.', 'members' )
+	);
+	if ( is_wp_error( $data ) ) {
+		wp_send_json_error( array( 'message' => $data->get_error_message() ), 400 );
 	}
 	$sanitized = sanitize_settings_payload( $data );
 	update_option( OPTION_KEY, $sanitized );
+	members_am_invalidate_settings_cache();
 	wp_send_json_success( array( 'message' => __( 'Settings saved.', 'members' ) ) );
 }
 
@@ -834,13 +981,11 @@ function sanitize_settings_payload( $data ) {
 	);
 
 	if ( isset( $out['_defaults'] ) && is_array( $out['_defaults'] ) ) {
-		$d = $out['_defaults'];
+		$d                = $out['_defaults'];
 		$out['_defaults'] = array(
 			'captured' => ! empty( $d['captured'] ),
 		);
-		if ( isset( $d['tree'] ) && is_array( $d['tree'] ) ) {
-			$out['_defaults']['tree'] = $d['tree'];
-		}
+		// Never persist imported menu trees (size, shape, and trust boundary).
 	}
 
 	if ( isset( $out['roles'] ) && is_array( $out['roles'] ) ) {
@@ -927,10 +1072,14 @@ function sanitize_role_config( $cfg ) {
 			if ( ! $s || ! is_array( $ov ) ) {
 				continue;
 			}
+			$icon_raw   = isset( $ov['icon'] ) ? $ov['icon'] : '';
+			$icon_type0 = isset( $ov['icon_type'] ) ? sanitize_key( $ov['icon_type'] ) : '';
+			$icon_san   = members_am_sanitize_stored_icon( $icon_type0, is_string( $icon_raw ) ? $icon_raw : '' );
+
 			$entry = array(
 				'label'      => isset( $ov['label'] ) ? sanitize_text_field( $ov['label'] ) : '',
-				'icon_type'  => isset( $ov['icon_type'] ) ? sanitize_key( $ov['icon_type'] ) : '',
-				'icon'       => isset( $ov['icon'] ) ? sanitize_text_field( $ov['icon'] ) : '',
+				'icon_type'  => $icon_san['icon_type'],
+				'icon'       => $icon_san['icon'],
 				'url'        => isset( $ov['url'] ) ? esc_url_raw( $ov['url'] ) : '',
 				'color_bg'   => isset( $ov['color_bg'] ) ? sanitize_hex_color( $ov['color_bg'] ) : '',
 				'color_text' => isset( $ov['color_text'] ) ? sanitize_hex_color( $ov['color_text'] ) : '',
@@ -958,12 +1107,20 @@ function sanitize_custom_item( $item ) {
 	if ( ! is_array( $item ) ) {
 		return array();
 	}
+	$icon_san = members_am_sanitize_stored_icon(
+		isset( $item['icon_type'] ) ? sanitize_key( $item['icon_type'] ) : 'dashicon',
+		isset( $item['icon'] ) && is_string( $item['icon'] ) ? $item['icon'] : ''
+	);
+	$icon_out = $icon_san['icon'];
+	if ( 'dashicon' === $icon_san['icon_type'] && '' === $icon_out ) {
+		$icon_out = 'dashicons-admin-generic';
+	}
 	return array(
 		'id'        => isset( $item['id'] ) ? sanitize_key( $item['id'] ) : wp_unique_id( 'c' ),
 		'label'     => isset( $item['label'] ) ? sanitize_text_field( $item['label'] ) : '',
 		'url'       => isset( $item['url'] ) ? esc_url_raw( $item['url'] ) : '',
-		'icon_type' => isset( $item['icon_type'] ) ? sanitize_key( $item['icon_type'] ) : 'dashicon',
-		'icon'      => isset( $item['icon'] ) ? sanitize_text_field( $item['icon'] ) : 'dashicons-admin-generic',
+		'icon_type' => $icon_san['icon_type'],
+		'icon'      => $icon_out,
 		'parent'    => isset( $item['parent'] ) ? sanitize_text_field( $item['parent'] ) : '',
 		'position'  => isset( $item['position'] ) ? absint( $item['position'] ) : 99,
 		'cap'       => isset( $item['cap'] ) ? sanitize_key( $item['cap'] ) : 'read',
@@ -994,6 +1151,7 @@ function ajax_reset_settings() {
 		$settings['capabilities']  = array();
 	}
 	update_option( OPTION_KEY, $settings );
+	members_am_invalidate_settings_cache();
 	wp_send_json_success( array( 'message' => __( 'Reset complete.', 'members' ) ) );
 }
 
@@ -1031,12 +1189,16 @@ function ajax_import_settings() {
 	if ( ! current_user_can( get_members_settings_capability() ) ) {
 		wp_send_json_error( array( 'message' => __( 'Permission denied.', 'members' ) ), 403 );
 	}
-	$raw = isset( $_POST['settings'] ) ? wp_unslash( $_POST['settings'] ) : '';
-	$data = json_decode( $raw, true );
-	if ( ! is_array( $data ) ) {
-		wp_send_json_error( array( 'message' => __( 'Invalid JSON.', 'members' ) ), 400 );
+	$raw  = isset( $_POST['settings'] ) ? wp_unslash( $_POST['settings'] ) : '';
+	$data = members_am_decode_settings_json(
+		$raw,
+		__( 'Import payload is too large.', 'members' )
+	);
+	if ( is_wp_error( $data ) ) {
+		wp_send_json_error( array( 'message' => $data->get_error_message() ), 400 );
 	}
 	update_option( OPTION_KEY, sanitize_settings_payload( $data ) );
+	members_am_invalidate_settings_cache();
 	wp_send_json_success( array( 'message' => __( 'Settings imported.', 'members' ) ) );
 }
 
