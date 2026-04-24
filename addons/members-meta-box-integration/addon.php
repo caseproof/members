@@ -6,18 +6,6 @@ namespace Members\Integration\MetaBox;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Registers the plugin activation callback.
- *
- * @since  1.0.0
- * @access public
- * @return void
- */
-register_activation_hook( __FILE__, function() {
-	require_once 'src/Activator.php';
-	Activator::activate();
-} );
-
-/**
  * Wrapper for the plugin instance.
  *
  * @since  1.0.0

@@ -121,18 +121,110 @@
 
 #wpcontent #members-admin-header {
 	margin-left: -20px;
-	padding: 0;
-	padding-left: 22px;
-	background-color: #f9f9f9;
-	background-repeat: repeat;
-	background-size: 1200px 75px;
-	min-height: 36px;
+	padding: 0 28px 0 22px;
+	background-color: #0b1220;
+	background-image:
+		radial-gradient(circle at 12% 35%, rgba(14,69,152,0.45), transparent 55%),
+		radial-gradient(circle at 90% 85%, rgba(245,148,49,0.14), transparent 60%);
+	background-repeat: no-repeat;
+	min-height: 56px;
 	position: relative;
-	/* border-bottom: 2px solid #00cee6; */
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
 }
 
 #wpcontent #members-admin-header img.members-logo {
-	height: 90px;
+	height: 42px;
+	display: block;
+}
+
+#wpcontent #members-admin-header .members-by-mp {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin-left: auto;
+	text-decoration: none;
+	box-shadow: none;
+	transition: opacity 0.15s ease;
+}
+
+#wpcontent #members-admin-header .members-by-mp:hover,
+#wpcontent #members-admin-header .members-by-mp:focus {
+	opacity: 0.75;
+	text-decoration: none;
+	box-shadow: none;
+}
+
+#wpcontent #members-admin-header .members-by-label {
+	color: #94a3b8;
+	font-size: 12px;
+	font-weight: 500;
+}
+
+#wpcontent #members-admin-header img.members-mp-logo {
+	height: 18px;
+	display: block;
+}
+
+/* Notifications inbox button — hosted in the admin header on every Members page. */
+#wpcontent #members-admin-header #membersAdminHeaderNotifications {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	padding: 0;
+	margin: 0 0 0 18px;
+	background: rgba(255, 255, 255, 0.06);
+	border: 1px solid rgba(255, 255, 255, 0.12);
+	border-radius: 8px;
+	color: #fff;
+	cursor: pointer;
+	box-shadow: none;
+	transition: background 0.15s ease, border-color 0.15s ease;
+	line-height: 1;
+	vertical-align: middle;
+	min-height: 0;
+	text-decoration: none;
+}
+
+#wpcontent #members-admin-header #membersAdminHeaderNotifications:hover,
+#wpcontent #members-admin-header #membersAdminHeaderNotifications:focus {
+	background: rgba(255, 255, 255, 0.12);
+	border-color: rgba(255, 255, 255, 0.24);
+	color: #fff;
+	box-shadow: none;
+	outline: none;
+}
+
+#wpcontent #members-admin-header #membersAdminHeaderNotifications svg {
+	width: 16px;
+	height: auto;
+	display: block;
+}
+
+#wpcontent #members-admin-header #membersAdminHeaderNotifications svg path {
+	fill: #e2e8f0;
+}
+
+#wpcontent #members-admin-header #membersAdminHeaderNotifications .members-notifications-count {
+	position: absolute;
+	top: -4px;
+	right: -4px;
+	min-width: 16px;
+	height: 16px;
+	padding: 0 4px;
+	border-radius: 999px;
+	background: #F59431;
+	color: #0b1220;
+	font-size: 10px;
+	font-weight: 700;
+	line-height: 16px;
+	text-align: center;
+	border: 1.5px solid #0b1220;
+	box-sizing: content-box;
 }
 
 .members-upgrade-header #close-members-upgrade-header {
@@ -148,9 +240,376 @@
 /* ====== Members Settings Screen. ====== */
 
 .memberpress-welcome-panel.welcome-panel {
-	margin-top: 0;
-	padding: 40px 20px;
+	margin-top: 20px;
+	padding: 20px 28px;
 	background: #fff;
+	border-radius: 10px;
+	min-height: 0;
+}
+
+.memberpress-welcome-panel.welcome-panel .welcome-panel-content {
+	min-height: 0;
+	height: auto;
+}
+
+/* ============================================================
+   About Us — editorial redesign
+   Scoped entirely under .members-about to avoid WP admin bleed.
+   ============================================================ */
+
+.members-about {
+	--ink:            #0f172a;
+	--ink-soft:       #334155;
+	--ink-muted:      #64748b;
+	--mp-blue:        #0E4598;
+	--mp-teal:        #3582AE;
+	--mp-orange:      #F59431;
+	--rule:           #e5e7eb;
+	--paper:          #fbfaf7;
+	--paper-soft:     #f3efe6;
+	--paper-line:     #e8e3d5;
+	--display-font:   "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+	--sans-font:      "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Full-bleed paper background — override the default admin gray */
+body.members_page_members-about #wpbody-content,
+body.toplevel_page_members-about #wpbody-content,
+body.admin_page_members-about #wpbody-content {
+	background: var(--paper);
+}
+
+.members-about.wrap {
+	max-width: 1120px;
+	margin: 0 auto;
+	padding: 48px 24px 80px;
+	color: var(--ink);
+	font-family: var(--sans-font);
+}
+
+/* === Hero ================================================== */
+.members-about__hero {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 200px;
+	grid-template-areas:
+		"head mark"
+		"body mark";
+	gap: 32px 56px;
+	align-items: start;
+	padding-bottom: 64px;
+	border-bottom: 1px solid var(--paper-line);
+}
+
+.members-about__hero-head { grid-area: head; }
+.members-about__body { grid-area: body; }
+.members-about__mark { grid-area: mark; align-self: start; }
+
+.members-about__eyebrow {
+	display: inline-block;
+	font-family: var(--sans-font);
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.18em;
+	text-transform: uppercase;
+	color: var(--ink-muted);
+	padding-bottom: 18px;
+}
+
+.members-about__title {
+	font-family: var(--display-font);
+	font-weight: 900;
+	font-size: clamp(40px, 5.5vw, 64px);
+	line-height: 1;
+	letter-spacing: -0.035em;
+	color: var(--ink);
+	margin: 0;
+}
+
+.members-about__title em {
+	font-style: normal;
+	font-weight: 900;
+	color: var(--mp-blue);
+}
+
+.members-about__title-dot {
+	color: var(--mp-blue);
+	font-style: normal;
+	font-weight: 900;
+}
+
+.members-about__body {
+	max-width: 60ch;
+	font-size: 15.5px;
+	line-height: 1.62;
+	color: var(--ink-soft);
+}
+
+.members-about__body p {
+	margin: 0 0 14px;
+}
+
+.members-about__body p:last-child {
+	margin-bottom: 0;
+}
+
+.members-about__lead {
+	font-family: var(--sans-font);
+	font-weight: 500;
+	font-size: 17px;
+	line-height: 1.5;
+	color: var(--ink);
+	margin-bottom: 24px !important;
+	padding-left: 18px;
+	border-left: 2px solid var(--mp-blue);
+}
+
+.members-about__body a,
+.members-about__lead a {
+	color: var(--mp-blue);
+	text-decoration: none;
+	background-image: linear-gradient(currentColor, currentColor);
+	background-size: 100% 1px;
+	background-position: 0 100%;
+	background-repeat: no-repeat;
+	padding-bottom: 1px;
+	transition: color 0.2s ease, background-size 0.2s ease;
+}
+
+.members-about__body a:hover,
+.members-about__lead a:hover {
+	color: var(--mp-orange);
+}
+
+.members-about__body em,
+.members-about__lead em {
+	font-style: normal;
+	font-weight: 700;
+	color: var(--mp-blue);
+}
+
+/* MP stacked logo — treated as a confident visual mark */
+.members-about__mark {
+	padding: 24px;
+	background: #fff;
+	border: 1px solid var(--paper-line);
+	border-radius: 4px;
+	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+	transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.members-about__mark:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+}
+
+.members-about__mark a {
+	display: block;
+	box-shadow: none !important;
+	text-decoration: none;
+}
+
+.members-about__mark img {
+	display: block;
+	width: 100%;
+	height: auto;
+	max-width: 160px;
+	margin: 0 auto;
+}
+
+/* === Products =============================================== */
+.members-about__products {
+	padding-top: 56px;
+}
+
+.members-about__products-head {
+	margin-bottom: 28px;
+	text-align: center;
+}
+
+.members-about__products-head h3 {
+	font-family: var(--display-font);
+	font-weight: 700;
+	font-size: 15px;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	color: var(--ink-muted);
+	margin: 0;
+}
+
+.members-about__grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 20px;
+}
+
+.members-about__card {
+	display: flex;
+	flex-direction: column;
+	padding: 24px;
+	background: #fff;
+	border: 1px solid var(--paper-line);
+	border-radius: 6px;
+	transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.members-about__card:hover {
+	transform: translateY(-3px);
+	box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+	border-color: rgba(14, 69, 152, 0.2);
+}
+
+.members-about__card-head {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	margin-bottom: 14px;
+}
+
+.members-about__card-icon {
+	flex: 0 0 44px;
+	width: 44px;
+	height: 44px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--paper-soft);
+	border-radius: 10px;
+	overflow: hidden;
+}
+
+.members-about__card-icon img {
+	display: block;
+	max-width: 32px;
+	max-height: 32px;
+	width: auto;
+	height: auto;
+}
+
+.members-about__card-title {
+	margin: 0;
+	font-family: var(--display-font);
+	font-weight: 700;
+	font-size: 17px;
+	line-height: 1.2;
+	letter-spacing: -0.01em;
+	color: var(--ink);
+}
+
+.members-about__card-title a {
+	color: inherit;
+	text-decoration: none;
+	box-shadow: none;
+}
+
+.members-about__card-title a:hover {
+	color: var(--mp-blue);
+}
+
+.members-about__card-desc {
+	flex: 1;
+	margin: 0 0 24px;
+	font-size: 14px;
+	line-height: 1.55;
+	color: var(--ink-soft);
+}
+
+.members-about__card-foot {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	padding-top: 16px;
+	border-top: 1px solid var(--paper-line);
+}
+
+.members-about__status {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--ink-muted);
+}
+
+.members-about__status::before {
+	content: "";
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: currentColor;
+}
+
+.members-about__status.is-active { color: #10b981; }
+.members-about__status.is-inactive { color: var(--mp-orange); }
+.members-about__status.is-missing { color: var(--ink-muted); }
+
+.members-about__cta {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 14px;
+	font-size: 13px;
+	font-weight: 600;
+	letter-spacing: 0.01em;
+	border-radius: 4px;
+	text-decoration: none;
+	border: 1px solid transparent;
+	transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.15s ease;
+	box-shadow: none;
+}
+
+.members-about__cta:focus,
+.members-about__cta:focus-visible {
+	outline: 2px solid var(--mp-blue);
+	outline-offset: 2px;
+	box-shadow: none;
+}
+
+.members-about__cta.is-primary {
+	background: var(--mp-blue);
+	color: #fff;
+}
+
+.members-about__cta.is-primary:hover {
+	background: #093374;
+	color: #fff;
+	transform: translateY(-1px);
+}
+
+.members-about__cta.is-secondary {
+	background: transparent;
+	color: var(--ink);
+	border-color: var(--rule);
+}
+
+.members-about__cta.is-secondary:hover {
+	border-color: var(--ink);
+	background: #fff;
+	color: var(--ink);
+}
+
+.members-about__cta svg {
+	transition: transform 0.2s ease;
+}
+
+.members-about__cta:hover svg {
+	transform: translate(1px, -1px);
+}
+
+/* === Responsive ============================================= */
+@media (max-width: 900px) {
+	.members-about__hero {
+		grid-template-columns: 1fr;
+		grid-template-areas:
+			"head"
+			"body"
+			"mark";
+		gap: 24px;
+	}
+	.members-about__mark { max-width: 160px; }
+	.members-about__grid { grid-template-columns: 1fr; }
 }
 
 .memberpress-welcome-panel.welcome-panel:before {
@@ -493,11 +952,40 @@
 
 .memberpress-about .welcome-panel-column-container {
 	display: flex;
+	align-items: center;
+	gap: 40px;
+	padding: 0;
+	margin: 0;
+}
+
+.memberpress-about .mp-desc p {
+	font-size: 13px;
+	line-height: 1.6;
+	color: #334155;
+	margin: 0 0 12px;
+}
+
+.memberpress-about .mp-desc p:first-child {
+	font-size: 15px;
+	font-weight: 600;
+	color: #0f172a;
+	margin-top: 0;
+	margin-bottom: 14px;
+}
+
+.memberpress-about .mp-desc p:last-child {
+	margin-bottom: 0;
+}
+
+.memberpress-about .mp-logo-wrap {
+	flex: 0 0 auto;
 }
 
 .memberpress-about .mp-logo {
-	max-width: 256px;
-	margin: 50px;
+	display: block;
+	max-width: 220px;
+	height: auto;
+	margin: 0;
 }
 
 .members-about-addons {
@@ -511,8 +999,38 @@
 	width: 100%;
 }
 
+.members-about-addons .members-plugin-card .plugin-icon {
+	position: static;
+	width: auto;
+	height: 28px;
+	max-width: 40px;
+	object-fit: contain;
+	flex: 0 0 auto;
+	display: block;
+}
+
+.members-about-addons .members-plugin-card .name,
+.members-about-addons .members-plugin-card .desc {
+	margin-left: 0;
+}
+
+.members-about-addons .members-plugin-card .plugin-card-top {
+	padding: 20px;
+}
+
+.members-about-addons .members-plugin-card .name h3 {
+	margin: 0 0 10px;
+	min-height: 0;
+	height: auto;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	line-height: 1.2;
+}
+
 .members-about-addons .members-plugin-card .name h3 a {
 	text-decoration: none;
+	line-height: 1.2;
 }
 
 .members-about-addons .members-plugin-card .plugin-card-bottom {

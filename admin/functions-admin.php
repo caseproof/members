@@ -208,24 +208,28 @@ add_action( 'in_admin_header', 'members_admin_header', 0 );
  */
 function members_admin_header() {
 
-	if ( members_is_memberpress_active() || empty( $_GET['page'] ) || ! in_array( $_GET['page'], array( 'roles', 'members', 'members-settings', 'members-about' ) ) ) {
+	if ( members_is_memberpress_active() || empty( $_GET['page'] ) || ! in_array( $_GET['page'], array( 'roles', 'members', 'members-settings', 'members-about', 'members-payments', 'members-growth-tools' ) ) ) {
 		return;
 	}
 
 	$dismissed = get_option( 'members_dismiss_upgrade_header', false );
 
-	if ( ! empty( $dismissed ) ) {
-		return;
-	}
-
     ?>
 
+    <?php if ( empty( $dismissed ) ) : ?>
     <div class="members-upgrade-header" id="members-upgrade-header">
     	<span id="close-members-upgrade-header">X</span>
     	<?php _e( 'You\'re using Members. To unlock more features, consider <a href="https://memberpress.com/plans/pricing/?utm_source=members_plugin&utm_medium=link&utm_campaign=in_plugin&utm_content=pro_features">adding MemberPress.</a>' ); ?>
     </div>
+    <?php endif; ?>
 
-    <div id="members-admin-header"><img class="members-logo" src="<?php echo members_plugin()->uri . 'img/Members-header.svg'; ?>" /></div>
+    <div id="members-admin-header">
+        <img class="members-logo" src="<?php echo members_plugin()->uri . 'img/Members-header.svg'; ?>" />
+        <a class="members-by-mp" href="https://memberpress.com/?utm_source=members_plugin&utm_medium=link&utm_campaign=header_logo&utm_content=link_1" target="_blank" rel="noopener">
+            <span class="members-by-label">by</span>
+            <img class="members-mp-logo" src="<?php echo members_plugin()->uri . 'img/memberpress-logo-white.png'; ?>" />
+        </a>
+    </div>
 
     <script>
     	jQuery(document).ready(function($) {
@@ -319,5 +323,16 @@ function members_dismiss_upgrade_header() {
  */
 function members_is_admin_page() {
 	$screen = get_current_screen();
-	return ! empty( $screen->id ) && ! empty( Members\Admin\Settings_Page::get_instance()->admin_pages ) && in_array( $screen->id, Members\Admin\Settings_Page::get_instance()->admin_pages );
+
+	if ( ! empty( $screen->id ) && ! empty( Members\Admin\Settings_Page::get_instance()->admin_pages ) && in_array( $screen->id, Members\Admin\Settings_Page::get_instance()->admin_pages ) ) {
+		return true;
+	}
+
+	// Fallback: pages registered outside Settings_Page (e.g. the Growth Tools
+	// submenu is registered by the caseproof/growth-tools composer package).
+	if ( ! empty( $_GET['page'] ) && in_array( $_GET['page'], array( 'roles', 'members', 'members-settings', 'members-about', 'members-payments', 'members-growth-tools' ), true ) ) {
+		return true;
+	}
+
+	return false;
 }

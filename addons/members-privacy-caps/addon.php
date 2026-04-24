@@ -7,38 +7,6 @@ defined('ABSPATH') || exit;
 add_action( 'members_register_caps', __NAMESPACE__ . '\register_caps'          );
 add_filter( 'map_meta_cap',          __NAMESPACE__ . '\map_meta_cap',    95, 2 );
 
-# Register activation/deactivation hooks.
-register_activation_hook( __FILE__, __NAMESPACE__ . '\activation' );
-
-/**
- * Adds the privacy capabilities to the administrator role whenever the plugin
- * is activated.
- *
- * On Multisite, we're not adding any caps to a role because these caps are, by
- * default, only allowed for people with the `manage_network` capability, which
- * is a Super Admin cap.  If network owners want sub-site administrators to be
- * able to have thse caps, they should be added to the role via the edit role
- * screen in Members.
- *
- * @since  1.0.0
- * @access public
- * @return void
- */
-function activation() {
-
-	if ( is_multisite() ) {
-		return;
-	}
-
-	$role = get_role( 'administrator' );
-
-	if ( $role ) {
-		$role->add_cap( 'export_others_personal_data' );
-		$role->add_cap( 'erase_others_personal_data'  );
-		$role->add_cap( 'manage_privacy_options'      );
-	}
-}
-
 /**
  * Registers capabilities with the Members plugin.
  *
