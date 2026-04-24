@@ -750,6 +750,53 @@
 		return false;
 	}
 
+	/**
+	 * Top-level and submenu item IDs in the current tree (excludes separator placeholders).
+	 *
+	 * @return {string[]}
+	 */
+	function getAllMenuItemIdsFromTree() {
+		var ids = [];
+		(state.tree || []).forEach(function (node) {
+			if (!node || !node.id || node.id.indexOf('sep-') === 0) {
+				return;
+			}
+			ids.push(node.id);
+			(node.children || []).forEach(function (ch) {
+				if (ch && ch.id) {
+					ids.push(ch.id);
+				}
+			});
+		});
+		return ids;
+	}
+
+	/**
+	 * Hidden IDs so the target role matches the source column: saved hidden entries (including stale slugs)
+	 * plus any tree item that is hidden for the source or shows as "no access" there.
+	 *
+	 * @param {string} sourceRole Role slug to mimic.
+	 * @return {string[]}
+	 */
+	function getHiddenIdsForMimickingSourceRole(sourceRole) {
+		var out = {};
+		(getRoleConfig(sourceRole).hidden || []).forEach(function (id) {
+			if (id) {
+				out[id] = true;
+			}
+		});
+		getAllMenuItemIdsFromTree().forEach(function (itemId) {
+			var node = findNode(itemId);
+			if (!node) {
+				return;
+			}
+			if (isHidden(sourceRole, itemId) || !roleHasCap(sourceRole, node.cap || 'read')) {
+				out[itemId] = true;
+			}
+		});
+		return Object.keys(out);
+	}
+
 	function normalizeCapForCheck(cap) {
 		if (!cap || typeof cap !== 'string') {
 			return cap;
@@ -2956,7 +3003,7 @@
 				if (r.slug === from) fromLabel = r.label;
 				if (r.slug === to) toLabel = r.label;
 			});
-			if (!confirm('Copy menu settings from "' + fromLabel + '" to "' + toLabel + '"?\nThis will overwrite "' + toLabel + '" menu configuration.\n\nNote: This copies menu order, hidden items, labels, icons, and colors.\nIt does NOT change the role\'s capabilities (items marked with a lock icon).')) {
+			if (!confirm('Copy menu settings from "' + fromLabel + '" to "' + toLabel + '"?\nThis will overwrite "' + toLabel + '" menu configuration.\n\nNote: This copies menu order, labels, icons, and colors. Items the source role cannot access (no-access in its column) are stored as hidden on the target so a higher-capability role does not gain those screens.\nIt does not change WordPress role capabilities (lock icon).')) {
 				return;
 			}
 
@@ -2964,7 +3011,7 @@
 			var srcCfg = getRoleConfig(from);
 
 			var newCfg = {
-				hidden: srcCfg.hidden ? srcCfg.hidden.slice() : [],
+				hidden: getHiddenIdsForMimickingSourceRole(from),
 				order: [],
 				submenu_order: {},
 				overrides: {}

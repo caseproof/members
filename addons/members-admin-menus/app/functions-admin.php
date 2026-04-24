@@ -305,13 +305,46 @@ function merge_menu_capabilities_from_settings( array $caps, $settings ) {
 }
 
 /**
- * For each role, whether {@see WP_Role::has_cap()} allows the capability (respects role_has_cap).
+ * Build an allcaps-style map from a role, then apply the same core {@see 'user_has_cap'}
+ * grants WordPress registers in {@see wp-includes/default-filters.php}:
+ * {@see wp_maybe_grant_install_languages_cap()}, {@see wp_maybe_grant_resume_extensions_caps()},
+ * {@see wp_maybe_grant_site_health_caps()}.
+ *
+ * {@see WP_Role::has_cap()} does not run those callbacks, so the Admin Menus matrix uses this
+ * merged map (e.g. Site Health, resume plugins/themes, install languages).
+ *
+ * @param \WP_Role $role         Role object.
+ * @param \WP_User $pseudo_user User stub for {@see wp_maybe_grant_site_health_caps()} (ID 0:
+ *                               single-site grants match install_plugins; multisite skips super-admin-only grant).
+ * @return array<string, bool>
+ */
+function role_matrix_allcaps_with_core_runtime_grants( $role, $pseudo_user ) {
+	if ( ! $role instanceof \WP_Role || ! $pseudo_user instanceof \WP_User ) {
+		return array();
+	}
+	$allcaps = array();
+	foreach ( $role->capabilities as $cap => $grant ) {
+		if ( $grant ) {
+			$allcaps[ $cap ] = true;
+		}
+	}
+	$allcaps = \wp_maybe_grant_install_languages_cap( $allcaps );
+	$allcaps = \wp_maybe_grant_resume_extensions_caps( $allcaps );
+	$allcaps = \wp_maybe_grant_site_health_caps( $allcaps, array(), array(), $pseudo_user );
+	return $allcaps;
+}
+
+/**
+ * For each role, whether the capability applies for UI previews (stored caps + core runtime grants).
  *
  * @param string[] $caps Capability names.
  * @return array<string, array<string, bool>>
  */
 function build_role_cap_matrix_for_js( array $caps ) {
-	$matrix = array();
+	$matrix      = array();
+	$pseudo_user = new \WP_User();
+	$pseudo_user->ID = 0;
+
 	foreach ( \members_get_roles() as $role_obj ) {
 		$slug    = $role_obj->name;
 		$wp_role = \get_role( $slug );
@@ -319,12 +352,13 @@ function build_role_cap_matrix_for_js( array $caps ) {
 			$matrix[ $slug ] = array();
 			continue;
 		}
-		$row = array();
+		$runtime_caps = role_matrix_allcaps_with_core_runtime_grants( $wp_role, $pseudo_user );
+		$row          = array();
 		foreach ( $caps as $cap ) {
 			if ( ! is_string( $cap ) || '' === $cap ) {
 				continue;
 			}
-			$row[ $cap ] = (bool) $wp_role->has_cap( $cap );
+			$row[ $cap ] = $wp_role->has_cap( $cap ) || ! empty( $runtime_caps[ $cap ] );
 		}
 		$matrix[ $slug ] = $row;
 	}
