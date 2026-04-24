@@ -440,16 +440,76 @@
 		return part.indexOf('members-am-') === 0;
 	}
 
+	/**
+	 * Remove Members custom hook rows from a tree clone when they are no longer in settings
+	 * (localized menuTree is static for the page load).
+	 *
+	 * @param {Array} nodes Tree nodes (mutated).
+	 * @param {Object} allowedHooks Map of hook slug -> true for current custom_items.
+	 */
+	function pruneStaleMembersAmNodes(nodes, allowedHooks) {
+		if (!Array.isArray(nodes)) {
+			return;
+		}
+		for (var i = nodes.length - 1; i >= 0; i--) {
+			var n = nodes[i];
+			if (n.children && n.children.length) {
+				pruneStaleMembersAmNodes(n.children, allowedHooks);
+			}
+			var hookPart = n.id ? (n.id.indexOf('::') !== -1 ? n.id.split('::').pop() : n.id) : '';
+			if (hookPart && hookPart.indexOf('members-am-') === 0 && !allowedHooks[hookPart]) {
+				nodes.splice(i, 1);
+			}
+		}
+	}
+
+	function findNodeInTree(nodes, id) {
+		if (!nodes || !id) {
+			return null;
+		}
+		for (var i = 0; i < nodes.length; i++) {
+			if (nodes[i].id === id) {
+				return nodes[i];
+			}
+			if (nodes[i].children && nodes[i].children.length) {
+				var f = findNodeInTree(nodes[i].children, id);
+				if (f) {
+					return f;
+				}
+			}
+		}
+		return null;
+	}
+
 	function buildTreeWithCustoms() {
 		var base = $.extend(true, [], membersAdminMenus.menuTree || []);
-		// Build a set of existing IDs so we don't add duplicates.
+		var allowedHooks = {};
+		(state.settings.custom_items || []).forEach(function (item) {
+			if (item && item.id) {
+				allowedHooks[customHookId(item)] = true;
+			}
+		});
+		pruneStaleMembersAmNodes(base, allowedHooks);
+		// Build a set of existing top-level IDs so we don't add duplicates.
 		var existingIds = {};
-		base.forEach(function (n) { existingIds[n.id] = true; });
+		base.forEach(function (n) {
+			existingIds[n.id] = true;
+		});
 		(state.settings.custom_items || []).forEach(function (item) {
 			if (!item || !item.id) {
 				return;
 			}
 			var hookId = customHookId(item);
+			var parentSlug = (item.parent && String(item.parent).trim()) || '';
+			if (parentSlug) {
+				var fullId = parentSlug + '::' + hookId;
+				var subNode = findNodeInTree(base, fullId);
+				if (subNode) {
+					subNode.custom = true;
+					subNode.customId = item.id;
+				}
+				return;
+			}
 			if (existingIds[hookId]) {
 				// Already present in the base tree (injected by PHP).
 				// Just flag it as custom so badges and remove work.
@@ -471,24 +531,13 @@
 				customId: item.id,
 				children: [],
 			});
+			existingIds[hookId] = true;
 		});
 		return base;
 	}
 
 	function findNode(id, nodes) {
-		nodes = nodes || state.tree;
-		for (var i = 0; i < nodes.length; i++) {
-			if (nodes[i].id === id) {
-				return nodes[i];
-			}
-			if (nodes[i].children && nodes[i].children.length) {
-				var f = findNode(id, nodes[i].children);
-				if (f) {
-					return f;
-				}
-			}
-		}
-		return null;
+		return findNodeInTree(nodes || state.tree, id);
 	}
 
 	/**
@@ -2027,7 +2076,12 @@
 			.val(state.settings.capabilities[state.selectedId] || '');
 
 		var custom = node && node.custom;
-		$('#members-am-remove-custom').toggle(!!custom);
+		var $rmCustom = $('#members-am-remove-custom');
+		if (custom) {
+			$rmCustom.removeAttr('hidden');
+		} else {
+			$rmCustom.attr('hidden', 'hidden');
+		}
 
 		$('#members-am-visibility-toggles').empty();
 		var itemCap = (node && node.cap) || 'read';
@@ -2968,12 +3022,26 @@
 
 		$('#members-am-remove-custom').on('click', function () {
 			var node = findNode(state.selectedId);
-			if (!node || !node.customId) {
+			var storageId = node && node.customId ? String(node.customId) : '';
+			if (!storageId && node && node.custom && state.selectedId) {
+				var hook =
+					state.selectedId.indexOf('::') !== -1
+						? state.selectedId.split('::').pop()
+						: state.selectedId;
+				if (hook.indexOf('members-am-') === 0) {
+					(state.settings.custom_items || []).forEach(function (c) {
+						if (c && c.id && customHookId(c) === hook) {
+							storageId = String(c.id);
+						}
+					});
+				}
+			}
+			if (!node || !storageId) {
 				return;
 			}
 			pushUndoSnapshot();
 			state.settings.custom_items = (state.settings.custom_items || []).filter(function (c) {
-				return c.id !== node.customId;
+				return !c || String(c.id) !== storageId;
 			});
 			state.selectedId = null;
 			state.tree = buildTreeWithCustoms();

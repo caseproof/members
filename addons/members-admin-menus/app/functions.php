@@ -176,8 +176,10 @@ function apply_menu_modifications() {
 
 	// Phase 2: label, icon, URL, colors.
 	if ( ! empty( $cfg['overrides'] ) && is_array( $cfg['overrides'] ) ) {
-		apply_menu_overrides( $cfg['overrides'] );
+		// Colors must run before apply_menu_overrides(): custom items replace $menu[ $k ][2] with the
+		// external URL while overrides stay keyed by members-am-* — otherwise CSS rules never match.
 		apply_color_overrides( $cfg['overrides'] );
+		apply_menu_overrides( $cfg['overrides'] );
 		apply_level_moves( $cfg['overrides'] );
 	}
 
@@ -714,6 +716,31 @@ function members_am_promoted_menu_callback() {
 }
 
 /**
+ * Resolve which overrides key applies to a top-level $menu row (handles members-am-* slug replaced by URL in $item[2]).
+ *
+ * @param array $item      One $menu row (0–6).
+ * @param array $overrides Overrides map.
+ * @return string Matching key or ''.
+ */
+function members_am_resolve_top_level_override_key( $item, $overrides ) {
+	if ( empty( $overrides ) || ! is_array( $overrides ) ) {
+		return '';
+	}
+	$try = isset( $item[2] ) ? (string) $item[2] : '';
+	if ( '' !== $try && ! empty( $overrides[ $try ] ) && is_array( $overrides[ $try ] ) ) {
+		return $try;
+	}
+	// $item[5] is the admin page hook (e.g. toplevel_page_members-am-c123); suffix matches the internal menu slug.
+	if ( ! empty( $item[5] ) && is_string( $item[5] ) && preg_match( '/_page_(.+)$/', $item[5], $m ) ) {
+		$cand = $m[1];
+		if ( '' !== $cand && ! empty( $overrides[ $cand ] ) && is_array( $overrides[ $cand ] ) ) {
+			return $cand;
+		}
+	}
+	return '';
+}
+
+/**
  * Apply color overrides via admin_head CSS rules.
  *
  * Instead of wrapping titles in styled spans (which only affects text),
@@ -731,8 +758,8 @@ function apply_color_overrides( $overrides ) {
 		if ( empty( $item[2] ) ) {
 			continue;
 		}
-		$slug = $item[2];
-		if ( empty( $overrides[ $slug ] ) || ! is_array( $overrides[ $slug ] ) ) {
+		$slug = members_am_resolve_top_level_override_key( $item, $overrides );
+		if ( '' === $slug ) {
 			continue;
 		}
 		$o  = $overrides[ $slug ];
