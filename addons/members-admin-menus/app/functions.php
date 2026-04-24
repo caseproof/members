@@ -1231,7 +1231,7 @@ function is_user_exempt( $user_id ) {
 }
 
 /**
- * Resolved config for a user: roles merged + user overrides + hidden intersect + merged order.
+ * Resolved config for a user: roles merged + user blocks (menu overrides deep-merged per slug onto role merge).
  *
  * @param int $user_id User ID.
  * @return array
@@ -1259,12 +1259,29 @@ function get_resolved_config_for_user( $user_id ) {
 
 	$base = get_resolved_config_for_user_from_roles_only( $settings, $roles );
 
-	// Phase 3: user-specific overrides replace role-merged blocks.
+	// Phase 3: user-specific blocks. Menu overrides are deep-merged per slug onto the role-merged map so an
+	// empty or partial users[ id ].overrides entry does not wipe role styling (colors, labels, etc.).
 	if ( ! empty( $settings['users'][ $uid ] ) && is_array( $settings['users'][ $uid ] ) ) {
 		$u = $settings['users'][ $uid ];
-		foreach ( array( 'hidden', 'order', 'submenu_order', 'overrides', 'custom_items', 'capabilities' ) as $k ) {
+		foreach ( array( 'hidden', 'order', 'submenu_order', 'custom_items', 'capabilities' ) as $k ) {
 			if ( isset( $u[ $k ] ) ) {
 				$base[ $k ] = $u[ $k ];
+			}
+		}
+		if ( ! empty( $u['overrides'] ) && is_array( $u['overrides'] ) ) {
+			if ( ! isset( $base['overrides'] ) || ! is_array( $base['overrides'] ) ) {
+				$base['overrides'] = array();
+			}
+			foreach ( $u['overrides'] as $slug => $user_ov ) {
+				if ( ! is_string( $slug ) || '' === $slug || ! is_array( $user_ov ) ) {
+					continue;
+				}
+				$slug       = sanitize_text_field( $slug );
+				$prev       = isset( $base['overrides'][ $slug ] ) && is_array( $base['overrides'][ $slug ] ) ? $base['overrides'][ $slug ] : array();
+				$merged_row = array_merge( $prev, $user_ov );
+				if ( array() !== $merged_row ) {
+					$base['overrides'][ $slug ] = $merged_row;
+				}
 			}
 		}
 	}

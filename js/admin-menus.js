@@ -31,6 +31,9 @@
 	/** Snapshot of persisted settings for unsaved-change detection (object key order–independent). */
 	var initialSettingsSerialized = '';
 
+	/** Skip wpColorPicker `change` / `clear` while programmatically syncing Iris (avoids double save/render). */
+	var membersAmColorPickerSuppress = false;
+
 	/**
 	 * Stable JSON string for comparing settings payloads (sorts object keys recursively).
 	 *
@@ -261,6 +264,42 @@
 		if (!u.overrides || Array.isArray(u.overrides)) u.overrides = {};
 		if (!u.submenu_order || Array.isArray(u.submenu_order)) u.submenu_order = {};
 		return u;
+	}
+
+	/**
+	 * Merged role override for one menu id (matches PHP array_merge across sorted roles: last role wins the row).
+	 *
+	 * @param {string[]} roles
+	 * @param {string} itemId
+	 * @return {Object}
+	 */
+	function getRoleMergedOverrideForItem(roles, itemId) {
+		var sorted = (roles || []).slice().sort();
+		var out = null;
+		for (var i = 0; i < sorted.length; i++) {
+			var o = getRoleConfig(sorted[i]).overrides[itemId];
+			if (o && typeof o === 'object') {
+				out = o;
+			}
+		}
+		return out ? $.extend(true, {}, out) : {};
+	}
+
+	/**
+	 * Effective overrides for the user preview column: merged roles for that user, then per-user row on top.
+	 *
+	 * @param {number} uid
+	 * @param {string} itemId
+	 * @return {Object}
+	 */
+	function getEffectiveOverrideForUserItem(uid, itemId) {
+		var roles = uid === state.previewUserId ? state.previewUserRoles || [] : [];
+		var base = getRoleMergedOverrideForItem(roles, itemId);
+		var uov = (getUserConfig(uid).overrides && getUserConfig(uid).overrides[itemId]) || {};
+		if (!uov || typeof uov !== 'object') {
+			return base;
+		}
+		return $.extend(true, {}, base, uov);
 	}
 
 	function getTopOrderForUser(uid) {
@@ -1062,11 +1101,40 @@
 			return (ucfg.overrides && ucfg.overrides[state.selectedId]) || {};
 		}
 		var roles = getTargetRoles();
-		var role = roles[0];
-		if (!role) {
+		if (!roles.length) {
 			return null;
 		}
-		var o = getRoleConfig(role).overrides[state.selectedId];
+		// "All roles" (or any multi-target selection): the first slug in getRolesList()
+		// order is not necessarily the column the user edited — merge so each field
+		// uses the first non-empty value found across targeted roles (fixes color
+		// pickers and other fields showing blank while row previews look correct).
+		if (roles.length > 1) {
+			var keySet = {};
+			roles.forEach(function (r) {
+				var ov = getRoleConfig(r).overrides[state.selectedId];
+				if (ov && typeof ov === 'object') {
+					Object.keys(ov).forEach(function (k) {
+						keySet[k] = true;
+					});
+				}
+			});
+			var merged = {};
+			Object.keys(keySet).forEach(function (k) {
+				for (var i = 0; i < roles.length; i++) {
+					var ov = getRoleConfig(roles[i]).overrides[state.selectedId];
+					if (!ov) {
+						continue;
+					}
+					var val = ov[k];
+					if (val !== '' && val !== undefined && val !== null) {
+						merged[k] = val;
+						break;
+					}
+				}
+			});
+			return merged;
+		}
+		var o = getRoleConfig(roles[0]).overrides[state.selectedId];
 		return o || {};
 	}
 
@@ -1592,7 +1660,7 @@
 
 	function renderUserItemRow(node, parentMenuId, uid, ucfg, depth) {
 		depth = depth || 0;
-		var ov = (ucfg.overrides && ucfg.overrides[node.id]) || {};
+		var ov = getEffectiveOverrideForUserItem(uid, node.id);
 		var label = ov.label || node.title;
 		var hidden = isUserHidden(uid, node.id);
 		var noCap = !userHasCap(node.cap);
@@ -2065,6 +2133,53 @@
 		}
 	}
 
+	/**
+	 * WCAG relative luminance for a 6-digit hex color (mirrors PHP members_am_relative_luminance).
+	 *
+	 * @param {string} hex
+	 * @return {number}
+	 */
+	function membersAmRelativeLuminance(hex) {
+		hex = String(hex || '').replace(/^#/, '');
+		if (hex.length === 3) {
+			hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+		}
+		if (hex.length !== 6 || !/^[0-9a-fA-F]+$/.test(hex)) {
+			return 0.5;
+		}
+		var r = parseInt(hex.slice(0, 2), 16) / 255;
+		var g = parseInt(hex.slice(2, 4), 16) / 255;
+		var b = parseInt(hex.slice(4, 6), 16) / 255;
+		var toLinear = function (c) {
+			return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+		};
+		r = toLinear(r);
+		g = toLinear(g);
+		b = toLinear(b);
+		return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+	}
+
+	/**
+	 * @param {string} hex
+	 * @return {string}
+	 */
+	function membersAmContrastFgForBg(hex) {
+		return membersAmRelativeLuminance(hex) > 0.45 ? '#1d2327' : '#f0f0f1';
+	}
+
+	function membersAmSyncColorInput($input, hex) {
+		$input.val(hex);
+		if ($input.data('wpWpColorPicker')) {
+			membersAmColorPickerSuppress = true;
+			try {
+				$input.wpColorPicker('color', hex);
+			} catch (ignore) {
+				// Iris may reject malformed values.
+			}
+			membersAmColorPickerSuppress = false;
+		}
+	}
+
 	function destroyColorPickers() {
 		$('.members-am-color').each(function () {
 			if ($(this).data('wpWpColorPicker')) {
@@ -2076,7 +2191,10 @@
 	function initColorPickers() {
 		destroyColorPickers();
 		$('.members-am-color').wpColorPicker({
-			change: function (event, ui) {
+			change: function () {
+				if (membersAmColorPickerSuppress) {
+					return;
+				}
 				// wpColorPicker fires change BEFORE writing to the input,
 				// so we defer reading until the value is committed.
 				setTimeout(function () {
@@ -2084,12 +2202,31 @@
 				}, 20);
 			},
 			clear: function () {
+				if (membersAmColorPickerSuppress) {
+					return;
+				}
 				// "Clear" button doesn't fire change — handle it separately.
 				setTimeout(function () {
 					pushOverridesFromForm();
 				}, 20);
 			},
 		});
+		membersAmColorPickerSuppress = true;
+		$('.members-am-color').each(function () {
+			var $el = $(this);
+			var hex = String($el.val() || '').trim();
+			if (!hex || hex === '#') {
+				return;
+			}
+			if ($el.data('wpWpColorPicker')) {
+				try {
+					$el.wpColorPicker('color', hex);
+				} catch (ignore) {
+					// Iris may reject malformed values.
+				}
+			}
+		});
+		membersAmColorPickerSuppress = false;
 	}
 
 	function pushOverridesFromForm() {
@@ -2851,6 +2988,22 @@
 		});
 
 		$('#members-am-edit-target-role').on('change', openEditPanel);
+
+		$('#members-am-colors-readable').on('click', function (e) {
+			e.preventDefault();
+			var bg = String($('#members-am-color-bg').val() || '').trim();
+			if (!bg || bg === '#') {
+				var needBg =
+					(membersAdminMenus.i18n && membersAdminMenus.i18n.colorsReadableNeedBg) ||
+					'Choose a background color first.';
+				window.alert(needBg);
+				return;
+			}
+			var fg = membersAmContrastFgForBg(bg);
+			membersAmSyncColorInput($('#members-am-color-text'), fg);
+			membersAmSyncColorInput($('#members-am-color-icon'), fg);
+			pushOverridesFromForm();
+		});
 
 		$('#members-am-edit-label, #members-am-edit-url, #members-am-icon-value, #members-am-badge-text').on('input', function () {
 			pushOverridesFromForm();

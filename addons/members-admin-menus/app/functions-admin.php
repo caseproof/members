@@ -378,6 +378,7 @@ function enqueue_admin_menus_assets() {
 				'filterRolesVisibilityLabel' => __( 'Filter roles in this list', 'members' ),
 				'moreToolsShowAria'      => __( 'Show additional tools: copy between roles, import and export', 'members' ),
 				'moreToolsHideAria'      => __( 'Hide additional tools', 'members' ),
+				'colorsReadableNeedBg'   => __( 'Choose a background color first.', 'members' ),
 			),
 		)
 	);
@@ -510,9 +511,13 @@ function render_admin_menus_page() {
 				</div>
 				<div class="members-am-edit-col">
 					<label><?php esc_html_e( 'Colors', 'members' ); ?></label>
+					<p class="description members-am-colors-hint"><?php esc_html_e( 'These colors apply only to the targets chosen in “Apply field edits to role” (a single role, all roles, or a preview user). Each role column shows that role’s overrides. The user preview column shows that user’s roles merged together, then any per-user tweaks when you pick that user here.', 'members' ); ?></p>
 					<p><label><?php esc_html_e( 'Background', 'members' ); ?></label><input type="text" class="members-am-color" id="members-am-color-bg" /></p>
 					<p><label><?php esc_html_e( 'Text', 'members' ); ?></label><input type="text" class="members-am-color" id="members-am-color-text" /></p>
 					<p><label><?php esc_html_e( 'Icon', 'members' ); ?></label><input type="text" class="members-am-color" id="members-am-color-icon" /></p>
+					<p class="members-am-colors-readable-wrap">
+						<button type="button" class="button button-small" id="members-am-colors-readable"><?php esc_html_e( 'Set readable text and icon colors', 'members' ); ?></button>
+					</p>
 				</div>
 				<div class="members-am-edit-col">
 					<label><?php esc_html_e( 'Badge', 'members' ); ?></label>
