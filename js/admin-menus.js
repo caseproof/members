@@ -2527,10 +2527,25 @@
 	}
 
 	function resetSettings(scope, role) {
-		var msg =
-			scope === 'role' && role
-				? 'Reset all settings for this role? This cannot be undone.'
-				: 'Reset ALL menu settings for every role? This cannot be undone.';
+		var i18n = membersAdminMenus.i18n || {};
+		var msg;
+		if (scope === 'role' && role === 'administrator') {
+			msg =
+				i18n.confirmResetAdministrator ||
+				'Reset all menu settings for the Administrator role? This cannot be undone.';
+		} else if (scope === 'all') {
+			msg =
+				i18n.confirmResetAllRoles ||
+				'Reset ALL menu settings for every role? This cannot be undone.';
+		} else if (scope === 'role' && role) {
+			msg =
+				i18n.confirmResetRole ||
+				'Reset all settings for this role? This cannot be undone.';
+		} else {
+			msg =
+				i18n.confirmResetAllRoles ||
+				'Reset ALL menu settings for every role? This cannot be undone.';
+		}
 		if (!confirm(msg)) {
 			return;
 		}
@@ -2839,47 +2854,59 @@
 			$('.members-am-reset-dropdown').remove();
 
 			var $btn = $(this);
-			var activeRoles = state.activeRoleSlugs || [];
-			var firstRole = activeRoles.length ? activeRoles[0] : '';
-			var firstRoleLabel = '';
-			if (firstRole) {
-				(membersAdminMenus.roles || []).forEach(function (r) {
-					if (r.slug === firstRole) firstRoleLabel = r.label;
-				});
-			}
+			var i18n = membersAdminMenus.i18n || {};
+			var adminSlug = 'administrator';
+			var hasAdministrator = false;
+			(membersAdminMenus.roles || []).forEach(function (r) {
+				if (r.slug === adminSlug) {
+					hasAdministrator = true;
+				}
+			});
 
 			var $drop = $('<div class="members-am-reset-dropdown"/>');
-			$drop.append($('<div class="members-am-reset-title"/>').text('Reset Settings'));
+			$drop.append(
+				$('<div class="members-am-reset-title"/>').text(
+					i18n.resetSettingsLabel || 'Reset Settings'
+				)
+			);
 
-			if (firstRole && firstRoleLabel) {
-				var $roleBtn = $('<button type="button" class="members-am-reset-option"/>');
-				$roleBtn.append($('<span class="dashicons dashicons-admin-users"/>'));
-				$roleBtn.append(
+			if (hasAdministrator) {
+				var $adminBtn = $('<button type="button" class="members-am-reset-option"/>');
+				$adminBtn.append($('<span class="dashicons dashicons-admin-users"/>'));
+				$adminBtn.append(
 					$('<span class="members-am-reset-option-text"/>').append(
-						$('<strong/>').text('Reset ' + firstRoleLabel),
-						$('<small/>').text('Clear all menu settings for this role only')
+						$('<strong/>').text(
+							i18n.resetAdministrator || 'Reset Administrator'
+						),
+						$('<small/>').text(
+							i18n.resetAdministratorHelp ||
+								'Clear all menu settings for the Administrator role only.'
+						)
 					)
 				);
-				$roleBtn.on('click', function (e) {
-					e.preventDefault();
-					e.stopPropagation();
+				$adminBtn.on('click', function (ev) {
+					ev.preventDefault();
+					ev.stopPropagation();
 					$('.members-am-reset-dropdown').remove();
-					resetSettings('role', firstRole);
+					resetSettings('role', adminSlug);
 				});
-				$drop.append($roleBtn);
+				$drop.append($adminBtn);
 			}
 
 			var $allBtn = $('<button type="button" class="members-am-reset-option members-am-reset-danger"/>');
 			$allBtn.append($('<span class="dashicons dashicons-warning"/>'));
 			$allBtn.append(
 				$('<span class="members-am-reset-option-text"/>').append(
-					$('<strong/>').text('Reset all roles'),
-					$('<small/>').text('Clear all menu settings for every role')
+					$('<strong/>').text(i18n.resetAll || 'Reset all roles'),
+					$('<small/>').text(
+						i18n.resetAllRolesHelp ||
+							'Clear all menu settings for every role.'
+					)
 				)
 			);
-			$allBtn.on('click', function (e) {
-				e.preventDefault();
-				e.stopPropagation();
+			$allBtn.on('click', function (ev) {
+				ev.preventDefault();
+				ev.stopPropagation();
 				$('.members-am-reset-dropdown').remove();
 				resetSettings('all');
 			});

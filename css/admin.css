@@ -2396,6 +2396,10 @@ body.admin_page_members-about #wpbody-content {
 	color: var(--wp-components-color-foreground, #1d2327);
 }
 
+.members-am-reset-dropdown > .members-am-reset-option:last-of-type {
+	border-bottom: none;
+}
+
 .members-am-reset-option {
 	display: flex;
 	align-items: flex-start;
@@ -2408,10 +2412,6 @@ body.admin_page_members-about #wpbody-content {
 	width: 100%;
 	border-bottom: 1px solid var(--wp-components-color-gray-200, #f0f0f0);
 	transition: background 0.15s;
-}
-
-.members-am-reset-option:last-child {
-	border-bottom: none;
 }
 
 .members-am-reset-option:hover {
