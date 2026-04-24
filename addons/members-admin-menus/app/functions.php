@@ -189,7 +189,7 @@ function apply_menu_modifications() {
 		foreach ( $cap_map as $slug => $cap ) {
 			$slug = sanitize_text_field( $slug );
 			$cap  = sanitize_key( $cap );
-			if ( ! $slug || ! $cap || current_user_can( $cap ) || members_admin_menus_is_protected_slug( $slug ) ) {
+			if ( ! $slug || ! $cap || current_user_can( $cap ) ) {
 				continue;
 			}
 			if ( false !== strpos( $slug, '::' ) ) {
@@ -211,7 +211,7 @@ function apply_menu_modifications() {
 
 	foreach ( $hidden as $slug ) {
 		$slug = sanitize_text_field( $slug );
-		if ( ! $slug || members_admin_menus_is_protected_slug( $slug ) ) {
+		if ( ! $slug ) {
 			continue;
 		}
 		if ( false !== strpos( $slug, '::' ) ) {
@@ -956,9 +956,6 @@ function members_am_redirect_target_is_blocked_for_user( $user_id, $url ) {
 		if ( ! $cslug ) {
 			continue;
 		}
-		if ( members_admin_menus_is_protected_slug( $cslug ) ) {
-			return false;
-		}
 		foreach ( $hidden as $h ) {
 			if ( $h === $cslug || members_admin_menus_slug_matches( $cslug, $h ) ) {
 				return true;
@@ -1018,9 +1015,6 @@ function block_restricted_pages() {
 	if ( ! is_admin() || wp_doing_ajax() || wp_doing_cron() ) {
 		return;
 	}
-	if ( isset( $_GET['page'] ) && 'members-settings' === sanitize_key( wp_unslash( $_GET['page'] ) ) ) {
-		return;
-	}
 	$user_id = get_current_user_id();
 	if ( ! $user_id || is_user_exempt( $user_id ) ) {
 		return;
@@ -1032,9 +1026,6 @@ function block_restricted_pages() {
 	if ( ! empty( $cap_map ) && is_array( $cap_map ) ) {
 		$current = get_current_screen_slugs();
 		foreach ( $current as $cslug ) {
-			if ( members_admin_menus_is_protected_slug( $cslug ) ) {
-				continue;
-			}
 			foreach ( $cap_map as $slug => $cap ) {
 				if ( ! $slug || ! $cap || current_user_can( $cap ) ) {
 					continue;
@@ -1055,9 +1046,6 @@ function block_restricted_pages() {
 
 	$current = get_current_screen_slugs();
 	foreach ( $current as $cslug ) {
-		if ( members_admin_menus_is_protected_slug( $cslug ) ) {
-			continue;
-		}
 		foreach ( $hidden as $h ) {
 			if ( $h === $cslug || members_admin_menus_slug_matches( $cslug, $h ) ) {
 				$url = apply_filters( app()->namespace . '/redirect_url', members_am_blocked_redirect_fallback_url( $user_id ), $user_id );
@@ -1175,21 +1163,6 @@ function get_current_screen_slugs() {
 	 * @param array $slugs Slugs.
 	 */
 	return array_unique( array_filter( apply_filters( app()->namespace . '/current_screen_slugs', $slugs ) ) );
-}
-
-/**
- * Slugs that cannot be hidden (Members settings / safety).
- *
- * @param string $slug Slug.
- * @return bool
- */
-function members_admin_menus_is_protected_slug( $slug ) {
-	$s = (string) $slug;
-	return (
-		false !== stripos( $s, 'members-settings' )
-		|| false !== stripos( $s, 'members-admin-menus' )
-		|| false !== stripos( $s, 'page=members' )
-	);
 }
 
 /**
