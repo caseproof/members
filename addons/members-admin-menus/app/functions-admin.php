@@ -251,6 +251,87 @@ function get_admin_menus_color_scheme_css() {
 }
 
 /**
+ * Collect unique capability strings referenced by the menu tree (for Admin Menus UI checks).
+ *
+ * @param array $tree Menu tree from build_menu_tree_for_js().
+ * @return string[]
+ */
+function collect_capability_names_from_menu_tree( $tree ) {
+	$out = array();
+	if ( ! is_array( $tree ) ) {
+		return $out;
+	}
+	foreach ( $tree as $node ) {
+		if ( ! empty( $node['cap'] ) && is_string( $node['cap'] ) ) {
+			$c = sanitize_key( $node['cap'] );
+			if ( $c ) {
+				$out[] = $c;
+			}
+		}
+		if ( ! empty( $node['children'] ) && is_array( $node['children'] ) ) {
+			foreach ( $node['children'] as $child ) {
+				if ( ! empty( $child['cap'] ) && is_string( $child['cap'] ) ) {
+					$c = sanitize_key( $child['cap'] );
+					if ( $c ) {
+						$out[] = $c;
+					}
+				}
+			}
+		}
+	}
+	return array_values( array_unique( $out ) );
+}
+
+/**
+ * Merge per-item capability overrides from saved settings into the capability list.
+ *
+ * @param string[] $caps     Base capability names.
+ * @param array    $settings Admin Menus settings.
+ * @return string[]
+ */
+function merge_menu_capabilities_from_settings( array $caps, $settings ) {
+	if ( empty( $settings['capabilities'] ) || ! is_array( $settings['capabilities'] ) ) {
+		return $caps;
+	}
+	foreach ( $settings['capabilities'] as $slug => $cap ) {
+		if ( is_string( $cap ) && '' !== trim( $cap ) ) {
+			$c = sanitize_key( preg_replace( '/\s.*/', '', trim( $cap ) ) );
+			if ( $c ) {
+				$caps[] = $c;
+			}
+		}
+	}
+	return array_values( array_unique( $caps ) );
+}
+
+/**
+ * For each role, whether {@see WP_Role::has_cap()} allows the capability (respects role_has_cap).
+ *
+ * @param string[] $caps Capability names.
+ * @return array<string, array<string, bool>>
+ */
+function build_role_cap_matrix_for_js( array $caps ) {
+	$matrix = array();
+	foreach ( \members_get_roles() as $role_obj ) {
+		$slug    = $role_obj->name;
+		$wp_role = \get_role( $slug );
+		if ( ! $wp_role ) {
+			$matrix[ $slug ] = array();
+			continue;
+		}
+		$row = array();
+		foreach ( $caps as $cap ) {
+			if ( ! is_string( $cap ) || '' === $cap ) {
+				continue;
+			}
+			$row[ $cap ] = (bool) $wp_role->has_cap( $cap );
+		}
+		$matrix[ $slug ] = $row;
+	}
+	return $matrix;
+}
+
+/**
  * Enqueue scripts and styles for the Admin Menus page.
  *
  * @return void
@@ -297,6 +378,9 @@ function enqueue_admin_menus_assets() {
 		}
 	}
 
+	$menu_caps       = merge_menu_capabilities_from_settings( collect_capability_names_from_menu_tree( $tree ), $settings );
+	$role_cap_matrix = build_role_cap_matrix_for_js( $menu_caps );
+
 	wp_localize_script(
 		'members-admin-menus',
 		'membersAdminMenus',
@@ -305,6 +389,7 @@ function enqueue_admin_menus_assets() {
 			'settings'      => ensure_objects_for_js( $settings ),
 			'roles'         => $roles,
 			'roleCaps'      => $role_caps,
+			'roleCapMatrix' => $role_cap_matrix,
 			'adminEditable' => ! empty( $settings['_meta']['admin_editable'] ),
 			'nonce'         => wp_create_nonce( 'members_admin_menus' ),
 			'ajaxUrl'       => admin_url( 'admin-ajax.php' ),

@@ -750,8 +750,25 @@
 		return false;
 	}
 
+	function normalizeCapForCheck(cap) {
+		if (!cap || typeof cap !== 'string') {
+			return cap;
+		}
+		var s = cap.trim().toLowerCase();
+		var sp = s.indexOf(' ');
+		if (sp !== -1) {
+			s = s.substring(0, sp);
+		}
+		return s;
+	}
+
 	function roleHasCap(role, cap) {
+		cap = normalizeCapForCheck(cap);
 		if (!cap || cap === 'read') return true;
+		var matrix = membersAdminMenus.roleCapMatrix && membersAdminMenus.roleCapMatrix[role];
+		if (matrix && Object.prototype.hasOwnProperty.call(matrix, cap)) {
+			return !!matrix[cap];
+		}
 		var caps = membersAdminMenus.roleCaps && membersAdminMenus.roleCaps[role];
 		if (!caps) return false;
 		return caps.indexOf(cap) !== -1;
@@ -2093,7 +2110,8 @@
 		}
 
 		$('#members-am-visibility-toggles').empty();
-		var itemCap = (node && node.cap) || 'read';
+		var capFromSettings = normalizeCapForCheck(state.settings.capabilities[state.selectedId] || '');
+		var itemCap = capFromSettings || normalizeCapForCheck((node && node.cap) || '') || 'read';
 		var visRolesForPanel = [];
 		getRolesList().forEach(function (r) {
 			if (r.slug === 'administrator' && !state.settings._meta.admin_editable) {
