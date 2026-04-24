@@ -326,17 +326,8 @@
 	}
 
 	function getChildOrderForUser(uid, parentId) {
-		var def = defaultChildSlugs(parentId);
+		var def = getChildSlugsDefaultForUser(uid, parentId);
 		var ucfg = getUserConfig(uid);
-		state.tree.forEach(function (n) {
-			if (!n || !n.id || n.id.indexOf('::') !== -1) {
-				return;
-			}
-			var ovv = (ucfg.overrides && ucfg.overrides[n.id]) || {};
-			if (ovv.parent === parentId && def.indexOf(n.id) === -1) {
-				def.push(n.id);
-			}
-		});
 		var so = ucfg.submenu_order && ucfg.submenu_order[parentId];
 		if (!so || !so.length) {
 			return def.slice();
@@ -394,6 +385,7 @@
 				def.push(n.id);
 			}
 		});
+		appendRelocatedSubmenuCompositeIdsForUser(uid, parentId, def);
 		return def;
 	}
 
@@ -405,7 +397,7 @@
 			effectiveParent = ov.parent;
 		}
 		var arr;
-		var slugForOrder = itemId.indexOf('::') !== -1 ? itemId.split('::').pop() : itemId;
+		var slugForOrder = submenuOrderTokenForItem(itemId, effectiveParent);
 		if (effectiveParent) {
 			if (!ucfg.submenu_order[effectiveParent]) {
 				ucfg.submenu_order[effectiveParent] = getChildSlugsDefaultForUser(uid, effectiveParent);
@@ -507,6 +499,23 @@
 				if (subNode) {
 					subNode.custom = true;
 					subNode.customId = item.id;
+					return;
+				}
+				var pNode = findNodeInTree(base, parentSlug);
+				if (pNode) {
+					if (!pNode.children) {
+						pNode.children = [];
+					}
+					pNode.children.push({
+						id: fullId,
+						title: item.label || 'Custom',
+						url: item.url || '',
+						type: 'sub',
+						cap: item.cap || 'read',
+						custom: true,
+						customId: item.id,
+						children: []
+					});
 				}
 				return;
 			}
@@ -563,10 +572,16 @@
 		if (!itemId) {
 			return null;
 		}
+		var ov = getRoleConfig(role).overrides[itemId] || {};
 		if (itemId.indexOf('::') !== -1) {
+			if (ov.parent === '__promote__') {
+				return null;
+			}
+			if (ov.parent && ov.parent !== '__promote__') {
+				return ov.parent;
+			}
 			return findParentIdInTree(itemId);
 		}
-		var ov = getRoleConfig(role).overrides[itemId] || {};
 		if (ov.parent && ov.parent !== '__promote__') {
 			return ov.parent;
 		}
@@ -584,13 +599,18 @@
 		if (!itemId) {
 			return null;
 		}
+		var eff = getEffectiveOverrideForUserItem(uid, itemId);
 		if (itemId.indexOf('::') !== -1) {
+			if (eff.parent === '__promote__') {
+				return null;
+			}
+			if (eff.parent && eff.parent !== '__promote__') {
+				return eff.parent;
+			}
 			return findParentIdInTree(itemId);
 		}
-		var ucfg = getUserConfig(uid);
-		var ov = (ucfg.overrides && ucfg.overrides[itemId]) || {};
-		if (ov.parent && ov.parent !== '__promote__') {
-			return ov.parent;
+		if (eff.parent && eff.parent !== '__promote__') {
+			return eff.parent;
 		}
 		return null;
 	}
@@ -628,6 +648,74 @@
 		});
 	}
 
+	function walkMenuTree(nodes, visitor) {
+		(nodes || []).forEach(function (n) {
+			visitor(n);
+			walkMenuTree(n.children, visitor);
+		});
+	}
+
+	/** Submenu rows moved under another top-level parent (override.parent) still use their snapshot composite id. */
+	function appendRelocatedSubmenuCompositeIds(role, parentId, def) {
+		walkMenuTree(state.tree, function (n) {
+			var id = n.id;
+			if (!id || id.indexOf('::') === -1) {
+				return;
+			}
+			if (findParentIdInTree(id) === parentId) {
+				return;
+			}
+			if (getEffectiveParentId(id, role) !== parentId) {
+				return;
+			}
+			if (def.indexOf(id) === -1) {
+				def.push(id);
+			}
+		});
+	}
+
+	function appendRelocatedSubmenuCompositeIdsForUser(uid, parentId, def) {
+		walkMenuTree(state.tree, function (n) {
+			var id = n.id;
+			if (!id || id.indexOf('::') === -1) {
+				return;
+			}
+			if (findParentIdInTree(id) === parentId) {
+				return;
+			}
+			if (getEffectiveParentIdForUser(id, uid) !== parentId) {
+				return;
+			}
+			if (def.indexOf(id) === -1) {
+				def.push(id);
+			}
+		});
+	}
+
+	function removeSubmenuOrderSlugForConfig(cfg, parentKey, itemId) {
+		if (!cfg || !cfg.submenu_order || !parentKey || !cfg.submenu_order[parentKey]) {
+			return;
+		}
+		var arr = cfg.submenu_order[parentKey];
+		var short = itemId.indexOf('::') !== -1 ? itemId.split('::').pop() : itemId;
+		for (var i = arr.length - 1; i >= 0; i--) {
+			if (arr[i] === itemId || arr[i] === short) {
+				arr.splice(i, 1);
+			}
+		}
+	}
+
+	function submenuOrderTokenForItem(itemId, effectiveParent) {
+		if (!effectiveParent || itemId.indexOf('::') === -1) {
+			return itemId.indexOf('::') !== -1 ? itemId.split('::').pop() : itemId;
+		}
+		var treeP = findParentIdInTree(itemId);
+		if (treeP === effectiveParent) {
+			return itemId.split('::').pop();
+		}
+		return itemId;
+	}
+
 	function getTopOrder(role) {
 		var def = defaultTopOrder();
 		var o = getRoleConfig(role).order;
@@ -662,16 +750,7 @@
 	}
 
 	function getChildOrder(role, parentId) {
-		var def = defaultChildSlugs(parentId);
-		state.tree.forEach(function (n) {
-			if (!n || !n.id || n.id.indexOf('::') !== -1) {
-				return;
-			}
-			var ov = getRoleConfig(role).overrides[n.id] || {};
-			if (ov.parent === parentId && def.indexOf(n.id) === -1) {
-				def.push(n.id);
-			}
-		});
+		var def = getChildSlugsDefaultForRole(role, parentId);
 		var so = getRoleConfig(role).submenu_order[parentId];
 		if (!so || !so.length) {
 			return def.slice();
@@ -699,10 +778,18 @@
 				def.push(n.id);
 			}
 		});
+		appendRelocatedSubmenuCompositeIds(role, parentId, def);
 		return def;
 	}
 
 	function resolveChildNodeForRole(role, parentId, cslug) {
+		if (cslug.indexOf('::') !== -1) {
+			var byComp = findNode(cslug);
+			if (byComp && getEffectiveParentId(cslug, role) === parentId) {
+				return byComp;
+			}
+			return null;
+		}
 		var cid = childFullId(parentId, cslug);
 		var child = findNode(cid);
 		if (child) {
@@ -718,6 +805,13 @@
 	}
 
 	function resolveChildNodeForUser(uid, parentId, cslug) {
+		if (cslug.indexOf('::') !== -1) {
+			var byCompU = findNode(cslug);
+			if (byCompU && getEffectiveParentIdForUser(cslug, uid) === parentId) {
+				return byCompU;
+			}
+			return null;
+		}
 		var cid = childFullId(parentId, cslug);
 		var child = findNode(cid);
 		if (child) {
@@ -1372,8 +1466,7 @@
 			if (!child) {
 				return;
 			}
-			var childOv = getRoleConfig(role).overrides[child.id] || {};
-			if (childOv.parent === '__promote__') {
+			if (getEffectiveParentId(child.id, role) !== node.id) {
 				return;
 			}
 			renderRoleBranch(role, child, node.id, $container, depth + 1);
@@ -1392,8 +1485,7 @@
 			if (!child) {
 				return;
 			}
-			var childOv = (ucfg.overrides && ucfg.overrides[child.id]) || {};
-			if (childOv.parent === '__promote__') {
+			if (getEffectiveParentIdForUser(child.id, uid) !== node.id) {
 				return;
 			}
 			renderUserBranch(uid, child, node.id, ucfg, $list, depth + 1);
@@ -2223,11 +2315,6 @@
 			$wrap.attr('hidden', true);
 			return;
 		}
-		// PHP apply_level_moves() only demotes true top-level items (slug has no ::).
-		if (findParentIdInTree(state.selectedId)) {
-			$wrap.attr('hidden', true);
-			return;
-		}
 		var roleForUi = getTargetRoles()[0] || state.activeRoleSlugs[0];
 		if (roleForUi && isDemotedToSubmenu(roleForUi, state.selectedId)) {
 			$wrap.attr('hidden', true);
@@ -2235,6 +2322,7 @@
 		}
 		$wrap.removeAttr('hidden');
 		var sid = state.selectedId;
+		var curEff = roleForUi ? getEffectiveParentId(sid, roleForUi) : null;
 		var placeholder = (membersAdminMenus.i18n && membersAdminMenus.i18n.selectParentMenu) || '';
 		$sel.empty().append($('<option/>').val('').text(placeholder));
 		var count = 0;
@@ -2243,6 +2331,9 @@
 				return;
 			}
 			if (node.id === sid) {
+				return;
+			}
+			if (curEff && node.id === curEff) {
 				return;
 			}
 			var label = (node.title && String(node.title).trim()) ? node.title : node.id;
@@ -3302,6 +3393,18 @@
 				return;
 			}
 
+			if (sid.indexOf('::') !== -1 && ov0.parent && ov0.parent !== '__promote__') {
+				var relocParent = ov0.parent;
+				var tuPr = getTargetUserId();
+				if (tuPr) {
+					removeSubmenuOrderSlugForConfig(getUserConfig(tuPr), relocParent, sid);
+				} else {
+					getTargetRoles().forEach(function (role) {
+						removeSubmenuOrderSlugForConfig(getRoleConfig(role), relocParent, sid);
+					});
+				}
+			}
+
 			setOverrideField('parent', '__promote__');
 
 			// Add the promoted item to the top-level order right after its original parent.
@@ -3341,6 +3444,18 @@
 				return;
 			}
 			pushUndoSnapshot();
+			var sidDm = state.selectedId;
+			if (sidDm.indexOf('::') !== -1) {
+				var treePDm = findParentIdInTree(sidDm);
+				var tuDm = getTargetUserId();
+				if (tuDm) {
+					removeSubmenuOrderSlugForConfig(getUserConfig(tuDm), treePDm, sidDm);
+				} else {
+					getTargetRoles().forEach(function (role) {
+						removeSubmenuOrderSlugForConfig(getRoleConfig(role), treePDm, sidDm);
+					});
+				}
+			}
 			setOverrideField('parent', p);
 			pushOverridesFromForm();
 			openEditPanel();

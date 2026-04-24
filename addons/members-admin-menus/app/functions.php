@@ -174,13 +174,16 @@ function apply_menu_modifications() {
 		}
 	}
 
-	// Phase 2: label, icon, URL, colors.
+	// Phase 2: structural moves, then labels/icons/URLs, then colors (see order note below).
 	if ( ! empty( $cfg['overrides'] ) && is_array( $cfg['overrides'] ) ) {
-		// Colors must run before apply_menu_overrides(): custom items replace $menu[ $k ][2] with the
-		// external URL while overrides stay keyed by members-am-* — otherwise CSS rules never match.
-		apply_color_overrides( $cfg['overrides'] );
-		apply_menu_overrides( $cfg['overrides'] );
+		// apply_level_moves() must run before apply_menu_overrides(): for Members custom items,
+		// apply_menu_overrides() replaces $menu / $submenu [2] with the external URL while overrides
+		// stay keyed by members-am-*. Demote / relocate logic matches rows by the canonical slug in [2];
+		// if the URL is applied first, the row is never found and "Move to submenu" has no effect on $menu.
 		apply_level_moves( $cfg['overrides'] );
+		apply_menu_overrides( $cfg['overrides'] );
+		// Run after URL/slug mutations so submenu color selectors can use the final href in $submenu[...][2].
+		apply_color_overrides( $cfg['overrides'] );
 	}
 
 	// Phase 3: capability-based hiding (independent of role hidden lists).
@@ -593,9 +596,178 @@ function merge_demoted_submenu_into_parent( $target_parent, $demoted_slug, $nest
 }
 
 /**
+ * Copy every callback from one admin hook to another (same signature as core add_action).
+ *
+ * Used after relocating a submenu so {@see get_plugin_page_hook()} finds handlers on the
+ * parent-specific hook name WordPress derives from the new flyout.
+ *
+ * @param string $old_hook Prior hook suffix (e.g. tools_page_site-health).
+ * @param string $new_hook New hook suffix (e.g. index_page_site-health).
+ * @return void
+ */
+function members_am_clone_admin_hook_to( $old_hook, $new_hook ) {
+	$old_hook = (string) $old_hook;
+	$new_hook = (string) $new_hook;
+	if ( '' === $old_hook || '' === $new_hook || $old_hook === $new_hook ) {
+		return;
+	}
+	if ( ! \has_action( $old_hook ) ) {
+		return;
+	}
+	global $wp_filter;
+	if ( ! isset( $wp_filter[ $old_hook ] ) || ! ( $wp_filter[ $old_hook ] instanceof \WP_Hook ) ) {
+		return;
+	}
+	$src = $wp_filter[ $old_hook ];
+	foreach ( $src->callbacks as $priority => $callbacks ) {
+		foreach ( $callbacks as $cb ) {
+			if ( isset( $cb['function'], $cb['accepted_args'] ) ) {
+				\add_action( $new_hook, $cb['function'], (int) $priority, (int) $cb['accepted_args'] );
+			}
+		}
+	}
+}
+
+/**
+ * Register $_registered_pages and clone load/callback hooks after a submenu row moves to a new parent.
+ *
+ * Core {@see add_submenu_page()} registers a parent-specific hook name; {@see user_can_access_admin_page()}
+ * and {@see get_plugin_page_hook()} require the hook for the *new* parent once $submenu / $_parent_pages match it.
+ *
+ * @param string $old_parent Old parent basename (plugin_basename).
+ * @param string $new_parent New parent basename.
+ * @param string $child_pb   Child menu slug basename (item[2]).
+ * @return void
+ */
+function members_am_rebind_relocated_submenu_hooks( $old_parent, $new_parent, $child_pb ) {
+	global $_registered_pages;
+
+	$old_parent = plugin_basename( (string) $old_parent );
+	$new_parent = plugin_basename( (string) $new_parent );
+	$child_pb   = plugin_basename( (string) $child_pb );
+
+	if ( '' === $child_pb || ! function_exists( 'get_plugin_page_hookname' ) ) {
+		return;
+	}
+
+	$old_primary = \get_plugin_page_hookname( $child_pb, $old_parent );
+	$new_primary = \get_plugin_page_hookname( $child_pb, $new_parent );
+
+	$had_old_registration = false;
+	if ( isset( $_registered_pages ) && is_array( $_registered_pages ) && $old_primary && ! empty( $_registered_pages[ $old_primary ] ) ) {
+		$had_old_registration = true;
+	}
+	if ( 'tools.php' === $old_parent && isset( $_registered_pages ) && is_array( $_registered_pages ) ) {
+		$compat = \get_plugin_page_hookname( $child_pb, 'edit.php' );
+		if ( $compat && ! empty( $_registered_pages[ $compat ] ) ) {
+			$had_old_registration = true;
+		}
+	}
+
+	if ( ! $had_old_registration && $old_primary && \has_action( $old_primary ) ) {
+		$had_old_registration = true;
+	}
+
+	if ( ! $had_old_registration ) {
+		return;
+	}
+
+	$new_hooknames = array();
+	if ( $new_primary ) {
+		$new_hooknames[] = $new_primary;
+	}
+	if ( 'tools.php' === $new_parent ) {
+		$edit_compat = \get_plugin_page_hookname( $child_pb, 'edit.php' );
+		if ( $edit_compat ) {
+			$new_hooknames[] = $edit_compat;
+		}
+	}
+	$new_hooknames = array_unique( array_filter( $new_hooknames ) );
+
+	if ( isset( $_registered_pages ) && is_array( $_registered_pages ) ) {
+		foreach ( $new_hooknames as $nh ) {
+			$_registered_pages[ $nh ] = true;
+		}
+	}
+
+	if ( $old_primary && $new_primary && \has_action( $old_primary ) ) {
+		members_am_clone_admin_hook_to( $old_primary, $new_primary );
+	}
+}
+
+/**
+ * Move an existing submenu row from one parent file to another (same child hook).
+ *
+ * Used when overrides use a composite key parent::child with parent set to a different top-level slug.
+ *
+ * @param string $old_parent Parent file slug the row currently belongs to.
+ * @param string $child_slug Child hook (submenu item[2]); may be a .php file or members-am-*.
+ * @param string $new_parent Target parent file slug.
+ * @return bool True if the row was removed from the old parent and inserted under the new one.
+ */
+function relocate_submenu_row( $old_parent, $child_slug, $new_parent ) {
+	global $submenu, $_parent_pages;
+
+	$old_parent = plugin_basename( (string) $old_parent );
+	$new_parent = plugin_basename( (string) $new_parent );
+	$child_pb   = plugin_basename( (string) $child_slug );
+
+	if ( '' === $child_pb || '' === $new_parent || $old_parent === $new_parent ) {
+		return false;
+	}
+
+	if ( empty( $submenu[ $old_parent ] ) || ! is_array( $submenu[ $old_parent ] ) ) {
+		return false;
+	}
+
+	// Already registered under the target parent — nothing to do (avoid orphaning the row).
+	if ( ! empty( $submenu[ $new_parent ] ) && is_array( $submenu[ $new_parent ] ) ) {
+		foreach ( $submenu[ $new_parent ] as $ex ) {
+			if ( ! empty( $ex[2] ) && plugin_basename( (string) $ex[2] ) === $child_pb ) {
+				return false;
+			}
+		}
+	}
+
+	$row    = null;
+	$idx_rm = null;
+	foreach ( $submenu[ $old_parent ] as $idx => $sub ) {
+		if ( empty( $sub[2] ) ) {
+			continue;
+		}
+		if ( plugin_basename( (string) $sub[2] ) === $child_pb ) {
+			$row    = $sub;
+			$idx_rm = $idx;
+			break;
+		}
+	}
+	if ( null === $row || null === $idx_rm ) {
+		return false;
+	}
+
+	unset( $submenu[ $old_parent ][ $idx_rm ] );
+	$submenu[ $old_parent ] = array_values( $submenu[ $old_parent ] );
+
+	if ( empty( $submenu[ $new_parent ] ) || ! is_array( $submenu[ $new_parent ] ) ) {
+		$submenu[ $new_parent ] = array();
+	}
+	$submenu[ $new_parent ][] = $row;
+	$submenu[ $new_parent ]    = array_values( $submenu[ $new_parent ] );
+
+	if ( isset( $_parent_pages ) && is_array( $_parent_pages ) ) {
+		$_parent_pages[ $child_pb ] = $new_parent;
+	}
+
+	members_am_rebind_relocated_submenu_hooks( $old_parent, $new_parent, $child_pb );
+
+	return true;
+}
+
+/**
  * Move items between menu levels based on 'parent' override field.
  *
  * - If a submenu item has parent = '__promote__', promote it to top-level.
+ * - If a submenu item has parent = a top-level file slug (not __promote__), move it under that parent's submenu.
  * - If a top-level item has a parent slug set, demote it to a submenu of that parent.
  *
  * @param array $overrides Overrides keyed by canonical slug.
@@ -687,6 +859,14 @@ function apply_level_moves( $overrides ) {
 			if ( ! empty( $nested_submenu ) ) {
 				merge_demoted_submenu_into_parent( $target_parent, $slug, $nested_submenu );
 			}
+		} elseif ( $is_submenu && is_string( $target_parent ) && '' !== $target_parent && '__promote__' !== $target_parent ) {
+			$parts = explode( '::', $slug, 2 );
+			if ( count( $parts ) !== 2 ) {
+				continue;
+			}
+			$old_parent = $parts[0];
+			$child_slug = $parts[1];
+			relocate_submenu_row( $old_parent, $child_slug, $target_parent );
 		}
 	}
 }
