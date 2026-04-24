@@ -1690,6 +1690,39 @@ body.admin_page_members-about #wpbody-content {
 	border-left: 1px solid var(--members-am-chrome-border, #c3c4c7);
 }
 
+.members-am-toolbar-row--exempt {
+	flex-basis: 100%;
+	width: 100%;
+	margin-top: 8px;
+	padding-top: 10px;
+	border-top: 1px solid var(--members-am-chrome-border, #c3c4c7);
+}
+
+.members-am-exempt-wrap .members-am-exempt-chips {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin: 8px 0;
+}
+
+.members-am-exempt-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 2px 8px;
+	border: 1px solid var(--members-am-chrome-border, #c3c4c7);
+	border-radius: 4px;
+	background: var(--wp-components-color-background, #fff);
+	font-size: 13px;
+}
+
+.members-am-exempt-chip .members-am-exempt-remove {
+	padding: 0 2px;
+	min-height: 0;
+	line-height: 1.3;
+}
+
 /* Override core .button-link underline (it can fragment and appear only under the SVG chevron). */
 .members-am-more-tools,
 .members-am-more-tools:hover,
@@ -2457,7 +2490,8 @@ body.admin_page_members-about #wpbody-content {
 	}
 }
 
-.members-am-user-suggestions {
+.members-am-user-suggestions,
+.members-am-exempt-suggestions {
 	position: absolute;
 	z-index: 100;
 	background: var(--wp-components-color-background, #fff);
@@ -2471,18 +2505,21 @@ body.admin_page_members-about #wpbody-content {
 	left: 0;
 }
 
-.members-am-user-suggestion {
+.members-am-user-suggestion,
+.members-am-exempt-suggestion {
 	padding: 8px 12px;
 	cursor: pointer;
 	font-size: 13px;
 	border-bottom: 1px solid var(--wp-components-color-gray-200, #f0f0f0);
 }
 
-.members-am-user-suggestion:hover {
+.members-am-user-suggestion:hover,
+.members-am-exempt-suggestion:hover {
 	background: color-mix(in srgb, var(--members-am-accent-use) 8%, var(--wp-components-color-background, #fff));
 }
 
-.members-am-user-suggestion:last-child {
+.members-am-user-suggestion:last-child,
+.members-am-exempt-suggestion:last-child {
 	border-bottom: none;
 }
 

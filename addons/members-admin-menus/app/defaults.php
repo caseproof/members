@@ -28,6 +28,11 @@ const SETTINGS_JSON_MAX_BYTES = 2097152;
 const SETTINGS_JSON_MAX_DEPTH = 128;
 
 /**
+ * Maximum administrator user IDs stored as exempt from Admin Menus when admin_editable is on.
+ */
+const ADMIN_MENU_EXEMPT_USER_IDS_MAX = 20;
+
+/**
  * Default option array for members_admin_menus_settings.
  *
  * @return array
@@ -35,8 +40,9 @@ const SETTINGS_JSON_MAX_DEPTH = 128;
 function members_admin_menus_default_settings_data() {
 	return array(
 		'_meta'         => array(
-			'version'        => SETTINGS_SCHEMA_VERSION,
-			'admin_editable' => false,
+			'version'                     => SETTINGS_SCHEMA_VERSION,
+			'admin_editable'              => false,
+			'admin_menu_exempt_user_ids' => array(),
 		),
 		'roles'         => array(),
 		'users'         => array(),

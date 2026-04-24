@@ -26,6 +26,8 @@
 		columnBulkSelection: {},
 		/** Per-column collapsed parent ids: key -> { [parentItemId]: true } when children are folded away. */
 		collapsedParents: {},
+		/** Display labels for exempt administrator IDs (string keys). */
+		exemptUserLabels: {},
 	};
 
 	/** Snapshot of persisted settings for unsaved-change detection (object key order–independent). */
@@ -201,6 +203,7 @@
 		state.settings = deepClone(undoSettingsSnapshot);
 		undoSettingsSnapshot = null;
 		ensureSettings();
+		syncExemptUserLabels();
 		state.tree = buildTreeWithCustoms();
 		updateUndoButton();
 		renderAll();
@@ -216,7 +219,14 @@
 
 	function ensureSettings() {
 		if (!state.settings._meta || Array.isArray(state.settings._meta)) {
-			state.settings._meta = { version: 3, admin_editable: false };
+			state.settings._meta = {
+				version: 3,
+				admin_editable: false,
+				admin_menu_exempt_user_ids: [],
+			};
+		}
+		if (!Array.isArray(state.settings._meta.admin_menu_exempt_user_ids)) {
+			state.settings._meta.admin_menu_exempt_user_ids = [];
 		}
 		if (!state.settings.roles || Array.isArray(state.settings.roles)) {
 			state.settings.roles = {};
@@ -230,6 +240,126 @@
 		if (!state.settings.capabilities || Array.isArray(state.settings.capabilities)) {
 			state.settings.capabilities = {};
 		}
+	}
+
+	function getExemptUserIds() {
+		ensureSettings();
+		var m = state.settings._meta.admin_menu_exempt_user_ids;
+		if (!Array.isArray(m)) {
+			return [];
+		}
+		return m
+			.map(function (x) {
+				return parseInt(x, 10);
+			})
+			.filter(function (n) {
+				return n > 0;
+			});
+	}
+
+	function syncExemptUserLabels() {
+		var base = membersAdminMenus.exemptUserLabels || {};
+		getExemptUserIds().forEach(function (id) {
+			var sk = String(id);
+			if (!state.exemptUserLabels[sk]) {
+				state.exemptUserLabels[sk] = base[sk] || 'User #' + id;
+			}
+		});
+		Object.keys(state.exemptUserLabels).forEach(function (sk) {
+			if (getExemptUserIds().indexOf(parseInt(sk, 10)) === -1) {
+				delete state.exemptUserLabels[sk];
+			}
+		});
+	}
+
+	function renderExemptUi() {
+		var on = !!state.settings._meta.admin_editable;
+		var $row = $('#members-am-exempt-row');
+		if (!$row.length) {
+			return;
+		}
+		$row.prop('hidden', !on);
+		if (!on) {
+			return;
+		}
+		var i18n = membersAdminMenus.i18n || {};
+		var $chips = $('#members-am-exempt-chips').empty();
+		var ids = getExemptUserIds();
+		var lastOne = ids.length <= 1;
+		ids.forEach(function (id) {
+			var sk = String(id);
+			var label = state.exemptUserLabels[sk] || 'User #' + id;
+			var $chip = $('<span class="members-am-exempt-chip" role="listitem"/>');
+			$chip.append($('<span class="members-am-exempt-chip-label"/>').text(label));
+			var $rm = $('<button type="button" class="button button-link members-am-exempt-remove"/>')
+				.attr('aria-label', i18n.exemptRemove || 'Remove')
+				.text(i18n.exemptRemove || 'Remove');
+			if (lastOne) {
+				$rm.prop('disabled', true).attr('aria-disabled', 'true');
+			} else {
+				$rm.data('userId', id);
+			}
+			$chip.append($rm);
+			$chips.append($chip);
+		});
+	}
+
+	function showExemptSuggestions(list) {
+		$('.members-am-exempt-suggestions').remove();
+		var $input = $('#members-am-exempt-search');
+		if (!$input.length) {
+			return;
+		}
+		var $wrap = $input.parent();
+		$wrap.css('position', 'relative');
+		var $dd = $('<div class="members-am-exempt-suggestions"/>');
+		list.forEach(function (u) {
+			$dd.append(
+				$('<div class="members-am-exempt-suggestion"/>')
+					.text(u.label)
+					.on('click', function () {
+						var id = parseInt(u.id, 10);
+						if (getExemptUserIds().indexOf(id) !== -1) {
+							$('.members-am-exempt-suggestions').remove();
+							$input.val('');
+							return;
+						}
+						pushUndoSnapshot();
+						state.settings._meta.admin_menu_exempt_user_ids = getExemptUserIds().concat([id]);
+						state.exemptUserLabels[String(id)] = u.label;
+						$('.members-am-exempt-suggestions').remove();
+						$input.val('');
+						renderExemptUi();
+					})
+			);
+		});
+		$wrap.append($dd);
+		setTimeout(function () {
+			$(document).one('click', function () {
+				$('.members-am-exempt-suggestions').remove();
+			});
+		}, 0);
+	}
+
+	function searchExemptUsers(term) {
+		$.getJSON(membersAdminMenus.ajaxUrl, {
+			action: 'members_admin_menus_user_search',
+			nonce: membersAdminMenus.nonce,
+			term: term,
+		}, function (res) {
+			if (!res.success || !res.data || !res.data.length) {
+				$('.members-am-exempt-suggestions').remove();
+				return;
+			}
+			var admins = res.data.filter(function (u) {
+				return u.roles && u.roles.indexOf('administrator') !== -1;
+			});
+			if (!admins.length) {
+				$('.members-am-exempt-suggestions').remove();
+				return;
+			}
+			showExemptSuggestions(admins);
+		});
 	}
 
 	function getRoleConfig(role) {
@@ -1788,13 +1918,13 @@
 		);
 		$ogChecked.append(
 			$('<option value="keep-only-checked"/>').text(
-				i18n.bulkKeepOnlyCheckedVisible || 'Keep only checked visible'
+				i18n.bulkKeepOnlyCheckedVisible || 'Hide everything except selected (and parents)'
 			),
 			$('<option value="hide-checked"/>').text(
 				i18n.bulkHideCheckedItems || 'Hide checked items'
 			),
 			$('<option value="show-checked"/>').text(
-				i18n.bulkShowCheckedItems || 'Show checked items'
+				i18n.bulkShowCheckedItems || 'Show selected items'
 			)
 		);
 		$sel.append($ogWhole, $ogChecked);
@@ -1824,7 +1954,7 @@
 				if (
 					!window.confirm(
 						i18n.bulkConfirmKeepOnlyChecked ||
-							'Hide all items except checked items and their parent menus?'
+							'Hide all menu items except the selected ones and their parent menus?'
 					)
 				) {
 					return;
@@ -3300,18 +3430,70 @@
 
 		$('#members-am-admin-editable').on('change', function () {
 			var ok = true;
+			var i18n = membersAdminMenus.i18n || {};
 			if ($(this).is(':checked')) {
-				ok = window.confirm(membersAdminMenus.i18n.adminEditableWarn);
+				ok = window.confirm(i18n.adminEditableWarn);
 			}
 			if (!ok) {
 				$(this).prop('checked', false);
 				return;
 			}
+			pushUndoSnapshot();
 			state.settings._meta.admin_editable = $(this).is(':checked');
+			if (state.settings._meta.admin_editable && membersAdminMenus.currentUserIsAdministrator && membersAdminMenus.currentUserId) {
+				var cur = parseInt(membersAdminMenus.currentUserId, 10);
+				if (getExemptUserIds().length === 0) {
+					state.settings._meta.admin_menu_exempt_user_ids = [cur];
+					var sk = String(cur);
+					var base = membersAdminMenus.exemptUserLabels || {};
+					state.exemptUserLabels[sk] = base[sk] || 'User #' + cur;
+				}
+			}
+			if (!state.settings._meta.admin_editable) {
+				state.settings._meta.admin_menu_exempt_user_ids = [];
+				state.exemptUserLabels = $.extend({}, membersAdminMenus.exemptUserLabels || {});
+			}
+			syncExemptUserLabels();
 			initActiveRoles();
 			renderChips();
 			saveViewState();
+			renderExemptUi();
 			renderAll();
+		});
+
+		$('#members-am-exempt-chips').on('click', '.members-am-exempt-remove', function () {
+			var id = $(this).data('userId');
+			if (!id) {
+				return;
+			}
+			var ids = getExemptUserIds();
+			if (ids.length <= 1) {
+				showMembersAmNotice(
+					'warning',
+					(membersAdminMenus.i18n && membersAdminMenus.i18n.exemptLastAdministrator) ||
+						'Keep at least one exempt administrator while this option is enabled.'
+				);
+				return;
+			}
+			pushUndoSnapshot();
+			state.settings._meta.admin_menu_exempt_user_ids = ids.filter(function (x) {
+				return x !== id;
+			});
+			delete state.exemptUserLabels[String(id)];
+			renderExemptUi();
+		});
+
+		var exemptSearchTimer;
+		$('#members-am-exempt-search').on('input', function () {
+			var t = $(this).val();
+			clearTimeout(exemptSearchTimer);
+			exemptSearchTimer = setTimeout(function () {
+				if (t.length > 1) {
+					searchExemptUsers(t);
+				} else {
+					$('.members-am-exempt-suggestions').remove();
+				}
+			}, 300);
 		});
 
 		$('#members-am-sync-scroll').prop('checked', state.syncScroll !== false);
@@ -3635,6 +3817,7 @@
 	function renderAll() {
 		renderColumns();
 		renderEditTargetRoles();
+		renderExemptUi();
 		if (state.selectedId) {
 			openEditPanel();
 		}
@@ -3643,9 +3826,12 @@
 	function init() {
 		consumeFlashNotice();
 		ensureSettings();
+		state.exemptUserLabels = $.extend({}, membersAdminMenus.exemptUserLabels || {});
+		syncExemptUserLabels();
 		state.tree = buildTreeWithCustoms();
 		initActiveRoles();
 		$('#members-am-admin-editable').prop('checked', !!state.settings._meta.admin_editable);
+		renderExemptUi();
 		renderCopySelect();
 		renderChips();
 		bind();

@@ -1408,11 +1408,24 @@ function is_user_exempt( $user_id ) {
 		return true;
 	}
 
-	$meta = get_settings();
+	$meta           = get_settings();
 	$admin_editable = ! empty( $meta['_meta']['admin_editable'] );
 
 	if ( in_array( 'administrator', (array) $user->roles, true ) && ! $admin_editable ) {
 		return true;
+	}
+
+	if ( $admin_editable && in_array( 'administrator', (array) $user->roles, true ) ) {
+		$exempt_ids = array();
+		if ( ! empty( $meta['_meta']['admin_menu_exempt_user_ids'] ) && is_array( $meta['_meta']['admin_menu_exempt_user_ids'] ) ) {
+			$exempt_ids = array_map( 'absint', $meta['_meta']['admin_menu_exempt_user_ids'] );
+		}
+		// Legacy or pre-migration: empty list would lock out every administrator — fail open until settings are saved again.
+		if ( empty( $exempt_ids ) ) {
+			return (bool) apply_filters( app()->namespace . '/is_user_exempt', true, $user_id );
+		}
+		$is_exempt = in_array( (int) $user_id, $exempt_ids, true );
+		return (bool) apply_filters( app()->namespace . '/is_user_exempt', $is_exempt, $user_id );
 	}
 
 	return (bool) apply_filters( app()->namespace . '/is_user_exempt', false, $user_id );

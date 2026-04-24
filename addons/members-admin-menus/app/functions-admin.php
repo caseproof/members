@@ -536,6 +536,25 @@ function enqueue_admin_menus_assets() {
 	$menu_caps       = merge_menu_capabilities_from_settings( collect_capability_names_from_menu_tree( $tree ), $settings );
 	$role_cap_matrix = build_role_cap_matrix_for_js( $menu_caps );
 
+	$exempt_ids = array();
+	if ( ! empty( $settings['_meta']['admin_menu_exempt_user_ids'] ) && is_array( $settings['_meta']['admin_menu_exempt_user_ids'] ) ) {
+		$exempt_ids = array_map( 'absint', $settings['_meta']['admin_menu_exempt_user_ids'] );
+	}
+	$current_wp_user          = wp_get_current_user();
+	$current_is_administrator = $current_wp_user && $current_wp_user->exists() && in_array( 'administrator', (array) $current_wp_user->roles, true );
+	$exempt_user_labels       = members_am_exempt_administrator_user_labels( $exempt_ids );
+	if ( $current_is_administrator && $current_wp_user->ID ) {
+		$cid = (string) (int) $current_wp_user->ID;
+		if ( '' === ( $exempt_user_labels[ $cid ] ?? '' ) ) {
+			$exempt_user_labels[ $cid ] = sprintf(
+				/* translators: 1: display name, 2: user_login */
+				__( '%1$s (%2$s)', 'members' ),
+				$current_wp_user->display_name ? $current_wp_user->display_name : $current_wp_user->user_login,
+				$current_wp_user->user_login
+			);
+		}
+	}
+
 	wp_localize_script(
 		'members-admin-menus',
 		'membersAdminMenus',
@@ -546,6 +565,9 @@ function enqueue_admin_menus_assets() {
 			'roleCaps'      => $role_caps,
 			'roleCapMatrix' => $role_cap_matrix,
 			'adminEditable' => ! empty( $settings['_meta']['admin_editable'] ),
+			'currentUserId' => get_current_user_id(),
+			'currentUserIsAdministrator' => $current_is_administrator,
+			'exemptUserLabels'           => $exempt_user_labels,
 			'nonce'         => wp_create_nonce( 'members_admin_menus' ),
 			'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
 			'exportUrl'     => add_query_arg(
@@ -603,16 +625,16 @@ function enqueue_admin_menus_assets() {
 				'bulkGroupCheckedRows'   => __( 'Checked rows', 'members' ),
 				'bulkShowAllItems'       => __( 'Show every menu item', 'members' ),
 				'bulkHideAllItems'       => __( 'Hide every menu item', 'members' ),
-				'bulkKeepOnlyCheckedVisible' => __( 'Keep only checked visible', 'members' ),
+				'bulkKeepOnlyCheckedVisible' => __( 'Hide everything except selected (and parents)', 'members' ),
 				'bulkHideCheckedItems'   => __( 'Hide checked items', 'members' ),
-				'bulkShowCheckedItems'   => __( 'Show checked items', 'members' ),
+				'bulkShowCheckedItems'   => __( 'Show selected items', 'members' ),
 				'bulkSelectVisible'      => __( 'Select visible', 'members' ),
 				'bulkClearSelection'     => __( 'Clear selection', 'members' ),
 				'bulkCheckboxAria'       => __( 'Include in bulk actions', 'members' ),
 				'bulkSelectCheckedFirst' => __( 'Check one or more menu items first.', 'members' ),
 				'bulkSelectItemFirst'    => __( 'Select a menu item in the list first.', 'members' ),
 				'bulkConfirmHideAll'     => __( 'Hide every menu item in this column? You can use “Show every menu item” to undo before saving.', 'members' ),
-				'bulkConfirmKeepOnlyChecked' => __( 'Hide all items except checked items and their parent menus?', 'members' ),
+				'bulkConfirmKeepOnlyChecked' => __( 'Hide all menu items except the selected ones and their parent menus?', 'members' ),
 				'bulkConfirmHideChecked' => __( 'Hide the checked items (and their submenus where applicable)?', 'members' ),
 				'collapseSubmenus'       => __( 'Collapse submenu items', 'members' ),
 				'expandSubmenus'         => __( 'Expand submenu items', 'members' ),
@@ -628,6 +650,9 @@ function enqueue_admin_menus_assets() {
 				'colorsReadableNeedBg'   => __( 'Choose a background color first.', 'members' ),
 				'noAccessTitlePattern'   => __( 'This role does not have the stored capability “%s”. Users with multiple roles may still reach the screen if another role grants it. Tags use manage_post_tags when Category & Tag Caps is active (Members → Roles, Taxonomy).', 'members' ),
 				'multiRoleMergeHelp'     => __( 'Users with multiple roles: a menu item is hidden if any of their roles hides it. When two roles define different labels, icons, or colors for the same item, the first role in the user’s role list wins.', 'members' ),
+				'exemptLastAdministrator' => __( 'Keep at least one exempt administrator while this option is enabled.', 'members' ),
+				'exemptRemove'            => __( 'Remove', 'members' ),
+				'exemptSaveRequiresAdministrator' => __( 'When administrator menu editing is enabled, at least one exempt administrator is required. Sign in as an administrator or add one using the search field.', 'members' ),
 			),
 		)
 	);
@@ -693,6 +718,16 @@ function render_admin_menus_page() {
 						<a href="#" class="button" id="members-am-export"><?php esc_html_e( 'Export', 'members' ); ?></a>
 						<button type="button" class="button" id="members-am-import"><?php esc_html_e( 'Import', 'members' ); ?></button>
 						<input type="file" id="members-am-import-file" class="members-am-import-file-hidden" accept="application/json" />
+					</div>
+				</div>
+				<div id="members-am-exempt-row" class="members-am-toolbar-row members-am-toolbar-row--exempt" hidden>
+					<div class="members-am-exempt-wrap">
+						<p class="description members-am-exempt-help"><?php esc_html_e( 'These administrator accounts always see the full menu and are not blocked from admin URLs by Admin Menus. At least one is required while editing the Administrator role. Add another exempt administrator before removing yourself.', 'members' ); ?></p>
+						<div id="members-am-exempt-chips" class="members-am-exempt-chips" role="list"></div>
+						<p class="members-am-exempt-search-wrap">
+							<label for="members-am-exempt-search" class="screen-reader-text"><?php esc_html_e( 'Search administrators to add as exempt', 'members' ); ?></label>
+							<input type="text" id="members-am-exempt-search" class="regular-text members-am-exempt-search" placeholder="<?php esc_attr_e( 'Search administrators…', 'members' ); ?>" autocomplete="off" />
+						</p>
 					</div>
 				</div>
 			</div>
@@ -928,6 +963,69 @@ function members_am_decode_settings_json( $raw, $too_large_message ) {
 }
 
 /**
+ * Normalize stored exempt administrator user IDs when "Allow editing administrator menus" is enabled.
+ *
+ * @param mixed $raw_ids        Client-supplied list (may be non-array).
+ * @param bool  $admin_editable Whether administrator menu editing is enabled.
+ * @return int[] Unique administrator user IDs (empty when $admin_editable is false).
+ */
+function members_am_normalize_administrator_exempt_user_ids( $raw_ids, $admin_editable ) {
+	if ( ! $admin_editable ) {
+		return array();
+	}
+	$out = array();
+	if ( is_array( $raw_ids ) ) {
+		foreach ( $raw_ids as $id ) {
+			$id = absint( $id );
+			if ( $id < 1 || count( $out ) >= ADMIN_MENU_EXEMPT_USER_IDS_MAX ) {
+				continue;
+			}
+			$user = get_userdata( $id );
+			if ( ! $user || ! in_array( 'administrator', (array) $user->roles, true ) ) {
+				continue;
+			}
+			$out[] = $id;
+		}
+		$out = array_values( array_unique( $out ) );
+	}
+	if ( empty( $out ) ) {
+		$uid  = get_current_user_id();
+		$user = $uid ? get_userdata( $uid ) : false;
+		if ( $user && in_array( 'administrator', (array) $user->roles, true ) ) {
+			return array( $uid );
+		}
+	}
+	return $out;
+}
+
+/**
+ * Display labels for exempt administrator IDs (localized script data).
+ *
+ * @param int[] $ids User IDs.
+ * @return array<string, string> Map of string user ID to label.
+ */
+function members_am_exempt_administrator_user_labels( array $ids ) {
+	$labels = array();
+	foreach ( $ids as $id ) {
+		$id = absint( $id );
+		if ( $id < 1 ) {
+			continue;
+		}
+		$user = get_userdata( $id );
+		if ( ! $user || ! in_array( 'administrator', (array) $user->roles, true ) ) {
+			continue;
+		}
+		$labels[ (string) $id ] = sprintf(
+			/* translators: 1: display name, 2: user_login */
+			__( '%1$s (%2$s)', 'members' ),
+			$user->display_name ? $user->display_name : $user->user_login,
+			$user->user_login
+		);
+	}
+	return $labels;
+}
+
+/**
  * AJAX: save full settings JSON.
  *
  * @return void
@@ -948,6 +1046,19 @@ function ajax_save_settings() {
 		wp_send_json_error( array( 'message' => $data->get_error_message() ), 400 );
 	}
 	$sanitized = sanitize_settings_payload( $data );
+	if ( ! empty( $sanitized['_meta']['admin_editable'] ) ) {
+		$exempt = isset( $sanitized['_meta']['admin_menu_exempt_user_ids'] ) && is_array( $sanitized['_meta']['admin_menu_exempt_user_ids'] )
+			? $sanitized['_meta']['admin_menu_exempt_user_ids']
+			: array();
+		if ( empty( $exempt ) ) {
+			wp_send_json_error(
+				array(
+					'message' => __( 'When administrator menu editing is enabled, at least one exempt administrator is required. Sign in as an administrator or add one using the search field.', 'members' ),
+				),
+				400
+			);
+		}
+	}
 	update_option( OPTION_KEY, $sanitized );
 	members_am_invalidate_settings_cache();
 	wp_send_json_success( array( 'message' => __( 'Settings saved.', 'members' ) ) );
@@ -975,9 +1086,18 @@ function sanitize_settings_payload( $data ) {
 
 	$out = wp_parse_args( $filtered, $defaults );
 
+	$admin_editable = ! empty( $out['_meta']['admin_editable'] );
+	$raw_exempt     = array();
+	if ( isset( $data['_meta'] ) && is_array( $data['_meta'] ) && isset( $data['_meta']['admin_menu_exempt_user_ids'] ) ) {
+		$raw_exempt = $data['_meta']['admin_menu_exempt_user_ids'];
+	} elseif ( isset( $out['_meta']['admin_menu_exempt_user_ids'] ) ) {
+		$raw_exempt = $out['_meta']['admin_menu_exempt_user_ids'];
+	}
+
 	$out['_meta'] = array(
-		'version'        => isset( $out['_meta']['version'] ) ? absint( $out['_meta']['version'] ) : 3,
-		'admin_editable' => ! empty( $out['_meta']['admin_editable'] ),
+		'version'                     => isset( $out['_meta']['version'] ) ? absint( $out['_meta']['version'] ) : 3,
+		'admin_editable'              => $admin_editable,
+		'admin_menu_exempt_user_ids' => members_am_normalize_administrator_exempt_user_ids( $raw_exempt, $admin_editable ),
 	);
 
 	if ( isset( $out['_defaults'] ) && is_array( $out['_defaults'] ) ) {
