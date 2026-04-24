@@ -379,6 +379,7 @@ function enqueue_admin_menus_assets() {
 				'moreToolsShowAria'      => __( 'Show additional tools: copy between roles, import and export', 'members' ),
 				'moreToolsHideAria'      => __( 'Hide additional tools', 'members' ),
 				'colorsReadableNeedBg'   => __( 'Choose a background color first.', 'members' ),
+				'noAccessTitlePattern'   => __( 'This role does not have the stored capability “%s”. Users with multiple roles may still reach the screen if another role grants it. Tags use manage_post_tags when Category & Tag Caps is active (Members → Roles, Taxonomy).', 'members' ),
 			),
 		)
 	);
@@ -451,7 +452,7 @@ function render_admin_menus_page() {
 
 		<p class="members-am-legend">
 			<span class="members-am-legend-item"><span class="dashicons dashicons-visibility members-am-legend-visibility-icon" aria-hidden="true"></span> <?php esc_html_e( 'Eye icon: manually show/hide menu items', 'members' ); ?></span>
-			<span class="members-am-legend-item"><span class="members-am-legend-nocap-badge">&#128274; no access</span> <?php esc_html_e( 'Role lacks the required WordPress capability (manage in Roles page)', 'members' ); ?></span>
+			<span class="members-am-legend-item"><span class="members-am-legend-nocap-badge">&#128274; no access</span> <?php esc_html_e( 'This role does not have the menu item’s capability on the role object alone; users with multiple roles may still have access. Hover the badge for details.', 'members' ); ?></span>
 		</p>
 
 		<div class="members-am-chips" id="members-am-role-chips"></div>

@@ -752,7 +752,6 @@
 
 	function roleHasCap(role, cap) {
 		if (!cap || cap === 'read') return true;
-		if (role === 'administrator') return true;
 		var caps = membersAdminMenus.roleCaps && membersAdminMenus.roleCaps[role];
 		if (!caps) return false;
 		return caps.indexOf(cap) !== -1;
@@ -1680,7 +1679,17 @@
 			$main.append($('<span class="members-am-badge members-am-badge-custom"/>').text(ov.badge).css({ backgroundColor: badgeBg, color: '#fff', fontSize: '9px', padding: '1px 5px', borderRadius: '2px', marginLeft: '4px', whiteSpace: 'nowrap' }));
 		}
 		if (noCap) {
-			$main.append($('<span class="members-am-badge members-am-badge-nocap" title="This role does not have the \'' + (node.cap || 'read') + '\' capability. Manage capabilities in Members > Roles.">&#128274; no access</span>'));
+			var i18nN = membersAdminMenus.i18n || {};
+			var nocapTitle =
+				(i18nN.noAccessTitlePattern && i18nN.noAccessTitlePattern.replace('%s', node.cap || 'read')) ||
+				'This role does not have the \'' +
+					(node.cap || 'read') +
+					'\' capability on this role object. Users with multiple roles may still access the screen. Manage capabilities in Members → Roles.';
+			$main.append(
+				$('<span class="members-am-badge members-am-badge-nocap"/>')
+					.attr('title', nocapTitle)
+					.html('&#128274; no access')
+			);
 		}
 		$row.append($main);
 
