@@ -2886,13 +2886,12 @@
 			.attr('placeholder', (node && node.cap) ? node.cap + ' (default)' : '')
 			.val(state.settings.capabilities[state.selectedId] || '');
 
-		var custom = node && node.custom;
+		// Remove deletes a Members custom_items row only (members-am-* hooks), not core WP menus.
+		var removableCustom = Boolean(
+			node && node.customId && isCustomMenuUrlTarget(state.selectedId)
+		);
 		var $rmCustom = $('#members-am-remove-custom');
-		if (custom) {
-			$rmCustom.removeAttr('hidden');
-		} else {
-			$rmCustom.attr('hidden', 'hidden');
-		}
+		$rmCustom.prop('hidden', !removableCustom);
 
 		$('#members-am-visibility-toggles').empty();
 		var capFromSettings = normalizeCapForCheck(state.settings.capabilities[state.selectedId] || '');
@@ -2948,6 +2947,7 @@
 		initColorPickers();
 		renderIconGrid();
 		updateDemoteParentSelect();
+		updatePromoteButtonState();
 		updateEditPopoverSubtitle();
 		updateBadgePreview();
 		document.body.style.overflow = 'hidden';
@@ -2963,6 +2963,26 @@
 	/**
 	 * Populate "Move to submenu" parent dropdown from top-level menu items (titles, not raw file slugs).
 	 */
+	/**
+	 * "Make top-level" applies to snapshot submenu rows (parent::child) or to
+	 * top-level file slugs that were moved under another parent via overrides.
+	 */
+	function canMakeTopLevelForCurrentEdit() {
+		if (!state.selectedId) {
+			return false;
+		}
+		var sid = state.selectedId;
+		if (sid.indexOf('::') !== -1) {
+			return true;
+		}
+		var ov = getOverrideForEdit() || {};
+		return !!(ov.parent && ov.parent !== '__promote__');
+	}
+
+	function updatePromoteButtonState() {
+		$('#members-am-promote').prop('disabled', !canMakeTopLevelForCurrentEdit());
+	}
+
 	function updateDemoteParentSelect() {
 		var $wrap = $('.members-am-demote-wrap');
 		var $sel = $('#members-am-demote-parent');
@@ -4056,6 +4076,9 @@
 		});
 
 		$('#members-am-remove-custom').on('click', function () {
+			if (!state.selectedId || !isCustomMenuUrlTarget(state.selectedId)) {
+				return;
+			}
 			var node = findNode(state.selectedId);
 			var storageId = node && node.customId ? String(node.customId) : '';
 			if (!storageId && node && node.custom && state.selectedId) {
@@ -4181,7 +4204,9 @@
 		});
 
 		$('#members-am-promote').on('click', function () {
-			if (!state.selectedId) return;
+			if (!state.selectedId || $(this).prop('disabled')) {
+				return;
+			}
 			pushUndoSnapshot();
 			var sid = state.selectedId;
 			var ov0 = getOverrideForEdit() || {};

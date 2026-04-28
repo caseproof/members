@@ -2254,6 +2254,11 @@ body.admin_page_members-about #wpbody-content {
 	box-shadow: none !important;
 }
 
+/* Core .button display can override the UA [hidden] rule; keep destructive control off-layout for core items. */
+#members-am-remove-custom[hidden] {
+	display: none !important;
+}
+
 .members-am-btn-danger:hover {
 	color: #fff !important;
 	background: #d63638 !important;
