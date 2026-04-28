@@ -24,6 +24,7 @@ add_action( 'admin_init', __NAMESPACE__ . '\block_restricted_pages', 1 );
 add_action( 'admin_enqueue_scripts', __NAMESPACE__ . '\maybe_enqueue_fontawesome' );
 add_filter( 'custom_menu_order', __NAMESPACE__ . '\enable_custom_menu_order' );
 add_filter( 'menu_order', __NAMESPACE__ . '\filter_menu_order', 999 );
+add_action( 'members_after_rescue', __NAMESPACE__ . '\\members_am_add_exempt_administrator' );
 
 /**
  * Enable custom menu order when we have per-role order stored.
@@ -1391,6 +1392,95 @@ function get_settings() {
  */
 function members_am_invalidate_settings_cache() {
 	unset( $GLOBALS['members_am_settings_runtime_cache'] );
+}
+
+/**
+ * Remove Admin Menus role entries for slugs that no longer exist (e.g. after Members role reset).
+ *
+ * Only prunes `roles[ slug ]` keys; does not alter capability maps or other settings.
+ *
+ * @param array $role_slugs Role slugs to remove from stored settings.
+ * @return void
+ */
+function members_am_prune_role_settings( array $role_slugs ) {
+	if ( empty( $role_slugs ) ) {
+		return;
+	}
+
+	$slugs = array_unique( array_filter( array_map( 'sanitize_key', $role_slugs ) ) );
+	if ( empty( $slugs ) ) {
+		return;
+	}
+
+	$settings = get_option( OPTION_KEY, array() );
+	if ( ! is_array( $settings ) || empty( $settings['roles'] ) || ! is_array( $settings['roles'] ) ) {
+		return;
+	}
+
+	$changed = false;
+	foreach ( $slugs as $slug ) {
+		if ( isset( $settings['roles'][ $slug ] ) ) {
+			unset( $settings['roles'][ $slug ] );
+			$changed = true;
+		}
+	}
+
+	if ( $changed ) {
+		update_option( OPTION_KEY, $settings );
+		members_am_invalidate_settings_cache();
+	}
+}
+
+/**
+ * Add a user ID to the Admin Menus exempt list (used when administrators are restricted via admin_editable).
+ *
+ * Does not enable `admin_editable`. No-op if the user is not an administrator (or super admin on multisite).
+ *
+ * @param int $user_id User ID.
+ * @return void
+ */
+function members_am_add_exempt_administrator( $user_id ) {
+	$uid = absint( $user_id );
+	if ( $uid < 1 ) {
+		return;
+	}
+
+	$user = get_userdata( $uid );
+	if ( ! $user ) {
+		return;
+	}
+
+	$is_administrator = in_array( 'administrator', (array) $user->roles, true );
+	if ( ! $is_administrator && ! ( is_multisite() && is_super_admin( $uid ) ) ) {
+		return;
+	}
+
+	$settings = get_option( OPTION_KEY, array() );
+	if ( ! is_array( $settings ) ) {
+		$settings = array();
+	}
+
+	if ( empty( $settings['_meta'] ) || ! is_array( $settings['_meta'] ) ) {
+		$settings['_meta'] = array();
+	}
+
+	$exempt_ids = array();
+	if ( ! empty( $settings['_meta']['admin_menu_exempt_user_ids'] ) && is_array( $settings['_meta']['admin_menu_exempt_user_ids'] ) ) {
+		$exempt_ids = array_map( 'absint', $settings['_meta']['admin_menu_exempt_user_ids'] );
+	}
+
+	if ( in_array( $uid, $exempt_ids, true ) ) {
+		return;
+	}
+
+	$exempt_ids[] = $uid;
+	$exempt_ids   = array_values( array_unique( array_map( 'absint', $exempt_ids ) ) );
+	sort( $exempt_ids, SORT_NUMERIC );
+
+	$settings['_meta']['admin_menu_exempt_user_ids'] = $exempt_ids;
+
+	update_option( OPTION_KEY, $settings );
+	members_am_invalidate_settings_cache();
 }
 
 /**

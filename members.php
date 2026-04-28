@@ -540,6 +540,14 @@ final class Members_Plugin {
 		// Fallback for reassigning users: use site default if it's a core role, else subscriber.
 		$fallback_role = in_array( $default_role_option, $default_roles, true ) ? $default_role_option : 'subscriber';
 
+		$removed_custom_roles = array();
+		foreach ( $members_created_roles as $role_name ) {
+			if ( ! in_array( $role_name, $default_roles, true ) ) {
+				$removed_custom_roles[] = $role_name;
+			}
+		}
+		$removed_custom_roles = array_values( array_unique( $removed_custom_roles ) );
+
 		foreach ( $members_created_roles as $role_name ) {
 			if ( in_array( $role_name, $default_roles, true ) ) {
 				continue;
@@ -560,6 +568,10 @@ final class Members_Plugin {
 			}
 			remove_role( $role_name );
 			members_untrack_created_role( $role_name );
+		}
+
+		if ( function_exists( 'Members\\AddOns\\AdminMenus\\members_am_prune_role_settings' ) ) {
+			\Members\AddOns\AdminMenus\members_am_prune_role_settings( $removed_custom_roles );
 		}
 
 		// Reset the five default WordPress roles to core defaults.
