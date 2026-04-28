@@ -208,7 +208,7 @@ add_action( 'in_admin_header', 'members_admin_header', 0 );
  */
 function members_admin_header() {
 
-	if ( members_is_memberpress_active() || empty( $_GET['page'] ) || ! in_array( $_GET['page'], array( 'roles', 'members', 'members-settings', 'members-about', 'members-payments', 'members-growth-tools' ) ) ) {
+	if ( members_is_memberpress_active() || empty( $_GET['page'] ) || ! in_array( $_GET['page'], array( 'roles', 'members', 'members-settings', 'members-about', 'members-payments', 'members-growth-tools', 'members-admin-menus' ), true ) ) {
 		return;
 	}
 
@@ -330,7 +330,7 @@ function members_is_admin_page() {
 
 	// Fallback: pages registered outside Settings_Page (e.g. the Growth Tools
 	// submenu is registered by the caseproof/growth-tools composer package).
-	if ( ! empty( $_GET['page'] ) && in_array( $_GET['page'], array( 'roles', 'members', 'members-settings', 'members-about', 'members-payments', 'members-growth-tools' ), true ) ) {
+	if ( ! empty( $_GET['page'] ) && in_array( $_GET['page'], array( 'roles', 'members', 'members-settings', 'members-about', 'members-payments', 'members-growth-tools', 'members-admin-menus' ), true ) ) {
 		return true;
 	}
 

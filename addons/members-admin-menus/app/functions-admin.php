@@ -645,14 +645,56 @@ function enqueue_admin_menus_assets() {
 				'bulkVisibilityHint'     => __( 'For bulk visibility (whole column or checked rows), use the tools above each role column.', 'members' ),
 				'filterRolesVisibility'  => __( 'Filter roles…', 'members' ),
 				'filterRolesVisibilityLabel' => __( 'Filter roles in this list', 'members' ),
-				'moreToolsShowAria'      => __( 'Show additional tools: copy between roles, import and export', 'members' ),
+				'moreToolsShowAria'      => __( 'Show additional tools', 'members' ),
 				'moreToolsHideAria'      => __( 'Hide additional tools', 'members' ),
-				'colorsReadableNeedBg'   => __( 'Choose a background color first.', 'members' ),
+				'moreToolsPanelHint'     => __( 'Administrator editing, copy between roles, exempt administrators, and import/export.', 'members' ),
+				'searchUsersToOverride'  => __( 'Search users to override…', 'members' ),
+				'rowBadgeHidden'         => __( 'HIDDEN', 'members' ),
+				'rowBadgeNoAccess'       => __( 'NO ACCESS', 'members' ),
 				'noAccessTitlePattern'   => __( 'This role does not have the stored capability “%s”. Users with multiple roles may still reach the screen if another role grants it. Tags use manage_post_tags when Category & Tag Caps is active (Members → Roles, Taxonomy).', 'members' ),
 				'multiRoleMergeHelp'     => __( 'Users with multiple roles: a menu item is hidden if any of their roles hides it. When two roles define different labels, icons, or colors for the same item, the first role in the user’s role list wins.', 'members' ),
 				'exemptLastAdministrator' => __( 'Keep at least one exempt administrator while this option is enabled.', 'members' ),
 				'exemptRemove'            => __( 'Remove', 'members' ),
 				'exemptSaveRequiresAdministrator' => __( 'When administrator menu editing is enabled, at least one exempt administrator is required. Sign in as an administrator or add one using the search field.', 'members' ),
+				'columnsAllHidden'        => __( 'All role columns are hidden. Use the role chips above to show at least one role.', 'members' ),
+				'showRoleColumn'          => __( 'Show role column', 'members' ),
+				'hideRoleColumn'          => __( 'Hide role column', 'members' ),
+				'moveColumnLeft'          => __( 'Move column left', 'members' ),
+				'moveColumnRight'         => __( 'Move column right', 'members' ),
+				'closeUserColumn'         => __( 'Close user preview column', 'members' ),
+				'showAllRoles'            => __( 'Show all', 'members' ),
+				'hideAllRoles'            => __( 'Hide all', 'members' ),
+				'setOverride'             => __( 'Set override', 'members' ),
+				'setOverridePhase2'       => __( 'Per-user override editing is planned for a future update.', 'members' ),
+				'popoverPhase1Body'       => __( 'Detailed item editing (rename, URL, icons, and colors) is coming in the next update. Use the row controls in each column for visibility and ordering.', 'members' ),
+				'copyConfirm'             => __( 'Copy menu settings from “%1$s” to “%2$s”? This overwrites the target role’s configuration.', 'members' ),
+				'copyConfirmYes'          => __( 'Confirm copy', 'members' ),
+				'copyConfirmNo'           => __( 'Cancel', 'members' ),
+				'addItemModalTitle'       => __( 'Add custom menu item', 'members' ),
+				'addItemModalIntro'       => __( 'Add a link to the admin menu. Nothing is saved until you click “Save changes”.', 'members' ),
+				'addItemSubmit'           => __( 'Add to menu', 'members' ),
+				'addItemCancel'           => __( 'Cancel', 'members' ),
+				'positionTopEnd'          => __( 'Top of menu', 'members' ),
+				'positionTopStart'        => __( 'Bottom of menu', 'members' ),
+				'positionSubmenuOf'       => __( 'Submenu of…', 'members' ),
+				'applyToAllRoles'         => __( 'All roles', 'members' ),
+				'applyToLabel'            => __( 'Apply to:', 'members' ),
+				'customTitle'             => __( 'Custom title', 'members' ),
+				'urlOverride'             => __( 'URL override', 'members' ),
+				'urlDefaultPlaceholder'   => __( 'Default', 'members' ),
+				'sectionIcon'             => __( 'Icon', 'members' ),
+				'sectionBadge'            => __( 'Badge', 'members' ),
+				'sectionColors'           => __( 'Colors', 'members' ),
+				'sectionVisibility'       => __( 'Visibility per role', 'members' ),
+				'selectParentMenuButton'  => __( 'Select parent menu', 'members' ),
+				'removeMenuItem'          => __( 'Remove', 'members' ),
+				'badgePreviewLabel'       => __( 'Preview', 'members' ),
+				'badgeTextFieldLabel'     => __( 'Badge text', 'members' ),
+				'badgeColorFieldLabel'    => __( 'Badge color', 'members' ),
+				'colorsApplyFooterNote'   => __( 'Colors apply to the “Apply to” target. Each role column shows its own overrides.', 'members' ),
+				'popoverCloseAria'        => __( 'Close advanced menu', 'members' ),
+				'labelUrlSection'         => __( 'Label & URL', 'members' ),
+				'editPopoverDone'         => __( 'Close', 'members' ),
 			),
 		)
 	);
@@ -678,7 +720,8 @@ function render_admin_menus_page() {
 				</div>
 				<span class="members-am-user-search-wrap members-am-toolbar-primary-user">
 					<label for="members-am-user-search"><?php esc_html_e( 'User:', 'members' ); ?></label>
-					<input type="text" id="members-am-user-search" class="members-am-user-search-input" placeholder="<?php esc_attr_e( 'Search users…', 'members' ); ?>" />
+					<input type="text" id="members-am-user-search" class="members-am-user-search-input" placeholder="<?php esc_attr_e( 'Search users to override…', 'members' ); ?>" />
+					<button type="button" class="button" id="members-am-set-override" disabled aria-disabled="true" title="<?php echo esc_attr( __( 'Per-user override editing is planned for a future update.', 'members' ) ); ?>"><?php esc_html_e( 'Set override', 'members' ); ?></button>
 				</span>
 				<div class="members-am-toolbar-group members-am-toolbar-group--view">
 					<label class="members-am-sync-scroll">
@@ -698,29 +741,31 @@ function render_admin_menus_page() {
 				</div>
 			</div>
 			<div id="members-am-toolbar-extra" class="members-am-toolbar-extra" hidden>
-				<div class="members-am-toolbar-row members-am-toolbar-row--extra-tools">
-					<label class="members-am-admin-editable">
+				<p class="description members-am-toolbar-extra-hint"><?php esc_html_e( 'Administrator editing, copy between roles, exempt administrators, and import/export.', 'members' ); ?></p>
+				<div class="members-am-toolbar-extra-row">
+					<label class="members-am-admin-editable members-am-toolbar-admin-editable-inline">
 						<input type="checkbox" id="members-am-admin-editable" />
 						<?php esc_html_e( 'Allow editing administrator menus', 'members' ); ?>
 					</label>
-					<span class="members-am-copy-wrap">
+					<span class="members-am-copy-wrap members-am-copy-wrap--extra-inline">
 						<label>
 							<?php esc_html_e( 'Copy from role', 'members' ); ?>
-							<select id="members-am-copy-from"></select>
+							<select id="members-am-copy-from" class="members-am-copy-select"></select>
 						</label>
 						<label>
 							<?php esc_html_e( 'to', 'members' ); ?>
-							<select id="members-am-copy-to"></select>
+							<select id="members-am-copy-to" class="members-am-copy-select"></select>
 						</label>
 						<button type="button" class="button" id="members-am-copy-apply"><?php esc_html_e( 'Copy', 'members' ); ?></button>
+						<div id="members-am-copy-confirm-area" class="members-am-copy-confirm-area" hidden></div>
 					</span>
-					<div class="members-am-toolbar-group members-am-toolbar-group--io">
+					<div class="members-am-toolbar-group members-am-toolbar-group--io members-am-toolbar-extra-io">
 						<a href="#" class="button" id="members-am-export"><?php esc_html_e( 'Export', 'members' ); ?></a>
 						<button type="button" class="button" id="members-am-import"><?php esc_html_e( 'Import', 'members' ); ?></button>
 						<input type="file" id="members-am-import-file" class="members-am-import-file-hidden" accept="application/json" />
 					</div>
 				</div>
-				<div id="members-am-exempt-row" class="members-am-toolbar-row members-am-toolbar-row--exempt" hidden>
+				<div id="members-am-exempt-row" class="members-am-toolbar-row members-am-toolbar-row--exempt members-am-toolbar-extra-exempt" hidden>
 					<div class="members-am-exempt-wrap">
 						<p class="description members-am-exempt-help"><?php esc_html_e( 'These administrator accounts always see the full menu and are not blocked from admin URLs by Admin Menus. At least one is required while editing the Administrator role. Add another exempt administrator before removing yourself.', 'members' ); ?></p>
 						<div id="members-am-exempt-chips" class="members-am-exempt-chips" role="list"></div>
@@ -733,88 +778,159 @@ function render_admin_menus_page() {
 			</div>
 		</div>
 
-		<p class="members-am-legend">
-			<span class="members-am-legend-item"><span class="dashicons dashicons-visibility members-am-legend-visibility-icon" aria-hidden="true"></span> <?php esc_html_e( 'Eye icon: manually show/hide menu items', 'members' ); ?></span>
-			<span class="members-am-legend-item"><span class="members-am-legend-nocap-badge">&#128274; no access</span> <?php esc_html_e( 'This role does not have the menu item’s capability on the role object alone; users with multiple roles may still have access. Hover the badge for details.', 'members' ); ?></span>
-		</p>
-		<p class="members-am-legend members-am-legend--note description"><?php esc_html_e( 'Users with multiple roles: a menu item is hidden if any of their roles hides it. When two roles define different labels, icons, or colors for the same item, the first role in the user’s role list wins.', 'members' ); ?></p>
-
-		<div class="members-am-chips" id="members-am-role-chips"></div>
-
-		<div class="members-am-carousel-wrap">
-			<button type="button" class="members-am-carousel-prev" id="members-am-carousel-prev" aria-label="<?php esc_attr_e( 'Previous', 'members' ); ?>">&lsaquo;</button>
-			<div class="members-am-columns" id="members-am-columns"></div>
-			<button type="button" class="members-am-carousel-next" id="members-am-carousel-next" aria-label="<?php esc_attr_e( 'Next', 'members' ); ?>">&rsaquo;</button>
+		<div class="members-am-info-bar" role="region" aria-label="<?php esc_attr_e( 'Admin Menus legend', 'members' ); ?>">
+			<div class="members-am-info-bar-legends">
+				<span class="members-am-info-item"><span class="members-am-legend-badge members-am-legend-badge-hidden"><?php esc_html_e( 'HIDDEN', 'members' ); ?></span> <?php esc_html_e( 'Item manually hidden for this role.', 'members' ); ?></span>
+				<span class="members-am-info-item"><span class="dashicons dashicons-lock members-am-info-icon" aria-hidden="true"></span><span class="members-am-legend-badge members-am-legend-badge-nocap"><?php esc_html_e( 'NO ACCESS', 'members' ); ?></span> <?php esc_html_e( 'This role does not have the required capability for that menu item. Users with multiple roles may still have access. Hover a row badge for details.', 'members' ); ?></span>
+			</div>
+			<span class="members-am-info-item members-am-info-item--note"><?php esc_html_e( 'Users with multiple roles: a menu item is hidden if any of their roles hides it. When two roles define different labels, icons, or colors for the same item, the first role in the user’s role list wins.', 'members' ); ?></span>
 		</div>
-		<div class="members-am-carousel-dots" id="members-am-carousel-dots"></div>
-		<p class="members-am-carousel-status" id="members-am-carousel-status"></p>
 
-		<div class="members-am-edit-panel" id="members-am-edit-panel" hidden>
-			<div class="members-am-edit-panel-header">
-				<h2 id="members-am-edit-title"></h2>
-				<button type="button" class="button-link" id="members-am-edit-close">&times;</button>
+		<div class="members-am-chips-wrap">
+			<div class="members-am-chips-actions">
+				<button type="button" class="button button-small" id="members-am-chips-show-all"><?php esc_html_e( 'Show all', 'members' ); ?></button>
+				<button type="button" class="button button-small" id="members-am-chips-hide-all"><?php esc_html_e( 'Hide all', 'members' ); ?></button>
 			</div>
-			<div class="members-am-edit-toolbar">
-				<label class="members-am-edit-target-wrap">
-					<?php esc_html_e( 'Apply field edits to role', 'members' ); ?>
-					<select id="members-am-edit-target-role"></select>
-				</label>
-				<button type="button" class="button" id="members-am-remove-custom" hidden><?php esc_html_e( 'Remove custom item', 'members' ); ?></button>
-				<span class="members-am-level-actions">
-					<button type="button" class="button" id="members-am-add-sep"><?php esc_html_e( 'Add separator', 'members' ); ?></button>
-					<button type="button" class="button" id="members-am-promote"><?php esc_html_e( 'Make top-level', 'members' ); ?></button>
-					<span class="members-am-demote-wrap" hidden>
-						<label for="members-am-demote-parent" class="screen-reader-text"><?php esc_html_e( 'Parent menu', 'members' ); ?></label>
-						<select id="members-am-demote-parent" class="members-am-demote-select" aria-label="<?php esc_attr_e( 'Parent menu', 'members' ); ?>"></select>
-						<button type="button" class="button" id="members-am-demote"><?php esc_html_e( 'Move to submenu', 'members' ); ?></button>
-					</span>
-				</span>
+			<div class="members-am-chips members-am-chips-inner" id="members-am-role-chips"></div>
+		</div>
+
+		<div class="members-am-cols-host">
+			<div class="members-am-cols-wrap" id="members-am-cols-wrap">
+				<div class="members-am-cols-inner">
+					<div class="members-am-columns" id="members-am-columns"></div>
+				</div>
 			</div>
-			<div class="members-am-edit-grid">
-				<div class="members-am-edit-col">
-					<label><?php esc_html_e( 'Title', 'members' ); ?></label>
-					<input type="text" id="members-am-edit-label" class="widefat" />
-					<div id="members-am-edit-url-wrap">
-						<label><?php esc_html_e( 'URL', 'members' ); ?></label>
-						<input type="text" id="members-am-edit-url" class="widefat" />
+		</div>
+
+		<div id="members-am-edit-panel" class="members-am-edit-popover-root" hidden>
+			<div class="members-am-edit-popover-overlay" id="members-am-edit-popover-overlay" tabindex="-1" aria-hidden="true"></div>
+			<div class="members-am-edit-popover-dialog" role="dialog" aria-modal="true" aria-labelledby="members-am-edit-title">
+				<div class="members-am-edit-popover-arrow" id="members-am-edit-popover-arrow" aria-hidden="true"></div>
+				<div class="members-am-edit-popover-header">
+					<div class="members-am-edit-popover-heading">
+						<h2 id="members-am-edit-title" class="members-am-edit-popover-title"></h2>
+						<p id="members-am-edit-subtitle" class="members-am-edit-popover-subtitle"></p>
+					</div>
+					<button type="button" class="button-link members-am-edit-popover-close" id="members-am-edit-close" aria-label="<?php esc_attr_e( 'Close advanced menu', 'members' ); ?>">&times;</button>
+				</div>
+				<div id="members-am-phase1-placeholder" class="members-am-phase1-placeholder members-am-edit-popover-placeholder" hidden>
+					<p class="members-am-phase1-placeholder-text"></p>
+				</div>
+				<div class="members-am-edit-toolbar members-am-edit-popover-chrome">
+					<div class="members-am-edit-popover-scope">
+						<label class="members-am-edit-target-wrap" for="members-am-edit-target-role">
+							<span class="members-am-edit-target-label"><?php esc_html_e( 'Apply to:', 'members' ); ?></span>
+						</label>
+						<select id="members-am-edit-target-role" class="members-am-edit-target-select"></select>
+					</div>
+					<div class="members-am-edit-popover-actions">
+						<button type="button" class="button button-small" id="members-am-promote"><?php esc_html_e( 'Make top-level', 'members' ); ?></button>
+						<span class="members-am-demote-wrap" hidden>
+							<label for="members-am-demote-parent" class="members-am-demote-parent-label"><?php esc_html_e( 'Select parent menu', 'members' ); ?></label>
+							<select id="members-am-demote-parent" class="members-am-demote-select" aria-label="<?php esc_attr_e( 'Parent menu', 'members' ); ?>"></select>
+							<button type="button" class="button button-small" id="members-am-demote"><?php esc_html_e( 'Move to submenu', 'members' ); ?></button>
+						</span>
+						<button type="button" class="button button-small members-am-btn-danger" id="members-am-remove-custom" hidden><?php esc_html_e( 'Remove', 'members' ); ?></button>
 					</div>
 				</div>
-				<div class="members-am-edit-col members-am-icons">
-					<label><?php esc_html_e( 'Icon', 'members' ); ?></label>
-					<div class="members-am-icon-tabs">
-						<button type="button" class="button is-active" data-tab="dashicons"><?php esc_html_e( 'Dashicons', 'members' ); ?></button>
-						<button type="button" class="button" data-tab="fontawesome"><?php esc_html_e( 'Font Awesome', 'members' ); ?></button>
-						<button type="button" class="button" data-tab="upload"><?php esc_html_e( 'Upload', 'members' ); ?></button>
+				<div class="members-am-edit-popover-body">
+					<div class="members-am-edit-grid" id="members-am-edit-grid">
+						<div class="members-am-edit-section-label"><?php esc_html_e( 'Label & URL', 'members' ); ?></div>
+						<div class="members-am-edit-row members-am-edit-row-title-url">
+							<div class="members-am-edit-field">
+								<label for="members-am-edit-label"><?php esc_html_e( 'Custom title', 'members' ); ?></label>
+								<input type="text" id="members-am-edit-label" class="widefat" />
+							</div>
+							<div class="members-am-edit-field" id="members-am-edit-url-wrap">
+								<label for="members-am-edit-url"><?php esc_html_e( 'URL override', 'members' ); ?></label>
+								<input type="text" id="members-am-edit-url" class="widefat" placeholder="<?php esc_attr_e( 'Default', 'members' ); ?>" />
+							</div>
+						</div>
+						<section class="members-am-edit-section members-am-edit-section-icon members-am-icons" aria-labelledby="members-am-section-icon-heading">
+							<h3 id="members-am-section-icon-heading" class="members-am-edit-section-title"><?php esc_html_e( 'Icon', 'members' ); ?></h3>
+							<div class="members-am-icon-tabs">
+								<button type="button" class="button is-active" data-tab="dashicons"><?php esc_html_e( 'Dashicons', 'members' ); ?></button>
+								<button type="button" class="button" data-tab="fontawesome"><?php esc_html_e( 'Font Awesome', 'members' ); ?></button>
+								<button type="button" class="button" data-tab="upload"><?php esc_html_e( 'Upload', 'members' ); ?></button>
+							</div>
+							<input type="text" id="members-am-icon-search" placeholder="<?php esc_attr_e( 'Search icons…', 'members' ); ?>" class="widefat" />
+							<div class="members-am-icon-grid" id="members-am-icon-grid"></div>
+							<input type="hidden" id="members-am-icon-type" value="dashicon" />
+							<input type="text" id="members-am-icon-value" class="widefat" placeholder="dashicons-admin-post" />
+							<img id="members-am-icon-preview" class="members-am-icon-preview" src="" alt="" />
+							<button type="button" class="button" id="members-am-media-upload"><?php esc_html_e( 'Choose image', 'members' ); ?></button>
+							<p class="description members-am-icon-upload-desc"><?php esc_html_e( 'Recommended: 20×20px PNG or SVG. Larger images will be scaled down.', 'members' ); ?></p>
+						</section>
+						<section class="members-am-edit-section members-am-edit-section-badge" aria-labelledby="members-am-section-badge-heading">
+							<h3 id="members-am-section-badge-heading" class="members-am-edit-section-title"><?php esc_html_e( 'Badge', 'members' ); ?></h3>
+							<div class="members-am-edit-badge-row">
+								<div class="members-am-edit-field">
+									<label for="members-am-badge-text"><?php esc_html_e( 'Badge text', 'members' ); ?></label>
+									<input type="text" id="members-am-badge-text" class="widefat" placeholder="<?php esc_attr_e( 'e.g. New, Beta, Pro', 'members' ); ?>" />
+								</div>
+								<div class="members-am-edit-field">
+									<label for="members-am-badge-bg"><?php esc_html_e( 'Badge color', 'members' ); ?></label>
+									<input type="text" class="members-am-color members-am-badge-bg-input" id="members-am-badge-bg" />
+								</div>
+							</div>
+							<div class="members-am-badge-preview-row">
+								<span class="members-am-badge-preview-label"><?php esc_html_e( 'Preview', 'members' ); ?></span>
+								<span id="members-am-badge-preview" class="members-am-badge-preview" aria-live="polite"></span>
+							</div>
+						</section>
+						<section class="members-am-edit-section members-am-edit-section-colors" aria-labelledby="members-am-section-colors-heading">
+							<h3 id="members-am-section-colors-heading" class="members-am-edit-section-title"><?php esc_html_e( 'Colors', 'members' ); ?></h3>
+							<p class="description members-am-colors-hint"><?php esc_html_e( 'Colors apply to the “Apply to” target. Each role column shows its own overrides.', 'members' ); ?></p>
+							<div class="members-am-edit-colors-grid">
+								<p class="members-am-edit-color-field"><label for="members-am-color-bg"><?php esc_html_e( 'Background', 'members' ); ?></label><input type="text" class="members-am-color" id="members-am-color-bg" /></p>
+								<p class="members-am-edit-color-field"><label for="members-am-color-text"><?php esc_html_e( 'Text', 'members' ); ?></label><input type="text" class="members-am-color" id="members-am-color-text" /></p>
+								<p class="members-am-edit-color-field"><label for="members-am-color-icon"><?php esc_html_e( 'Icon', 'members' ); ?></label><input type="text" class="members-am-color" id="members-am-color-icon" /></p>
+							</div>
+						</section>
+						<section class="members-am-edit-section members-am-edit-section-visibility" aria-labelledby="members-am-section-visibility-heading">
+							<h3 id="members-am-section-visibility-heading" class="members-am-edit-section-title"><?php esc_html_e( 'Visibility per role', 'members' ); ?></h3>
+							<p class="description members-am-bulk-visibility-hint"><?php esc_html_e( 'For bulk visibility (whole column or checked rows), use the tools above each role column.', 'members' ); ?></p>
+							<div id="members-am-visibility-toggles"></div>
+							<p class="members-am-edit-cap-field">
+								<label for="members-am-item-cap"><?php esc_html_e( 'Required capability', 'members' ); ?></label>
+								<input type="text" id="members-am-item-cap" class="widefat" placeholder="read" />
+							</p>
+						</section>
 					</div>
-					<input type="text" id="members-am-icon-search" placeholder="<?php esc_attr_e( 'Search icons…', 'members' ); ?>" class="widefat" />
-					<div class="members-am-icon-grid" id="members-am-icon-grid"></div>
-					<input type="hidden" id="members-am-icon-type" value="dashicon" />
-					<input type="text" id="members-am-icon-value" class="widefat" placeholder="dashicons-admin-post" />
-					<img id="members-am-icon-preview" class="members-am-icon-preview" src="" alt="" />
-					<button type="button" class="button" id="members-am-media-upload"><?php esc_html_e( 'Choose image', 'members' ); ?></button>
-					<p class="description members-am-icon-upload-desc"><?php esc_html_e( 'Recommended: 20×20px PNG or SVG. Larger images will be scaled down.', 'members' ); ?></p>
 				</div>
-				<div class="members-am-edit-col">
-					<label><?php esc_html_e( 'Colors', 'members' ); ?></label>
-					<p class="description members-am-colors-hint"><?php esc_html_e( 'These colors apply only to the targets chosen in “Apply field edits to role” (a single role, all roles, or a preview user). Each role column shows that role’s overrides. The user preview column shows that user’s roles merged together, then any per-user tweaks when you pick that user here.', 'members' ); ?></p>
-					<p><label><?php esc_html_e( 'Background', 'members' ); ?></label><input type="text" class="members-am-color" id="members-am-color-bg" /></p>
-					<p><label><?php esc_html_e( 'Text', 'members' ); ?></label><input type="text" class="members-am-color" id="members-am-color-text" /></p>
-					<p><label><?php esc_html_e( 'Icon', 'members' ); ?></label><input type="text" class="members-am-color" id="members-am-color-icon" /></p>
-					<p class="members-am-colors-readable-wrap">
-						<button type="button" class="button button-small" id="members-am-colors-readable"><?php esc_html_e( 'Set readable text and icon colors', 'members' ); ?></button>
+				<div class="members-am-edit-popover-footer">
+					<button type="button" class="button button-primary" id="members-am-edit-popover-done"><?php esc_html_e( 'Close', 'members' ); ?></button>
+				</div>
+			</div>
+		</div>
+
+		<div id="members-am-add-item-modal" class="members-am-modal" hidden>
+			<div class="members-am-modal-backdrop" tabindex="-1"></div>
+			<div class="members-am-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="members-am-add-item-modal-title">
+				<div class="members-am-modal-header">
+					<h2 id="members-am-add-item-modal-title"><?php esc_html_e( 'Add custom menu item', 'members' ); ?></h2>
+					<button type="button" class="button-link members-am-modal-close" id="members-am-add-item-modal-close" aria-label="<?php esc_attr_e( 'Close', 'members' ); ?>">&times;</button>
+				</div>
+				<div class="members-am-modal-body">
+					<p class="description"><?php esc_html_e( 'Add a link to the admin menu. Nothing is saved until you click “Save changes”.', 'members' ); ?></p>
+					<p>
+						<label for="members-am-add-item-title"><?php esc_html_e( 'Title', 'members' ); ?></label>
+						<input type="text" id="members-am-add-item-title" class="widefat" required />
+					</p>
+					<p>
+						<label for="members-am-add-item-url"><?php esc_html_e( 'URL', 'members' ); ?></label>
+						<input type="text" id="members-am-add-item-url" class="widefat" placeholder="<?php esc_attr_e( 'https:// or /wp-admin/…', 'members' ); ?>" required />
+					</p>
+					<p>
+						<label for="members-am-add-item-parent"><?php esc_html_e( 'Submenu of…', 'members' ); ?></label>
+						<select id="members-am-add-item-parent" class="widefat">
+							<option value=""><?php esc_html_e( 'Top level (end of menu)', 'members' ); ?></option>
+						</select>
 					</p>
 				</div>
-				<div class="members-am-edit-col">
-					<label><?php esc_html_e( 'Badge', 'members' ); ?></label>
-					<p><label><?php esc_html_e( 'Text', 'members' ); ?></label><input type="text" id="members-am-badge-text" class="widefat" placeholder="<?php esc_attr_e( 'e.g. New, Beta, Pro', 'members' ); ?>" /></p>
-					<p><label><?php esc_html_e( 'Color', 'members' ); ?></label><input type="text" class="members-am-color" id="members-am-badge-bg" /></p>
-				</div>
-				<div class="members-am-edit-col">
-					<label><?php esc_html_e( 'Visibility per role', 'members' ); ?></label>
-					<p class="description members-am-bulk-visibility-hint"><?php esc_html_e( 'For bulk visibility (whole column or checked rows), use the tools above each role column.', 'members' ); ?></p>
-					<div id="members-am-visibility-toggles"></div>
-					<label><?php esc_html_e( 'Required capability', 'members' ); ?></label>
-					<input type="text" id="members-am-item-cap" class="widefat" placeholder="read" />
+				<div class="members-am-modal-footer">
+					<button type="button" class="button" id="members-am-add-item-cancel"><?php esc_html_e( 'Cancel', 'members' ); ?></button>
+					<button type="button" class="button button-primary" id="members-am-add-item-submit"><?php esc_html_e( 'Add to menu', 'members' ); ?></button>
 				</div>
 			</div>
 		</div>

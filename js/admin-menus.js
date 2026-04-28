@@ -8,8 +8,6 @@
 		settings: $.extend(true, {}, membersAdminMenus.settings),
 		tree: [],
 		activeRoleSlugs: [],
-		carouselPage: 0,
-		columnsPerPage: 3,
 		selectedId: null,
 		iconTab: 'dashicons',
 		previewUserId: null,
@@ -28,7 +26,28 @@
 		collapsedParents: {},
 		/** Display labels for exempt administrator IDs (string keys). */
 		exemptUserLabels: {},
+		/**
+		 * When opening the item editor, optionally pre-select Apply to: from the column that was acted on.
+		 * { type: 'role', slug: string } | { type: 'user', id: number } — consumed once in openEditPanel().
+		 */
+		pendingEditApplyTarget: null,
 	};
+
+	/** Phase 1: item panel shows placeholder copy only; full field editor remains in markup for later phases. */
+	var MEMBERS_AM_PHASE1_PLACEHOLDER_PANEL = false;
+
+	/** Stable accent per role slug (matches design: colored chip + column header dot). */
+	var ROLE_ACCENT_PALETTE = ['#46b450', '#2271b1', '#d97706', '#d63384', '#7c3aed', '#16a34a', '#64748b', '#0891b2'];
+
+	function roleAccentColor(slug) {
+		slug = String(slug || '');
+		var h = 0;
+		for (var i = 0; i < slug.length; i++) {
+			h = (h << 5) - h + slug.charCodeAt(i);
+			h |= 0;
+		}
+		return ROLE_ACCENT_PALETTE[Math.abs(h) % ROLE_ACCENT_PALETTE.length];
+	}
 
 	/** Snapshot of persisted settings for unsaved-change detection (object key order–independent). */
 	var initialSettingsSerialized = '';
@@ -160,7 +179,6 @@
 		try {
 			localStorage.setItem(VIEW_STORAGE_KEY, JSON.stringify({
 				activeRoleSlugs: state.activeRoleSlugs,
-				carouselPage: state.carouselPage,
 			}));
 		} catch (e) {}
 	}
@@ -1689,12 +1707,6 @@
 			});
 			if (restored.length) {
 				state.activeRoleSlugs = restored;
-				state.carouselPage = (typeof saved.carouselPage === 'number') ? saved.carouselPage : 0;
-				// Clamp carousel page to valid range.
-				var maxPage = Math.max(0, Math.ceil(state.activeRoleSlugs.length / state.columnsPerPage) - 1);
-				if (state.carouselPage > maxPage) {
-					state.carouselPage = maxPage;
-				}
 				return;
 			}
 		}
@@ -1711,31 +1723,50 @@
 		}
 	}
 
+	function scrollRoleColumnIntoView(roleSlug) {
+		var $col = $('#members-am-columns .members-am-column[data-role="' + roleSlug + '"]');
+		if (!$col.length) {
+			return;
+		}
+		var el = $col[0];
+		if (el.scrollIntoView) {
+			el.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
+		}
+	}
+
 	function renderChips() {
 		var $c = $('#members-am-role-chips').empty();
+		var i18n = membersAdminMenus.i18n || {};
+		var showLbl = i18n.showRoleColumn || 'Show column';
+		var hideLbl = i18n.hideRoleColumn || 'Hide column';
 		getRolesList().forEach(function (r) {
 			if (r.slug === 'administrator' && !state.settings._meta.admin_editable) {
 				return;
 			}
 			var on = state.activeRoleSlugs.indexOf(r.slug) !== -1;
-			var $chip = $('<button type="button" class="members-am-chip"/>')
-				.text(r.label)
+			var accent = roleAccentColor(r.slug);
+			var cbTitle = on ? hideLbl : showLbl;
+			var $wrap = $('<span class="members-am-role-chip-wrap"/>').attr('data-role', r.slug);
+			var $cb = $('<input type="checkbox" class="members-am-role-chip-cb"/>')
+				.prop('checked', on)
+				.attr('title', cbTitle)
+				.attr('aria-label', cbTitle + ': ' + r.label);
+			var $pill = $('<span class="members-am-chip members-am-chip-pill" role="presentation"/>')
 				.attr('data-role', r.slug)
-				.toggleClass('is-active', on);
-			$c.append($chip);
+				.css('--members-am-role-accent', accent)
+				.toggleClass('is-active', on)
+				.toggleClass('members-am-chip--inactive', !on);
+			var $action = $('<button type="button" class="members-am-chip-pill-action"/>')
+				.attr('data-role', r.slug)
+				.append($('<span class="members-am-chip-label"/>').text(r.label));
+			$pill.append($cb, $action);
+			$wrap.append($pill);
+			$c.append($wrap);
 		});
 	}
 
 	function renderCarouselStatus() {
-		var total = Math.max(1, Math.ceil(state.activeRoleSlugs.length / state.columnsPerPage));
-		var cur = Math.min(state.carouselPage + 1, total);
-		var start = state.carouselPage * state.columnsPerPage + 1;
-		var end = Math.min((state.carouselPage + 1) * state.columnsPerPage, state.activeRoleSlugs.length);
-		$('#members-am-carousel-status').text(start + '–' + end + ' ' + membersAdminMenus.i18n.of + ' ' + state.activeRoleSlugs.length);
-		var $dots = $('#members-am-carousel-dots').empty();
-		for (var p = 0; p < total; p++) {
-			$dots.append($('<button type="button" class="members-am-dot"/>').toggleClass('is-active', p === state.carouselPage));
-		}
+		/* Carousel removed: all role columns render in a horizontal scroll row (admin-menus-v5 layout). */
 	}
 
 	/**
@@ -1879,22 +1910,19 @@
 		var columnKey = filterKey;
 		var i18n = membersAdminMenus.i18n || {};
 		var $bulk = $('<div class="members-am-col-bulk"/>').attr('data-column-key', columnKey);
-		var $toolbar = $('<div class="members-am-col-bulk-toolbar"/>');
+		var $toolbar = $('<div class="members-am-col-bulk-toolbar members-am-col-bulk-toolbar--grid"/>');
 		$toolbar.append(
 			$('<button type="button" class="button button-small members-am-bulk-select-visible"/>').text(
 				i18n.bulkSelectVisible || 'Select visible'
 			),
 			$('<button type="button" class="button button-small members-am-bulk-clear-selection"/>').text(
 				i18n.bulkClearSelection || 'Clear selection'
-			)
-		);
-		var $collapseBar = $('<div class="members-am-col-collapse-toolbar"/>');
-		$collapseBar.append(
+			),
 			$('<button type="button" class="button button-small members-am-collapse-all"/>').text(
-				i18n.collapseAllMenus || 'Collapse all'
+				i18n.collapseAllMenus || 'Collapse submenus'
 			),
 			$('<button type="button" class="button button-small members-am-expand-all"/>').text(
-				i18n.expandAllMenus || 'Expand all'
+				i18n.expandAllMenus || 'Expand submenus'
 			)
 		);
 		var $sel = $('<select class="members-am-bulk-select"/>').attr(
@@ -1928,7 +1956,7 @@
 			)
 		);
 		$sel.append($ogWhole, $ogChecked);
-		$bulk.append($toolbar, $collapseBar, $sel);
+		$bulk.append($toolbar, $sel);
 		var $filter = $wrap.find('.members-am-col-filter').first();
 		if ($filter.length) {
 			$filter.after($bulk);
@@ -2014,11 +2042,26 @@
 		var label = (getRolesList().filter(function (r) {
 			return r.slug === role;
 		})[0] || {}).label || role;
-		$head.append($('<span class="members-am-sidebar-title"/>').text(label));
+		var accent = roleAccentColor(role);
+		var $titleBlock = $('<span class="members-am-sidebar-head-titles"/>');
+		$titleBlock.append(
+			$('<span class="members-am-sidebar-role-dot" aria-hidden="true"/>').css('background', accent),
+			$('<span class="members-am-sidebar-title"/>').text(label)
+		);
+		$head.append($titleBlock);
+		var i18nHead = membersAdminMenus.i18n || {};
+		var lblLeft = i18nHead.moveColumnLeft || 'Move column left';
+		var lblRight = i18nHead.moveColumnRight || 'Move column right';
 		$head.append(
 			$('<span class="members-am-col-move"/>').append(
-				$('<button type="button" class="members-am-col-left" aria-label="Move column left"/>').text('◀'),
-				$('<button type="button" class="members-am-col-right" aria-label="Move column right"/>').text('▶')
+				$('<button type="button" class="button button-small members-am-col-move-btn members-am-col-left"/>')
+					.attr('aria-label', lblLeft)
+					.attr('title', lblLeft)
+					.append($('<span class="dashicons dashicons-arrow-left-alt2" aria-hidden="true"/>')),
+				$('<button type="button" class="button button-small members-am-col-move-btn members-am-col-right"/>')
+					.attr('aria-label', lblRight)
+					.attr('title', lblRight)
+					.append($('<span class="dashicons dashicons-arrow-right-alt2" aria-hidden="true"/>'))
 			)
 		);
 		$wrap.append($head);
@@ -2116,6 +2159,10 @@
 			var badgeBg = ov.badge_bg || '#d63638';
 			$main.append($('<span class="members-am-badge members-am-badge-custom"/>').text(ov.badge).css({ backgroundColor: badgeBg, color: '#fff', fontSize: '9px', padding: '1px 5px', borderRadius: '2px', marginLeft: '4px', whiteSpace: 'nowrap' }));
 		}
+		if (hidden) {
+			var hidLbl = i18nRow.rowBadgeHidden || 'HIDDEN';
+			$main.append($('<span class="members-am-badge members-am-badge-hidden"/>').text(hidLbl));
+		}
 		if (noCap) {
 			var i18nN = membersAdminMenus.i18n || {};
 			var nocapTitle =
@@ -2123,10 +2170,14 @@
 				'This role does not have the \'' +
 					(node.cap || 'read') +
 					'\' capability on this role object. Users with multiple roles may still access the screen. Manage capabilities in Members → Roles.';
+			var noAccessLbl = i18nN.rowBadgeNoAccess || 'NO ACCESS';
 			$main.append(
 				$('<span class="members-am-badge members-am-badge-nocap"/>')
 					.attr('title', nocapTitle)
-					.text('\uD83D\uDD12 no access')
+					.append(
+						$('<span class="dashicons dashicons-lock members-am-badge-nocap-icon" aria-hidden="true"/>'),
+						$('<span class="members-am-badge-nocap-text"/>').text(noAccessLbl)
+					)
 			);
 		}
 		$row.append($main);
@@ -2232,15 +2283,23 @@
 			var badgeBg = ov.badge_bg || '#d63638';
 			$main.append($('<span class="members-am-badge members-am-badge-custom"/>').text(ov.badge).css({ backgroundColor: badgeBg, color: '#fff', fontSize: '9px', padding: '1px 5px', borderRadius: '2px', marginLeft: '4px', whiteSpace: 'nowrap' }));
 		}
+		if (hidden) {
+			var hidLblU = i18nURow.rowBadgeHidden || 'HIDDEN';
+			$main.append($('<span class="members-am-badge members-am-badge-hidden"/>').text(hidLblU));
+		}
 		if (noCap) {
 			var i18nUN = membersAdminMenus.i18n || {};
 			var userNocapTitle =
 				(i18nUN.noAccessTitlePattern && i18nUN.noAccessTitlePattern.replace('%s', node.cap || 'read')) ||
 				'This user does not have the \'' + (node.cap || 'read') + '\' capability.';
+			var noAccessLblU = i18nUN.rowBadgeNoAccess || 'NO ACCESS';
 			$main.append(
 				$('<span class="members-am-badge members-am-badge-nocap"/>')
 					.attr('title', userNocapTitle)
-					.text('\uD83D\uDD12 no access')
+					.append(
+						$('<span class="dashicons dashicons-lock members-am-badge-nocap-icon" aria-hidden="true"/>'),
+						$('<span class="members-am-badge-nocap-text"/>').text(noAccessLblU)
+					)
 			);
 		}
 		$row.append($main);
@@ -2371,9 +2430,13 @@
 				},
 				update: function () {
 					if (uid) {
+						state.pendingEditApplyTarget = { type: 'user', id: parseInt(String(uid), 10) };
 						serializeUserColumnFromDom($list, uid);
 					} else if (role) {
+						state.pendingEditApplyTarget = { type: 'role', slug: String(role) };
 						serializeRoleColumnFromDom($list, role);
+					} else {
+						state.pendingEditApplyTarget = null;
 					}
 					openEditPanel();
 				}
@@ -2387,16 +2450,25 @@
 		var scrollMap = {};
 		$cols.find('.members-am-column').each(function () {
 			var role = $(this).data('role');
-			if (role) {
+			var uid = $(this).data('user');
+			var key = role ? String(role) : (uid != null && uid !== '' ? 'u:' + uid : null);
+			if (key) {
 				var $list = $(this).find('.members-am-sidebar-list');
 				if ($list.length) {
-					scrollMap[role] = $list.scrollTop();
+					scrollMap[key] = $list.scrollTop();
 				}
 			}
 		});
 		$cols.empty();
-		var start = state.carouselPage * state.columnsPerPage;
-		var slice = state.activeRoleSlugs.slice(start, start + state.columnsPerPage);
+		var slice = state.activeRoleSlugs.slice();
+		if (!slice.length && !state.previewUserId) {
+			var emptyMsg =
+				(membersAdminMenus.i18n && membersAdminMenus.i18n.columnsAllHidden) ||
+				'';
+			$cols.append($('<p class="members-am-columns-empty"/>').text(emptyMsg));
+			renderCarouselStatus();
+			return;
+		}
 		slice.forEach(function (role) {
 			var $c = $('<div/>', { class: 'members-am-column' }).attr('data-role', role);
 			renderSidebar(role, $c);
@@ -2410,14 +2482,24 @@
 			var uid = state.previewUserId;
 			var $uc = $('<div/>', { class: 'members-am-column members-am-user-column' }).attr('data-user', String(uid));
 			var $head = $('<div class="members-am-sidebar-head"/>');
-			$head.append($('<span/>').text(state.previewUserLabel || ('User #' + uid)));
+			var $userTitle = $('<span class="members-am-sidebar-head-titles"/>');
+			$userTitle.append(
+				$('<span class="members-am-sidebar-role-dot members-am-sidebar-role-dot--user" aria-hidden="true"/>'),
+				$('<span class="members-am-sidebar-title"/>').text(state.previewUserLabel || ('User #' + uid))
+			);
+			$head.append($userTitle);
+			var i18nClose = membersAdminMenus.i18n || {};
+			var closeLbl = i18nClose.closeUserColumn || 'Remove user preview column';
 			$head.append(
-				$('<button type="button" class="button button-small">&times;</button>')
+				$('<button type="button" class="button button-small members-am-user-col-close"/>')
+					.attr('aria-label', closeLbl)
+					.attr('title', closeLbl)
+					.append($('<span class="dashicons dashicons-no-alt" aria-hidden="true"/>'))
 					.on('click', function () {
-					state.previewUserId = null;
-					state.previewUserLabel = null;
-					state.previewUserRoles = [];
-					renderAll();
+						state.previewUserId = null;
+						state.previewUserLabel = null;
+						state.previewUserRoles = [];
+						renderAll();
 					})
 			);
 			$uc.append($head);
@@ -2441,6 +2523,10 @@
 			bindColumnFilter($uc, $list, 'u:' + uid);
 			bindColumnBulk($uc, 'u:' + uid);
 			$cols.append($uc);
+			var ukey = 'u:' + uid;
+			if (scrollMap[ukey]) {
+				$uc.find('.members-am-sidebar-list').scrollTop(scrollMap[ukey]);
+			}
 		}
 		if (state.syncScroll) {
 			var $lists = $cols.find('.members-am-sidebar-list');
@@ -2458,6 +2544,55 @@
 		initMembersAmSortables();
 	}
 
+	function syncCopyToDisabled() {
+		var from = $('#members-am-copy-from').val();
+		$('#members-am-copy-to option').prop('disabled', false);
+		if (from) {
+			$('#members-am-copy-to option[value="' + from + '"]').prop('disabled', true);
+		}
+		if ($('#members-am-copy-to').val() === from) {
+			var $nd = $('#members-am-copy-to option:not(:disabled)').first();
+			if ($nd.length) {
+				$nd.prop('selected', true);
+			}
+		}
+	}
+
+	function showCopyConfirmInline(fromLabel, toLabel, onConfirm) {
+		var $area = $('#members-am-copy-confirm-area');
+		if (!$area.length) {
+			var fallback =
+				'Copy menu settings from "' + fromLabel + '" to "' + toLabel + '"?';
+			if (!window.confirm(fallback)) {
+				return;
+			}
+			onConfirm();
+			return;
+		}
+		$area.empty().removeAttr('hidden');
+		var i18n = membersAdminMenus.i18n || {};
+		var text = (i18n.copyConfirm || 'Copy from “%1$s” to “%2$s”?')
+			.replace('%1$s', fromLabel)
+			.replace('%2$s', toLabel);
+		var $wrap = $('<div class="notice notice-warning inline members-am-inline-copy-notice"/>');
+		$wrap.append($('<p/>').text(text));
+		var $p2 = $('<p/>');
+		var $yes = $('<button type="button" class="button button-primary"/>').text(
+			i18n.copyConfirmYes || 'Confirm'
+		);
+		var $no = $('<button type="button" class="button"/>').text(i18n.copyConfirmNo || 'Cancel');
+		$yes.on('click', function () {
+			$area.attr('hidden', true).empty();
+			onConfirm();
+		});
+		$no.on('click', function () {
+			$area.attr('hidden', true).empty();
+		});
+		$p2.append($yes, document.createTextNode(' '), $no);
+		$wrap.append($p2);
+		$area.append($wrap);
+	}
+
 	function renderCopySelect() {
 		var $from = $('#members-am-copy-from').empty();
 		var $to = $('#members-am-copy-to').empty();
@@ -2469,11 +2604,93 @@
 		if (roles.length > 1) {
 			$to.val(roles[1].slug);
 		}
+		syncCopyToDisabled();
+	}
+
+	function updateEditPopoverSubtitle() {
+		var v = $('#members-am-edit-target-role').val();
+		var i18nSub = membersAdminMenus.i18n || {};
+		var text = '';
+		if (v === '__all__') {
+			text = i18nSub.applyToAllRoles || 'All roles';
+		} else if (v && String(v).indexOf('__user__') === 0) {
+			var uids = parseInt(String(v).replace('__user__', ''), 10);
+			text = state.previewUserLabel || 'User #' + uids;
+		} else if (v) {
+			getRolesList().forEach(function (r) {
+				if (r.slug === v) {
+					text = r.label;
+				}
+			});
+			text = text || v;
+		}
+		$('#members-am-edit-subtitle').text(text);
+	}
+
+	function updateBadgePreview() {
+		var $p = $('#members-am-badge-preview');
+		if (!$p.length) {
+			return;
+		}
+		var t = String($('#members-am-badge-text').val() || '').trim();
+		if (!t) {
+			t = 'Badge';
+		}
+		var bg = String($('#members-am-badge-bg').val() || '').trim();
+		if (!bg || bg === '#') {
+			bg = '#2271b1';
+		}
+		var fg = membersAmContrastFgForBg(bg);
+		$p.text(t).css({ backgroundColor: bg, color: fg });
+	}
+
+	function closeEditPopover() {
+		state.selectedId = null;
+		state.pendingEditApplyTarget = null;
+		document.body.style.overflow = '';
+		$('#members-am-edit-panel').attr('hidden', true);
+		$('#members-am-phase1-placeholder').attr('hidden', true);
+		$('#members-am-edit-grid').removeAttr('hidden');
+		$('.members-am-edit-toolbar').removeAttr('hidden');
+		$('.members-am-edit-popover-body').removeAttr('hidden');
+		$('.members-am-edit-popover-footer').removeAttr('hidden');
+		$('#members-am-edit-subtitle').text('');
+		renderAll();
+	}
+
+	var membersAmRepositionPopoverTimer;
+
+	/**
+	 * Floating popover: dialog is centered in the viewport via CSS flex on the root.
+	 * Clears any legacy inline positioning from older builds.
+	 */
+	function positionEditPopover() {
+		var $root = $('#members-am-edit-panel');
+		var $dlg = $root.find('.members-am-edit-popover-dialog');
+		if (!$root.length || !$dlg.length || $root.prop('hidden')) {
+			return;
+		}
+		$dlg.css({
+			position: '',
+			left: '',
+			top: '',
+			right: '',
+			bottom: '',
+			width: '',
+			maxWidth: '',
+		});
+	}
+
+	function schedulePositionEditPopover() {
+		clearTimeout(membersAmRepositionPopoverTimer);
+		membersAmRepositionPopoverTimer = setTimeout(positionEditPopover, 50);
 	}
 
 	function renderEditTargetRoles() {
+		var prevVal = $('#members-am-edit-target-role').val();
 		var $s = $('#members-am-edit-target-role').empty();
-		$s.append($('<option/>').val('__all__').text('All roles'));
+		var i18nR = membersAdminMenus.i18n || {};
+		$s.append($('<option/>').val('__all__').text(i18nR.applyToAllRoles || 'All roles'));
 		state.activeRoleSlugs.forEach(function (slug) {
 			var lab = (getRolesList().filter(function (r) {
 				return r.slug === slug;
@@ -2483,22 +2700,81 @@
 		if (state.previewUserId) {
 			$s.append($('<option/>').val('__user__' + state.previewUserId).text(state.previewUserLabel || 'User #' + state.previewUserId));
 		}
+		if (prevVal && $s.find('option').filter(function () { return $(this).val() === prevVal; }).length) {
+			$s.val(prevVal);
+		}
+	}
+
+	function applyPendingEditApplyTargetSelect() {
+		var $sel = $('#members-am-edit-target-role');
+		if (!$sel.length || !state.pendingEditApplyTarget) {
+			return;
+		}
+		var p = state.pendingEditApplyTarget;
+		state.pendingEditApplyTarget = null;
+		var wantVal = null;
+		if (p.type === 'user' && p.id) {
+			wantVal = '__user__' + String(p.id);
+		} else if (p.type === 'role' && p.slug) {
+			wantVal = String(p.slug);
+		}
+		if (!wantVal) {
+			return;
+		}
+		if ($sel.find('option').filter(function () { return $(this).val() === wantVal; }).length) {
+			$sel.val(wantVal);
+		}
 	}
 
 	function openEditPanel() {
 		if (!state.selectedId) {
 			$('#members-am-edit-panel').attr('hidden', true);
+			$('#members-am-phase1-placeholder').attr('hidden', true);
+			$('#members-am-edit-grid').removeAttr('hidden');
+			$('.members-am-edit-toolbar').removeAttr('hidden');
+			$('#members-am-edit-subtitle').text('');
 			return;
 		}
 		$('#members-am-edit-panel').removeAttr('hidden');
 		var node = findNode(state.selectedId);
+		if (MEMBERS_AM_PHASE1_PLACEHOLDER_PANEL) {
+			var i18nPh = membersAdminMenus.i18n || {};
+			$('#members-am-edit-title').text(node ? node.title : state.selectedId);
+			var roleSlug = state.activeRoleSlugs[0] || '';
+			var roleLabel = roleSlug;
+			getRolesList().forEach(function (r) {
+				if (r.slug === roleSlug) {
+					roleLabel = r.label;
+				}
+			});
+			$('#members-am-edit-subtitle').text(roleSlug ? roleLabel : '');
+			$('#members-am-phase1-placeholder .members-am-phase1-placeholder-text').text(
+				i18nPh.popoverPhase1Body ||
+					'Detailed item editing is coming in a future update.'
+			);
+			$('#members-am-phase1-placeholder').removeAttr('hidden');
+			$('#members-am-edit-grid').attr('hidden', 'hidden');
+			$('.members-am-edit-toolbar').attr('hidden', 'hidden');
+			$('.members-am-edit-popover-body').attr('hidden', 'hidden');
+			$('.members-am-edit-popover-footer').attr('hidden', 'hidden');
+			setTimeout(schedulePositionEditPopover, 0);
+			return;
+		}
+		$('#members-am-phase1-placeholder').attr('hidden', true);
+		$('#members-am-edit-grid').removeAttr('hidden');
+		$('.members-am-edit-toolbar').removeAttr('hidden');
+		$('.members-am-edit-popover-body').removeAttr('hidden');
+		$('.members-am-edit-popover-footer').removeAttr('hidden');
+		renderEditTargetRoles();
+		applyPendingEditApplyTargetSelect();
 		var ov = getOverrideForEdit() || {};
 		$('#members-am-edit-title').text(node ? node.title : state.selectedId);
 		$('#members-am-edit-label').val(ov.label || (node && node.title) || '');
 		var allowUrl = isCustomMenuUrlTarget(state.selectedId);
 		$('#members-am-edit-url-wrap').toggle(allowUrl);
+		var urlDefPh = (membersAdminMenus.i18n && membersAdminMenus.i18n.urlDefaultPlaceholder) || 'Default';
 		$('#members-am-edit-url')
-			.attr('placeholder', 'Override URL (leave empty for default)')
+			.attr('placeholder', urlDefPh)
 			.val(allowUrl ? ov.url || (node && node.url) || '' : '')
 			.data('default-url', (node && node.url) || '');
 		$('#members-am-icon-type').val(ov.icon_type || 'dashicon');
@@ -2587,6 +2863,16 @@
 		initColorPickers();
 		renderIconGrid();
 		updateDemoteParentSelect();
+		updateEditPopoverSubtitle();
+		updateBadgePreview();
+		document.body.style.overflow = 'hidden';
+		setTimeout(function () {
+			positionEditPopover();
+			var $f = $('#members-am-edit-label');
+			if ($f.length && $f.is(':visible')) {
+				$f.trigger('focus');
+			}
+		}, 50);
 	}
 
 	/**
@@ -2757,6 +3043,7 @@
 		setOverrideField('badge_bg', $('#members-am-badge-bg').val());
 		state.settings.capabilities[state.selectedId] = $('#members-am-item-cap').val() || '';
 		renderColumns();
+		updateBadgePreview();
 	}
 
 	function renderIconGrid() {
@@ -2851,27 +3138,6 @@
 			arr[ix] = arr[nx];
 			arr[nx] = tmp;
 		}
-		renderAll();
-	}
-
-	function addSeparator() {
-		var roles = getTargetRoles();
-		if (!roles.length) {
-			return;
-		}
-		pushUndoSnapshot();
-		var sid = 'sep-' + Date.now();
-		roles.forEach(function (role) {
-			if (!getRoleConfig(role).order || !getRoleConfig(role).order.length) {
-				getRoleConfig(role).order = defaultTopOrder();
-			}
-			var o = getRoleConfig(role).order;
-			var ix = state.selectedId ? o.indexOf(state.selectedId) : o.length - 1;
-			if (ix < 0) {
-				ix = o.length;
-			}
-			o.splice(ix + 1, 0, sid);
-		});
 		renderAll();
 	}
 
@@ -3139,29 +3405,42 @@
 	}
 
 	function bind() {
-		$(document).on('click', '#members-am-role-chips .members-am-chip', function () {
-			var role = $(this).data('role');
+		$(document).on('change', '#members-am-role-chips .members-am-role-chip-cb', function () {
+			var role = $(this).closest('.members-am-role-chip-wrap').data('role');
+			var want = $(this).prop('checked');
 			var ix = state.activeRoleSlugs.indexOf(role);
-			if (ix === -1) {
-				state.activeRoleSlugs.push(role);
-			} else if (state.activeRoleSlugs.length > 1) {
-				state.activeRoleSlugs.splice(ix, 1);
+			if (want) {
+				if (ix === -1) {
+					state.activeRoleSlugs.push(role);
+				}
+			} else {
+				if (state.activeRoleSlugs.length <= 1) {
+					$(this).prop('checked', true);
+					return;
+				}
+				if (ix !== -1) {
+					state.activeRoleSlugs.splice(ix, 1);
+				}
 			}
 			saveViewState();
 			renderChips();
 			renderAll();
 		});
 
-		$('#members-am-carousel-prev').on('click', function () {
-			state.carouselPage = Math.max(0, state.carouselPage - 1);
-			saveViewState();
-			renderAll();
-		});
-		$('#members-am-carousel-next').on('click', function () {
-			var maxp = Math.max(0, Math.ceil(state.activeRoleSlugs.length / state.columnsPerPage) - 1);
-			state.carouselPage = Math.min(maxp, state.carouselPage + 1);
-			saveViewState();
-			renderAll();
+		$(document).on('click', '#members-am-role-chips .members-am-chip-pill-action', function (e) {
+			e.preventDefault();
+			var role = $(this).data('role');
+			if (state.activeRoleSlugs.indexOf(role) === -1) {
+				state.activeRoleSlugs.push(role);
+				saveViewState();
+				renderChips();
+				renderAll();
+				setTimeout(function () {
+					scrollRoleColumnIntoView(role);
+				}, 0);
+				return;
+			}
+			scrollRoleColumnIntoView(role);
 		});
 
 		$('#members-am-columns')
@@ -3217,6 +3496,16 @@
 			.on('click', '.members-am-item', function (e) {
 				if ($(e.target).closest('button, .members-am-item-cb, .members-am-collapse-toggle').length) {
 					return;
+				}
+				var $col = $(this).closest('.members-am-column');
+				var colRole = $col.data('role');
+				var colUser = $col.data('user');
+				if (colUser != null && String(colUser) !== '') {
+					state.pendingEditApplyTarget = { type: 'user', id: parseInt(String(colUser), 10) };
+				} else if (colRole) {
+					state.pendingEditApplyTarget = { type: 'role', slug: String(colRole) };
+				} else {
+					state.pendingEditApplyTarget = null;
 				}
 				state.selectedId = $(this).data('id');
 				renderColumns();
@@ -3383,50 +3672,50 @@
 				if (r.slug === from) fromLabel = r.label;
 				if (r.slug === to) toLabel = r.label;
 			});
-			if (!confirm('Copy menu settings from "' + fromLabel + '" to "' + toLabel + '"?\nThis will overwrite "' + toLabel + '" menu configuration.\n\nNote: This copies menu order, labels, icons, and colors. Items the source role cannot access (no-access in its column) are stored as hidden on the target so a higher-capability role does not gain those screens.\nIt does not change WordPress role capabilities (lock icon).')) {
-				return;
-			}
+			showCopyConfirmInline(fromLabel, toLabel, function () {
+				pushUndoSnapshot();
+				var srcCfg = getRoleConfig(from);
 
-			pushUndoSnapshot();
-			var srcCfg = getRoleConfig(from);
+				var newCfg = {
+					hidden: getHiddenIdsForMimickingSourceRole(from),
+					order: [],
+					submenu_order: {},
+					overrides: {}
+				};
 
-			var newCfg = {
-				hidden: getHiddenIdsForMimickingSourceRole(from),
-				order: [],
-				submenu_order: {},
-				overrides: {}
-			};
+				var resolvedOrder = getTopOrder(from);
+				newCfg.order = resolvedOrder.slice();
 
-			var resolvedOrder = getTopOrder(from);
-			newCfg.order = resolvedOrder.slice();
-
-			state.tree.forEach(function (node) {
-				if (node.children && node.children.length) {
-					var childOrder = getChildOrder(from, node.id);
-					if (childOrder && childOrder.length) {
-						newCfg.submenu_order[node.id] = childOrder.slice();
+				state.tree.forEach(function (node) {
+					if (node.children && node.children.length) {
+						var childOrder = getChildOrder(from, node.id);
+						if (childOrder && childOrder.length) {
+							newCfg.submenu_order[node.id] = childOrder.slice();
+						}
 					}
+				});
+
+				if (srcCfg.overrides && typeof srcCfg.overrides === 'object') {
+					newCfg.overrides = JSON.parse(JSON.stringify(srcCfg.overrides));
 				}
+
+				state.settings.roles[to] = newCfg;
+
+				if (state.activeRoleSlugs.indexOf(to) === -1) {
+					state.activeRoleSlugs.push(to);
+					saveViewState();
+					renderChips();
+				}
+
+				renderAll();
+				var copying =
+					(membersAdminMenus.i18n && membersAdminMenus.i18n.copying) ||
+					'Copying…';
+				saveSettings(copying);
 			});
-
-			if (srcCfg.overrides && typeof srcCfg.overrides === 'object') {
-				newCfg.overrides = JSON.parse(JSON.stringify(srcCfg.overrides));
-			}
-
-			state.settings.roles[to] = newCfg;
-
-			if (state.activeRoleSlugs.indexOf(to) === -1) {
-				state.activeRoleSlugs.push(to);
-				saveViewState();
-				renderChips();
-			}
-
-			renderAll();
-			var copying =
-				(membersAdminMenus.i18n && membersAdminMenus.i18n.copying) ||
-				'Copying…';
-			saveSettings(copying);
 		});
+
+		$('#members-am-copy-from').on('change', syncCopyToDisabled);
 
 		$('#members-am-admin-editable').on('change', function () {
 			var ok = true;
@@ -3534,23 +3823,151 @@
 			membersAmSetMoreToolsOpen($('#members-am-toolbar-extra').prop('hidden'));
 		});
 
+		function closeAddItemModal() {
+			var $m = $('#members-am-add-item-modal');
+			if ($m.length) {
+				$m.attr('hidden', true);
+			}
+		}
+
+		function populateAddItemParentSelect() {
+			var $par = $('#members-am-add-item-parent');
+			if (!$par.length) {
+				return;
+			}
+			var i18nM = membersAdminMenus.i18n || {};
+			var topPh = i18nM.positionTopEnd || 'Top level (end of menu)';
+			$par.empty().append($('<option/>').val('').text(topPh));
+			(state.tree || []).forEach(function (n) {
+				if (!n || !n.id || String(n.id).indexOf('::') !== -1) {
+					return;
+				}
+				$par.append($('<option/>').val(n.id).text(n.title || n.id));
+			});
+		}
+
+		function openAddItemModal() {
+			var $m = $('#members-am-add-item-modal');
+			if (!$m.length) {
+				pushUndoSnapshot();
+				var id0 = 'c' + Date.now();
+				state.settings.custom_items.push({
+					id: id0,
+					label: 'Custom link',
+					url: window.location.origin + '/wp-admin/',
+					icon_type: 'dashicon',
+					icon: 'dashicons-admin-generic',
+					parent: '',
+					position: 99,
+					cap: 'read',
+				});
+				state.tree = buildTreeWithCustoms();
+				state.selectedId = customHookId({ id: id0 });
+				state.pendingEditApplyTarget = {
+					type: 'role',
+					slug: String(state.activeRoleSlugs[0] || (getRolesList()[0] && getRolesList()[0].slug) || 'subscriber'),
+				};
+				renderAll();
+				openEditPanel();
+				return;
+			}
+			$('#members-am-add-item-title').val('');
+			var defaultUrl = window.location.origin + '/wp-admin/';
+			var au = membersAdminMenus.ajaxUrl || '';
+			var um = au.match(/^(https?:\/\/[^/]+(\/[^/]+)*\/wp-admin)\//i);
+			if (um && um[1]) {
+				defaultUrl = um[1] + '/';
+			}
+			$('#members-am-add-item-url').val(defaultUrl);
+			populateAddItemParentSelect();
+			$m.removeAttr('hidden');
+		}
+
 		$('#members-am-add-item').on('click', function () {
+			openAddItemModal();
+		});
+
+		$('#members-am-add-item-modal-close, #members-am-add-item-cancel').on('click', function (e) {
+			e.preventDefault();
+			closeAddItemModal();
+		});
+
+		$('#members-am-add-item-modal').on('click', '.members-am-modal-backdrop', function () {
+			closeAddItemModal();
+		});
+
+		$('#members-am-add-item-submit').on('click', function (e) {
+			e.preventDefault();
+			var title = ($('#members-am-add-item-title').val() || '').trim();
+			var url = ($('#members-am-add-item-url').val() || '').trim();
+			var parent = ($('#members-am-add-item-parent').val() || '').trim();
+			if (!title || !url) {
+				showMembersAmNotice(
+					'error',
+					(membersAdminMenus.i18n && membersAdminMenus.i18n.bulkSelectItemFirst) ||
+						'Please enter a title and URL.'
+				);
+				return;
+			}
 			pushUndoSnapshot();
 			var id = 'c' + Date.now();
 			state.settings.custom_items.push({
 				id: id,
-				label: 'Custom link',
-				url: window.location.origin + '/wp-admin/',
+				label: title,
+				url: url,
 				icon_type: 'dashicon',
 				icon: 'dashicons-admin-generic',
-				parent: '',
+				parent: parent,
 				position: 99,
 				cap: 'read',
 			});
 			state.tree = buildTreeWithCustoms();
 			state.selectedId = customHookId({ id: id });
+			state.pendingEditApplyTarget = {
+				type: 'role',
+				slug: String(state.activeRoleSlugs[0] || (getRolesList()[0] && getRolesList()[0].slug) || 'subscriber'),
+			};
+			closeAddItemModal();
 			renderAll();
 			openEditPanel();
+		});
+
+		$('#members-am-chips-show-all').on('click', function (e) {
+			e.preventDefault();
+			pushUndoSnapshot();
+			var next = [];
+			getRolesList().forEach(function (r) {
+				if (r.slug === 'administrator' && !state.settings._meta.admin_editable) {
+					return;
+				}
+				next.push(r.slug);
+			});
+			if (!next.length) {
+				next = ['subscriber'];
+			}
+			state.activeRoleSlugs = next;
+			saveViewState();
+			renderChips();
+			renderAll();
+		});
+
+		$('#members-am-chips-hide-all').on('click', function (e) {
+			e.preventDefault();
+			var eligible = [];
+			getRolesList().forEach(function (r) {
+				if (r.slug === 'administrator' && !state.settings._meta.admin_editable) {
+					return;
+				}
+				eligible.push(r.slug);
+			});
+			if (eligible.length <= 1) {
+				return;
+			}
+			pushUndoSnapshot();
+			state.activeRoleSlugs = [eligible[0]];
+			saveViewState();
+			renderChips();
+			renderAll();
 		});
 
 		$('#members-am-remove-custom').on('click', function () {
@@ -3578,33 +3995,40 @@
 			});
 			state.selectedId = null;
 			state.tree = buildTreeWithCustoms();
-			renderAll();
-			$('#members-am-edit-panel').attr('hidden', true);
+			closeEditPopover();
+		});
+
+		$('#members-am-edit-popover-overlay').on('click', function (e) {
+			if (e.target === this) {
+				closeEditPopover();
+			}
+		});
+
+		$('#members-am-edit-popover-done').on('click', function () {
+			closeEditPopover();
+		});
+
+		$(window).on('resize.membersAmEditPop scroll.membersAmEditPop', function () {
+			if (!$('#members-am-edit-panel').prop('hidden')) {
+				schedulePositionEditPopover();
+			}
+		});
+
+		$(document).on('keydown.membersAmEditPopover', function (e) {
+			if (e.key !== 'Escape' && e.keyCode !== 27) {
+				return;
+			}
+			if ($('#members-am-edit-panel').prop('hidden')) {
+				return;
+			}
+			closeEditPopover();
 		});
 
 		$('#members-am-edit-close').on('click', function () {
-			state.selectedId = null;
-			$('#members-am-edit-panel').attr('hidden', true);
-			renderAll();
+			closeEditPopover();
 		});
 
 		$('#members-am-edit-target-role').on('change', openEditPanel);
-
-		$('#members-am-colors-readable').on('click', function (e) {
-			e.preventDefault();
-			var bg = String($('#members-am-color-bg').val() || '').trim();
-			if (!bg || bg === '#') {
-				var needBg =
-					(membersAdminMenus.i18n && membersAdminMenus.i18n.colorsReadableNeedBg) ||
-					'Choose a background color first.';
-				window.alert(needBg);
-				return;
-			}
-			var fg = membersAmContrastFgForBg(bg);
-			membersAmSyncColorInput($('#members-am-color-text'), fg);
-			membersAmSyncColorInput($('#members-am-color-icon'), fg);
-			pushOverridesFromForm();
-		});
 
 		$('#members-am-edit-label, #members-am-edit-url, #members-am-icon-value, #members-am-badge-text').on('input', function () {
 			pushOverridesFromForm();
@@ -3670,8 +4094,6 @@
 			}
 			renderAll();
 		});
-
-		$('#members-am-add-sep').on('click', addSeparator);
 
 		$('#members-am-promote').on('click', function () {
 			if (!state.selectedId) return;
@@ -3834,6 +4256,19 @@
 		renderExemptUi();
 		renderCopySelect();
 		renderChips();
+		var initI18n = membersAdminMenus.i18n || {};
+		if (initI18n.searchUsersToOverride) {
+			$('#members-am-user-search').attr('placeholder', initI18n.searchUsersToOverride);
+		}
+		if (initI18n.showAllRoles) {
+			$('#members-am-chips-show-all').text(initI18n.showAllRoles);
+		}
+		if (initI18n.hideAllRoles) {
+			$('#members-am-chips-hide-all').text(initI18n.hideAllRoles);
+		}
+		if (initI18n.editPopoverDone) {
+			$('#members-am-edit-popover-done').text(initI18n.editPopoverDone);
+		}
 		bind();
 		renderAll();
 		initialSettingsSerialized = getSettingsSnapshot();
