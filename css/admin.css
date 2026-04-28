@@ -2324,28 +2324,22 @@ body.admin_page_members-about #wpbody-content {
 
 .members-am-edit-colors-grid {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-	gap: 12px 28px;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 16px 32px;
 }
 
 .members-am-edit-color-field {
 	margin: 0;
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	flex-wrap: wrap;
-	gap: 10px 12px;
 }
 
 .members-am-edit-color-field label {
-	margin: 0;
-	flex-shrink: 0;
+	display: block;
+	margin: 0 0 6px;
 }
 
-.members-am-edit-color-field .wp-picker-container,
-.members-am-edit-color-field .members-am-color {
-	flex: 1 1 auto;
-	min-width: 0;
+.members-am-edit-color-field .wp-picker-container {
+	display: inline-block;
+	max-width: 100%;
 }
 
 .members-am-edit-cap-field {
@@ -2360,7 +2354,8 @@ body.admin_page_members-about #wpbody-content {
 
 @media screen and (max-width: 600px) {
 	.members-am-edit-row-title-url,
-	.members-am-edit-badge-row {
+	.members-am-edit-badge-row,
+	.members-am-edit-colors-grid {
 		grid-template-columns: 1fr;
 	}
 }

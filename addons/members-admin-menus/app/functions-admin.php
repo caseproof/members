@@ -569,13 +569,14 @@ function enqueue_admin_menus_assets() {
 			'currentUserIsAdministrator' => $current_is_administrator,
 			'exemptUserLabels'           => $exempt_user_labels,
 			'nonce'         => wp_create_nonce( 'members_admin_menus' ),
-			'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
+			// Use a same-origin path so Local/proxy ports are preserved (avoids CORS).
+			'ajaxUrl'       => admin_url( 'admin-ajax.php', 'relative' ),
 			'exportUrl'     => add_query_arg(
 				array(
 					'action' => 'members_admin_menus_export',
 					'nonce'  => wp_create_nonce( 'members_admin_menus' ),
 				),
-				admin_url( 'admin-ajax.php' )
+				admin_url( 'admin-ajax.php', 'relative' )
 			),
 			'i18n'          => array(
 				'save'                      => __( 'Save changes', 'members' ),
