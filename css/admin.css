@@ -1972,7 +1972,7 @@ body.admin_page_members-about #wpbody-content {
 	border: 1px solid #dba617;
 	border-radius: 2px;
 	font-size: 12px;
-	color: var(--members-am-base, #1d2327);
+	color: var(--wp-components-color-foreground, #1d2327);
 	box-sizing: border-box;
 }
 
@@ -1998,7 +1998,7 @@ body.admin_page_members-about #wpbody-content {
 	width: 100%;
 	box-sizing: border-box;
 	font-style: italic;
-	color: var(--members-am-muted, #646970);
+	color: var(--wp-components-color-gray-700, #50575e);
 }
 
 .members-am-info-icon {
@@ -2125,7 +2125,7 @@ body.admin_page_members-about #wpbody-content {
 	justify-content: space-between;
 	gap: 12px;
 	padding: 12px 16px;
-	background: #23282d;
+	background: var(--members-am-base, #1d2327);
 	color: var(--members-am-fg-on-base, #f0f0f1);
 	flex-shrink: 0;
 }
@@ -2152,7 +2152,7 @@ body.admin_page_members-about #wpbody-content {
 }
 
 .members-am-edit-popover-close {
-	color: rgba(240, 240, 241, 0.55) !important;
+	color: color-mix(in srgb, currentColor 62%, transparent) !important;
 	font-size: 18px;
 	line-height: 1;
 	padding: 0 4px !important;
@@ -2161,7 +2161,7 @@ body.admin_page_members-about #wpbody-content {
 
 .members-am-edit-popover-close:hover,
 .members-am-edit-popover-close:focus {
-	color: #fff !important;
+	color: inherit !important;
 }
 
 .members-am-edit-popover-placeholder {
@@ -2496,8 +2496,8 @@ body.admin_page_members-about #wpbody-content {
 	min-width: 350px;
 	max-width: 350px;
 	flex-shrink: 0;
-	background: #2d3338;
-	border: 1px solid rgba(0, 0, 0, 0.15);
+	background: var(--members-am-base, #1d2327);
+	border: 1px solid var(--members-am-border-on-base, var(--members-am-border-on-base-fallback));
 	border-radius: 4px;
 	color: var(--members-am-fg-on-base, #f0f0f1);
 	display: flex;
@@ -2581,14 +2581,14 @@ body.admin_page_members-about #wpbody-content {
 	align-items: center;
 	gap: 8px;
 	padding: 9px 10px;
-	background: linear-gradient(180deg, #2c3338 0%, #23282d 100%);
+	background: linear-gradient(180deg, var(--members-am-surface-use) 0%, var(--members-am-base, #1d2327) 100%);
 	border-radius: 4px 4px 0 0;
-	border-bottom: 1px solid rgba(0, 0, 0, 0.25);
+	border-bottom: 1px solid var(--members-am-border-on-base, var(--members-am-border-on-base-fallback));
 	font-weight: 600;
 	font-size: 11px;
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
-	color: #f0f0f1;
+	color: var(--members-am-fg-on-base, #f0f0f1);
 }
 
 .members-am-sidebar-head-titles {
@@ -2810,9 +2810,9 @@ body.admin_page_members-about #wpbody-content {
 	padding: 0 !important;
 	margin: 0;
 	line-height: 1;
-	background: rgba(255, 255, 255, 0.08);
-	border: 1px solid rgba(255, 255, 255, 0.22);
-	color: #f0f0f1;
+	background: color-mix(in srgb, currentColor 8%, transparent);
+	border: 1px solid color-mix(in srgb, currentColor 24%, transparent);
+	color: inherit;
 	border-radius: 3px;
 }
 
@@ -2826,9 +2826,9 @@ body.admin_page_members-about #wpbody-content {
 
 .members-am-sidebar-head .members-am-col-move-btn:hover,
 .members-am-sidebar-head .members-am-col-move-btn:focus {
-	background: rgba(255, 255, 255, 0.16);
-	border-color: rgba(255, 255, 255, 0.4);
-	color: #fff;
+	background: color-mix(in srgb, currentColor 16%, transparent);
+	border-color: color-mix(in srgb, currentColor 42%, transparent);
+	color: inherit;
 }
 
 .members-am-sidebar-head .members-am-user-col-close {
@@ -2840,9 +2840,9 @@ body.admin_page_members-about #wpbody-content {
 	min-height: 28px;
 	padding: 0 !important;
 	margin: 0;
-	background: rgba(255, 255, 255, 0.08);
-	border: 1px solid rgba(255, 255, 255, 0.22);
-	color: #f0f0f1;
+	background: color-mix(in srgb, currentColor 8%, transparent);
+	border: 1px solid color-mix(in srgb, currentColor 24%, transparent);
+	color: inherit;
 	border-radius: 3px;
 }
 
