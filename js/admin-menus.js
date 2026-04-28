@@ -36,17 +36,28 @@
 	/** Phase 1: item panel shows placeholder copy only; full field editor remains in markup for later phases. */
 	var MEMBERS_AM_PHASE1_PLACEHOLDER_PANEL = false;
 
-	/** Stable accent per role slug (matches design: colored chip + column header dot). */
-	var ROLE_ACCENT_PALETTE = ['#46b450', '#2271b1', '#d97706', '#d63384', '#7c3aed', '#16a34a', '#64748b', '#0891b2'];
+	/**
+	 * Distinct hues for role chips (medium–dark for white label text).
+	 * Larger set than before so similar-looking roles collide less often.
+	 */
+	var ROLE_ACCENT_PALETTE = [
+		'#2271b1', '#1d4ed8', '#0369a1', '#0e7490', '#0f766e', '#15803d', '#4d7c0f', '#a16207',
+		'#c2410c', '#ea580c', '#b91c1c', '#be185d', '#db2777', '#c026d3', '#9333ea', '#7c3aed',
+		'#6d28d9', '#4338ca', '#312e81', '#92400e', '#854d0e', '#57534e', '#475569', '#7c2d12',
+	];
 
+	/**
+	 * Stable accent per role slug (colored chip + column header dot).
+	 * FNV-1a 32-bit: the previous djb2+xor mix mapped common WP role slugs to only 3 palette slots (mod 24).
+	 */
 	function roleAccentColor(slug) {
 		slug = String(slug || '');
-		var h = 0;
+		var h = 2166136261 >>> 0;
 		for (var i = 0; i < slug.length; i++) {
-			h = (h << 5) - h + slug.charCodeAt(i);
-			h |= 0;
+			h ^= slug.charCodeAt(i);
+			h = Math.imul(h, 16777619) >>> 0;
 		}
-		return ROLE_ACCENT_PALETTE[Math.abs(h) % ROLE_ACCENT_PALETTE.length];
+		return ROLE_ACCENT_PALETTE[h % ROLE_ACCENT_PALETTE.length];
 	}
 
 	/** Snapshot of persisted settings for unsaved-change detection (object key order–independent). */
