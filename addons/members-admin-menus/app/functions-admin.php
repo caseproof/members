@@ -628,6 +628,8 @@ function enqueue_admin_menus_assets() {
 				'bulkKeepOnlyCheckedVisible' => __( 'Hide everything except selected (and parents)', 'members' ),
 				'bulkHideCheckedItems'   => __( 'Hide checked items', 'members' ),
 				'bulkShowCheckedItems'   => __( 'Show selected items', 'members' ),
+				'showInMenu'             => __( 'Show in menu', 'members' ),
+				'hideFromMenu'           => __( 'Hide from menu', 'members' ),
 				'bulkSelectVisible'      => __( 'Select visible', 'members' ),
 				'bulkClearSelection'     => __( 'Clear selection', 'members' ),
 				'bulkCheckboxAria'       => __( 'Include in bulk actions', 'members' ),
@@ -650,6 +652,7 @@ function enqueue_admin_menus_assets() {
 				'moreToolsPanelHint'     => __( 'Administrator editing, copy between roles, exempt administrators, and import/export.', 'members' ),
 				'searchUsersToOverride'  => __( 'Search users to override…', 'members' ),
 				'rowBadgeHidden'         => __( 'HIDDEN', 'members' ),
+				'rowBadgeHiddenDetail'   => __( 'Item manually hidden for this role.', 'members' ),
 				'rowBadgeNoAccess'       => __( 'NO ACCESS', 'members' ),
 				'noAccessTitlePattern'   => __( 'This role does not have the stored capability “%s”. Users with multiple roles may still reach the screen if another role grants it. Tags use manage_post_tags when Category & Tag Caps is active (Members → Roles, Taxonomy).', 'members' ),
 				'multiRoleMergeHelp'     => __( 'Users with multiple roles: a menu item is hidden if any of their roles hides it. When two roles define different labels, icons, or colors for the same item, the first role in the user’s role list wins.', 'members' ),
@@ -780,8 +783,8 @@ function render_admin_menus_page() {
 
 		<div class="members-am-info-bar" role="region" aria-label="<?php esc_attr_e( 'Admin Menus legend', 'members' ); ?>">
 			<div class="members-am-info-bar-legends">
-				<span class="members-am-info-item"><span class="members-am-legend-badge members-am-legend-badge-hidden"><?php esc_html_e( 'HIDDEN', 'members' ); ?></span> <?php esc_html_e( 'Item manually hidden for this role.', 'members' ); ?></span>
-				<span class="members-am-info-item"><span class="dashicons dashicons-lock members-am-info-icon" aria-hidden="true"></span><span class="members-am-legend-badge members-am-legend-badge-nocap"><?php esc_html_e( 'NO ACCESS', 'members' ); ?></span> <?php esc_html_e( 'This role does not have the required capability for that menu item. Users with multiple roles may still have access. Hover a row badge for details.', 'members' ); ?></span>
+				<span class="members-am-info-item"><span class="members-am-legend-hidden-mark" aria-hidden="true"><span class="dashicons dashicons-hidden"></span></span> <?php esc_html_e( 'Item manually hidden for this role.', 'members' ); ?></span>
+				<span class="members-am-info-item"><span class="dashicons dashicons-lock members-am-info-icon" aria-hidden="true"></span><span class="screen-reader-text"><?php esc_html_e( 'No access.', 'members' ); ?></span> <?php esc_html_e( 'This role does not have the required capability for that menu item. Users with multiple roles may still have access. Hover a row badge for details.', 'members' ); ?></span>
 			</div>
 			<span class="members-am-info-item members-am-info-item--note"><?php esc_html_e( 'Users with multiple roles: a menu item is hidden if any of their roles hides it. When two roles define different labels, icons, or colors for the same item, the first role in the user’s role list wins.', 'members' ); ?></span>
 		</div>

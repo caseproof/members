@@ -2006,24 +2006,23 @@ body.admin_page_members-about #wpbody-content {
 	vertical-align: text-bottom;
 }
 
-.members-am-legend-badge {
-	display: inline-block;
-	padding: 1px 6px;
+.members-am-legend-hidden-mark {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	margin-right: 6px;
+	padding: 2px 5px;
 	border-radius: 2px;
-	font-size: 10px;
-	font-weight: 600;
-	letter-spacing: 0.03em;
-	margin-right: 4px;
-}
-
-.members-am-legend-badge-hidden {
+	vertical-align: text-bottom;
 	background: #d63638;
 	color: #fff;
 }
 
-.members-am-legend-badge-nocap {
-	background: #dba617;
-	color: var(--members-am-base, #1d2327);
+.members-am-legend-hidden-mark .dashicons {
+	font-size: 14px;
+	width: 14px;
+	height: 14px;
+	line-height: 1;
 }
 
 .members-am-chips-wrap {
@@ -2331,6 +2330,22 @@ body.admin_page_members-about #wpbody-content {
 
 .members-am-edit-color-field {
 	margin: 0;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 10px 12px;
+}
+
+.members-am-edit-color-field label {
+	margin: 0;
+	flex-shrink: 0;
+}
+
+.members-am-edit-color-field .wp-picker-container,
+.members-am-edit-color-field .members-am-color {
+	flex: 1 1 auto;
+	min-width: 0;
 }
 
 .members-am-edit-cap-field {
@@ -2948,6 +2963,19 @@ body.admin_page_members-about #wpbody-content {
 	font-size: 11px;
 }
 
+.members-am-item-actions button.members-am-eye,
+.members-am-item-actions button.members-am-user-eye {
+	padding: 0 2px;
+}
+
+.members-am-item-actions button.members-am-eye .dashicons,
+.members-am-item-actions button.members-am-user-eye .dashicons {
+	font-size: 16px;
+	width: 16px;
+	height: 16px;
+	line-height: 1.2;
+}
+
 .members-am-sep {
 	text-align: center;
 	opacity: 0.35;
@@ -2977,23 +3005,41 @@ body.admin_page_members-about #wpbody-content {
 .members-am-badge-nocap {
 	display: inline-flex;
 	align-items: center;
-	gap: 3px;
+	justify-content: center;
 	background: #dba617;
 	color: var(--members-am-base, #1d2327);
-	font-weight: 600;
+	padding: 2px 5px;
+	border-radius: 2px;
 }
 
 .members-am-badge-nocap-icon {
-	font-size: 12px;
-	width: 12px;
-	height: 12px;
+	font-size: 14px;
+	width: 14px;
+	height: 14px;
 	line-height: 1;
 }
 
 .members-am-badge-hidden {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 	background: #d63638;
 	color: #fff;
-	font-weight: 600;
+	padding: 2px 5px;
+	border-radius: 2px;
+}
+
+.members-am-badge-hidden-icon {
+	font-size: 14px;
+	width: 14px;
+	height: 14px;
+	line-height: 1;
+}
+
+/* Row color overrides must not recolor badge UI icons (inline color on .dashicons). */
+.members-am-badge-hidden .members-am-badge-hidden-icon,
+.members-am-badge-nocap .members-am-badge-nocap-icon {
+	color: inherit !important;
 }
 
 .members-am-legend {

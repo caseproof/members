@@ -2084,6 +2084,23 @@
 		bindColumnBulk($wrap, role);
 	}
 
+	function membersAmVisibilityEyeButton(hidden, itemLabel, buttonClass) {
+		var i18n = membersAdminMenus.i18n || {};
+		var showIn = i18n.showInMenu || 'Show in menu';
+		var hideFrom = i18n.hideFromMenu || 'Hide from menu';
+		var actionLbl = hidden ? showIn : hideFrom;
+		return $('<button type="button"/>')
+			.addClass(buttonClass || 'members-am-eye')
+			.attr('title', actionLbl)
+			.attr('aria-label', actionLbl + ': ' + itemLabel)
+			.attr('aria-pressed', hidden ? 'true' : 'false')
+			.append(
+				$('<span class="dashicons" aria-hidden="true"/>').addClass(
+					hidden ? 'dashicons-hidden' : 'dashicons-visibility'
+				)
+			);
+	}
+
 	function renderItemRow(role, node, parentMenuId, $container, depth) {
 		depth = depth || 0;
 		var itemId = node.id;
@@ -2161,7 +2178,18 @@
 		}
 		if (hidden) {
 			var hidLbl = i18nRow.rowBadgeHidden || 'HIDDEN';
-			$main.append($('<span class="members-am-badge members-am-badge-hidden"/>').text(hidLbl));
+			var hidDetail =
+				i18nRow.rowBadgeHiddenDetail ||
+				'Item manually hidden for this role.';
+			$main.append(
+				$('<span class="members-am-badge members-am-badge-hidden"/>')
+					.attr('title', hidDetail)
+					.attr('role', 'img')
+					.attr('aria-label', hidLbl + '. ' + hidDetail)
+					.append(
+						$('<span class="dashicons dashicons-hidden members-am-badge-hidden-icon" aria-hidden="true"/>')
+					)
+			);
 		}
 		if (noCap) {
 			var i18nN = membersAdminMenus.i18n || {};
@@ -2174,9 +2202,10 @@
 			$main.append(
 				$('<span class="members-am-badge members-am-badge-nocap"/>')
 					.attr('title', nocapTitle)
+					.attr('role', 'img')
+					.attr('aria-label', noAccessLbl + '. ' + nocapTitle)
 					.append(
-						$('<span class="dashicons dashicons-lock members-am-badge-nocap-icon" aria-hidden="true"/>'),
-						$('<span class="members-am-badge-nocap-text"/>').text(noAccessLbl)
+						$('<span class="dashicons dashicons-lock members-am-badge-nocap-icon" aria-hidden="true"/>')
 					)
 			);
 		}
@@ -2197,7 +2226,7 @@
 
 		var $hover = $('<div class="members-am-item-actions"/>');
 		$hover.append(
-			$('<button type="button" class="members-am-eye" title="Toggle"/>').text('◉'),
+			membersAmVisibilityEyeButton(hidden, label, 'members-am-eye'),
 			$('<button type="button" class="members-am-up" title="Up"/>').text('↑'),
 			$('<button type="button" class="members-am-down" title="Down"/>').text('↓')
 		);
@@ -2285,7 +2314,18 @@
 		}
 		if (hidden) {
 			var hidLblU = i18nURow.rowBadgeHidden || 'HIDDEN';
-			$main.append($('<span class="members-am-badge members-am-badge-hidden"/>').text(hidLblU));
+			var hidDetailU =
+				i18nURow.rowBadgeHiddenDetail ||
+				'Item manually hidden for this role.';
+			$main.append(
+				$('<span class="members-am-badge members-am-badge-hidden"/>')
+					.attr('title', hidDetailU)
+					.attr('role', 'img')
+					.attr('aria-label', hidLblU + '. ' + hidDetailU)
+					.append(
+						$('<span class="dashicons dashicons-hidden members-am-badge-hidden-icon" aria-hidden="true"/>')
+					)
+			);
 		}
 		if (noCap) {
 			var i18nUN = membersAdminMenus.i18n || {};
@@ -2296,9 +2336,10 @@
 			$main.append(
 				$('<span class="members-am-badge members-am-badge-nocap"/>')
 					.attr('title', userNocapTitle)
+					.attr('role', 'img')
+					.attr('aria-label', noAccessLblU + '. ' + userNocapTitle)
 					.append(
-						$('<span class="dashicons dashicons-lock members-am-badge-nocap-icon" aria-hidden="true"/>'),
-						$('<span class="members-am-badge-nocap-text"/>').text(noAccessLblU)
+						$('<span class="dashicons dashicons-lock members-am-badge-nocap-icon" aria-hidden="true"/>')
 					)
 			);
 		}
@@ -2318,7 +2359,7 @@
 
 		var $actions = $('<div class="members-am-item-actions"/>');
 		$actions.append(
-			$('<button type="button" class="members-am-user-eye" title="Toggle visibility"/>').text(hidden ? '◯' : '◉'),
+			membersAmVisibilityEyeButton(hidden, label, 'members-am-user-eye'),
 			$('<button type="button" class="members-am-user-up" title="Up"/>').text('↑'),
 			$('<button type="button" class="members-am-user-down" title="Down"/>').text('↓')
 		);
