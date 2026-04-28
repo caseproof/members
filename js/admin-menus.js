@@ -104,6 +104,36 @@
 
 	var NOTICE_STORAGE_KEY = 'members_am_notice';
 
+	/** Auto-dismiss success notices after this many ms (WordPress dismiss animation). 0 = off. */
+	var MEMBERS_AM_NOTICE_AUTO_DISMISS_MS = 5000;
+
+	/**
+	 * Dismiss a Members Admin Menus notice the same way core does (fade/slide).
+	 *
+	 * @param {JQuery} $notice Notice element.
+	 * @return {void}
+	 */
+	function scheduleMembersAmNoticeAutoDismiss($notice) {
+		if (!MEMBERS_AM_NOTICE_AUTO_DISMISS_MS || MEMBERS_AM_NOTICE_AUTO_DISMISS_MS < 1) {
+			return;
+		}
+		window.setTimeout(function () {
+			if (!$notice || !$notice.length || !$notice.closest('body').length) {
+				return;
+			}
+			var $btn = $notice.find('.notice-dismiss');
+			if ($btn.length) {
+				$btn.trigger('click');
+				return;
+			}
+			$notice.fadeTo(200, 0, function () {
+				$notice.slideUp(200, function () {
+					$notice.remove();
+				});
+			});
+		}, MEMBERS_AM_NOTICE_AUTO_DISMISS_MS);
+	}
+
 	/**
 	 * WordPress admin–style dismissible notice.
 	 *
@@ -131,6 +161,9 @@
 		$notice.append($('<p/>').text(message));
 		$container.prepend($notice);
 		$(document).trigger('wp-notice-added');
+		if (type === 'success') {
+			scheduleMembersAmNoticeAutoDismiss($notice);
+		}
 	}
 
 	function flashNoticeAfterReload(type, message) {
