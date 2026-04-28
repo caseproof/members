@@ -252,6 +252,8 @@ final class Members_Plugin {
 			require_once( $this->dir . 'admin/class-roles.php'                 );
 			require_once( $this->dir . 'admin/class-role-edit.php'             );
 			require_once( $this->dir . 'admin/class-role-new.php'              );
+			require_once( $this->dir . 'admin/class-role-export.php'           );
+			require_once( $this->dir . 'admin/class-role-import.php'           );
 			require_once( $this->dir . 'admin/class-meta-box-publish-role.php' );
 			require_once( $this->dir . 'admin/class-meta-box-custom-cap.php'   );
 

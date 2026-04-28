@@ -205,11 +205,15 @@ class Role_List_Table extends \WP_List_Table {
 	 */
 	protected function column_cb( $role ) {
 
-		if ( $role == get_option( 'default_role' ) || in_array( $role, $this->current_user->roles ) || ! members_is_role_editable( $role ) )
-			$out = '';
-
-		else
+		if ( $role == get_option( 'default_role' ) ) {
+			$out = sprintf( '<input type="checkbox" disabled="disabled" title="%s" />', esc_attr__( 'The default role cannot be selected for bulk actions.', 'members' ) );
+		} elseif ( in_array( $role, $this->current_user->roles ) ) {
+			$out = sprintf( '<input type="checkbox" disabled="disabled" title="%s" />', esc_attr__( 'Your own role cannot be selected for bulk actions.', 'members' ) );
+		} elseif ( ! members_is_role_editable( $role ) ) {
+			$out = sprintf( '<input type="checkbox" disabled="disabled" title="%s" />', esc_attr__( 'This role is not editable.', 'members' ) );
+		} else {
 			$out = sprintf( '<input type="checkbox" name="roles[%1$s]" value="%1$s" />', esc_attr( $role ) );
+		}
 
 		return apply_filters( 'members_manage_roles_column_cb', $out, $role );
 	}
@@ -506,6 +510,9 @@ class Role_List_Table extends \WP_List_Table {
 
 		if ( current_user_can( 'delete_roles' ) )
 			$actions['delete'] = esc_html__( 'Delete', 'members' );
+
+		if ( current_user_can( 'list_roles' ) )
+			$actions['export'] = esc_html__( 'Export', 'members' );
 
 		return apply_filters( 'members_manage_roles_bulk_actions', $actions );
 	}
