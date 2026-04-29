@@ -2422,6 +2422,26 @@
 		return itemId.indexOf('::') !== -1 ? itemId.split('::').pop() : itemId;
 	}
 
+	/**
+	 * Token stored in submenu_order[parent] must match getChildOrder() / defaultChildSlugs:
+	 * native snapshot children use the short hook (e.g. edit.php); rows moved under another
+	 * parent (composite id, tree parent !== effective parent) must keep the full composite id.
+	 *
+	 * @param {string} parentAttr data-menu-parent from the row (effective parent file slug).
+	 * @param {string} itemId data-id (may be parent::child).
+	 * @return {string}
+	 */
+	function submenuOrderTokenFromDomRow(parentAttr, itemId) {
+		if (!itemId || itemId.indexOf('::') === -1) {
+			return itemId;
+		}
+		var treeParent = findParentIdInTree(itemId);
+		if (treeParent === parentAttr) {
+			return submenuSlugFromItemId(itemId);
+		}
+		return itemId;
+	}
+
 	function serializeRoleColumnFromDom($list, role) {
 		var topOrder = [];
 		var submenuOrder = {};
@@ -2448,7 +2468,7 @@
 				if (!submenuOrder[parent]) {
 					submenuOrder[parent] = [];
 				}
-				submenuOrder[parent].push(submenuSlugFromItemId(id));
+				submenuOrder[parent].push(submenuOrderTokenFromDomRow(parent, id));
 			}
 		});
 		var rc = getRoleConfig(role);
@@ -2482,7 +2502,7 @@
 				if (!submenuOrder[parent]) {
 					submenuOrder[parent] = [];
 				}
-				submenuOrder[parent].push(submenuSlugFromItemId(id));
+				submenuOrder[parent].push(submenuOrderTokenFromDomRow(parent, id));
 			}
 		});
 		var ucfg = getUserConfig(uid);
@@ -2524,6 +2544,11 @@
 						state.pendingEditApplyTarget = null;
 					}
 					openEditPanel();
+					// Rebuild columns after jQuery UI sortable finishes so row flex layout and
+					// submenu_order stay consistent (avoids stray inline dimensions / wrong tokens).
+					window.setTimeout(function () {
+						renderColumns();
+					}, 0);
 				}
 			});
 		});
