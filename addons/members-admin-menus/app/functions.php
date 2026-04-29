@@ -25,6 +25,8 @@ add_action( 'admin_enqueue_scripts', __NAMESPACE__ . '\maybe_enqueue_fontawesome
 add_filter( 'custom_menu_order', __NAMESPACE__ . '\enable_custom_menu_order' );
 add_filter( 'menu_order', __NAMESPACE__ . '\filter_menu_order', 999 );
 add_action( 'members_after_rescue', __NAMESPACE__ . '\\members_am_add_exempt_administrator' );
+// Late pass: plugins (e.g. debug-log-config-tool) may register nodes on wp_before_admin_bar_render, after admin_bar_menu.
+add_action( 'wp_before_admin_bar_render', __NAMESPACE__ . '\apply_admin_bar_menu_restrictions', 9999, 1 );
 
 /**
  * Enable custom menu order when we have per-role order stored.
@@ -1105,16 +1107,43 @@ function members_am_slugs_for_admin_redirect_url( $url ) {
 	$path  = (string) wp_parse_url( $url, PHP_URL_PATH );
 	$query = (string) wp_parse_url( $url, PHP_URL_QUERY );
 	$slugs = array();
+	$args  = array();
 	if ( '' !== $query ) {
 		wp_parse_str( $query, $args );
-		if ( ! empty( $args['page'] ) ) {
+		if ( ! empty( $args['page'] ) && is_string( $args['page'] ) ) {
 			$slugs[] = sanitize_text_field( $args['page'] );
 		}
 	}
+	// Bare edit.php / post-new.php / post.php basename must not match Posts-only hidden ids when this URL is for another post_type (e.g. Pages).
+	$cpt_slug                 = ! empty( $args['post_type'] ) && is_string( $args['post_type'] ) ? sanitize_key( $args['post_type'] ) : '';
+	$omit_ambiguous_basename = ( '' !== $cpt_slug && 'post' !== $cpt_slug );
 	if ( '' !== $path ) {
 		$base = basename( $path );
 		if ( $base && 'admin.php' !== $base ) {
-			$slugs[] = $base;
+			if ( ! ( $omit_ambiguous_basename && in_array( $base, array( 'edit.php', 'post-new.php', 'post.php' ), true ) ) ) {
+				$slugs[] = $base;
+			}
+		}
+	}
+	// Composite ids (parity with get_current_screen_slugs) so submenu keys like tools.php::tools.php?page=x match toolbar and deep links.
+	if ( '' !== $path && ! empty( $args['page'] ) && is_string( $args['page'] ) ) {
+		$base = basename( $path );
+		$page = sanitize_text_field( $args['page'] );
+		if ( $base && $page ) {
+			$slugs[] = $base . '?page=' . $page;
+		}
+	}
+	if ( '' !== $cpt_slug ) {
+		$base = '' !== $path ? basename( $path ) : '';
+		if ( $base && in_array( $base, array( 'edit.php', 'post-new.php', 'post.php' ), true ) ) {
+			$slugs[] = $base . '?post_type=' . $cpt_slug;
+		}
+	}
+	if ( ! empty( $args['taxonomy'] ) && is_string( $args['taxonomy'] ) ) {
+		$tax  = sanitize_key( $args['taxonomy'] );
+		$base = '' !== $path ? basename( $path ) : '';
+		if ( $tax && $base && in_array( $base, array( 'edit-tags.php', 'term.php' ), true ) ) {
+			$slugs[] = $base . '?taxonomy=' . $tax;
 		}
 	}
 	return array_unique( array_filter( $slugs ) );
@@ -1152,6 +1181,211 @@ function members_am_redirect_target_is_blocked_for_user( $user_id, $url ) {
 		}
 	}
 	return false;
+}
+
+/**
+ * Normalize an admin bar node href to an absolute URL under this site's wp-admin, or empty string if not applicable.
+ *
+ * @param string $href Raw href from {@see WP_Admin_Bar::get_nodes()}.
+ * @return string Absolute http(s) URL or ''.
+ */
+function members_am_normalize_toolbar_href( $href ) {
+	$href = is_string( $href ) ? trim( $href ) : '';
+	if ( '' === $href || '#' === $href || 0 === stripos( $href, 'javascript:' ) ) {
+		return '';
+	}
+	if ( preg_match( '/\s/', $href ) ) {
+		return '';
+	}
+
+	if ( preg_match( '#^https?://#i', $href ) ) {
+		$url = $href;
+	} elseif ( 0 === strpos( $href, '//' ) ) {
+		$url = ( is_ssl() ? 'https:' : 'http:' ) . $href;
+	} elseif ( 0 === strpos( $href, '/' ) ) {
+		$url = home_url( $href );
+	} else {
+		$url = admin_url( $href );
+	}
+
+	$url = esc_url_raw( $url );
+	if ( '' === $url ) {
+		return '';
+	}
+
+	$parts = wp_parse_url( $url );
+	if ( empty( $parts['scheme'] ) || empty( $parts['host'] ) || empty( $parts['path'] ) ) {
+		return '';
+	}
+
+	$site_host = wp_parse_url( site_url( '/' ), PHP_URL_HOST );
+	if ( ! is_string( $site_host ) || '' === $site_host || strcasecmp( (string) $parts['host'], $site_host ) !== 0 ) {
+		return '';
+	}
+
+	$admin_path = wp_parse_url( admin_url(), PHP_URL_PATH );
+	if ( ! is_string( $admin_path ) || '' === $admin_path ) {
+		return '';
+	}
+	$admin_base = untrailingslashit( wp_normalize_path( $admin_path ) );
+	$req_path   = wp_normalize_path( (string) $parts['path'] );
+	if ( '' === $admin_base ) {
+		return '';
+	}
+	if ( 0 !== strpos( $req_path . '/', $admin_base . '/' ) ) {
+		return '';
+	}
+
+	return $url;
+}
+
+/**
+ * Whether the admin bar still has any node whose parent is the given id.
+ *
+ * @param \WP_Admin_Bar $wp_admin_bar Admin bar instance.
+ * @param string        $parent_id    Parent node id.
+ * @return bool
+ */
+function members_am_admin_bar_parent_has_children( $wp_admin_bar, $parent_id ) {
+	$parent_id = (string) $parent_id;
+	foreach ( (array) $wp_admin_bar->get_nodes() as $node ) {
+		if ( ! is_object( $node ) || empty( $node->id ) ) {
+			continue;
+		}
+		if ( isset( $node->parent ) && (string) $node->parent === $parent_id ) {
+			return true;
+		}
+	}
+	return false;
+}
+
+/**
+ * Remove known container nodes that have no remaining children (e.g. empty "New" dropdown).
+ *
+ * @param \WP_Admin_Bar $wp_admin_bar Admin bar instance.
+ * @return void
+ */
+function members_am_prune_empty_admin_bar_parents( $wp_admin_bar ) {
+	$prune_ids = apply_filters(
+		app()->namespace . '/admin_bar_empty_parent_prune_ids',
+		array( 'new-content' )
+	);
+	if ( ! is_array( $prune_ids ) || empty( $prune_ids ) ) {
+		return;
+	}
+	$never_prune = apply_filters(
+		app()->namespace . '/admin_bar_parent_prune_never_remove',
+		array( 'my-account', 'top-secondary', 'wp-logo' )
+	);
+	$never       = is_array( $never_prune ) ? array_flip( $never_prune ) : array();
+
+	for ( $i = 0; $i < 10; $i++ ) {
+		$removed = false;
+		foreach ( $prune_ids as $pid ) {
+			$pid = is_string( $pid ) ? sanitize_key( $pid ) : '';
+			if ( '' === $pid || isset( $never[ $pid ] ) ) {
+				continue;
+			}
+			$nodes = $wp_admin_bar->get_nodes();
+			if ( empty( $nodes[ $pid ] ) ) {
+				continue;
+			}
+			if ( ! members_am_admin_bar_parent_has_children( $wp_admin_bar, $pid ) ) {
+				$wp_admin_bar->remove_menu( $pid );
+				$removed = true;
+			}
+		}
+		if ( ! $removed ) {
+			break;
+		}
+	}
+}
+
+/**
+ * Remove admin bar links that point at admin screens blocked for this user (same rules as sidebar + URL redirect checks).
+ *
+ * Fires on {@see 'wp_before_admin_bar_render'} (late priority) so items added during that same action — not only on
+ * {@see 'admin_bar_menu'} — are present before we strip them.
+ *
+ * @param \WP_Admin_Bar|null $passed_bar Admin bar instance (WordPress passes this on this hook; null falls back to global).
+ * @return void
+ */
+function apply_admin_bar_menu_restrictions( $passed_bar = null ) {
+	$bar = $passed_bar instanceof \WP_Admin_Bar ? $passed_bar : null;
+	if ( null === $bar ) {
+		global $wp_admin_bar;
+		$bar = $wp_admin_bar instanceof \WP_Admin_Bar ? $wp_admin_bar : null;
+	}
+	if ( ! $bar instanceof \WP_Admin_Bar ) {
+		return;
+	}
+	$user_id = get_current_user_id();
+	if ( $user_id < 1 ) {
+		return;
+	}
+
+	/**
+	 * Whether to strip admin bar items using Admin Menus hidden / capability map rules.
+	 *
+	 * @param bool $apply   Default true.
+	 * @param int  $user_id Current user ID.
+	 */
+	if ( ! apply_filters( app()->namespace . '/apply_admin_bar_restrictions', true, $user_id ) ) {
+		return;
+	}
+
+	if ( is_user_exempt( $user_id ) ) {
+		return;
+	}
+
+	/**
+	 * Node ids to never remove (structural / identity toolbar items).
+	 *
+	 * @param string[] $ids     Node ids.
+	 * @param int      $user_id Current user ID.
+	 */
+	$always_keep = apply_filters( app()->namespace . '/admin_bar_node_ids_always_keep', array( 'menu-toggle' ), $user_id );
+	$keep_flip   = is_array( $always_keep ) ? array_flip( $always_keep ) : array();
+
+	/**
+	 * Parent toolbar node ids whose `href` duplicates the first child (core does this for `new-content`).
+	 * Do not remove them in the URL pass — only {@see members_am_prune_empty_admin_bar_parents} may drop them when
+	 * they have no children left, so hiding e.g. Posts does not remove the whole "+ New" menu while Media/Pages remain.
+	 *
+	 * @param string[] $ids     Node ids.
+	 * @param int      $user_id Current user ID.
+	 */
+	$skip_href_parent_ids = apply_filters(
+		app()->namespace . '/admin_bar_skip_href_removal_parent_ids',
+		array( 'new-content' ),
+		$user_id
+	);
+	$skip_href_parents = is_array( $skip_href_parent_ids ) ? array_flip( $skip_href_parent_ids ) : array();
+
+	foreach ( (array) $bar->get_nodes() as $node ) {
+		if ( ! is_object( $node ) || empty( $node->id ) ) {
+			continue;
+		}
+		$id = (string) $node->id;
+		if ( isset( $keep_flip[ $id ] ) ) {
+			continue;
+		}
+		if ( isset( $skip_href_parents[ $id ] ) ) {
+			continue;
+		}
+		if ( empty( $node->href ) || ! is_string( $node->href ) ) {
+			continue;
+		}
+		$abs = members_am_normalize_toolbar_href( $node->href );
+		if ( '' === $abs ) {
+			continue;
+		}
+		if ( members_am_redirect_target_is_blocked_for_user( $user_id, $abs ) ) {
+			$bar->remove_menu( $id );
+		}
+	}
+
+	members_am_prune_empty_admin_bar_parents( $bar );
 }
 
 /**
@@ -1323,6 +1557,10 @@ function get_current_screen_slugs() {
 	if ( ! empty( $_GET['post_type'] ) && in_array( $pagenow, array( 'edit.php', 'post-new.php', 'post.php' ), true ) ) {
 		$pt      = sanitize_key( wp_unslash( $_GET['post_type'] ) );
 		$slugs[] = 'edit.php?post_type=' . $pt;
+		// Match submenu ids like edit.php?post_type=page::post-new.php?post_type=page (not only the list screen).
+		if ( in_array( $pagenow, array( 'post-new.php', 'post.php' ), true ) ) {
+			$slugs[] = $pagenow . '?post_type=' . $pt;
+		}
 	} elseif ( ! empty( $pagenow ) && empty( $_GET['page'] ) ) {
 		$slugs[] = $pagenow;
 	}
