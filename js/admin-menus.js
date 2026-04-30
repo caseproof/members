@@ -2764,6 +2764,7 @@
 		$('#members-am-edit-grid').removeAttr('hidden');
 		$('.members-am-edit-toolbar').removeAttr('hidden');
 		$('.members-am-edit-popover-body').removeAttr('hidden');
+		$('.members-am-edit-popover-footer').removeAttr('hidden');
 		$('#members-am-edit-subtitle').text('');
 		renderAll();
 	}
@@ -2866,6 +2867,7 @@
 			$('#members-am-edit-grid').attr('hidden', 'hidden');
 			$('.members-am-edit-toolbar').attr('hidden', 'hidden');
 			$('.members-am-edit-popover-body').attr('hidden', 'hidden');
+			$('.members-am-edit-popover-footer').attr('hidden', 'hidden');
 			setTimeout(schedulePositionEditPopover, 0);
 			return;
 		}
@@ -2873,6 +2875,7 @@
 		$('#members-am-edit-grid').removeAttr('hidden');
 		$('.members-am-edit-toolbar').removeAttr('hidden');
 		$('.members-am-edit-popover-body').removeAttr('hidden');
+		$('.members-am-edit-popover-footer').removeAttr('hidden');
 		renderEditTargetRoles();
 		applyPendingEditApplyTargetSelect();
 		var ov = getOverrideForEdit() || {};

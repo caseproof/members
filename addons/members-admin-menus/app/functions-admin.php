@@ -833,9 +833,6 @@ function render_admin_menus_page() {
 						</span>
 						<button type="button" class="button button-small members-am-btn-danger" id="members-am-remove-custom" hidden><?php esc_html_e( 'Remove', 'members' ); ?></button>
 					</div>
-					<div class="members-am-edit-popover-done-wrap">
-						<button type="button" class="button button-primary" id="members-am-edit-popover-done"><?php esc_html_e( 'Close', 'members' ); ?></button>
-					</div>
 				</div>
 				<div class="members-am-edit-popover-body">
 					<div class="members-am-edit-grid" id="members-am-edit-grid">
@@ -901,6 +898,9 @@ function render_admin_menus_page() {
 							</p>
 						</section>
 					</div>
+				</div>
+				<div class="members-am-edit-popover-footer">
+					<button type="button" class="button button-primary" id="members-am-edit-popover-done"><?php esc_html_e( 'Close', 'members' ); ?></button>
 				</div>
 			</div>
 		</div>
