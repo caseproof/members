@@ -116,7 +116,7 @@ Most things should be fairly straightforward, but you can also [view the docs](h
 
 Yes. On the Roles screen, use **Export All** to download a JSON file containing every role, its capabilities, and your Members plugin settings. To export only some roles, select them in the roles table and choose **Export** from the Bulk Actions menu.
 
-To import roles, upload a Members export JSON file from the same screen and click **Upload and Preview**. Members will show each role before anything is changed, so you can import new roles, skip roles, overwrite existing roles, or import conflicting roles under a new slug. Protected roles, such as the built-in Administrator role, your current role, and the site's default role, cannot be overwritten.
+To import roles, upload a Members export JSON file from the same screen and click **Upload and Preview**. Members will show each role before anything is changed, so you can import new roles, skip roles, overwrite existing roles, or import conflicting roles under a new slug. Protected roles, such as the built-in Administrator role, your current role, and the site's default role, cannot be overwritten or renamed.
 
 ### Minimum PHP requirements.
 
