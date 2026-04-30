@@ -24,6 +24,7 @@ Members allows you to set permissions to restrict content on your site by provid
 * **Multiple User Roles:** Give one, two, or even more roles to any user.
 * **Explicitly Deny Capabilities:** Deny specific capabilities to specific user roles.
 * **Clone Roles:** Build a new role by cloning an existing role.
+* **Role Import / Export:** Export all roles and Members settings to a JSON file, export selected roles from the roles table, and preview imported roles before choosing whether to import, skip, overwrite, or rename each one.
 * **Content Permissions / Restricted Content:** Protect content to determine which users (by role) have access to post content.
 * **Shortcodes:** Shortcodes to control who has access to content.
 * **Widgets:** A login form widget and users widget to show in your theme's sidebars.
@@ -110,6 +111,12 @@ The two plugins are complementary, not competing. Many sites use Members for fin
 ### How do I use it?
 
 Most things should be fairly straightforward, but you can also [view the docs](https://members-plugin.com/docs/) online.
+
+### Can I move roles between sites?
+
+Yes. On the Roles screen, use **Export All** to download a JSON file containing every role, its capabilities, and your Members plugin settings. To export only some roles, select them in the roles table and choose **Export** from the Bulk Actions menu.
+
+To import roles, upload a Members export JSON file from the same screen and click **Upload and Preview**. Members will show each role before anything is changed, so you can import new roles, skip roles, overwrite existing roles, or import conflicting roles under a new slug. Protected roles, such as the built-in Administrator role, your current role, and the site's default role, cannot be overwritten.
 
 ### Minimum PHP requirements.
 
