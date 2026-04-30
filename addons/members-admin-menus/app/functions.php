@@ -26,7 +26,8 @@ add_filter( 'custom_menu_order', __NAMESPACE__ . '\enable_custom_menu_order' );
 add_filter( 'menu_order', __NAMESPACE__ . '\filter_menu_order', 999 );
 add_action( 'members_after_rescue', __NAMESPACE__ . '\\members_am_add_exempt_administrator' );
 // Late pass: plugins (e.g. debug-log-config-tool) may register nodes on wp_before_admin_bar_render, after admin_bar_menu.
-add_action( 'wp_before_admin_bar_render', __NAMESPACE__ . '\apply_admin_bar_menu_restrictions', 9999, 1 );
+// Priority 9999: run after most same-hook callbacks so their nodes exist before we strip; anything hooked above 9999 will not be processed.
+add_action( 'wp_before_admin_bar_render', __NAMESPACE__ . '\members_am_apply_admin_bar_menu_restrictions', 9999, 0 );
 
 /**
  * Enable custom menu order when we have per-role order stored.
@@ -1307,10 +1308,13 @@ function members_am_prune_empty_admin_bar_parents( $wp_admin_bar ) {
  * Fires on {@see 'wp_before_admin_bar_render'} (late priority) so items added during that same action — not only on
  * {@see 'admin_bar_menu'} — are present before we strip them.
  *
- * @param \WP_Admin_Bar|null $passed_bar Admin bar instance (WordPress passes this on this hook; null falls back to global).
+ * Core invokes {@see 'wp_before_admin_bar_render'} with no arguments; this implementation reads the global `$wp_admin_bar` instance.
+ * The optional parameter exists so a custom caller may pass a bar instance explicitly.
+ *
+ * @param \WP_Admin_Bar|null $passed_bar Optional bar instance; core always leaves this null.
  * @return void
  */
-function apply_admin_bar_menu_restrictions( $passed_bar = null ) {
+function members_am_apply_admin_bar_menu_restrictions( $passed_bar = null ) {
 	$bar = $passed_bar instanceof \WP_Admin_Bar ? $passed_bar : null;
 	if ( null === $bar ) {
 		global $wp_admin_bar;
