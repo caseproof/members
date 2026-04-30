@@ -35,9 +35,6 @@
 		visibilityDetailsAnchor: null,
 	};
 
-	/** Phase 1: item panel shows placeholder copy only; full field editor remains in markup for later phases. */
-	var MEMBERS_AM_PHASE1_PLACEHOLDER_PANEL = false;
-
 	/**
 	 * Distinct hues for role chips (medium–dark for white label text).
 	 * Larger set than before so similar-looking roles collide less often.
@@ -2762,7 +2759,6 @@
 		state.pendingEditApplyTarget = null;
 		document.body.style.overflow = '';
 		$('#members-am-edit-panel').attr('hidden', true);
-		$('#members-am-phase1-placeholder').attr('hidden', true);
 		$('#members-am-edit-grid').removeAttr('hidden');
 		$('.members-am-edit-toolbar').removeAttr('hidden');
 		$('.members-am-edit-popover-body').removeAttr('hidden');
@@ -2843,7 +2839,6 @@
 		if (!state.selectedId) {
 			state.visibilityDetailsAnchor = null;
 			$('#members-am-edit-panel').attr('hidden', true);
-			$('#members-am-phase1-placeholder').attr('hidden', true);
 			$('#members-am-edit-grid').removeAttr('hidden');
 			$('.members-am-edit-toolbar').removeAttr('hidden');
 			$('#members-am-edit-subtitle').text('');
@@ -2851,30 +2846,6 @@
 		}
 		$('#members-am-edit-panel').removeAttr('hidden');
 		var node = findNode(state.selectedId);
-		if (MEMBERS_AM_PHASE1_PLACEHOLDER_PANEL) {
-			var i18nPh = membersAdminMenus.i18n || {};
-			$('#members-am-edit-title').text(node ? node.title : state.selectedId);
-			var roleSlug = state.activeRoleSlugs[0] || '';
-			var roleLabel = roleSlug;
-			getRolesList().forEach(function (r) {
-				if (r.slug === roleSlug) {
-					roleLabel = r.label;
-				}
-			});
-			$('#members-am-edit-subtitle').text(roleSlug ? roleLabel : '');
-			$('#members-am-phase1-placeholder .members-am-phase1-placeholder-text').text(
-				i18nPh.popoverPhase1Body ||
-					'Detailed item editing is coming in a future update.'
-			);
-			$('#members-am-phase1-placeholder').removeAttr('hidden');
-			$('#members-am-edit-grid').attr('hidden', 'hidden');
-			$('.members-am-edit-toolbar').attr('hidden', 'hidden');
-			$('.members-am-edit-popover-body').attr('hidden', 'hidden');
-			$('.members-am-edit-popover-footer').attr('hidden', 'hidden');
-			setTimeout(schedulePositionEditPopover, 0);
-			return;
-		}
-		$('#members-am-phase1-placeholder').attr('hidden', true);
 		$('#members-am-edit-grid').removeAttr('hidden');
 		$('.members-am-edit-toolbar').removeAttr('hidden');
 		$('.members-am-edit-popover-body').removeAttr('hidden');

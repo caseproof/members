@@ -22,6 +22,11 @@ add_action( 'admin_init', __NAMESPACE__ . '\redirect_old_admin_menus_url' );
 /**
  * Capability required for Admin Menus and Members settings screens.
  *
+ * Uses the `members_settings_capability` filter (default `manage_options`). Do not lower this
+ * capability for untrusted roles: anyone with it can save Admin Menus settings (including import),
+ * hide admin items, map capabilities, and configure custom menu links—including external URLs that
+ * redirect via `members_am_redirect_to_custom_menu_url()` in the Admin Menus add-on.
+ *
  * @return string
  */
 function get_members_settings_capability() {
@@ -668,7 +673,6 @@ function enqueue_admin_menus_assets() {
 				'closeUserColumn'         => __( 'Close user preview column', 'members' ),
 				'showAllRoles'            => __( 'Show all', 'members' ),
 				'hideAllRoles'            => __( 'Hide all', 'members' ),
-				'popoverPhase1Body'       => __( 'Detailed item editing (rename, URL, icons, and colors) is coming in the next update. Use the row controls in each column for visibility and ordering.', 'members' ),
 				'copyConfirm'             => __( 'Copy menu settings from “%1$s” to “%2$s”? This overwrites the target role’s configuration.', 'members' ),
 				'copyConfirmYes'          => __( 'Confirm copy', 'members' ),
 				'copyConfirmNo'           => __( 'Cancel', 'members' ),
@@ -822,9 +826,6 @@ function render_admin_menus_page() {
 						<p id="members-am-edit-subtitle" class="members-am-edit-popover-subtitle"></p>
 					</div>
 					<button type="button" class="button-link members-am-edit-popover-close" id="members-am-edit-close" aria-label="<?php esc_attr_e( 'Close advanced menu', 'members' ); ?>">&times;</button>
-				</div>
-				<div id="members-am-phase1-placeholder" class="members-am-phase1-placeholder members-am-edit-popover-placeholder" hidden>
-					<p class="members-am-phase1-placeholder-text"></p>
 				</div>
 				<div class="members-am-edit-toolbar members-am-edit-popover-chrome">
 					<div class="members-am-edit-popover-scope">
@@ -1407,10 +1408,12 @@ function ajax_reset_settings() {
 	if ( 'role' === $scope && $role ) {
 		unset( $settings['roles'][ $role ] );
 	} else {
-		$settings['roles']         = array();
-		$settings['users']         = array();
-		$settings['custom_items']  = array();
-		$settings['capabilities']  = array();
+		$defaults                    = get_default_settings();
+		$settings['roles']           = array();
+		$settings['users']           = array();
+		$settings['custom_items']   = array();
+		$settings['capabilities']   = array();
+		$settings['_meta']          = $defaults['_meta'];
 	}
 	update_settings_option( $settings );
 	members_am_invalidate_settings_cache();

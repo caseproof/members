@@ -249,6 +249,27 @@ function inject_custom_menu_items_late() {
 }
 
 /**
+ * Map a stored top-level order token to the key used in the global $menu array ($item[2]).
+ *
+ * Mirrors {@see filter_menu_order()}: `parent::child` uses the child segment; `sep-*` is unchanged
+ * (physical reorder skips it; {@see inject_separators()} consumes those tokens from $order).
+ *
+ * @param string $token Order entry (slug or composite).
+ * @return string Slug for $menu lookup, or original token for sep-*.
+ */
+function members_am_order_token_to_menu_slug( $token ) {
+	$token = (string) $token;
+	if ( 0 === strpos( $token, 'sep-' ) ) {
+		return $token;
+	}
+	if ( false !== strpos( $token, '::' ) ) {
+		$parts = explode( '::', $token, 2 );
+		return isset( $parts[1] ) ? (string) $parts[1] : $token;
+	}
+	return $token;
+}
+
+/**
  * Reorder $menu array by slug list.
  *
  * @param array $menu   Admin menu global.
@@ -266,7 +287,11 @@ function reorder_menu_by_slug_list( $menu, $order ) {
 	$used = array();
 	$pos  = 1;
 	$order = array_map( 'strval', $order );
-	foreach ( $order as $slug ) {
+	foreach ( $order as $token ) {
+		if ( 0 === strpos( $token, 'sep-' ) ) {
+			continue;
+		}
+		$slug = members_am_order_token_to_menu_slug( $token );
 		if ( ! isset( $by_slug[ $slug ] ) || isset( $used[ $slug ] ) ) {
 			continue;
 		}
