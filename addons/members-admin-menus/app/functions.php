@@ -432,7 +432,7 @@ function apply_menu_overrides( $overrides ) {
 			if ( 0 === strpos( $icon, 'http://' ) || 0 === strpos( $icon, 'https://' ) || 0 === strpos( $icon, '//' ) ) {
 				$icon_type = 'image';
 			} elseif ( 0 === strpos( $icon, 'data:image/' ) ) {
-				$icon_type = 'svg';
+				$icon_type = 'image';
 			}
 
 			if ( 'dashicon' === $icon_type ) {
@@ -1082,6 +1082,32 @@ function inject_custom_menu_items( $items ) {
 }
 
 /**
+ * Redirect to a stored custom menu item URL.
+ *
+ * External URLs are intentionally supported for custom menu items configured by
+ * users who can edit Members settings, so off-site targets use wp_redirect().
+ *
+ * @param string $url Target URL.
+ * @return void
+ */
+function members_am_redirect_to_custom_menu_url( $url ) {
+	$url = esc_url_raw( $url );
+	if ( '' === $url || ! preg_match( '#^https?://#i', $url ) ) {
+		return;
+	}
+
+	$target_host = strtolower( (string) wp_parse_url( $url, PHP_URL_HOST ) );
+	$site_host   = strtolower( (string) wp_parse_url( home_url( '/' ), PHP_URL_HOST ) );
+
+	if ( '' !== $target_host && '' !== $site_host && $target_host !== $site_host ) {
+		wp_redirect( $url ); // phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect
+	} else {
+		wp_safe_redirect( $url );
+	}
+	exit;
+}
+
+/**
  * Redirects custom menu items to their target URL.
  *
  * @return void
@@ -1093,8 +1119,7 @@ function members_am_custom_menu_callback() {
 	}
 	$page = sanitize_key( wp_unslash( $_GET['page'] ) );
 	if ( isset( $members_am_custom_redirects[ $page ] ) ) {
-		wp_safe_redirect( $members_am_custom_redirects[ $page ] );
-		exit;
+		members_am_redirect_to_custom_menu_url( $members_am_custom_redirects[ $page ] );
 	}
 }
 
@@ -1628,6 +1653,16 @@ function get_settings() {
 }
 
 /**
+ * Store Admin Menus settings without autoloading the potentially large option.
+ *
+ * @param array $settings Settings array.
+ * @return bool Whether the value was updated.
+ */
+function update_settings_option( array $settings ) {
+	return update_option( OPTION_KEY, $settings, false );
+}
+
+/**
  * Clear the in-request settings cache after option updates.
  *
  * @return void
@@ -1668,7 +1703,7 @@ function members_am_prune_role_settings( array $role_slugs ) {
 	}
 
 	if ( $changed ) {
-		update_option( OPTION_KEY, $settings );
+		update_settings_option( $settings );
 		members_am_invalidate_settings_cache();
 	}
 }
@@ -1721,7 +1756,7 @@ function members_am_add_exempt_administrator( $user_id ) {
 
 	$settings['_meta']['admin_menu_exempt_user_ids'] = $exempt_ids;
 
-	update_option( OPTION_KEY, $settings );
+	update_settings_option( $settings );
 	members_am_invalidate_settings_cache();
 }
 

@@ -23,7 +23,7 @@ class Activator {
 	public static function activate() {
 		$existing = get_option( 'members_admin_menus_settings', null );
 		if ( null === $existing || ! is_array( $existing ) ) {
-			update_option( 'members_admin_menus_settings', self::get_default_option() );
+			add_option( 'members_admin_menus_settings', self::get_default_option(), '', false );
 		}
 	}
 

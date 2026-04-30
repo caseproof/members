@@ -145,7 +145,7 @@ function members_am_sanitize_icon_image_value( $raw ) {
 		if ( strlen( $raw ) > 200000 ) {
 			return '';
 		}
-		if ( ! preg_match( '/^data:image\/(png|jpeg|jpg|gif|webp|svg\+xml);base64,[A-Za-z0-9+\/=\s]+$/i', $raw ) ) {
+		if ( ! preg_match( '/^data:image\/(png|jpeg|jpg|gif|webp);base64,[A-Za-z0-9+\/=\s]+$/i', $raw ) ) {
 			return '';
 		}
 		return $raw;
@@ -1061,13 +1061,13 @@ function build_menu_tree_for_js() {
 /**
  * Decode JSON settings payload with size and depth limits.
  *
- * @param mixed  $raw Raw POST value (string or array).
+ * @param mixed  $raw Raw POST value.
  * @param string $too_large_message Message when payload exceeds byte limit.
  * @return array|\WP_Error Decoded array or error.
  */
 function members_am_decode_settings_json( $raw, $too_large_message ) {
 	if ( is_array( $raw ) ) {
-		return $raw;
+		return new \WP_Error( 'members_am_invalid_json', __( 'Invalid data.', 'members' ) );
 	}
 	if ( ! is_string( $raw ) ) {
 		return new \WP_Error( 'members_am_invalid_json', __( 'Invalid data.', 'members' ) );
@@ -1179,7 +1179,7 @@ function ajax_save_settings() {
 			);
 		}
 	}
-	update_option( OPTION_KEY, $sanitized );
+	update_settings_option( $sanitized );
 	members_am_invalidate_settings_cache();
 	wp_send_json_success( array( 'message' => __( 'Settings saved.', 'members' ) ) );
 }
@@ -1390,7 +1390,7 @@ function ajax_reset_settings() {
 		$settings['custom_items']  = array();
 		$settings['capabilities']  = array();
 	}
-	update_option( OPTION_KEY, $settings );
+	update_settings_option( $settings );
 	members_am_invalidate_settings_cache();
 	wp_send_json_success( array( 'message' => __( 'Reset complete.', 'members' ) ) );
 }
@@ -1437,7 +1437,7 @@ function ajax_import_settings() {
 	if ( is_wp_error( $data ) ) {
 		wp_send_json_error( array( 'message' => $data->get_error_message() ), 400 );
 	}
-	update_option( OPTION_KEY, sanitize_settings_payload( $data ) );
+	update_settings_option( sanitize_settings_payload( $data ) );
 	members_am_invalidate_settings_cache();
 	wp_send_json_success( array( 'message' => __( 'Settings imported.', 'members' ) ) );
 }

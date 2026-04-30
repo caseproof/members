@@ -1235,7 +1235,7 @@
 			if (s.length > 200000) {
 				return '';
 			}
-			if (!/^data:image\/(png|jpeg|jpg|gif|webp|svg\+xml);base64,/i.test(s)) {
+			if (!/^data:image\/(png|jpeg|jpg|gif|webp);base64,/i.test(s)) {
 				return '';
 			}
 			return s;
