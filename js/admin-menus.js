@@ -31,6 +31,8 @@
 		 * { type: 'role', slug: string } | { type: 'user', id: number } — consumed once in openEditPanel().
 		 */
 		pendingEditApplyTarget: null,
+		/** Last menu item id the visibility expand panel was opened for (collapse when selection changes). */
+		visibilityDetailsAnchor: null,
 	};
 
 	/** Phase 1: item panel shows placeholder copy only; full field editor remains in markup for later phases. */
@@ -2839,6 +2841,7 @@
 
 	function openEditPanel() {
 		if (!state.selectedId) {
+			state.visibilityDetailsAnchor = null;
 			$('#members-am-edit-panel').attr('hidden', true);
 			$('#members-am-phase1-placeholder').attr('hidden', true);
 			$('#members-am-edit-grid').removeAttr('hidden');
@@ -2919,6 +2922,8 @@
 		var $rmCustom = $('#members-am-remove-custom');
 		$rmCustom.prop('hidden', !removableCustom);
 
+		var visibilityAnchorChanged = state.visibilityDetailsAnchor !== state.selectedId;
+
 		$('#members-am-visibility-toggles').empty();
 		var capFromSettings = normalizeCapForCheck(state.settings.capabilities[state.selectedId] || '');
 		var itemCap = capFromSettings || normalizeCapForCheck((node && node.cap) || '') || 'read';
@@ -2970,8 +2975,17 @@
 			$('#members-am-visibility-toggles').append($l);
 		});
 
+		updateVisibilityCurrentSummary();
+		state.visibilityDetailsAnchor = state.selectedId;
+		if (visibilityAnchorChanged) {
+			setVisibilityDetailsOpen(false);
+		}
+
 		initColorPickers();
+		syncIconTabFromFields();
 		renderIconGrid();
+		updateIconCurrentSummary();
+		setIconPickerExpanded(false);
 		updateDemoteParentSelect();
 		updatePromoteButtonState();
 		updateEditPopoverSubtitle();
@@ -3198,9 +3212,139 @@
 		state.settings.capabilities[state.selectedId] = $('#members-am-item-cap').val() || '';
 		renderColumns();
 		updateBadgePreview();
+		updateIconCurrentSummary();
+		updateVisibilityCurrentSummary();
+	}
+
+	/**
+	 * Map stored/effective icon type to picker tab id.
+	 *
+	 * @param {string} eff effectiveIconType result.
+	 * @return {'dashicons'|'fontawesome'|'upload'}
+	 */
+	function iconTypeToTab(eff) {
+		if (eff === 'image' || eff === 'custom' || eff === 'svg') {
+			return 'upload';
+		}
+		if (eff === 'fontawesome') {
+			return 'fontawesome';
+		}
+		return 'dashicons';
+	}
+
+	/**
+	 * Align tab buttons + state.iconTab with current field values.
+	 */
+	function syncIconTabFromFields() {
+		var val = $('#members-am-icon-value').val() || '';
+		var decl = $('#members-am-icon-type').val() || 'dashicon';
+		state.iconTab = iconTypeToTab(effectiveIconType(val, decl));
+		$('.members-am-icon-tabs .button').each(function () {
+			var t = $(this).data('tab');
+			var active =
+				(t === 'dashicons' && state.iconTab === 'dashicons') ||
+				(t === 'fontawesome' && state.iconTab === 'fontawesome') ||
+				(t === 'upload' && state.iconTab === 'upload');
+			$(this).toggleClass('is-active', active);
+		});
+	}
+
+	function applyIconTabPanelLayout() {
+		var isUpload = state.iconTab === 'upload';
+		$('#members-am-icon-search').toggle(!isUpload);
+		$('#members-am-icon-grid').toggle(!isUpload);
+		$('#members-am-media-upload, .members-am-icon-upload-desc').toggle(isUpload);
+	}
+
+	function updateIconCurrentSummary() {
+		var i18n = membersAdminMenus.i18n || {};
+		var val = ($('#members-am-icon-value').val() || '').trim();
+		var decl = $('#members-am-icon-type').val() || 'dashicon';
+		var eff = effectiveIconType(val, decl);
+		var $el = $('#members-am-icon-current-summary');
+		if (!val) {
+			$el.text(i18n.iconSummaryDefault || 'No custom icon; the menu default is used.');
+			return;
+		}
+		var display = val;
+		if ((eff === 'image' || eff === 'custom' || eff === 'svg') && val.length > 60) {
+			display = val.slice(0, 28) + '…' + val.slice(-24);
+		}
+		var fmt;
+		if (eff === 'image' || eff === 'custom' || eff === 'svg') {
+			fmt = i18n.iconSummaryImage || 'Custom image: %s';
+		} else if (eff === 'fontawesome') {
+			fmt = i18n.iconSummaryFontAwesome || 'Font Awesome: %s';
+		} else {
+			fmt = i18n.iconSummaryDashicon || 'Dashicon: %s';
+		}
+		$el.text(fmt.replace('%s', display));
+	}
+
+	function setVisibilityDetailsOpen(open) {
+		var el = document.getElementById('members-am-visibility-details');
+		if (el) {
+			el.open = open;
+		}
+	}
+
+	/**
+	 * One-line summary for the visibility expand control (checked vs total role rows).
+	 */
+	function updateVisibilityCurrentSummary() {
+		var i18n = membersAdminMenus.i18n || {};
+		var $out = $('#members-am-visibility-current-summary');
+		var $rows = $('#members-am-visibility-toggles .members-am-vis-row');
+		if (!$out.length) {
+			return;
+		}
+		if (!$rows.length) {
+			$out.text('');
+			return;
+		}
+		var visible = 0;
+		var total = 0;
+		$rows.each(function () {
+			total++;
+			if ($(this).find('.members-am-vis-cb').is(':checked')) {
+				visible++;
+			}
+		});
+		if (total === 0) {
+			$out.text('');
+			return;
+		}
+		if (visible === total) {
+			$out.text(i18n.visibilitySummaryAllVisible || 'All listed roles show this item.');
+		} else if (visible === 0) {
+			$out.text(i18n.visibilitySummaryNoneVisible || 'Hidden for all listed roles.');
+		} else {
+			var fmt = i18n.visibilitySummaryPartial || '%1$d of %2$d roles show this item.';
+			$out.text(
+				fmt.replace('%1$d', String(visible)).replace('%2$d', String(total))
+			);
+		}
+	}
+
+	function setIconPickerExpanded(expanded) {
+		var i18n = membersAdminMenus.i18n || {};
+		var $panel = $('#members-am-icon-panel');
+		var $btn = $('#members-am-icon-panel-toggle');
+		if (expanded) {
+			$panel.removeAttr('hidden');
+			$btn.attr('aria-expanded', 'true').text(i18n.iconPickerHide || 'Hide icon options');
+		} else {
+			$panel.attr('hidden', 'hidden');
+			$btn.attr('aria-expanded', 'false').text(i18n.iconPickerShow || 'Browse icons…');
+		}
 	}
 
 	function renderIconGrid() {
+		applyIconTabPanelLayout();
+		if (state.iconTab === 'upload') {
+			$('#members-am-icon-grid').empty();
+			return;
+		}
 		var tab = state.iconTab;
 		var q = ($('#members-am-icon-search').val() || '').toLowerCase();
 		var $g = $('#members-am-icon-grid').empty();
@@ -4198,6 +4342,16 @@
 			$(this).addClass('is-active');
 			state.iconTab = $(this).data('tab') === 'fontawesome' ? 'fontawesome' : ($(this).data('tab') === 'upload' ? 'upload' : 'dashicons');
 			renderIconGrid();
+		});
+
+		$('#members-am-icon-panel-toggle').on('click', function () {
+			var panel = document.getElementById('members-am-icon-panel');
+			var willExpand = panel && panel.hasAttribute('hidden');
+			setIconPickerExpanded(willExpand);
+			if (willExpand) {
+				syncIconTabFromFields();
+				renderIconGrid();
+			}
 		});
 
 		$('#members-am-icon-search').on('input', renderIconGrid);

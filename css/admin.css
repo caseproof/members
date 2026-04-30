@@ -3109,6 +3109,98 @@ body.admin_page_members-about #wpbody-content {
 	margin: 0 0 10px;
 }
 
+/* Expandable edit sections (native <details>) — Admin Menus popover */
+.members-am-expand-details {
+	border: 1px solid var(--wp-components-color-gray-200, #dcdcde);
+	border-radius: 4px;
+	background: var(--wp-components-color-background, #fff);
+	margin: 0;
+}
+
+.members-am-expand-details-summary {
+	cursor: pointer;
+	list-style: none;
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	padding: 10px 12px;
+	margin: 0;
+	font-weight: normal;
+}
+
+.members-am-expand-details-summary::-webkit-details-marker,
+.members-am-expand-details-summary::marker {
+	display: none;
+}
+
+.members-am-expand-details-summary::before {
+	content: '';
+	flex-shrink: 0;
+	width: 0;
+	height: 0;
+	margin-top: 5px;
+	border-top: 5px solid transparent;
+	border-bottom: 5px solid transparent;
+	border-left: 6px solid var(--members-am-muted, #646970);
+	transform: rotate(0deg);
+	transition: transform 0.12s ease;
+}
+
+.members-am-expand-details[open] > .members-am-expand-details-summary::before {
+	transform: rotate(90deg);
+}
+
+.members-am-expand-summary-text {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	min-width: 0;
+	flex: 1;
+}
+
+.members-am-expand-details-summary .members-am-edit-section-title {
+	margin: 0;
+	font-size: 14px;
+}
+
+.members-am-expand-current-summary {
+	margin: 0;
+	font-size: 13px;
+	line-height: 1.4;
+	color: var(--members-am-fg-muted-on-base, #646970);
+}
+
+.members-am-expand-details[open] > .members-am-expand-panel {
+	border-top: 1px solid var(--wp-components-color-gray-200, #dcdcde);
+}
+
+.members-am-expand-panel {
+	padding: 12px;
+	margin: 0;
+}
+
+.members-am-icon-heading-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	flex-wrap: wrap;
+	margin-bottom: 4px;
+}
+
+.members-am-icon-heading-row .members-am-edit-section-title {
+	margin: 0;
+}
+
+.members-am-icon-current-summary {
+	margin: 0 0 12px;
+	font-size: 13px;
+}
+
+.members-am-icon-panel > .members-am-icon-tabs {
+	margin-top: 0;
+}
+
 .members-am-icon-tabs {
 	margin-bottom: 8px;
 }

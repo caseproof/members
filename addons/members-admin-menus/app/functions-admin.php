@@ -685,9 +685,18 @@ function enqueue_admin_menus_assets() {
 				'urlOverride'             => __( 'URL override', 'members' ),
 				'urlDefaultPlaceholder'   => __( 'Default', 'members' ),
 				'sectionIcon'             => __( 'Icon', 'members' ),
+				'iconPickerShow'          => __( 'Browse icons…', 'members' ),
+				'iconPickerHide'          => __( 'Hide icon options', 'members' ),
+				'iconSummaryDefault'      => __( 'No custom icon; the menu default is used.', 'members' ),
+				'iconSummaryDashicon'     => __( 'Dashicon: %s', 'members' ),
+				'iconSummaryFontAwesome'  => __( 'Font Awesome: %s', 'members' ),
+				'iconSummaryImage'        => __( 'Custom image: %s', 'members' ),
 				'sectionBadge'            => __( 'Badge', 'members' ),
 				'sectionColors'           => __( 'Colors', 'members' ),
 				'sectionVisibility'       => __( 'Visibility per role', 'members' ),
+				'visibilitySummaryAllVisible'  => __( 'All listed roles show this item.', 'members' ),
+				'visibilitySummaryNoneVisible'   => __( 'Hidden for all listed roles.', 'members' ),
+				'visibilitySummaryPartial'     => __( '%1$d of %2$d roles show this item.', 'members' ),
 				'selectParentMenuButton'  => __( 'Select parent menu', 'members' ),
 				'removeMenuItem'          => __( 'Remove', 'members' ),
 				'badgePreviewLabel'       => __( 'Preview', 'members' ),
@@ -848,19 +857,26 @@ function render_admin_menus_page() {
 							</div>
 						</div>
 						<section class="members-am-edit-section members-am-edit-section-icon members-am-icons" aria-labelledby="members-am-section-icon-heading">
-							<h3 id="members-am-section-icon-heading" class="members-am-edit-section-title"><?php esc_html_e( 'Icon', 'members' ); ?></h3>
-							<div class="members-am-icon-tabs">
-								<button type="button" class="button is-active" data-tab="dashicons"><?php esc_html_e( 'Dashicons', 'members' ); ?></button>
-								<button type="button" class="button" data-tab="fontawesome"><?php esc_html_e( 'Font Awesome', 'members' ); ?></button>
-								<button type="button" class="button" data-tab="upload"><?php esc_html_e( 'Upload', 'members' ); ?></button>
+							<div class="members-am-icon-heading-row">
+								<h3 id="members-am-section-icon-heading" class="members-am-edit-section-title"><?php esc_html_e( 'Icon', 'members' ); ?></h3>
+								<button type="button" class="button button-small members-am-icon-panel-toggle" id="members-am-icon-panel-toggle" aria-expanded="false" aria-controls="members-am-icon-panel"><?php esc_html_e( 'Browse icons…', 'members' ); ?></button>
 							</div>
-							<input type="text" id="members-am-icon-search" placeholder="<?php esc_attr_e( 'Search icons…', 'members' ); ?>" class="widefat" />
-							<div class="members-am-icon-grid" id="members-am-icon-grid"></div>
-							<input type="hidden" id="members-am-icon-type" value="dashicon" />
-							<input type="text" id="members-am-icon-value" class="widefat" placeholder="dashicons-admin-post" />
-							<img id="members-am-icon-preview" class="members-am-icon-preview" src="" alt="" />
-							<button type="button" class="button" id="members-am-media-upload"><?php esc_html_e( 'Choose image', 'members' ); ?></button>
-							<p class="description members-am-icon-upload-desc"><?php esc_html_e( 'Recommended: 20×20px PNG or SVG. Larger images will be scaled down.', 'members' ); ?></p>
+							<p class="description members-am-icon-current-summary" id="members-am-icon-current-summary" aria-live="polite"></p>
+							<div id="members-am-icon-panel" class="members-am-icon-panel" hidden>
+								<div class="members-am-icon-tabs">
+									<button type="button" class="button is-active" data-tab="dashicons"><?php esc_html_e( 'Dashicons', 'members' ); ?></button>
+									<button type="button" class="button" data-tab="fontawesome"><?php esc_html_e( 'Font Awesome', 'members' ); ?></button>
+									<button type="button" class="button" data-tab="upload"><?php esc_html_e( 'Upload', 'members' ); ?></button>
+								</div>
+								<input type="text" id="members-am-icon-search" placeholder="<?php esc_attr_e( 'Search icons…', 'members' ); ?>" class="widefat" />
+								<div class="members-am-icon-grid" id="members-am-icon-grid"></div>
+								<input type="hidden" id="members-am-icon-type" value="dashicon" />
+								<label for="members-am-icon-value" class="screen-reader-text"><?php esc_html_e( 'Icon class or image URL', 'members' ); ?></label>
+								<input type="text" id="members-am-icon-value" class="widefat" placeholder="dashicons-admin-post" />
+								<img id="members-am-icon-preview" class="members-am-icon-preview" src="" alt="" />
+								<button type="button" class="button" id="members-am-media-upload"><?php esc_html_e( 'Choose image', 'members' ); ?></button>
+								<p class="description members-am-icon-upload-desc"><?php esc_html_e( 'Recommended: 20×20px PNG or SVG. Larger images will be scaled down.', 'members' ); ?></p>
+							</div>
 						</section>
 						<section class="members-am-edit-section members-am-edit-section-badge" aria-labelledby="members-am-section-badge-heading">
 							<h3 id="members-am-section-badge-heading" class="members-am-edit-section-title"><?php esc_html_e( 'Badge', 'members' ); ?></h3>
@@ -889,13 +905,22 @@ function render_admin_menus_page() {
 							</div>
 						</section>
 						<section class="members-am-edit-section members-am-edit-section-visibility" aria-labelledby="members-am-section-visibility-heading">
-							<h3 id="members-am-section-visibility-heading" class="members-am-edit-section-title"><?php esc_html_e( 'Visibility per role', 'members' ); ?></h3>
-							<p class="description members-am-bulk-visibility-hint"><?php esc_html_e( 'For bulk visibility (whole column or checked rows), use the tools above each role column.', 'members' ); ?></p>
-							<div id="members-am-visibility-toggles"></div>
-							<p class="members-am-edit-cap-field">
-								<label for="members-am-item-cap"><?php esc_html_e( 'Required capability', 'members' ); ?></label>
-								<input type="text" id="members-am-item-cap" class="widefat" placeholder="read" />
-							</p>
+							<details id="members-am-visibility-details" class="members-am-expand-details members-am-visibility-details">
+								<summary class="members-am-expand-details-summary">
+									<span class="members-am-expand-summary-text">
+										<span id="members-am-section-visibility-heading" class="members-am-edit-section-title"><?php esc_html_e( 'Visibility per role', 'members' ); ?></span>
+										<span class="description members-am-expand-current-summary" id="members-am-visibility-current-summary" aria-live="polite"></span>
+									</span>
+								</summary>
+								<div class="members-am-expand-panel members-am-visibility-panel">
+									<p class="description members-am-bulk-visibility-hint"><?php esc_html_e( 'For bulk visibility (whole column or checked rows), use the tools above each role column.', 'members' ); ?></p>
+									<div id="members-am-visibility-toggles"></div>
+									<p class="members-am-edit-cap-field">
+										<label for="members-am-item-cap"><?php esc_html_e( 'Required capability', 'members' ); ?></label>
+										<input type="text" id="members-am-item-cap" class="widefat" placeholder="read" />
+									</p>
+								</div>
+							</details>
 						</section>
 					</div>
 				</div>
