@@ -2755,6 +2755,7 @@
 	}
 
 	function closeEditPopover() {
+		destroyColorPickers();
 		state.selectedId = null;
 		state.pendingEditApplyTarget = null;
 		document.body.style.overflow = '';
@@ -3086,7 +3087,7 @@
 
 	function membersAmSyncColorInput($input, hex) {
 		$input.val(hex);
-		if ($input.data('wpWpColorPicker')) {
+		if ($input.closest('.wp-picker-container').length || $input.data('wpWpColorPicker')) {
 			membersAmColorPickerSuppress = true;
 			try {
 				$input.wpColorPicker('color', hex);
@@ -3097,11 +3098,34 @@
 		}
 	}
 
+	/**
+	 * Remove wpColorPicker markup when destroy() is a no-op or never bound (core #37069 class issues).
+	 *
+	 * @param {JQuery} $input
+	 */
+	function membersAmStripColorPickerDom($input) {
+		var $wrap = $input.closest('.wp-picker-container');
+		if (!$wrap.length) {
+			return;
+		}
+		$input.detach();
+		$wrap.before($input);
+		$wrap.remove();
+	}
+
 	function destroyColorPickers() {
 		$('.members-am-color').each(function () {
-			if ($(this).data('wpWpColorPicker')) {
-				$(this).wpColorPicker('destroy');
+			var $input = $(this);
+			try {
+				if ($input.data('wpWpColorPicker')) {
+					$input.wpColorPicker('destroy');
+				}
+			} catch (ignore) {
+				// Fall through to DOM teardown.
 			}
+			membersAmStripColorPickerDom($input);
+			$input.removeClass('wp-color-picker');
+			$input.removeData();
 		});
 	}
 
@@ -3135,7 +3159,7 @@
 			if (!hex || hex === '#') {
 				return;
 			}
-			if ($el.data('wpWpColorPicker')) {
+			if ($el.closest('.wp-picker-container').length || $el.data('wpWpColorPicker')) {
 				try {
 					$el.wpColorPicker('color', hex);
 				} catch (ignore) {
@@ -3995,7 +4019,6 @@
 					slug: String(state.activeRoleSlugs[0] || (getRolesList()[0] && getRolesList()[0].slug) || 'subscriber'),
 				};
 				renderAll();
-				openEditPanel();
 				return;
 			}
 			$('#members-am-add-item-title').val('');
@@ -4056,7 +4079,6 @@
 			};
 			closeAddItemModal();
 			renderAll();
-			openEditPanel();
 		});
 
 		$('#members-am-chips-show-all').on('click', function (e) {
