@@ -437,7 +437,8 @@ function apply_menu_overrides( $overrides ) {
 		}
 		if ( ! empty( $o['badge'] ) ) {
 			$badge_text = esc_html( $o['badge'] );
-			$badge_bg   = ! empty( $o['badge_bg'] ) ? sanitize_hex_color( $o['badge_bg'] ) : '#d63638';
+			$badge_bg   = ! empty( $o['badge_bg'] ) ? sanitize_hex_color( $o['badge_bg'] ) : '';
+			$badge_bg   = $badge_bg ? $badge_bg : '#d63638';
 			$badge_html = ' <span class="members-am-menu-badge" style="background-color:' . esc_attr( $badge_bg ) . ';">' . $badge_text . '</span>';
 			$menu[ $k ][0] .= $badge_html;
 		}
@@ -493,7 +494,8 @@ function apply_menu_overrides( $overrides ) {
 			}
 			if ( ! empty( $o['badge'] ) ) {
 				$badge_text = esc_html( $o['badge'] );
-				$badge_bg   = ! empty( $o['badge_bg'] ) ? sanitize_hex_color( $o['badge_bg'] ) : '#d63638';
+				$badge_bg   = ! empty( $o['badge_bg'] ) ? sanitize_hex_color( $o['badge_bg'] ) : '';
+				$badge_bg   = $badge_bg ? $badge_bg : '#d63638';
 				$badge_html = ' <span class="members-am-menu-badge" style="background-color:' . esc_attr( $badge_bg ) . ';">' . $badge_text . '</span>';
 				$submenu[ $parent ][ $idx ][0] .= $badge_html;
 			}
