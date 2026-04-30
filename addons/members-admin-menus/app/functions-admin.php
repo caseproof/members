@@ -668,8 +668,6 @@ function enqueue_admin_menus_assets() {
 				'closeUserColumn'         => __( 'Close user preview column', 'members' ),
 				'showAllRoles'            => __( 'Show all', 'members' ),
 				'hideAllRoles'            => __( 'Hide all', 'members' ),
-				'setOverride'             => __( 'Set override', 'members' ),
-				'setOverridePhase2'       => __( 'Per-user override editing is planned for a future update.', 'members' ),
 				'popoverPhase1Body'       => __( 'Detailed item editing (rename, URL, icons, and colors) is coming in the next update. Use the row controls in each column for visibility and ordering.', 'members' ),
 				'copyConfirm'             => __( 'Copy menu settings from “%1$s” to “%2$s”? This overwrites the target role’s configuration.', 'members' ),
 				'copyConfirmYes'          => __( 'Confirm copy', 'members' ),
@@ -725,7 +723,6 @@ function render_admin_menus_page() {
 				<span class="members-am-user-search-wrap members-am-toolbar-primary-user">
 					<label for="members-am-user-search"><?php esc_html_e( 'User:', 'members' ); ?></label>
 					<input type="text" id="members-am-user-search" class="members-am-user-search-input" placeholder="<?php esc_attr_e( 'Search users to override…', 'members' ); ?>" />
-					<button type="button" class="button" id="members-am-set-override" disabled aria-disabled="true" title="<?php echo esc_attr( __( 'Per-user override editing is planned for a future update.', 'members' ) ); ?>"><?php esc_html_e( 'Set override', 'members' ); ?></button>
 				</span>
 				<div class="members-am-toolbar-group members-am-toolbar-group--view">
 					<label class="members-am-sync-scroll">
@@ -836,6 +833,9 @@ function render_admin_menus_page() {
 						</span>
 						<button type="button" class="button button-small members-am-btn-danger" id="members-am-remove-custom" hidden><?php esc_html_e( 'Remove', 'members' ); ?></button>
 					</div>
+					<div class="members-am-edit-popover-done-wrap">
+						<button type="button" class="button button-primary" id="members-am-edit-popover-done"><?php esc_html_e( 'Close', 'members' ); ?></button>
+					</div>
 				</div>
 				<div class="members-am-edit-popover-body">
 					<div class="members-am-edit-grid" id="members-am-edit-grid">
@@ -901,9 +901,6 @@ function render_admin_menus_page() {
 							</p>
 						</section>
 					</div>
-				</div>
-				<div class="members-am-edit-popover-footer">
-					<button type="button" class="button button-primary" id="members-am-edit-popover-done"><?php esc_html_e( 'Close', 'members' ); ?></button>
 				</div>
 			</div>
 		</div>

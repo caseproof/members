@@ -2169,8 +2169,31 @@ body.admin_page_members-about #wpbody-content {
 }
 
 .members-am-edit-popover-chrome.members-am-edit-toolbar {
-	display: block;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0;
 	margin: 0;
+	border-bottom: 1px solid var(--members-am-chrome-border, #dcdcde);
+	background: var(--members-am-chrome-bg, #f6f7f7);
+}
+
+.members-am-edit-popover-chrome .members-am-edit-popover-scope {
+	border-bottom: none;
+}
+
+.members-am-edit-popover-chrome .members-am-edit-popover-actions {
+	border-bottom: none;
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.members-am-edit-popover-done-wrap {
+	margin-left: auto;
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	padding: 10px 16px;
 }
 
 .members-am-edit-popover-scope {
@@ -2193,17 +2216,6 @@ body.admin_page_members-about #wpbody-content {
 	min-height: 0;
 	overscroll-behavior: contain;
 	-webkit-overflow-scrolling: touch;
-}
-
-.members-am-edit-popover-footer {
-	padding: 12px 16px;
-	border-top: 1px solid var(--members-am-chrome-border, #dcdcde);
-	background: var(--members-am-chrome-bg, #f6f7f7);
-	display: flex;
-	flex-wrap: wrap;
-	gap: 8px;
-	align-items: center;
-	flex-shrink: 0;
 }
 
 .members-am-edit-target-wrap {
