@@ -10,7 +10,6 @@ namespace Members\AddOns\AdminMenus;
 
 defined( 'ABSPATH' ) || exit;
 
-add_action( 'admin_menu', __NAMESPACE__ . '\capture_menu_snapshot', 998 );
 add_action( 'wp_ajax_members_admin_menus_save', __NAMESPACE__ . '\ajax_save_settings' );
 add_action( 'wp_ajax_members_admin_menus_reset', __NAMESPACE__ . '\ajax_reset_settings' );
 add_action( 'wp_ajax_members_admin_menus_export', __NAMESPACE__ . '\ajax_export_settings' );
@@ -56,6 +55,19 @@ function register_admin_menus_submenu() {
 			}
 			enqueue_admin_menus_assets();
 		} );
+		// Snapshot + wp_localize_script run here (after admin_enqueue_scripts) so `$menu` matches
+		// the sidebar: other plugins often adjust the tree from admin_head before menu-header.php.
+		add_action(
+			'admin_head',
+			function () use ( $page_hook ) {
+				global $hook_suffix;
+				if ( $hook_suffix !== $page_hook ) {
+					return;
+				}
+				localize_admin_menus_script();
+			},
+			99999
+		);
 	}
 }
 
@@ -469,13 +481,22 @@ function role_matrix_allcaps_with_core_runtime_grants( $role, $pseudo_user ) {
 /**
  * For each role, whether the capability applies for UI previews (stored caps + core runtime grants).
  *
+ * Uses the same resolution path as {@see WP_User::has_cap()} ({@see map_meta_cap()} plus the
+ * `user_has_cap` filter) so menu meta capabilities match real access. {@see WP_Role::has_cap()}
+ * alone misses core mappings (e.g. GDPR tools: `export_others_personal_data` → `manage_options`),
+ * which incorrectly showed the “no access” lock for valid roles.
+ *
  * @param string[] $caps Capability names.
  * @return array<string, array<string, bool>>
  */
 function build_role_cap_matrix_for_js( array $caps ) {
-	$matrix      = array();
-	$pseudo_user = new \WP_User();
-	$pseudo_user->ID = 0;
+	$matrix = array();
+
+	$pseudo_for_grants = new \WP_User();
+	$pseudo_for_grants->ID = 0;
+
+	$matrix_user = new \WP_User();
+	$matrix_user->ID = 0;
 
 	foreach ( \members_get_roles() as $role_obj ) {
 		$slug    = $role_obj->name;
@@ -484,17 +505,34 @@ function build_role_cap_matrix_for_js( array $caps ) {
 			$matrix[ $slug ] = array();
 			continue;
 		}
-		$runtime_caps = role_matrix_allcaps_with_core_runtime_grants( $wp_role, $pseudo_user );
-		$row          = array();
+		$matrix_user->allcaps = role_matrix_allcaps_with_core_runtime_grants( $wp_role, $pseudo_for_grants );
+		$row                  = array();
 		foreach ( $caps as $cap ) {
 			if ( ! is_string( $cap ) || '' === $cap ) {
 				continue;
 			}
-			$row[ $cap ] = $wp_role->has_cap( $cap ) || ! empty( $runtime_caps[ $cap ] );
+			$row[ $cap ] = $matrix_user->has_cap( $cap );
 		}
 		$matrix[ $slug ] = $row;
 	}
 	return $matrix;
+}
+
+/**
+ * Deep copy of `$menu` / `$submenu` so nothing later in the request mutates the snapshot.
+ *
+ * @param mixed $data Menu branch or leaf.
+ * @return mixed
+ */
+function members_am_deep_copy_menu_structure( $data ) {
+	if ( is_array( $data ) ) {
+		$out = array();
+		foreach ( $data as $key => $value ) {
+			$out[ $key ] = members_am_deep_copy_menu_structure( $value );
+		}
+		return $out;
+	}
+	return $data;
 }
 
 /**
@@ -514,6 +552,19 @@ function enqueue_admin_menus_assets() {
 		FONT_AWESOME_CDN_VERSION
 	);
 	wp_enqueue_script( 'members-admin-menus' );
+}
+
+/**
+ * Capture the admin menu and attach data to members-admin-menus (footer script).
+ *
+ * Runs on {@see 'admin_head'} at priority 99999 so `$menu` / `$submenu` reflect load-* and
+ * typical admin_head adjustments, immediately before `menu-header.php` renders the sidebar.
+ * The script is footer-deferred; {@see wp_localize_script()} is still valid here.
+ *
+ * @return void
+ */
+function localize_admin_menus_script() {
+	capture_menu_snapshot();
 
 	$settings = get_settings();
 	$tree     = build_menu_tree_for_js();
@@ -968,6 +1019,10 @@ function render_admin_menus_page() {
 /**
  * Store a copy of the admin menu for the editor UI and defaults.
  *
+ * Called from {@see localize_admin_menus_script()} (admin_head, late) so `$menu` / `$submenu`
+ * match what {@see _wp_menu_output()} is about to render. Values are deep-copied so later
+ * mutations cannot desync the tree from the localized JSON.
+ *
  * @return void
  */
 function capture_menu_snapshot() {
@@ -975,9 +1030,16 @@ function capture_menu_snapshot() {
 		return;
 	}
 	global $menu, $submenu;
+	if ( ! is_array( $menu ) || ! is_array( $submenu ) ) {
+		$GLOBALS['members_admin_menus_snapshot'] = array(
+			'menu'    => array(),
+			'submenu' => array(),
+		);
+		return;
+	}
 	$GLOBALS['members_admin_menus_snapshot'] = array(
-		'menu'    => $menu,
-		'submenu' => $submenu,
+		'menu'    => members_am_deep_copy_menu_structure( $menu ),
+		'submenu' => members_am_deep_copy_menu_structure( $submenu ),
 	);
 }
 
@@ -1016,6 +1078,14 @@ function build_menu_tree_for_js() {
 			continue;
 		}
 		$slug = $item[2];
+		// Core still registers the legacy Links (blogroll) menu. includes/menu.php may re-parent
+		// $item[2] to the first submenu slug (e.g. link categories) while $item[5] stays `menu-links`.
+		// When link_manager_enabled is off, manage_links maps to do_not_allow — the real sidebar
+		// drops this tree; skip it here so Admin Menus matches.
+		$is_links_top = ( isset( $item[5] ) && 'menu-links' === $item[5] ) || 'link-manager.php' === $slug;
+		if ( $is_links_top && ! get_option( 'link_manager_enabled' ) ) {
+			continue;
+		}
 		if ( false !== strpos( $slug, 'separator' ) || false !== strpos( $slug, 'wp-menu-separator' ) ) {
 			continue;
 		}

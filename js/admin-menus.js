@@ -765,9 +765,9 @@
 	}
 
 	/**
-	 * Parent slug from the snapshot tree only (submenu ids use parent::child).
-	 * Admin menu snapshot is captured before PHP applies "move to submenu", so demoted
-	 * items are not in the tree as children — use getEffectiveParentId() with a role.
+	 * Parent slug from the snapshot tree (submenu ids use parent::child).
+	 * Snapshot is taken in PHP on admin_head (late), matching core `$menu` / `$submenu` at
+	 * sidebar render; use getEffectiveParentId() when role overrides move an item.
 	 */
 	function findParentIdInTree(childId) {
 		if (!childId || childId.indexOf('::') === -1) {

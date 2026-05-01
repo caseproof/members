@@ -1119,7 +1119,7 @@ function inject_custom_menu_items( $items ) {
  */
 function members_am_redirect_to_custom_menu_url( $url ) {
 	$url = esc_url_raw( $url );
-	if ( '' === $url || ! preg_match( '#^https?://#i', $url ) ) {
+	if ( '' === $url ) {
 		return;
 	}
 
