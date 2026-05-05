@@ -1113,7 +1113,7 @@ function inject_custom_menu_items( $items ) {
  * Redirect to a stored custom menu item URL.
  *
  * External URLs are intentionally supported for custom menu items configured by
- * users who can edit Members settings, so off-site targets use wp_redirect().
+ * users who can edit Members settings.
  *
  * @param string $url Target URL.
  * @return void
@@ -1128,7 +1128,15 @@ function members_am_redirect_to_custom_menu_url( $url ) {
 	$site_host   = strtolower( (string) wp_parse_url( home_url( '/' ), PHP_URL_HOST ) );
 
 	if ( '' !== $target_host && '' !== $site_host && $target_host !== $site_host ) {
-		wp_redirect( $url ); // phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect
+		$allow_external_host = static function( $hosts ) use ( $target_host ) {
+			if ( ! in_array( $target_host, $hosts, true ) ) {
+				$hosts[] = $target_host;
+			}
+			return $hosts;
+		};
+		add_filter( 'allowed_redirect_hosts', $allow_external_host );
+		wp_safe_redirect( $url );
+		remove_filter( 'allowed_redirect_hosts', $allow_external_host );
 	} else {
 		wp_safe_redirect( $url );
 	}
