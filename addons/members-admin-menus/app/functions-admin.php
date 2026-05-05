@@ -162,7 +162,7 @@ function members_am_sanitize_icon_image_value( $raw ) {
 		if ( strlen( $raw ) > 200000 ) {
 			return '';
 		}
-		if ( ! preg_match( '/^data:image\/(png|jpeg|jpg|gif|webp);base64,[A-Za-z0-9+\/=\s]+$/i', $raw ) ) {
+		if ( ! preg_match( '/^data:image\/(png|jpeg|jpg|gif|webp);base64,[A-Za-z0-9+\/=]+$/i', $raw ) ) {
 			return '';
 		}
 		return $raw;
@@ -1241,7 +1241,7 @@ function members_am_exempt_administrator_user_labels( array $ids ) {
  * @return void
  */
 function ajax_save_settings() {
-	if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'members_admin_menus' ) ) {
+	if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( wp_unslash( $_POST['nonce'] ), 'members_admin_menus' ) ) {
 		wp_send_json_error( array( 'message' => __( 'Invalid security token.', 'members' ) ), 403 );
 	}
 	if ( ! current_user_can( get_members_settings_capability() ) ) {
@@ -1463,7 +1463,7 @@ function sanitize_custom_item( $item ) {
  * @return void
  */
 function ajax_reset_settings() {
-	if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'members_admin_menus' ) ) {
+	if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( wp_unslash( $_POST['nonce'] ), 'members_admin_menus' ) ) {
 		wp_send_json_error( array( 'message' => __( 'Invalid security token.', 'members' ) ), 403 );
 	}
 	if ( ! current_user_can( get_members_settings_capability() ) ) {
@@ -1493,7 +1493,7 @@ function ajax_reset_settings() {
  * @return void
  */
 function ajax_export_settings() {
-	if ( ! isset( $_GET['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['nonce'] ) ), 'members_admin_menus' ) ) {
+	if ( ! isset( $_GET['nonce'] ) || ! wp_verify_nonce( wp_unslash( $_GET['nonce'] ), 'members_admin_menus' ) ) {
 		wp_die( esc_html__( 'Invalid security token.', 'members' ) );
 	}
 	if ( ! current_user_can( get_members_settings_capability() ) ) {
@@ -1515,7 +1515,7 @@ function ajax_export_settings() {
  * @return void
  */
 function ajax_import_settings() {
-	if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'members_admin_menus' ) ) {
+	if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( wp_unslash( $_POST['nonce'] ), 'members_admin_menus' ) ) {
 		wp_send_json_error( array( 'message' => __( 'Invalid security token.', 'members' ) ), 403 );
 	}
 	if ( ! current_user_can( get_members_settings_capability() ) ) {
@@ -1540,7 +1540,7 @@ function ajax_import_settings() {
  * @return void
  */
 function ajax_user_search() {
-	if ( ! isset( $_GET['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['nonce'] ) ), 'members_admin_menus' ) ) {
+	if ( ! isset( $_GET['nonce'] ) || ! wp_verify_nonce( wp_unslash( $_GET['nonce'] ), 'members_admin_menus' ) ) {
 		wp_send_json_error( array( 'message' => __( 'Invalid security token.', 'members' ) ), 403 );
 	}
 	if ( ! current_user_can( get_members_settings_capability() ) ) {
