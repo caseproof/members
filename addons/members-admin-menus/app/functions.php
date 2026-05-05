@@ -18,12 +18,19 @@ const OPTION_KEY = 'members_admin_menus_settings';
 /** Font Awesome CDN release (cdnjs) — used by maybe_enqueue_fontawesome() and enqueue_admin_menus_assets(). */
 const FONT_AWESOME_CDN_VERSION = '6.5.2';
 
+/** Default admin menu badge background (WordPress admin red) when none or invalid color is set. */
+const DEFAULT_MENU_BADGE_BG = '#d63638';
+
 add_action( 'admin_menu', __NAMESPACE__ . '\apply_menu_modifications', 999 );
 add_action( 'admin_menu', __NAMESPACE__ . '\inject_custom_menu_items_late', 100 );
 add_action( 'admin_init', __NAMESPACE__ . '\block_restricted_pages', 1 );
 add_action( 'admin_enqueue_scripts', __NAMESPACE__ . '\maybe_enqueue_fontawesome' );
 add_filter( 'custom_menu_order', __NAMESPACE__ . '\enable_custom_menu_order' );
 add_filter( 'menu_order', __NAMESPACE__ . '\filter_menu_order', 999 );
+add_action( 'members_after_rescue', __NAMESPACE__ . '\\members_am_add_exempt_administrator' );
+// Late pass: plugins (e.g. debug-log-config-tool) may register nodes on wp_before_admin_bar_render, after admin_bar_menu.
+// Priority 9999: run after most same-hook callbacks so their nodes exist before we strip; anything hooked above 9999 will not be processed.
+add_action( 'wp_before_admin_bar_render', __NAMESPACE__ . '\members_am_apply_admin_bar_menu_restrictions', 9999, 0 );
 
 /**
  * Enable custom menu order when we have per-role order stored.
@@ -245,6 +252,27 @@ function inject_custom_menu_items_late() {
 }
 
 /**
+ * Map a stored top-level order token to the key used in the global $menu array ($item[2]).
+ *
+ * Mirrors {@see filter_menu_order()}: `parent::child` uses the child segment; `sep-*` is unchanged
+ * (physical reorder skips it; {@see inject_separators()} consumes those tokens from $order).
+ *
+ * @param string $token Order entry (slug or composite).
+ * @return string Slug for $menu lookup, or original token for sep-*.
+ */
+function members_am_order_token_to_menu_slug( $token ) {
+	$token = (string) $token;
+	if ( 0 === strpos( $token, 'sep-' ) ) {
+		return $token;
+	}
+	if ( false !== strpos( $token, '::' ) ) {
+		$parts = explode( '::', $token, 2 );
+		return isset( $parts[1] ) ? (string) $parts[1] : $token;
+	}
+	return $token;
+}
+
+/**
  * Reorder $menu array by slug list.
  *
  * @param array $menu   Admin menu global.
@@ -262,7 +290,11 @@ function reorder_menu_by_slug_list( $menu, $order ) {
 	$used = array();
 	$pos  = 1;
 	$order = array_map( 'strval', $order );
-	foreach ( $order as $slug ) {
+	foreach ( $order as $token ) {
+		if ( 0 === strpos( $token, 'sep-' ) ) {
+			continue;
+		}
+		$slug = members_am_order_token_to_menu_slug( $token );
 		if ( ! isset( $by_slug[ $slug ] ) || isset( $used[ $slug ] ) ) {
 			continue;
 		}
@@ -408,7 +440,7 @@ function apply_menu_overrides( $overrides ) {
 		}
 		if ( ! empty( $o['badge'] ) ) {
 			$badge_text = esc_html( $o['badge'] );
-			$badge_bg   = ! empty( $o['badge_bg'] ) ? sanitize_hex_color( $o['badge_bg'] ) : '#d63638';
+			$badge_bg   = sanitize_hex_color( $o['badge_bg'] ?? '' ) ?: DEFAULT_MENU_BADGE_BG;
 			$badge_html = ' <span class="members-am-menu-badge" style="background-color:' . esc_attr( $badge_bg ) . ';">' . $badge_text . '</span>';
 			$menu[ $k ][0] .= $badge_html;
 		}
@@ -428,7 +460,7 @@ function apply_menu_overrides( $overrides ) {
 			if ( 0 === strpos( $icon, 'http://' ) || 0 === strpos( $icon, 'https://' ) || 0 === strpos( $icon, '//' ) ) {
 				$icon_type = 'image';
 			} elseif ( 0 === strpos( $icon, 'data:image/' ) ) {
-				$icon_type = 'svg';
+				$icon_type = 'image';
 			}
 
 			if ( 'dashicon' === $icon_type ) {
@@ -464,7 +496,7 @@ function apply_menu_overrides( $overrides ) {
 			}
 			if ( ! empty( $o['badge'] ) ) {
 				$badge_text = esc_html( $o['badge'] );
-				$badge_bg   = ! empty( $o['badge_bg'] ) ? sanitize_hex_color( $o['badge_bg'] ) : '#d63638';
+				$badge_bg   = sanitize_hex_color( $o['badge_bg'] ?? '' ) ?: DEFAULT_MENU_BADGE_BG;
 				$badge_html = ' <span class="members-am-menu-badge" style="background-color:' . esc_attr( $badge_bg ) . ';">' . $badge_text . '</span>';
 				$submenu[ $parent ][ $idx ][0] .= $badge_html;
 			}
@@ -1078,6 +1110,32 @@ function inject_custom_menu_items( $items ) {
 }
 
 /**
+ * Redirect to a stored custom menu item URL.
+ *
+ * External URLs are intentionally supported for custom menu items configured by
+ * users who can edit Members settings, so off-site targets use wp_redirect().
+ *
+ * @param string $url Target URL.
+ * @return void
+ */
+function members_am_redirect_to_custom_menu_url( $url ) {
+	$url = esc_url_raw( $url );
+	if ( '' === $url ) {
+		return;
+	}
+
+	$target_host = strtolower( (string) wp_parse_url( $url, PHP_URL_HOST ) );
+	$site_host   = strtolower( (string) wp_parse_url( home_url( '/' ), PHP_URL_HOST ) );
+
+	if ( '' !== $target_host && '' !== $site_host && $target_host !== $site_host ) {
+		wp_redirect( $url ); // phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect
+	} else {
+		wp_safe_redirect( $url );
+	}
+	exit;
+}
+
+/**
  * Redirects custom menu items to their target URL.
  *
  * @return void
@@ -1089,8 +1147,7 @@ function members_am_custom_menu_callback() {
 	}
 	$page = sanitize_key( wp_unslash( $_GET['page'] ) );
 	if ( isset( $members_am_custom_redirects[ $page ] ) ) {
-		wp_safe_redirect( $members_am_custom_redirects[ $page ] );
-		exit;
+		members_am_redirect_to_custom_menu_url( $members_am_custom_redirects[ $page ] );
 	}
 }
 
@@ -1104,16 +1161,43 @@ function members_am_slugs_for_admin_redirect_url( $url ) {
 	$path  = (string) wp_parse_url( $url, PHP_URL_PATH );
 	$query = (string) wp_parse_url( $url, PHP_URL_QUERY );
 	$slugs = array();
+	$args  = array();
 	if ( '' !== $query ) {
 		wp_parse_str( $query, $args );
-		if ( ! empty( $args['page'] ) ) {
+		if ( ! empty( $args['page'] ) && is_string( $args['page'] ) ) {
 			$slugs[] = sanitize_text_field( $args['page'] );
 		}
 	}
+	// Bare edit.php / post-new.php / post.php basename must not match Posts-only hidden ids when this URL is for another post_type (e.g. Pages).
+	$cpt_slug                 = ! empty( $args['post_type'] ) && is_string( $args['post_type'] ) ? sanitize_key( $args['post_type'] ) : '';
+	$omit_ambiguous_basename = ( '' !== $cpt_slug && 'post' !== $cpt_slug );
 	if ( '' !== $path ) {
 		$base = basename( $path );
 		if ( $base && 'admin.php' !== $base ) {
-			$slugs[] = $base;
+			if ( ! ( $omit_ambiguous_basename && in_array( $base, array( 'edit.php', 'post-new.php', 'post.php' ), true ) ) ) {
+				$slugs[] = $base;
+			}
+		}
+	}
+	// Composite ids (parity with get_current_screen_slugs) so submenu keys like tools.php::tools.php?page=x match toolbar and deep links.
+	if ( '' !== $path && ! empty( $args['page'] ) && is_string( $args['page'] ) ) {
+		$base = basename( $path );
+		$page = sanitize_text_field( $args['page'] );
+		if ( $base && $page ) {
+			$slugs[] = $base . '?page=' . $page;
+		}
+	}
+	if ( '' !== $cpt_slug ) {
+		$base = '' !== $path ? basename( $path ) : '';
+		if ( $base && in_array( $base, array( 'edit.php', 'post-new.php', 'post.php' ), true ) ) {
+			$slugs[] = $base . '?post_type=' . $cpt_slug;
+		}
+	}
+	if ( ! empty( $args['taxonomy'] ) && is_string( $args['taxonomy'] ) ) {
+		$tax  = sanitize_key( $args['taxonomy'] );
+		$base = '' !== $path ? basename( $path ) : '';
+		if ( $tax && $base && in_array( $base, array( 'edit-tags.php', 'term.php' ), true ) ) {
+			$slugs[] = $base . '?taxonomy=' . $tax;
 		}
 	}
 	return array_unique( array_filter( $slugs ) );
@@ -1151,6 +1235,214 @@ function members_am_redirect_target_is_blocked_for_user( $user_id, $url ) {
 		}
 	}
 	return false;
+}
+
+/**
+ * Normalize an admin bar node href to an absolute URL under this site's wp-admin, or empty string if not applicable.
+ *
+ * @param string $href Raw href from {@see WP_Admin_Bar::get_nodes()}.
+ * @return string Absolute http(s) URL or ''.
+ */
+function members_am_normalize_toolbar_href( $href ) {
+	$href = is_string( $href ) ? trim( $href ) : '';
+	if ( '' === $href || '#' === $href || 0 === stripos( $href, 'javascript:' ) ) {
+		return '';
+	}
+	if ( preg_match( '/\s/', $href ) ) {
+		return '';
+	}
+
+	if ( preg_match( '#^https?://#i', $href ) ) {
+		$url = $href;
+	} elseif ( 0 === strpos( $href, '//' ) ) {
+		$url = ( is_ssl() ? 'https:' : 'http:' ) . $href;
+	} elseif ( 0 === strpos( $href, '/' ) ) {
+		$url = home_url( $href );
+	} else {
+		$url = admin_url( $href );
+	}
+
+	$url = esc_url_raw( $url );
+	if ( '' === $url ) {
+		return '';
+	}
+
+	$parts = wp_parse_url( $url );
+	if ( empty( $parts['scheme'] ) || empty( $parts['host'] ) || empty( $parts['path'] ) ) {
+		return '';
+	}
+
+	$site_host = wp_parse_url( site_url( '/' ), PHP_URL_HOST );
+	if ( ! is_string( $site_host ) || '' === $site_host || strcasecmp( (string) $parts['host'], $site_host ) !== 0 ) {
+		return '';
+	}
+
+	$admin_path = wp_parse_url( admin_url(), PHP_URL_PATH );
+	if ( ! is_string( $admin_path ) || '' === $admin_path ) {
+		return '';
+	}
+	$admin_base = untrailingslashit( wp_normalize_path( $admin_path ) );
+	$req_path   = wp_normalize_path( (string) $parts['path'] );
+	if ( '' === $admin_base ) {
+		return '';
+	}
+	if ( 0 !== strpos( $req_path . '/', $admin_base . '/' ) ) {
+		return '';
+	}
+
+	return $url;
+}
+
+/**
+ * Whether the admin bar still has any node whose parent is the given id.
+ *
+ * @param \WP_Admin_Bar $wp_admin_bar Admin bar instance.
+ * @param string        $parent_id    Parent node id.
+ * @return bool
+ */
+function members_am_admin_bar_parent_has_children( $wp_admin_bar, $parent_id ) {
+	$parent_id = (string) $parent_id;
+	foreach ( (array) $wp_admin_bar->get_nodes() as $node ) {
+		if ( ! is_object( $node ) || empty( $node->id ) ) {
+			continue;
+		}
+		if ( isset( $node->parent ) && (string) $node->parent === $parent_id ) {
+			return true;
+		}
+	}
+	return false;
+}
+
+/**
+ * Remove known container nodes that have no remaining children (e.g. empty "New" dropdown).
+ *
+ * @param \WP_Admin_Bar $wp_admin_bar Admin bar instance.
+ * @return void
+ */
+function members_am_prune_empty_admin_bar_parents( $wp_admin_bar ) {
+	$prune_ids = apply_filters(
+		app()->namespace . '/admin_bar_empty_parent_prune_ids',
+		array( 'new-content' )
+	);
+	if ( ! is_array( $prune_ids ) || empty( $prune_ids ) ) {
+		return;
+	}
+	$never_prune = apply_filters(
+		app()->namespace . '/admin_bar_parent_prune_never_remove',
+		array( 'my-account', 'top-secondary', 'wp-logo' )
+	);
+	$never       = is_array( $never_prune ) ? array_flip( $never_prune ) : array();
+
+	for ( $i = 0; $i < 10; $i++ ) {
+		$removed = false;
+		foreach ( $prune_ids as $pid ) {
+			$pid = is_string( $pid ) ? sanitize_key( $pid ) : '';
+			if ( '' === $pid || isset( $never[ $pid ] ) ) {
+				continue;
+			}
+			$nodes = $wp_admin_bar->get_nodes();
+			if ( empty( $nodes[ $pid ] ) ) {
+				continue;
+			}
+			if ( ! members_am_admin_bar_parent_has_children( $wp_admin_bar, $pid ) ) {
+				$wp_admin_bar->remove_menu( $pid );
+				$removed = true;
+			}
+		}
+		if ( ! $removed ) {
+			break;
+		}
+	}
+}
+
+/**
+ * Remove admin bar links that point at admin screens blocked for this user (same rules as sidebar + URL redirect checks).
+ *
+ * Fires on {@see 'wp_before_admin_bar_render'} (late priority) so items added during that same action — not only on
+ * {@see 'admin_bar_menu'} — are present before we strip them.
+ *
+ * Core invokes {@see 'wp_before_admin_bar_render'} with no arguments; this implementation reads the global `$wp_admin_bar` instance.
+ * The optional parameter exists so a custom caller may pass a bar instance explicitly.
+ *
+ * @param \WP_Admin_Bar|null $passed_bar Optional bar instance; core always leaves this null.
+ * @return void
+ */
+function members_am_apply_admin_bar_menu_restrictions( $passed_bar = null ) {
+	$bar = $passed_bar instanceof \WP_Admin_Bar ? $passed_bar : null;
+	if ( null === $bar ) {
+		global $wp_admin_bar;
+		$bar = $wp_admin_bar instanceof \WP_Admin_Bar ? $wp_admin_bar : null;
+	}
+	if ( ! $bar instanceof \WP_Admin_Bar ) {
+		return;
+	}
+	$user_id = get_current_user_id();
+	if ( $user_id < 1 ) {
+		return;
+	}
+
+	/**
+	 * Whether to strip admin bar items using Admin Menus hidden / capability map rules.
+	 *
+	 * @param bool $apply   Default true.
+	 * @param int  $user_id Current user ID.
+	 */
+	if ( ! apply_filters( app()->namespace . '/apply_admin_bar_restrictions', true, $user_id ) ) {
+		return;
+	}
+
+	if ( is_user_exempt( $user_id ) ) {
+		return;
+	}
+
+	/**
+	 * Node ids to never remove (structural / identity toolbar items).
+	 *
+	 * @param string[] $ids     Node ids.
+	 * @param int      $user_id Current user ID.
+	 */
+	$always_keep = apply_filters( app()->namespace . '/admin_bar_node_ids_always_keep', array( 'menu-toggle' ), $user_id );
+	$keep_flip   = is_array( $always_keep ) ? array_flip( $always_keep ) : array();
+
+	/**
+	 * Parent toolbar node ids whose `href` duplicates the first child (core does this for `new-content`).
+	 * Do not remove them in the URL pass — only {@see members_am_prune_empty_admin_bar_parents} may drop them when
+	 * they have no children left, so hiding e.g. Posts does not remove the whole "+ New" menu while Media/Pages remain.
+	 *
+	 * @param string[] $ids     Node ids.
+	 * @param int      $user_id Current user ID.
+	 */
+	$skip_href_parent_ids = apply_filters(
+		app()->namespace . '/admin_bar_skip_href_removal_parent_ids',
+		array( 'new-content' ),
+		$user_id
+	);
+	$skip_href_parents = is_array( $skip_href_parent_ids ) ? array_flip( $skip_href_parent_ids ) : array();
+
+	foreach ( (array) $bar->get_nodes() as $node ) {
+		if ( ! is_object( $node ) || empty( $node->id ) ) {
+			continue;
+		}
+		$id = (string) $node->id;
+		if ( isset( $keep_flip[ $id ] ) ) {
+			continue;
+		}
+		if ( isset( $skip_href_parents[ $id ] ) ) {
+			continue;
+		}
+		if ( empty( $node->href ) || ! is_string( $node->href ) ) {
+			continue;
+		}
+		$abs = members_am_normalize_toolbar_href( $node->href );
+		if ( '' === $abs ) {
+			continue;
+		}
+		if ( members_am_redirect_target_is_blocked_for_user( $user_id, $abs ) ) {
+			$bar->remove_menu( $id );
+		}
+	}
+
+	members_am_prune_empty_admin_bar_parents( $bar );
 }
 
 /**
@@ -1322,6 +1614,10 @@ function get_current_screen_slugs() {
 	if ( ! empty( $_GET['post_type'] ) && in_array( $pagenow, array( 'edit.php', 'post-new.php', 'post.php' ), true ) ) {
 		$pt      = sanitize_key( wp_unslash( $_GET['post_type'] ) );
 		$slugs[] = 'edit.php?post_type=' . $pt;
+		// Match submenu ids like edit.php?post_type=page::post-new.php?post_type=page (not only the list screen).
+		if ( in_array( $pagenow, array( 'post-new.php', 'post.php' ), true ) ) {
+			$slugs[] = $pagenow . '?post_type=' . $pt;
+		}
 	} elseif ( ! empty( $pagenow ) && empty( $_GET['page'] ) ) {
 		$slugs[] = $pagenow;
 	}
@@ -1385,12 +1681,111 @@ function get_settings() {
 }
 
 /**
+ * Store Admin Menus settings without autoloading the potentially large option.
+ *
+ * @param array $settings Settings array.
+ * @return bool Whether the value was updated.
+ */
+function update_settings_option( array $settings ) {
+	return update_option( OPTION_KEY, $settings, false );
+}
+
+/**
  * Clear the in-request settings cache after option updates.
  *
  * @return void
  */
 function members_am_invalidate_settings_cache() {
 	unset( $GLOBALS['members_am_settings_runtime_cache'] );
+}
+
+/**
+ * Remove Admin Menus role entries for slugs that no longer exist (e.g. after Members role reset).
+ *
+ * Only prunes `roles[ slug ]` keys; does not alter capability maps or other settings.
+ *
+ * @param array $role_slugs Role slugs to remove from stored settings.
+ * @return void
+ */
+function members_am_prune_role_settings( array $role_slugs ) {
+	if ( empty( $role_slugs ) ) {
+		return;
+	}
+
+	$slugs = array_unique( array_filter( array_map( 'sanitize_key', $role_slugs ) ) );
+	if ( empty( $slugs ) ) {
+		return;
+	}
+
+	$settings = get_option( OPTION_KEY, array() );
+	if ( ! is_array( $settings ) || empty( $settings['roles'] ) || ! is_array( $settings['roles'] ) ) {
+		return;
+	}
+
+	$changed = false;
+	foreach ( $slugs as $slug ) {
+		if ( isset( $settings['roles'][ $slug ] ) ) {
+			unset( $settings['roles'][ $slug ] );
+			$changed = true;
+		}
+	}
+
+	if ( $changed ) {
+		update_settings_option( $settings );
+		members_am_invalidate_settings_cache();
+	}
+}
+
+/**
+ * Add a user ID to the Admin Menus exempt list (used when administrators are restricted via admin_editable).
+ *
+ * Does not enable `admin_editable`. No-op if the user is not an administrator (or super admin on multisite).
+ *
+ * @param int $user_id User ID.
+ * @return void
+ */
+function members_am_add_exempt_administrator( $user_id ) {
+	$uid = absint( $user_id );
+	if ( $uid < 1 ) {
+		return;
+	}
+
+	$user = get_userdata( $uid );
+	if ( ! $user ) {
+		return;
+	}
+
+	$is_administrator = in_array( 'administrator', (array) $user->roles, true );
+	if ( ! $is_administrator && ! ( is_multisite() && is_super_admin( $uid ) ) ) {
+		return;
+	}
+
+	$settings = get_option( OPTION_KEY, array() );
+	if ( ! is_array( $settings ) ) {
+		$settings = array();
+	}
+
+	if ( empty( $settings['_meta'] ) || ! is_array( $settings['_meta'] ) ) {
+		$settings['_meta'] = array();
+	}
+
+	$exempt_ids = array();
+	if ( ! empty( $settings['_meta']['admin_menu_exempt_user_ids'] ) && is_array( $settings['_meta']['admin_menu_exempt_user_ids'] ) ) {
+		$exempt_ids = array_map( 'absint', $settings['_meta']['admin_menu_exempt_user_ids'] );
+	}
+
+	if ( in_array( $uid, $exempt_ids, true ) ) {
+		return;
+	}
+
+	$exempt_ids[] = $uid;
+	$exempt_ids   = array_unique( $exempt_ids );
+	sort( $exempt_ids, SORT_NUMERIC );
+
+	$settings['_meta']['admin_menu_exempt_user_ids'] = $exempt_ids;
+
+	update_settings_option( $settings );
+	members_am_invalidate_settings_cache();
 }
 
 /**
