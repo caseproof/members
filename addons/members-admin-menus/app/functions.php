@@ -18,6 +18,9 @@ const OPTION_KEY = 'members_admin_menus_settings';
 /** Font Awesome CDN release (cdnjs) — used by maybe_enqueue_fontawesome() and enqueue_admin_menus_assets(). */
 const FONT_AWESOME_CDN_VERSION = '6.5.2';
 
+/** Default admin menu badge background (WordPress admin red) when none or invalid color is set. */
+const DEFAULT_MENU_BADGE_BG = '#d63638';
+
 add_action( 'admin_menu', __NAMESPACE__ . '\apply_menu_modifications', 999 );
 add_action( 'admin_menu', __NAMESPACE__ . '\inject_custom_menu_items_late', 100 );
 add_action( 'admin_init', __NAMESPACE__ . '\block_restricted_pages', 1 );
@@ -437,8 +440,7 @@ function apply_menu_overrides( $overrides ) {
 		}
 		if ( ! empty( $o['badge'] ) ) {
 			$badge_text = esc_html( $o['badge'] );
-			$badge_bg   = ! empty( $o['badge_bg'] ) ? sanitize_hex_color( $o['badge_bg'] ) : '';
-			$badge_bg   = $badge_bg ? $badge_bg : '#d63638';
+			$badge_bg   = sanitize_hex_color( $o['badge_bg'] ?? '' ) ?: DEFAULT_MENU_BADGE_BG;
 			$badge_html = ' <span class="members-am-menu-badge" style="background-color:' . esc_attr( $badge_bg ) . ';">' . $badge_text . '</span>';
 			$menu[ $k ][0] .= $badge_html;
 		}
@@ -494,8 +496,7 @@ function apply_menu_overrides( $overrides ) {
 			}
 			if ( ! empty( $o['badge'] ) ) {
 				$badge_text = esc_html( $o['badge'] );
-				$badge_bg   = ! empty( $o['badge_bg'] ) ? sanitize_hex_color( $o['badge_bg'] ) : '';
-				$badge_bg   = $badge_bg ? $badge_bg : '#d63638';
+				$badge_bg   = sanitize_hex_color( $o['badge_bg'] ?? '' ) ?: DEFAULT_MENU_BADGE_BG;
 				$badge_html = ' <span class="members-am-menu-badge" style="background-color:' . esc_attr( $badge_bg ) . ';">' . $badge_text . '</span>';
 				$submenu[ $parent ][ $idx ][0] .= $badge_html;
 			}
@@ -1778,7 +1779,7 @@ function members_am_add_exempt_administrator( $user_id ) {
 	}
 
 	$exempt_ids[] = $uid;
-	$exempt_ids   = array_values( array_unique( array_map( 'absint', $exempt_ids ) ) );
+	$exempt_ids   = array_unique( $exempt_ids );
 	sort( $exempt_ids, SORT_NUMERIC );
 
 	$settings['_meta']['admin_menu_exempt_user_ids'] = $exempt_ids;

@@ -1159,9 +1159,6 @@ function build_menu_tree_for_js() {
  * @return array|\WP_Error Decoded array or error.
  */
 function members_am_decode_settings_json( $raw, $too_large_message ) {
-	if ( is_array( $raw ) ) {
-		return new \WP_Error( 'members_am_invalid_json', __( 'Invalid data.', 'members' ) );
-	}
 	if ( ! is_string( $raw ) ) {
 		return new \WP_Error( 'members_am_invalid_json', __( 'Invalid data.', 'members' ) );
 	}
