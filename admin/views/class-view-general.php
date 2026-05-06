@@ -42,7 +42,7 @@ class View_General extends View {
 		// Add reset roles data to the settings script (must run after enqueue).
 		wp_localize_script( 'members-settings', 'membersResetRoles', array(
 			'nonce' => wp_create_nonce( 'members_reset_roles' ),
-			'ajaxurl' => admin_url( 'admin-ajax.php' ),
+			'ajaxurl' => admin_url( 'admin-ajax.php', 'relative' ),
 			'confirmMessage' => esc_html__( 'This will remove only roles created with Members and reset the five WordPress roles (Administrator, Editor, Author, Contributor, Subscriber) to their default capabilities. Roles from other plugins (e.g. WooCommerce) will not be removed. Continue?', 'members' ),
 			'successMessage' => esc_html__( 'Members-created roles have been removed and WordPress roles have been reset to their defaults.', 'members' ),
 			'errorMessage' => esc_html__( 'An error occurred while resetting roles. Please try again.', 'members' )

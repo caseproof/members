@@ -52,6 +52,16 @@ function members_admin_register_scripts() {
 	$edit_role_ver  = file_exists( $edit_role_file ) ? filemtime( $edit_role_file ) : false;
 	wp_register_script( 'members-edit-role', members_plugin()->uri . "js/edit-role{$min}.js", array( 'postbox', 'wp-util' ), $edit_role_ver, true );
 
+	$admin_menus_file = members_plugin()->dir . "js/admin-menus{$min}.js";
+	$admin_menus_ver  = file_exists( $admin_menus_file ) ? filemtime( $admin_menus_file ) : false;
+	wp_register_script(
+		'members-admin-menus',
+		members_plugin()->uri . "js/admin-menus{$min}.js",
+		array( 'jquery', 'jquery-ui-sortable', 'wp-color-picker', 'wp-util' ),
+		$admin_menus_ver,
+		true
+	);
+
 	// Localize our script with some text we want to pass in.
 	$i18n = array(
 		'button_role_edit' => esc_html__( 'Edit',                'members' ),
@@ -202,7 +212,7 @@ add_action( 'in_admin_header', 'members_admin_header', 0 );
  */
 function members_admin_header() {
 
-	if ( members_is_memberpress_active() || empty( $_GET['page'] ) || ! in_array( $_GET['page'], array( 'roles', 'members', 'members-settings', 'members-about', 'members-payments', 'members-growth-tools' ) ) ) {
+	if ( members_is_memberpress_active() || empty( $_GET['page'] ) || ! in_array( $_GET['page'], array( 'roles', 'members', 'members-settings', 'members-about', 'members-payments', 'members-growth-tools', 'members-admin-menus' ), true ) ) {
 		return;
 	}
 
@@ -324,7 +334,7 @@ function members_is_admin_page() {
 
 	// Fallback: pages registered outside Settings_Page (e.g. the Growth Tools
 	// submenu is registered by the caseproof/growth-tools composer package).
-	if ( ! empty( $_GET['page'] ) && in_array( $_GET['page'], array( 'roles', 'members', 'members-settings', 'members-about', 'members-payments', 'members-growth-tools' ), true ) ) {
+	if ( ! empty( $_GET['page'] ) && in_array( $_GET['page'], array( 'roles', 'members', 'members-settings', 'members-about', 'members-payments', 'members-growth-tools', 'members-admin-menus' ), true ) ) {
 		return true;
 	}
 

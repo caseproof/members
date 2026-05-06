@@ -99,3 +99,61 @@ add_filter( 'map_meta_cap', function( $caps, $cap ) {
 	return $caps;
 
 }, 10, 2 );
+
+/**
+ * Grant post-tag granular caps to every role that can manage categories.
+ *
+ * Core mapped post_tag `manage_terms` to `manage_categories`. After this add-on remaps
+ * post_tag to `manage_post_tags`, roles cloned from Administrator (or otherwise missing the
+ * new primitives) still had `manage_categories` only — Admin Menus then showed "no access"
+ * for Tags while `current_user_can()` could still pass if another role granted the tag caps.
+ *
+ * Sites that need least-privilege (category management without automatic tag caps) can disable
+ * the sync with {@see 'members_ctc_sync_post_tag_caps_for_manage_categories_roles'}.
+ *
+ * @since 1.0.1
+ * @return void
+ */
+function sync_post_tag_caps_for_roles_with_manage_categories() {
+	/**
+	 * Whether to grant granular post_tag capabilities to every role that has `manage_categories`.
+	 *
+	 * Default true keeps compatibility with earlier add-on releases. Return false to skip the
+	 * automatic grant (use custom role/cap management instead).
+	 *
+	 * @since 1.0.2
+	 * @param bool $sync Whether to add tag caps to qualifying roles.
+	 */
+	if ( ! apply_filters( 'members_ctc_sync_post_tag_caps_for_manage_categories_roles', true ) ) {
+		return;
+	}
+
+	$tag_caps = array( 'manage_post_tags', 'assign_post_tags', 'edit_post_tags', 'delete_post_tags' );
+	foreach ( wp_roles()->roles as $slug => $_role_info ) {
+		$role = get_role( $slug );
+		if ( ! $role || ! $role->has_cap( 'manage_categories' ) ) {
+			continue;
+		}
+		foreach ( $tag_caps as $cap ) {
+			$role->add_cap( $cap );
+		}
+	}
+}
+
+/**
+ * One-time migration for sites that activated the add-on before tag caps were synced.
+ *
+ * @since 1.0.1
+ * @return void
+ */
+function maybe_sync_post_tag_caps_roles_migration() {
+	if ( '1' === get_option( 'members_ctc_sync_post_tag_caps_roles_v1', '' ) ) {
+		return;
+	}
+	if ( apply_filters( 'members_ctc_sync_post_tag_caps_for_manage_categories_roles', true ) ) {
+		sync_post_tag_caps_for_roles_with_manage_categories();
+	}
+	update_option( 'members_ctc_sync_post_tag_caps_roles_v1', '1', true );
+}
+
+add_action( 'init', __NAMESPACE__ . '\maybe_sync_post_tag_caps_roles_migration', 20 );

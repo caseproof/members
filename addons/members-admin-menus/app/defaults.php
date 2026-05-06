@@ -1,0 +1,55 @@
+<?php
+/**
+ * Default stored settings for Admin Menus (no hooks).
+ *
+ * Single source for Activator seeding and get_default_settings() / wp_parse_args.
+ *
+ * @package    Members
+ * @subpackage AddOns
+ */
+
+namespace Members\AddOns\AdminMenus;
+
+defined( 'ABSPATH' ) || exit;
+
+/**
+ * Schema version stored in _meta.version (increment when running migrations).
+ */
+const SETTINGS_SCHEMA_VERSION = 3;
+
+/**
+ * Maximum JSON payload size for save/import (bytes).
+ */
+const SETTINGS_JSON_MAX_BYTES = 2097152;
+
+/**
+ * Maximum nesting depth for json_decode on save/import.
+ */
+const SETTINGS_JSON_MAX_DEPTH = 128;
+
+/**
+ * Maximum administrator user IDs stored as exempt from Admin Menus when admin_editable is on.
+ */
+const ADMIN_MENU_EXEMPT_USER_IDS_MAX = 20;
+
+/**
+ * Default option array for members_admin_menus_settings.
+ *
+ * @return array
+ */
+function members_admin_menus_default_settings_data() {
+	return array(
+		'_meta'         => array(
+			'version'                     => SETTINGS_SCHEMA_VERSION,
+			'admin_editable'              => false,
+			'admin_menu_exempt_user_ids' => array(),
+		),
+		'roles'         => array(),
+		'users'         => array(),
+		'custom_items'  => array(),
+		'capabilities'  => array(),
+		'_defaults'     => array(
+			'captured' => false,
+		),
+	);
+}

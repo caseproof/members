@@ -43,6 +43,7 @@ Members now includes ALL of it's add-ons completely free of charge! Here are som
 * **Block Permissions:** Allows site owners to hide or show blocks based on user logged-in status, user role, or capability.
 * **Privacy Caps:** Creates additional capabilities for control over WordPressâ€™ privacy and personal data features (GDPR).
 * **Admin Access:** Allows site administrators to control which users have access to the WordPress admin via role.
+* **Admin Menus:** Customize the WordPress admin menu per role or per user—show or hide items, reorder top-level and submenu entries, override titles and icons, add custom menu links, map items to capabilities, and export or import your configuration.
 * **Core Create Caps:** Adds the create_posts and create_pages caps to posts/pages to separate them from their edit_* counterparts, providing more flexible editing capabilities.
 * **Categories and Tag Caps:** The Category and Tag Caps add-on creates custom capabilities for the core category and post tag taxonomies. This allows site owners to have precise control over who can manage, edit, delete, or assign categories/tags.
 * **Role Levels:** Exposes the old user levels system, which fixes the WordPress author drop-down bug when users don't have a role with one of the assigned levels.

@@ -371,7 +371,18 @@ final class Settings_Page {
 			<div class="wp-filter">
 				<?php echo $this->filter_links(); ?>
 			</div>
-			<?php $this->get_view( members_get_current_settings_view() )->template(); ?>
+			<?php
+		$_current_view = $this->get_view( members_get_current_settings_view() );
+		if ( $_current_view ) {
+			$_current_view->template();
+		} else {
+			// Fallback to General view if requested view doesn't exist.
+			$_fallback_view = $this->get_view( 'general' );
+			if ( $_fallback_view ) {
+				$_fallback_view->template();
+			}
+		}
+		?>
 		</div><!-- wrap -->
 	<?php }
 

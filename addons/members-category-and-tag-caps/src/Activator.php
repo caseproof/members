@@ -30,6 +30,9 @@ class Activator {
 	 */
 	public static function activate() {
 
+		// Activator can run before addon.php loads filters (e.g. first activation).
+		require_once __DIR__ . '/functions-filters.php';
+
 		// Get the administrator role.
 		$role = get_role( 'administrator' );
 
@@ -47,5 +50,8 @@ class Activator {
 			$role->add_cap( 'edit_post_tags'   );
 			$role->add_cap( 'delete_post_tags' );
 		}
+
+		// Roles with manage_categories could manage tags before granular caps; keep parity.
+		sync_post_tag_caps_for_roles_with_manage_categories();
 	}
 }
