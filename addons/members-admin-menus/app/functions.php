@@ -33,6 +33,48 @@ add_action( 'members_after_rescue', __NAMESPACE__ . '\\members_am_add_exempt_adm
 add_action( 'wp_before_admin_bar_render', __NAMESPACE__ . '\members_am_apply_admin_bar_menu_restrictions', 9999, 0 );
 
 /**
+ * Menu slugs that must not be hidden or capability-gated (Members recovery + Admin Menus editor).
+ *
+ * Uses exact matches only (top-level hook or `parent::child`).
+ *
+ * @return string[]
+ */
+function members_am_protected_menu_slugs() {
+	static $list = null;
+	if ( null !== $list ) {
+		return $list;
+	}
+	$list = array(
+		'members',
+		'members::members-settings',
+		'members::members-admin-menus',
+		'members::members-settings&view=add-ons',
+	);
+	/**
+	 * Additional menu slugs that must never be removed via Admin Menus hidden/cap maps.
+	 *
+	 * @param string[] $slugs Exact slug strings.
+	 */
+	$list = apply_filters( app()->namespace . '/protected_menu_slugs', $list );
+	$list = is_array( $list ) ? array_values( array_filter( array_map( 'strval', $list ) ) ) : array();
+	return $list;
+}
+
+/**
+ * Whether a slug is protected from hidden lists and capability-based menu removal.
+ *
+ * @param string $slug Stored menu slug.
+ * @return bool
+ */
+function members_am_is_protected_menu_slug( $slug ) {
+	$slug = sanitize_text_field( (string) $slug );
+	if ( '' === $slug ) {
+		return false;
+	}
+	return in_array( $slug, members_am_protected_menu_slugs(), true );
+}
+
+/**
  * Enable custom menu order when we have per-role order stored.
  *
  * @param mixed $enabled Previous value.
@@ -1886,6 +1928,31 @@ function get_resolved_config_for_user( $user_id ) {
 				if ( array() !== $merged_row ) {
 					$base['overrides'][ $slug ] = $merged_row;
 				}
+			}
+		}
+	}
+
+	// Never hide or cap-gate Members recovery screens (sanitization + legacy/import defense).
+	if ( ! empty( $base['hidden'] ) && is_array( $base['hidden'] ) ) {
+		$nh = array();
+		foreach ( $base['hidden'] as $h ) {
+			$h = is_string( $h ) ? sanitize_text_field( $h ) : '';
+			if ( ! $h || members_am_is_protected_menu_slug( $h ) ) {
+				continue;
+			}
+			if ( ! in_array( $h, $nh, true ) ) {
+				$nh[] = $h;
+			}
+		}
+		$base['hidden'] = $nh;
+	}
+	if ( ! empty( $base['capabilities'] ) && is_array( $base['capabilities'] ) ) {
+		foreach ( array_keys( $base['capabilities'] ) as $cap_slug ) {
+			if ( ! is_string( $cap_slug ) ) {
+				continue;
+			}
+			if ( members_am_is_protected_menu_slug( sanitize_text_field( $cap_slug ) ) ) {
+				unset( $base['capabilities'][ $cap_slug ] );
 			}
 		}
 	}

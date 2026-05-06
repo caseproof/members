@@ -1349,7 +1349,11 @@ function sanitize_settings_payload( $data ) {
 	if ( isset( $out['capabilities'] ) && is_array( $out['capabilities'] ) ) {
 		$caps = array();
 		foreach ( $out['capabilities'] as $slug => $cap ) {
-			$caps[ sanitize_text_field( $slug ) ] = sanitize_key( $cap );
+			$s = sanitize_text_field( $slug );
+			if ( ! $s || members_am_is_protected_menu_slug( $s ) ) {
+				continue;
+			}
+			$caps[ $s ] = sanitize_key( $cap );
 		}
 		$out['capabilities'] = $caps;
 	}
@@ -1369,7 +1373,16 @@ function sanitize_role_config( $cfg ) {
 	}
 	$out = array();
 	if ( isset( $cfg['hidden'] ) && is_array( $cfg['hidden'] ) ) {
-		$out['hidden'] = array_map( 'sanitize_text_field', $cfg['hidden'] );
+		$out['hidden'] = array();
+		foreach ( $cfg['hidden'] as $h ) {
+			$h = sanitize_text_field( $h );
+			if ( ! $h || members_am_is_protected_menu_slug( $h ) ) {
+				continue;
+			}
+			if ( ! in_array( $h, $out['hidden'], true ) ) {
+				$out['hidden'][] = $h;
+			}
+		}
 	}
 	if ( isset( $cfg['order'] ) && is_array( $cfg['order'] ) ) {
 		$out['order'] = array_map( 'sanitize_text_field', $cfg['order'] );
@@ -1389,7 +1402,7 @@ function sanitize_role_config( $cfg ) {
 		$out['capabilities'] = array();
 		foreach ( $cfg['capabilities'] as $slug => $cap ) {
 			$s = sanitize_text_field( $slug );
-			if ( ! $s ) {
+			if ( ! $s || members_am_is_protected_menu_slug( $s ) ) {
 				continue;
 			}
 			$out['capabilities'][ $s ] = sanitize_key( $cap );
@@ -1557,16 +1570,15 @@ function ajax_user_search() {
 			'number'         => 20,
 			'search'         => $search,
 			'search_columns' => array( 'user_login', 'user_nicename', 'user_email', 'display_name' ),
-			'fields'         => array( 'ID', 'user_login', 'display_name' ),
+			'fields'         => 'all',
 		)
 	);
 	$out = array();
 	foreach ( $query->get_results() as $u ) {
-		$user_obj = get_userdata( $u->ID );
 		$out[] = array(
 			'id'    => (int) $u->ID,
 			'label' => $u->display_name . ' (' . $u->user_login . ')',
-			'roles' => $user_obj ? $user_obj->roles : array(),
+			'roles' => isset( $u->roles ) && is_array( $u->roles ) ? $u->roles : array(),
 		);
 	}
 	wp_send_json_success( $out );
