@@ -144,11 +144,8 @@ jQuery( document ).ready( function() {
 		jQuery( '.members-cap-checklist' ).each( function() {
 
 			var $row = jQuery( this );
-			var cap  = $row.find( 'input[data-grant-cap]' ).attr( 'data-grant-cap' )
-				|| $row.find( 'input[data-deny-cap]' ).attr( 'data-deny-cap' )
-				|| '';
 
-			$row.attr( 'data-cap-search', ( cap + ' ' + $row.find( '.column-cap' ).text() ).toLowerCase() );
+			$row.attr( 'data-cap-search', members_get_cap_search_haystack( $row ) );
 		} );
 	}
 
@@ -221,6 +218,23 @@ jQuery( document ).ready( function() {
 	};
 
 	/**
+	 * Builds the lowercase search string for a capability row (slug + label text).
+	 *
+	 * @since  3.x.0
+	 * @access public
+	 * @param  jQuery  $row  `.members-cap-checklist` row.
+	 * @return string
+	 */
+	function members_get_cap_search_haystack( $row ) {
+
+		var cap = $row.find( 'input[data-grant-cap]' ).attr( 'data-grant-cap' )
+			|| $row.find( 'input[data-deny-cap]' ).attr( 'data-deny-cap' )
+			|| '';
+
+		return ( cap + ' ' + $row.find( '.column-cap' ).text() ).toLowerCase();
+	}
+
+	/**
 	 * Re-applies alternating-row striping to the visible capability rows in a
 	 * given table body. Replaces the previous CSS `:nth-child(even)` rule, which
 	 * counted hidden rows and produced inconsistent striping when filtering.
@@ -232,20 +246,8 @@ jQuery( document ).ready( function() {
 	 */
 	function members_stripe_rows( $tbody ) {
 
-		var i = 0;
-
-		$tbody.find( 'tr.members-cap-checklist' ).each( function() {
-
-			var $row = jQuery( this );
-
-			if ( 'none' === $row.css( 'display' ) ) {
-				$row.removeClass( 'members-cap-row-alt' );
-				return;
-			}
-
-			$row.toggleClass( 'members-cap-row-alt', 1 === ( i % 2 ) );
-			i++;
-		} );
+		$tbody.find( 'tr.members-cap-checklist' ).removeClass( 'members-cap-row-alt' );
+		$tbody.find( 'tr.members-cap-checklist:visible:odd' ).addClass( 'members-cap-row-alt' );
 	}
 
 	/**
@@ -277,26 +279,23 @@ jQuery( document ).ready( function() {
 
 		$rows.each( function() {
 
-			var $row    = jQuery( this );
+			var $row     = jQuery( this );
 			var haystack = $row.attr( 'data-cap-search' );
 
 			// Build the search haystack on the fly if it wasn't cached at render time
 			// (e.g. for a custom cap row added after initial template rendering).
 			if ( ! haystack ) {
-
-				var cap = $row.find( 'input[data-grant-cap]' ).attr( 'data-grant-cap' )
-					|| $row.find( 'input[data-deny-cap]' ).attr( 'data-deny-cap' )
-					|| '';
-
-				haystack = ( cap + ' ' + $row.find( '.column-cap' ).text() ).toLowerCase();
+				haystack = members_get_cap_search_haystack( $row );
 				$row.attr( 'data-cap-search', haystack );
 			}
 
 			if ( '' === query || -1 !== haystack.indexOf( query ) ) {
 				$row.show();
+				$row.toggleClass( 'members-cap-row-alt', 1 === ( visible_count % 2 ) );
 				visible_count++;
 			} else {
 				$row.hide();
+				$row.removeClass( 'members-cap-row-alt' );
 			}
 		} );
 
@@ -319,9 +318,6 @@ jQuery( document ).ready( function() {
 		} else {
 			$empty.hide();
 		}
-
-		// Re-stripe the now-visible rows so alternating backgrounds stay consistent.
-		members_stripe_rows( $tbody );
 
 		// Update the live match count next to the input.
 		var $count = jQuery( '.members-cap-filter-count' );
