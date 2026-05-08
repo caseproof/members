@@ -199,6 +199,55 @@ jQuery( document ).ready( function() {
 
 	/* ====== Capability Filter (search) ====== */
 
+	// Translation helpers. Resolve text via `wp.i18n` when available so that
+	// pluralization respects the active locale's plural formula; otherwise fall
+	// back to English defaults so the script stays functional even if `wp-i18n`
+	// failed to load.
+	var members_i18n_translate = function( text ) {
+		return ( window.wp && wp.i18n && wp.i18n.__ ) ? wp.i18n.__( text, 'members' ) : text;
+	};
+
+	var members_i18n_n = function( single, plural, n ) {
+
+		var template;
+
+		if ( window.wp && wp.i18n && wp.i18n._n && wp.i18n.sprintf ) {
+			template = wp.i18n._n( single, plural, n, 'members' );
+			return wp.i18n.sprintf( template, n );
+		}
+
+		template = ( 1 === n ? single : plural );
+		return template.replace( '%d', n );
+	};
+
+	/**
+	 * Re-applies alternating-row striping to the visible capability rows in a
+	 * given table body. Replaces the previous CSS `:nth-child(even)` rule, which
+	 * counted hidden rows and produced inconsistent striping when filtering.
+	 *
+	 * @since  3.x.0
+	 * @access public
+	 * @param  jQuery  $tbody
+	 * @return void
+	 */
+	function members_stripe_rows( $tbody ) {
+
+		var i = 0;
+
+		$tbody.find( 'tr.members-cap-checklist' ).each( function() {
+
+			var $row = jQuery( this );
+
+			if ( 'none' === $row.css( 'display' ) ) {
+				$row.removeClass( 'members-cap-row-alt' );
+				return;
+			}
+
+			$row.toggleClass( 'members-cap-row-alt', 1 === ( i % 2 ) );
+			i++;
+		} );
+	}
+
 	/**
 	 * Filters the rows in the currently active capability tab to those matching
 	 * the search input. The match is case-insensitive and runs against both the
@@ -252,13 +301,17 @@ jQuery( document ).ready( function() {
 		} );
 
 		// Toggle a "no matches" empty-state row inside the active tab's table.
-		var $tbody = $activeTab.find( 'tbody' ).first();
-		var $empty = $tbody.find( 'tr.members-cap-filter-empty' );
+		var $table  = $activeTab.find( 'table' ).first();
+		var $tbody  = $table.find( 'tbody' ).first();
+		var $empty  = $tbody.find( 'tr.members-cap-filter-empty' );
+		var col_cnt = $table.find( 'thead th' ).length || 3;
 
 		if ( ! $empty.length ) {
-			$empty = jQuery( '<tr class="members-cap-filter-empty"><td colspan="3"></td></tr>' );
-			$empty.find( 'td' ).text( members_i18n.filter_no_matches );
+			$empty = jQuery( '<tr class="members-cap-filter-empty"><td></td></tr>' );
+			$empty.find( 'td' ).attr( 'colspan', col_cnt ).text( members_i18n_translate( 'No capabilities match your filter.' ) );
 			$tbody.append( $empty );
+		} else {
+			$empty.find( 'td' ).attr( 'colspan', col_cnt );
 		}
 
 		if ( query && 0 === visible_count ) {
@@ -267,16 +320,23 @@ jQuery( document ).ready( function() {
 			$empty.hide();
 		}
 
+		// Re-stripe the now-visible rows so alternating backgrounds stay consistent.
+		members_stripe_rows( $tbody );
+
 		// Update the live match count next to the input.
 		var $count = jQuery( '.members-cap-filter-count' );
 
 		if ( '' === query ) {
 			$count.text( '' );
 		} else {
-			var template = 1 === visible_count ? members_i18n.filter_matches : members_i18n.filter_matches_plural;
-			$count.text( template.replace( '%d', visible_count ) );
+			$count.text( members_i18n_n( '%d match', '%d matches', visible_count ) );
 		}
 	}
+
+	// Apply initial striping to every cap section table after templates render.
+	jQuery( '.members-tab-content table.members-roles-select tbody' ).each( function() {
+		members_stripe_rows( jQuery( this ) );
+	} );
 
 	// Filter on every keystroke in the search input.
 	jQuery( document ).on( 'input search', '#members-cap-filter-input', function() {
@@ -528,8 +588,10 @@ jQuery( document ).ready( function() {
 					return;
 				}
 
-				// Clear any active filter so the new cap row is visible.
-				jQuery( '#members-cap-filter-input' ).val( '' );
+				// Clear any active filter so the new cap row is visible. Trigger
+				// `input` so the count text and empty-state row reset explicitly
+				// rather than relying on the tab-click handler.
+				jQuery( '#members-cap-filter-input' ).val( '' ).trigger( 'input' );
 
 				// Trigger a click event on the "custom" tab in the edit caps box.
 				jQuery( 'a[href="#members-tab-custom"]' ).trigger( 'click' );
@@ -550,6 +612,10 @@ jQuery( document ).ready( function() {
 
 				// Prepend our template to the "custom" edit caps tab content.
 				jQuery( '#members-tab-custom tbody' ).prepend( control_template( data ) );
+
+				// Re-stripe the custom tab body so the new row aligns with the
+				// alternating-row pattern.
+				members_stripe_rows( jQuery( '#members-tab-custom tbody' ) );
 
 				// Get the new cap table row.
 				var parent = jQuery( '[data-grant-cap="' + new_cap + '"]' ).parents( '.members-cap-checklist' );

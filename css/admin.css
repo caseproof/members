@@ -1178,7 +1178,7 @@ body.admin_page_members-about #wpbody-content {
 	text-align: center;
 }
 
-.members-cap-filter-empty:nth-child(even) {
+.members-cap-filter-empty {
 	background: transparent;
 }
 
@@ -1452,7 +1452,7 @@ body.admin_page_members-about #wpbody-content {
 	vertical-align: middle;
 }
 
-.members-roles-select tbody tr:nth-child(even) {
+.members-roles-select tbody tr.members-cap-row-alt {
 	background: #f2f2f2;
 }
 
