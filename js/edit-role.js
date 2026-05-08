@@ -139,6 +139,17 @@ jQuery( document ).ready( function() {
 		_.each( members_controls, function( data ) {
 			jQuery( '#members-tab-' + data.section + ' tbody' ).append( control_template( data ) );
 		} );
+
+		// Cache the cap text on each row so subsequent filters don't re-query the DOM.
+		jQuery( '.members-cap-checklist' ).each( function() {
+
+			var $row = jQuery( this );
+			var cap  = $row.find( 'input[data-grant-cap]' ).attr( 'data-grant-cap' )
+				|| $row.find( 'input[data-deny-cap]' ).attr( 'data-deny-cap' )
+				|| '';
+
+			$row.attr( 'data-cap-search', ( cap + ' ' + $row.find( '.column-cap' ).text() ).toLowerCase() );
+		} );
 	}
 
 	/* ====== Tabs ====== */
@@ -180,8 +191,106 @@ jQuery( document ).ready( function() {
 
 			// Copy the current tab item title to the box header.
 			jQuery( '.members-which-tab' ).text( jQuery( this ).text() );
+
+			// Re-apply the capability filter to the newly visible tab.
+			members_apply_cap_filter();
 		}
 	); // click()
+
+	/* ====== Capability Filter (search) ====== */
+
+	/**
+	 * Filters the rows in the currently active capability tab to those matching
+	 * the search input. The match is case-insensitive and runs against both the
+	 * capability slug and the visible label.
+	 *
+	 * @since  3.x.0
+	 * @access public
+	 * @return void
+	 */
+	function members_apply_cap_filter() {
+
+		var $input = jQuery( '#members-cap-filter-input' );
+
+		if ( ! $input.length ) {
+			return;
+		}
+
+		var query = ( $input.val() || '' ).toLowerCase().trim();
+		var $activeTab = jQuery( '.members-cap-tabs .members-tab-content:visible' ).first();
+
+		if ( ! $activeTab.length ) {
+			return;
+		}
+
+		var $rows         = $activeTab.find( 'tbody > tr.members-cap-checklist' );
+		var visible_count = 0;
+
+		$rows.each( function() {
+
+			var $row    = jQuery( this );
+			var haystack = $row.attr( 'data-cap-search' );
+
+			// Build the search haystack on the fly if it wasn't cached at render time
+			// (e.g. for a custom cap row added after initial template rendering).
+			if ( ! haystack ) {
+
+				var cap = $row.find( 'input[data-grant-cap]' ).attr( 'data-grant-cap' )
+					|| $row.find( 'input[data-deny-cap]' ).attr( 'data-deny-cap' )
+					|| '';
+
+				haystack = ( cap + ' ' + $row.find( '.column-cap' ).text() ).toLowerCase();
+				$row.attr( 'data-cap-search', haystack );
+			}
+
+			if ( '' === query || -1 !== haystack.indexOf( query ) ) {
+				$row.show();
+				visible_count++;
+			} else {
+				$row.hide();
+			}
+		} );
+
+		// Toggle a "no matches" empty-state row inside the active tab's table.
+		var $tbody = $activeTab.find( 'tbody' ).first();
+		var $empty = $tbody.find( 'tr.members-cap-filter-empty' );
+
+		if ( ! $empty.length ) {
+			$empty = jQuery( '<tr class="members-cap-filter-empty"><td colspan="3"></td></tr>' );
+			$empty.find( 'td' ).text( members_i18n.filter_no_matches );
+			$tbody.append( $empty );
+		}
+
+		if ( query && 0 === visible_count ) {
+			$empty.show();
+		} else {
+			$empty.hide();
+		}
+
+		// Update the live match count next to the input.
+		var $count = jQuery( '.members-cap-filter-count' );
+
+		if ( '' === query ) {
+			$count.text( '' );
+		} else {
+			var template = 1 === visible_count ? members_i18n.filter_matches : members_i18n.filter_matches_plural;
+			$count.text( template.replace( '%d', visible_count ) );
+		}
+	}
+
+	// Filter on every keystroke in the search input.
+	jQuery( document ).on( 'input search', '#members-cap-filter-input', function() {
+		members_apply_cap_filter();
+	} );
+
+	// Don't let "Enter" in the filter input submit the form.
+	jQuery( document ).on( 'keydown', '#members-cap-filter-input', function( e ) {
+
+		if ( 13 === e.keyCode ) {
+			e.preventDefault();
+			return false;
+		}
+	} );
 
 	/* ====== Capability Checkboxes (inside tab content) ====== */
 
@@ -418,6 +527,9 @@ jQuery( document ).ready( function() {
 				if ( -1 !== jQuery.inArray( jQuery( this ).val(), members_i18n.hidden_caps ) ) {
 					return;
 				}
+
+				// Clear any active filter so the new cap row is visible.
+				jQuery( '#members-cap-filter-input' ).val( '' );
 
 				// Trigger a click event on the "custom" tab in the edit caps box.
 				jQuery( 'a[href="#members-tab-custom"]' ).trigger( 'click' );
