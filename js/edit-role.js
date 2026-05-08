@@ -196,27 +196,6 @@ jQuery( document ).ready( function() {
 
 	/* ====== Capability Filter (search) ====== */
 
-	// Translation helpers. Resolve text via `wp.i18n` when available so that
-	// pluralization respects the active locale's plural formula; otherwise fall
-	// back to English defaults so the script stays functional even if `wp-i18n`
-	// failed to load.
-	var members_i18n_translate = function( text ) {
-		return ( window.wp && wp.i18n && wp.i18n.__ ) ? wp.i18n.__( text, 'members' ) : text;
-	};
-
-	var members_i18n_n = function( single, plural, n ) {
-
-		var template;
-
-		if ( window.wp && wp.i18n && wp.i18n._n && wp.i18n.sprintf ) {
-			template = wp.i18n._n( single, plural, n, 'members' );
-			return wp.i18n.sprintf( template, n );
-		}
-
-		template = ( 1 === n ? single : plural );
-		return template.replace( '%d', n );
-	};
-
 	/**
 	 * Builds the lowercase search string for a capability row (slug + label text).
 	 *
@@ -307,7 +286,11 @@ jQuery( document ).ready( function() {
 
 		if ( ! $empty.length ) {
 			$empty = jQuery( '<tr class="members-cap-filter-empty"><td></td></tr>' );
-			$empty.find( 'td' ).attr( 'colspan', col_cnt ).text( members_i18n_translate( 'No capabilities match your filter.' ) );
+			$empty.find( 'td' ).attr( 'colspan', col_cnt ).text(
+				window.wp && wp.i18n && wp.i18n.__
+					? wp.i18n.__( 'No capabilities match your filter.', 'members' )
+					: members_i18n.cap_filter_no_results
+			);
 			$tbody.append( $empty );
 		} else {
 			$empty.find( 'td' ).attr( 'colspan', col_cnt );
@@ -324,8 +307,17 @@ jQuery( document ).ready( function() {
 
 		if ( '' === query ) {
 			$count.text( '' );
+		} else if ( window.wp && wp.i18n && wp.i18n._n && wp.i18n.sprintf ) {
+			$count.text(
+				wp.i18n.sprintf(
+					wp.i18n._n( '%d match', '%d matches', visible_count, 'members' ),
+					visible_count
+				)
+			);
 		} else {
-			$count.text( members_i18n_n( '%d match', '%d matches', visible_count ) );
+			$count.text(
+				( 1 === visible_count ? members_i18n.cap_filter_match : members_i18n.cap_filter_matches ).replace( '%d', visible_count )
+			);
 		}
 	}
 
