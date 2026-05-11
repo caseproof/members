@@ -253,8 +253,7 @@ jQuery( document ).ready( function() {
 			return;
 		}
 
-		var $rows         = $activeTab.find( 'tbody > tr.members-cap-checklist' );
-		var visible_count = 0;
+		var $rows = $activeTab.find( 'tbody > tr.members-cap-checklist' );
 
 		$rows.each( function() {
 
@@ -268,15 +267,11 @@ jQuery( document ).ready( function() {
 				$row.attr( 'data-cap-search', haystack );
 			}
 
-			if ( '' === query || -1 !== haystack.indexOf( query ) ) {
-				$row.show();
-				$row.toggleClass( 'members-cap-row-alt', 1 === ( visible_count % 2 ) );
-				visible_count++;
-			} else {
-				$row.hide();
-				$row.removeClass( 'members-cap-row-alt' );
-			}
+			$row.toggle( '' === query || -1 !== haystack.indexOf( query ) );
 		} );
+
+		members_stripe_rows( $activeTab.find( 'tbody' ).first() );
+		var visible_count = $rows.filter( ':visible' ).length;
 
 		// Toggle a "no matches" empty-state row inside the active tab's table.
 		var $table  = $activeTab.find( 'table' ).first();
