@@ -89,13 +89,11 @@ jQuery( document ).ready( function() {
 	jQuery( 'input[name="role"]' ).keypress(
 		function( e ) {
 
-			// 13 is the key code for "Enter".
-			if ( 13 === e.keyCode ) {
+			if ( 'Enter' === e.key ) {
 
 				// Click the edit role button and trigger a focus.
 				jQuery( '.role-edit-button' ).click().trigger( 'focus' );
 
-				// Prevent default behavior and return false.
 				e.preventDefault();
 				return false;
 			}
@@ -206,9 +204,7 @@ jQuery( document ).ready( function() {
 	 */
 	function members_get_cap_search_haystack( $row ) {
 
-		var cap = $row.find( 'input[data-grant-cap]' ).attr( 'data-grant-cap' )
-			|| $row.find( 'input[data-deny-cap]' ).attr( 'data-deny-cap' )
-			|| '';
+		var cap = $row.find( 'input[data-grant-cap]' ).data( 'grant-cap' ) || '';
 
 		return ( cap + ' ' + $row.find( '.column-cap' ).text() ).toLowerCase();
 	}
@@ -322,14 +318,14 @@ jQuery( document ).ready( function() {
 	} );
 
 	// Filter on every keystroke in the search input.
-	jQuery( document ).on( 'input search', '#members-cap-filter-input', function() {
+	jQuery( document ).on( 'input search', '#members-cap-filter-input', _.debounce( function() {
 		members_apply_cap_filter();
-	} );
+	}, 250 ) );
 
 	// Don't let "Enter" in the filter input submit the form.
 	jQuery( document ).on( 'keydown', '#members-cap-filter-input', function( e ) {
 
-		if ( 13 === e.keyCode ) {
+		if ( 'Enter' === e.key ) {
 			e.preventDefault();
 			return false;
 		}
@@ -541,8 +537,7 @@ jQuery( document ).ready( function() {
 	jQuery( '#members-new-cap-field' ).keypress(
 		function( e ) {
 
-			// 13 is the key code for "Enter".
-			if ( 13 === e.keyCode ) {
+			if ( 'Enter' === e.key ) {
 				jQuery( '#members-add-new-cap' ).click();
 				e.preventDefault();
 				return false;
