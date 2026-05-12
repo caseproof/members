@@ -204,7 +204,7 @@ jQuery( document ).ready( function() {
 	 */
 	function members_get_cap_search_haystack( $row ) {
 
-		var cap = $row.find( 'input[data-grant-cap]' ).data( 'grant-cap' ) || '';
+		var cap = $row.find( 'input[data-grant-cap]' ).attr( 'data-grant-cap' ) || '';
 
 		return ( cap + ' ' + $row.find( '.column-cap' ).text() ).toLowerCase();
 	}
@@ -562,7 +562,7 @@ jQuery( document ).ready( function() {
 
 				// Don't allow the 'do_not_allow' cap.
 				//if ( 'do_not_allow' === new_cap ) {
-				if ( -1 !== jQuery.inArray( jQuery( this ).val(), members_i18n.hidden_caps ) ) {
+				if ( -1 !== jQuery.inArray( new_cap, members_i18n.hidden_caps ) ) {
 					return;
 				}
 
@@ -574,19 +574,17 @@ jQuery( document ).ready( function() {
 				// Trigger a click event on the "custom" tab in the edit caps box.
 				jQuery( 'a[href="#members-tab-custom"]' ).trigger( 'click' );
 
-				// Replace text placeholder with cap.
-				members_i18n.label_grant_cap = members_i18n.label_grant_cap.replace( /%s/g, '<code>' + new_cap + '</code>' );
-				members_i18n.label_deny_cap  = members_i18n.label_deny_cap.replace( /%s/g,  '<code>' + new_cap + '</code>' );
+			var label_grant = members_i18n.label_grant_cap.replace( /%s/g, '<code>' + new_cap + '</code>' );
+			var label_deny  = members_i18n.label_deny_cap.replace( /%s/g,  '<code>' + new_cap + '</code>' );
 
-				// Set up some data to pass to our Underscore template.
-				var data = {
-					cap            : new_cap,
-					readonly       : '',
-					name           : { grant : 'grant-new-caps[]', deny : 'deny-new-caps[]' },
-					is_granted_cap : true,
-					is_denied_cap  : false,
-					label          : { cap : new_cap, grant : members_i18n.label_grant_cap, deny : members_i18n.label_deny_cap }
-				};
+			var data = {
+				cap            : new_cap,
+				readonly       : '',
+				name           : { grant : 'grant-new-caps[]', deny : 'deny-new-caps[]' },
+				is_granted_cap : true,
+				is_denied_cap  : false,
+				label          : { cap : new_cap, grant : label_grant, deny : label_deny }
+			};
 
 				// Prepend our template to the "custom" edit caps tab content.
 				jQuery( '#members-tab-custom tbody' ).prepend( control_template( data ) );
