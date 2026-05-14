@@ -170,16 +170,17 @@ jQuery( document ).ready( function() {
 			j.preventDefault();
 
 			// Get the `href` attribute of the item.
-			var href = jQuery( this ).attr( 'href' );
+			var href     = jQuery( this ).attr( 'href' );
+			var $capTabs = jQuery( this ).parents( '.members-cap-tabs' );
 
 			// Hide all tab content.
-			jQuery( this ).parents( '.members-cap-tabs' ).find( '.members-tab-content' ).hide();
+			$capTabs.find( '.members-tab-content' ).hide();
 
 			// Find the tab content that matches the tab nav item and show it.
-			jQuery( this ).parents( '.members-cap-tabs' ).find( href ).show();
+			var $activePanel = $capTabs.find( href ).show();
 
 			// Set the `aria-selected` attribute to false for all tab nav items.
-			jQuery( this ).parents( '.members-cap-tabs' ).find( '.members-tab-title' ).attr( 'aria-selected', 'false' );
+			$capTabs.find( '.members-tab-title' ).attr( 'aria-selected', 'false' );
 
 			// Set the `aria-selected` attribute to true for this tab nav item.
 			jQuery( this ).parent().attr( 'aria-selected', 'true' );
@@ -188,7 +189,7 @@ jQuery( document ).ready( function() {
 			jQuery( '.members-which-tab' ).text( jQuery( this ).text() );
 
 			// Re-apply the capability filter to the newly visible tab.
-			members_apply_cap_filter();
+			members_apply_cap_filter( $activePanel );
 		}
 	); // click()
 
@@ -206,7 +207,7 @@ jQuery( document ).ready( function() {
 
 		var cap = $row.find( 'input[data-grant-cap]' ).attr( 'data-grant-cap' ) || '';
 
-		return ( cap + ' ' + $row.find( '.column-cap' ).text() ).toLowerCase();
+		return ( cap + ' ' + $row.find( '.column-cap button' ).text() ).toLowerCase();
 	}
 
 	/**
@@ -328,9 +329,13 @@ jQuery( document ).ready( function() {
 	 *
 	 * @since  3.x.0
 	 * @access public
+	 * @param  jQuery|undefined  $passedActiveTab  Tab panel to filter (e.g. from tab
+	 *                                              click). When omitted, the active
+	 *                                              panel is resolved from `aria-selected`
+	 *                                              on the tab nav.
 	 * @return void
 	 */
-	function members_apply_cap_filter() {
+	function members_apply_cap_filter( $passedActiveTab ) {
 
 		var $input = jQuery( '#members-cap-filter-input' );
 
@@ -339,7 +344,16 @@ jQuery( document ).ready( function() {
 		}
 
 		var query = ( $input.val() || '' ).toLowerCase().trim();
-		var $activeTab = jQuery( '.members-cap-tabs .members-tab-content:visible' ).first();
+		var $activeTab;
+
+		if ( $passedActiveTab && $passedActiveTab.length ) {
+			$activeTab = $passedActiveTab;
+		} else {
+			var $capTabs    = jQuery( '.members-cap-tabs' );
+			var $activeLink = $capTabs.find( '.members-tab-nav li[aria-selected="true"] a' ).first();
+			var tabHref     = $activeLink.attr( 'href' );
+			$activeTab      = tabHref ? $capTabs.find( tabHref ) : jQuery();
+		}
 
 		if ( ! $activeTab.length ) {
 			return;
