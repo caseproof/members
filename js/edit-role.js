@@ -574,17 +574,17 @@ jQuery( document ).ready( function() {
 				// Trigger a click event on the "custom" tab in the edit caps box.
 				jQuery( 'a[href="#members-tab-custom"]' ).trigger( 'click' );
 
-			var label_grant = members_i18n.label_grant_cap.replace( /%s/g, '<code>' + new_cap + '</code>' );
-			var label_deny  = members_i18n.label_deny_cap.replace( /%s/g,  '<code>' + new_cap + '</code>' );
+				var label_grant = members_i18n.label_grant_cap.replace( /%s/g, '<code>' + new_cap + '</code>' );
+				var label_deny  = members_i18n.label_deny_cap.replace( /%s/g,  '<code>' + new_cap + '</code>' );
 
-			var data = {
-				cap            : new_cap,
-				readonly       : '',
-				name           : { grant : 'grant-new-caps[]', deny : 'deny-new-caps[]' },
-				is_granted_cap : true,
-				is_denied_cap  : false,
-				label          : { cap : new_cap, grant : label_grant, deny : label_deny }
-			};
+				var data = {
+					cap            : new_cap,
+					readonly       : '',
+					name           : { grant : 'grant-new-caps[]', deny : 'deny-new-caps[]' },
+					is_granted_cap : true,
+					is_denied_cap  : false,
+					label          : { cap : new_cap, grant : label_grant, deny : label_deny }
+				};
 
 				// Prepend our template to the "custom" edit caps tab content.
 				jQuery( '#members-tab-custom tbody' ).prepend( control_template( data ) );
