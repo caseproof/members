@@ -226,6 +226,102 @@ jQuery( document ).ready( function() {
 	}
 
 	/**
+	 * Counts distinct capabilities matching the filter outside the active tab.
+	 * Dedupes by capability slug so the same cap (e.g. on a group tab and the
+	 * "All" tab) counts once.
+	 *
+	 * @since  3.x.0
+	 * @access public
+	 * @param  string  query
+	 * @param  jQuery  $activeTab
+	 * @return number
+	 */
+	function members_count_elsewhere_matching_caps( query, $activeTab ) {
+
+		if ( ! query ) {
+			return 0;
+		}
+
+		var caps = {};
+		var hayOnly = {};
+
+		jQuery( '.members-cap-tabs .members-tab-content' ).not( $activeTab ).each( function() {
+
+			jQuery( this ).find( 'tbody > tr.members-cap-checklist' ).each( function() {
+
+				var $row     = jQuery( this );
+				var haystack = $row.attr( 'data-cap-search' );
+
+				if ( ! haystack ) {
+					haystack = members_get_cap_search_haystack( $row );
+					$row.attr( 'data-cap-search', haystack );
+				}
+
+				if ( -1 === haystack.indexOf( query ) ) {
+					return;
+				}
+
+				var cap = $row.find( 'input[data-grant-cap]' ).attr( 'data-grant-cap' ) || '';
+
+				if ( cap ) {
+					caps[ cap ] = true;
+				} else {
+					hayOnly[ haystack ] = true;
+				}
+			} );
+		} );
+
+		return Object.keys( caps ).length + Object.keys( hayOnly ).length;
+	}
+
+	/**
+	 * Message for the empty-state row when the filter matches nothing on the
+	 * active tab (used only when the row is shown).
+	 *
+	 * @since  3.x.0
+	 * @access public
+	 * @param  string  query
+	 * @param  number  elsewhere_count  Distinct matches on other tabs.
+	 * @return string
+	 */
+	function members_cap_filter_empty_message( query, elsewhere_count ) {
+
+		if ( ! query ) {
+			return '';
+		}
+
+		if ( window.wp && wp.i18n && wp.i18n.__ && wp.i18n._n && wp.i18n.sprintf ) {
+
+			if ( 0 === elsewhere_count ) {
+				return wp.i18n.__( 'No capabilities match your filter.', 'members' );
+			}
+
+			return wp.i18n.__( 'No capabilities match your filter on this tab.', 'members' )
+				+ ' '
+				+ wp.i18n.sprintf(
+					wp.i18n._n(
+						'%d capability matches on other tabs.',
+						'%d capabilities match on other tabs.',
+						elsewhere_count,
+						'members'
+					),
+					elsewhere_count
+				);
+		}
+
+		if ( 0 === elsewhere_count ) {
+			return members_i18n.cap_filter_no_results;
+		}
+
+		return members_i18n.cap_filter_no_results_on_tab
+			+ ' '
+			+ ( 1 === elsewhere_count
+				? members_i18n.cap_filter_elsewhere_one.replace( '%d', elsewhere_count )
+				: members_i18n.cap_filter_elsewhere_other.replace( '%d', elsewhere_count )
+			);
+	}
+
+	/**
 	 * Filters the rows in the currently active capability tab to those matching
 	 * the search input. The match is case-insensitive and runs against both the
 	 * capability slug and the visible label.
@@ -269,6 +365,10 @@ jQuery( document ).ready( function() {
 		members_stripe_rows( $activeTab.find( 'tbody' ).first() );
 		var visible_count = $rows.filter( ':visible' ).length;
 
+		var elsewhere_count = ( query && 0 === visible_count )
+			? members_count_elsewhere_matching_caps( query, $activeTab )
+			: 0;
+
 		// Toggle a "no matches" empty-state row inside the active tab's table.
 		var $table  = $activeTab.find( 'table' ).first();
 		var $tbody  = $table.find( 'tbody' ).first();
@@ -277,15 +377,12 @@ jQuery( document ).ready( function() {
 
 		if ( ! $empty.length ) {
 			$empty = jQuery( '<tr class="members-cap-filter-empty"><td></td></tr>' );
-			$empty.find( 'td' ).attr( 'colspan', col_cnt ).text(
-				window.wp && wp.i18n && wp.i18n.__
-					? wp.i18n.__( 'No capabilities match your filter.', 'members' )
-					: members_i18n.cap_filter_no_results
-			);
 			$tbody.append( $empty );
-		} else {
-			$empty.find( 'td' ).attr( 'colspan', col_cnt );
 		}
+
+		$empty.find( 'td' ).attr( 'colspan', col_cnt ).text(
+			members_cap_filter_empty_message( query, elsewhere_count )
+		);
 
 		if ( query && 0 === visible_count ) {
 			$empty.show();
