@@ -69,7 +69,7 @@ function members_admin_register_scripts() {
 		'hidden_caps'            => members_get_hidden_caps(),
 		'cap_filter_no_results'         => esc_html__( 'No capabilities match your filter.', 'members' ),
 		'cap_filter_no_results_on_tab'  => esc_html__( 'No capabilities match your filter on this tab.', 'members' ),
-		'cap_filter_elsewhere_one'      => esc_html__( '%d capability matches on other tabs.', 'members' ),
+		'cap_filter_elsewhere_one'      => esc_html__( '%d capability match on other tabs.', 'members' ),
 		'cap_filter_elsewhere_other'    => esc_html__( '%d capabilities match on other tabs.', 'members' ),
 		'cap_filter_match'              => esc_html__( '%d match', 'members' ),
 		'cap_filter_matches'            => esc_html__( '%d matches', 'members' ),

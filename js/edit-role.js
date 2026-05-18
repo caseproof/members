@@ -303,7 +303,7 @@ jQuery( document ).ready( function() {
 				+ ' '
 				+ wp.i18n.sprintf(
 					wp.i18n._n(
-						'%d capability matches on other tabs.',
+						'%d capability match on other tabs.',
 						'%d capabilities match on other tabs.',
 						elsewhere_count,
 						'members'
