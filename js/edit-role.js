@@ -136,7 +136,7 @@ jQuery( document ).ready( function() {
 
 		// Loop through the controls and append the template for each.
 		_.each( members_controls, function( data ) {
-			jQuery( '#members-tab-' + data.section + ' tbody' ).append( control_template( data ) );
+			$tabcapsdiv.find( '#members-tab-' + data.section + ' tbody' ).append( control_template( data ) );
 		} );
 
 		// Cache the cap text on each row so subsequent filters don't re-query the DOM.
@@ -339,7 +339,7 @@ jQuery( document ).ready( function() {
 	 */
 	function members_apply_cap_filter( $passedActiveTab ) {
 
-		var $input = jQuery( '#members-cap-filter-input' );
+		var $input = $tabcapsdiv.find( '#members-cap-filter-input' );
 
 		if ( ! $input.length ) {
 			return;
@@ -688,7 +688,7 @@ jQuery( document ).ready( function() {
 				// Clear any active filter so the new cap row is visible. Trigger
 				// `input` so the count text and empty-state row reset explicitly
 				// rather than relying on the tab-click handler.
-				jQuery( '#members-cap-filter-input' ).val( '' ).trigger( 'input' );
+				$tabcapsdiv.find( '#members-cap-filter-input' ).val( '' ).trigger( 'input' );
 
 				// Trigger a click event on the "custom" tab in the edit caps box.
 				$tabcapsdiv.find( 'a[href="#members-tab-custom"]' ).trigger( 'click' );
@@ -706,11 +706,13 @@ jQuery( document ).ready( function() {
 				};
 
 				// Prepend our template to the "custom" edit caps tab content.
-				jQuery( '#members-tab-custom tbody' ).prepend( control_template( data ) );
+				var $customTabBody = $tabcapsdiv.find( '#members-tab-custom tbody' );
+
+				$customTabBody.prepend( control_template( data ) );
 
 				// Re-stripe the custom tab body so the new row aligns with the
 				// alternating-row pattern.
-				members_stripe_rows( jQuery( '#members-tab-custom tbody' ) );
+				members_stripe_rows( $customTabBody );
 
 				// Get the new cap table row.
 				var parent = jQuery( '[data-grant-cap="' + new_cap + '"]' ).parents( '.members-cap-checklist' );
