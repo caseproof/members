@@ -201,7 +201,7 @@ final class Cap_Tabs {
 						type="search"
 						id="members-cap-filter-input"
 						class="members-cap-filter-input"
-						placeholder="<?php esc_attr_e( 'Filter capabilities&hellip;', 'members' ); ?>"
+						placeholder="<?php esc_attr_e( 'Filter capabilities...', 'members' ); ?>"
 						autocomplete="off"
 					/>
 					<span class="members-cap-filter-count" aria-live="polite"></span>
