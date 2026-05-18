@@ -347,8 +347,7 @@ jQuery( document ).ready( function() {
 
 		var query = ( $input.val() || '' ).toLowerCase().trim();
 		var $activeTab;
-		var $capRoot = $input.closest( '#tabcapsdiv' );
-		var $capTabs = $capRoot.length ? $capRoot.find( '.members-cap-tabs' ) : jQuery( '.members-cap-tabs' );
+		var $capTabs = $tabcapsdiv.find( '.members-cap-tabs' );
 
 		if ( $passedActiveTab && $passedActiveTab.length ) {
 			$activeTab = $passedActiveTab;
@@ -642,7 +641,7 @@ jQuery( document ).ready( function() {
 
 			// If there's a value in the input, enable the add new button.
 			//if ( 'do_not_allow' !== jQuery( this ).val() ) {
-			if ( -1 === jQuery.inArray( jQuery( this ).val(), members_i18n.hidden_caps ) ) {
+			if ( ! members_i18n.hidden_caps.includes( jQuery( this ).val() ) ) {
 
 				jQuery( '#members-add-new-cap' ).prop( 'disabled', false );
 
@@ -682,7 +681,7 @@ jQuery( document ).ready( function() {
 
 				// Don't allow the 'do_not_allow' cap.
 				//if ( 'do_not_allow' === new_cap ) {
-				if ( -1 !== jQuery.inArray( new_cap, members_i18n.hidden_caps ) ) {
+				if ( members_i18n.hidden_caps.includes( new_cap ) ) {
 					return;
 				}
 
