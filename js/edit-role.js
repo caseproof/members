@@ -123,16 +123,15 @@ jQuery( document ).ready( function() {
 	// Create Underscore templates.
 	var section_template = wp.template( 'members-cap-section' );
 	var control_template = wp.template( 'members-cap-control' );
+	var $tabcapsdiv   = jQuery( '#tabcapsdiv' );
 
 	// Check that the `members_sections` and `members_controls` variables were
 	// passed in via `wp_localize_script()`.
 	if ( typeof members_sections !== 'undefined' && typeof members_controls !== 'undefined' ) {
 
-		var $tabcaps = jQuery( '#tabcapsdiv' );
-
 		// Loop through the sections and append the template for each.
 		_.each( members_sections, function( data ) {
-			$tabcaps.find( '.members-tab-wrap' ).append( section_template( data ) );
+			$tabcapsdiv.find( '.members-tab-wrap' ).append( section_template( data ) );
 		} );
 
 		// Loop through the controls and append the template for each.
@@ -141,7 +140,7 @@ jQuery( document ).ready( function() {
 		} );
 
 		// Cache the cap text on each row so subsequent filters don't re-query the DOM.
-		$tabcaps.find( '.members-cap-checklist' ).each( function() {
+		$tabcapsdiv.find( '.members-cap-checklist' ).each( function() {
 
 			var $row = jQuery( this );
 
@@ -151,7 +150,6 @@ jQuery( document ).ready( function() {
 
 	/* ====== Tabs ====== */
 
-	var $tabcapsdiv = jQuery( '#tabcapsdiv' );
 
 	// Hides the tab content.
 	$tabcapsdiv.find( '.members-cap-tabs .members-tab-content' ).hide();
@@ -190,7 +188,7 @@ jQuery( document ).ready( function() {
 			jQuery( this ).parent().attr( 'aria-selected', 'true' );
 
 			// Copy the current tab item title to the box header.
-			$capTabs.closest( '#tabcapsdiv' ).find( '.members-which-tab' ).text( jQuery( this ).text() );
+			$tabcapsdiv.find( '.members-which-tab' ).text( jQuery( this ).text() );
 
 			// Re-apply the capability filter to the newly visible tab.
 			members_apply_cap_filter( $activePanel );
@@ -435,7 +433,7 @@ jQuery( document ).ready( function() {
 	}
 
 	// Apply initial striping to every cap section table after templates render.
-	jQuery( '#tabcapsdiv' ).find( '.members-tab-content table.members-roles-select tbody' ).each( function() {
+	$tabcapsdiv.find( '.members-tab-content table.members-roles-select tbody' ).each( function() {
 		members_stripe_rows( jQuery( this ) );
 	} );
 
@@ -694,7 +692,7 @@ jQuery( document ).ready( function() {
 				jQuery( '#members-cap-filter-input' ).val( '' ).trigger( 'input' );
 
 				// Trigger a click event on the "custom" tab in the edit caps box.
-				jQuery( '#tabcapsdiv a[href="#members-tab-custom"]' ).trigger( 'click' );
+				$tabcapsdiv.find( 'a[href="#members-tab-custom"]' ).trigger( 'click' );
 
 				var label_grant = members_i18n.label_grant_cap.replace( /%s/g, '<code>' + new_cap + '</code>' );
 				var label_deny  = members_i18n.label_deny_cap.replace( /%s/g,  '<code>' + new_cap + '</code>' );
