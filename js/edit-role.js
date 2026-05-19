@@ -215,6 +215,26 @@ jQuery( document ).ready( function() {
 	}
 
 	/**
+	 * Returns the cached search haystack for a capability row, building it if needed.
+	 *
+	 * @since  3.x.0
+	 * @access public
+	 * @param  jQuery  $row  `.members-cap-checklist` row.
+	 * @return string
+	 */
+	function members_get_or_build_cap_search_haystack( $row ) {
+
+		var haystack = $row.data( 'capSearch' );
+
+		if ( ! haystack ) {
+			haystack = members_get_cap_search_haystack( $row );
+			$row.data( 'capSearch', haystack );
+		}
+
+		return haystack;
+	}
+
+	/**
 	 * Re-applies alternating-row striping to the visible capability rows in a
 	 * given table body. Replaces the previous CSS `:nth-child(even)` rule, which
 	 * counted hidden rows and produced inconsistent striping when filtering.
@@ -261,12 +281,7 @@ jQuery( document ).ready( function() {
 			jQuery( this ).find( 'tbody > tr.members-cap-checklist' ).each( function() {
 
 				var $row     = jQuery( this );
-				var haystack = $row.data( 'capSearch' );
-
-				if ( ! haystack ) {
-					haystack = members_get_cap_search_haystack( $row );
-					$row.data( 'capSearch', haystack );
-				}
+				var haystack = members_get_or_build_cap_search_haystack( $row );
 
 				if ( -1 === haystack.indexOf( query ) ) {
 					return;
@@ -318,18 +333,18 @@ jQuery( document ).ready( function() {
 					),
 					elsewhere_count
 				);
-		}
 
-		if ( 0 === elsewhere_count ) {
+		} else if ( 0 === elsewhere_count ) {
 			return members_i18n.cap_filter_no_results;
-		}
 
-		return members_i18n.cap_filter_no_results_on_tab
-			+ ' '
-			+ ( 1 === elsewhere_count
-				? members_i18n.cap_filter_elsewhere_one.replace( '%d', elsewhere_count )
-				: members_i18n.cap_filter_elsewhere_other.replace( '%d', elsewhere_count )
-			);
+		} else {
+			return members_i18n.cap_filter_no_results_on_tab
+				+ ' '
+				+ ( 1 === elsewhere_count
+					? members_i18n.cap_filter_elsewhere_one.replace( '%d', elsewhere_count )
+					: members_i18n.cap_filter_elsewhere_other.replace( '%d', elsewhere_count )
+				);
+		}
 	}
 
 	/**
@@ -375,14 +390,7 @@ jQuery( document ).ready( function() {
 		$rows.each( function() {
 
 			var $row     = jQuery( this );
-			var haystack = $row.data( 'capSearch' );
-
-			// Build the search haystack on the fly if it wasn't cached at render time
-			// (e.g. for a custom cap row added after initial template rendering).
-			if ( ! haystack ) {
-				haystack = members_get_cap_search_haystack( $row );
-				$row.data( 'capSearch', haystack );
-			}
+			var haystack = members_get_or_build_cap_search_haystack( $row );
 
 			var is_match = '' === query || -1 !== haystack.indexOf( query );
 
