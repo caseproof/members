@@ -384,6 +384,23 @@ jQuery( document ).ready( function() {
 			return;
 		}
 
+		// Clearing the filter resets every tab so previously visited panels
+		// are not left with hidden rows.
+		if ( '' === query ) {
+			$capTabs.find( '.members-tab-content' ).each( function() {
+
+				var $tab  = jQuery( this );
+				var $tbody = $tab.find( 'tbody' ).first();
+
+				$tab.find( 'tbody > tr.members-cap-checklist' ).show();
+				$tbody.find( 'tr.members-cap-filter-empty' ).hide();
+				members_stripe_rows( $tbody );
+			} );
+
+			$input.siblings( '.members-cap-filter-count' ).text( '' );
+			return;
+		}
+
 		var $rows = $activeTab.find( 'tbody > tr.members-cap-checklist' );
 		var visible_count = 0;
 
@@ -557,8 +574,8 @@ jQuery( document ).ready( function() {
 		        var isChecked = $this.is(':checked');
 		        var isGrantCheckbox = $this.hasClass('check-all-grant');
 		        var membersRoleSelect = $this.closest( '.members-roles-select' );
-		        var allGrantCheckboxes = membersRoleSelect.find( 'tbody input[data-grant-cap]' );
-		        var allDenyCheckboxes = membersRoleSelect.find( 'tbody input[data-deny-cap]' );
+		        var allGrantCheckboxes = membersRoleSelect.find( 'tbody tr.members-cap-checklist:visible input[data-grant-cap]' );
+		        var allDenyCheckboxes = membersRoleSelect.find( 'tbody tr.members-cap-checklist:visible input[data-deny-cap]' );
 		        var denyCheckboxes = membersRoleSelect.find( 'input.check-all-deny' );
 		        var grantCheckboxes = membersRoleSelect.find( 'input.check-all-grant' );
 
