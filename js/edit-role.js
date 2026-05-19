@@ -139,12 +139,14 @@ jQuery( document ).ready( function() {
 			$tabcapsdiv.find( '#members-tab-' + data.section + ' tbody' ).append( control_template( data ) );
 		} );
 
-		// Cache the cap text on each row so subsequent filters don't re-query the DOM.
+		// Cache the cap slug and search haystack on each row so subsequent filters
+		// don't re-query the DOM.
 		$tabcapsdiv.find( '.members-cap-checklist' ).each( function() {
 
 			var $row = jQuery( this );
 
 			$row.attr( 'data-cap-search', members_get_cap_search_haystack( $row ) );
+			$row.attr( 'data-cap-slug', $row.find( 'input[data-grant-cap]' ).attr( 'data-grant-cap' ) || '' );
 		} );
 	}
 
@@ -264,7 +266,7 @@ jQuery( document ).ready( function() {
 					return;
 				}
 
-				var cap = $row.find( 'input[data-grant-cap]' ).attr( 'data-grant-cap' ) || '';
+				var cap = $row.attr( 'data-cap-slug' ) || $row.find( 'input[data-grant-cap]' ).attr( 'data-grant-cap' ) || '';
 
 				if ( cap ) {
 					caps[ cap ] = true;
@@ -714,15 +716,16 @@ jQuery( document ).ready( function() {
 				// alternating-row pattern.
 				members_stripe_rows( $customTabBody );
 
-				// Get the new cap table row.
-				var parent = jQuery( '[data-grant-cap="' + new_cap + '"]' ).parents( '.members-cap-checklist' );
+				// Highlight the row we just prepended (scoped to custom tab, not a
+				// duplicate cap row that may exist on another tab).
+				var $newRow = $customTabBody.find( 'tr.members-cap-checklist' ).first();
 
-				// Add the highlight class.
-				jQuery( parent ).addClass( 'members-highlight' );
+				$newRow.attr( 'data-cap-slug', new_cap );
+				$newRow.attr( 'data-cap-search', members_get_cap_search_haystack( $newRow ) );
+				$newRow.addClass( 'members-highlight' );
 
-				// Remove the class after a set time for a highlight effect.
 				setTimeout( function() {
-					jQuery( parent ).removeClass( 'members-highlight' );
+					$newRow.removeClass( 'members-highlight' );
 				}, 500 );
 
 				// Set the new cap input value to an empty string.
