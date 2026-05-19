@@ -226,12 +226,32 @@ jQuery( document ).ready( function() {
 
 		var haystack = $row.data( 'capSearch' );
 
-		if ( ! haystack ) {
+		if ( 'undefined' === typeof haystack ) {
 			haystack = members_get_cap_search_haystack( $row );
 			$row.data( 'capSearch', haystack );
 		}
 
 		return haystack;
+	}
+
+	/**
+	 * Returns the cached capability slug for a row, building it if needed.
+	 *
+	 * @since  3.x.0
+	 * @access public
+	 * @param  jQuery  $row  `.members-cap-checklist` row.
+	 * @return string
+	 */
+	function members_get_or_build_cap_slug( $row ) {
+
+		var cap = $row.data( 'capSlug' );
+
+		if ( 'undefined' === typeof cap ) {
+			cap = $row.find( 'input[data-grant-cap]' ).attr( 'data-grant-cap' ) || '';
+			$row.data( 'capSlug', cap );
+		}
+
+		return cap;
 	}
 
 	/**
@@ -287,7 +307,7 @@ jQuery( document ).ready( function() {
 					return;
 				}
 
-				var cap = $row.data( 'capSlug' ) || $row.find( 'input[data-grant-cap]' ).attr( 'data-grant-cap' ) || '';
+				var cap = members_get_or_build_cap_slug( $row );
 
 				if ( cap ) {
 					caps[ cap ] = true;
