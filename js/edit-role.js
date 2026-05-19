@@ -145,8 +145,8 @@ jQuery( document ).ready( function() {
 
 			var $row = jQuery( this );
 
-			$row.attr( 'data-cap-search', members_get_cap_search_haystack( $row ) );
-			$row.attr( 'data-cap-slug', $row.find( 'input[data-grant-cap]' ).attr( 'data-grant-cap' ) || '' );
+			$row.data( 'capSearch', members_get_cap_search_haystack( $row ) );
+			$row.data( 'capSlug', $row.find( 'input[data-grant-cap]' ).attr( 'data-grant-cap' ) || '' );
 		} );
 	}
 
@@ -211,7 +211,7 @@ jQuery( document ).ready( function() {
 
 		var cap = $row.find( 'input[data-grant-cap]' ).attr( 'data-grant-cap' ) || '';
 
-		return ( cap + ' ' + $row.find( '.column-cap button' ).text() ).toLowerCase();
+		return ( cap + ' ' + $row.find( '.column-cap button' ).text().trim() ).toLowerCase();
 	}
 
 	/**
@@ -249,24 +249,30 @@ jQuery( document ).ready( function() {
 
 		var caps = {};
 		var hayOnly = {};
+		var $capTabs = $activeTab.closest( '.members-cap-tabs' );
+		// Group tabs are subsets of All; only Custom can hold caps not listed on All
+		// (e.g. user-added rows via the new-cap meta box).
+		var $otherTabs = $activeTab.is( '#members-tab-all' )
+			? $capTabs.find( '#members-tab-custom' )
+			: $capTabs.find( '.members-tab-content' ).not( $activeTab );
 
-		$activeTab.closest( '.members-cap-tabs' ).find( '.members-tab-content' ).not( $activeTab ).each( function() {
+		$otherTabs.each( function() {
 
 			jQuery( this ).find( 'tbody > tr.members-cap-checklist' ).each( function() {
 
 				var $row     = jQuery( this );
-				var haystack = $row.attr( 'data-cap-search' );
+				var haystack = $row.data( 'capSearch' );
 
 				if ( ! haystack ) {
 					haystack = members_get_cap_search_haystack( $row );
-					$row.attr( 'data-cap-search', haystack );
+					$row.data( 'capSearch', haystack );
 				}
 
 				if ( -1 === haystack.indexOf( query ) ) {
 					return;
 				}
 
-				var cap = $row.attr( 'data-cap-slug' ) || $row.find( 'input[data-grant-cap]' ).attr( 'data-grant-cap' ) || '';
+				var cap = $row.data( 'capSlug' ) || $row.find( 'input[data-grant-cap]' ).attr( 'data-grant-cap' ) || '';
 
 				if ( cap ) {
 					caps[ cap ] = true;
@@ -369,13 +375,13 @@ jQuery( document ).ready( function() {
 		$rows.each( function() {
 
 			var $row     = jQuery( this );
-			var haystack = $row.attr( 'data-cap-search' );
+			var haystack = $row.data( 'capSearch' );
 
 			// Build the search haystack on the fly if it wasn't cached at render time
 			// (e.g. for a custom cap row added after initial template rendering).
 			if ( ! haystack ) {
 				haystack = members_get_cap_search_haystack( $row );
-				$row.attr( 'data-cap-search', haystack );
+				$row.data( 'capSearch', haystack );
 			}
 
 			var is_match = '' === query || -1 !== haystack.indexOf( query );
@@ -720,8 +726,8 @@ jQuery( document ).ready( function() {
 				// duplicate cap row that may exist on another tab).
 				var $newRow = $customTabBody.find( 'tr.members-cap-checklist' ).first();
 
-				$newRow.attr( 'data-cap-slug', new_cap );
-				$newRow.attr( 'data-cap-search', members_get_cap_search_haystack( $newRow ) );
+				$newRow.data( 'capSlug', new_cap );
+				$newRow.data( 'capSearch', members_get_cap_search_haystack( $newRow ) );
 				$newRow.addClass( 'members-highlight' );
 
 				setTimeout( function() {
