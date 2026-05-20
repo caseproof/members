@@ -228,6 +228,9 @@ final class Members_Plugin {
 		// Notifications (cannot be included inside is_admin() check or cron won't work)
 		require_once( $this->dir . 'admin/class-notifications.php' );
 
+		// Block editor REST saves run outside is_admin(); meta + custom routes must load on every request.
+		require_once( $this->dir . 'admin/class-meta-box-content-permissions.php' );
+
 		// Load admin files.
 		if ( is_admin() ) {
 
@@ -243,9 +246,6 @@ final class Members_Plugin {
 			require_once( $this->dir . 'admin/class-manage-users.php' );
 			require_once( $this->dir . 'admin/class-user-edit.php'    );
 			require_once( $this->dir . 'admin/class-user-new.php'     );
-
-			// Edit posts.
-			require_once( $this->dir . 'admin/class-meta-box-content-permissions.php' );
 
 			// Role management.
 			require_once( $this->dir . 'admin/class-manage-roles.php'          );

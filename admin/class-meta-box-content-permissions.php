@@ -56,7 +56,82 @@ final class Meta_Box_Content_Permissions {
 		add_action( 'load-post.php',     array( $this, 'load' ) );
 		add_action( 'load-post-new.php', array( $this, 'load' ) );
 		add_action( 'init',                        array( $this, 'register_content_permissions_post_meta' ), 20 );
+		add_action( 'rest_api_init',               array( $this, 'register_content_permissions_rest_routes' ) );
 		add_action( 'enqueue_block_editor_assets', array( $this, 'enqueue_block_editor_panel' ) );
+	}
+
+	/**
+	 * Registers a dedicated REST route to persist role meta (core meta save is unreliable in the block editor).
+	 *
+	 * @since  3.2.22
+	 * @access public
+	 * @return void
+	 */
+	public function register_content_permissions_rest_routes() {
+
+		register_rest_route(
+			'members/v1',
+			'/content-permissions/(?P<id>[\d]+)',
+			array(
+				'methods'             => \WP_REST_Server::EDITABLE,
+				'callback'            => array( $this, 'rest_save_content_permissions' ),
+				'permission_callback' => array( $this, 'rest_save_content_permissions_permissions' ),
+				'args'                => array(
+					'id'    => array(
+						'type'              => 'integer',
+						'required'          => true,
+						'sanitize_callback' => 'absint',
+					),
+					'roles' => array(
+						'type'  => 'array',
+						'items' => array(
+							'type' => 'string',
+						),
+					),
+				),
+			)
+		);
+	}
+
+	/**
+	 * Permission check for the content permissions REST route.
+	 *
+	 * @since  3.2.22
+	 * @access public
+	 * @param  \WP_REST_Request  $request  REST request.
+	 * @return bool
+	 */
+	public function rest_save_content_permissions_permissions( $request ) {
+
+		$post_id = (int) $request->get_param( 'id' );
+
+		return $post_id && current_user_can( 'restrict_content' ) && current_user_can( 'edit_post', $post_id );
+	}
+
+	/**
+	 * Saves content permission roles for a post.
+	 *
+	 * @since  3.2.22
+	 * @access public
+	 * @param  \WP_REST_Request  $request  REST request.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function rest_save_content_permissions( $request ) {
+
+		$post_id = (int) $request->get_param( 'id' );
+		$roles   = $request->get_param( 'roles' );
+
+		if ( ! is_array( $roles ) ) {
+			$roles = array();
+		}
+
+		members_set_post_roles( $post_id, $roles );
+
+		return rest_ensure_response(
+			array(
+				'roles' => members_get_post_roles( $post_id ),
+			)
+		);
 	}
 
 	/**
@@ -115,10 +190,6 @@ final class Meta_Box_Content_Permissions {
 	 */
 	public function register_content_permissions_post_meta() {
 
-		if ( ! members_content_permissions_enabled() ) {
-			return;
-		}
-
 		foreach ( get_post_types( array( 'public' => true ), 'names' ) as $post_type ) {
 
 			if ( ! $this->is_enabled_for_post_type( $post_type ) ) {
@@ -129,17 +200,19 @@ final class Meta_Box_Content_Permissions {
 				$post_type,
 				'_members_access_role',
 				array(
-					'type'              => 'string',
-					'single'            => false,
+					'type'              => 'array',
+					'single'            => true,
 					'show_in_rest'      => array(
 						'schema' => array(
+							'type'        => 'array',
 							'description' => __( 'User roles that may view this content.', 'members' ),
 							'items'       => array(
 								'type' => 'string',
 							),
 						),
+						'prepare_callback' => array( $this, 'prepare_access_roles_for_rest' ),
 					),
-					'auth_callback'     => function () {
+					'auth_callback'     => function ( $allowed, $meta_key, $object_id ) {
 						return current_user_can( 'restrict_content' );
 					},
 					'sanitize_callback' => 'members_sanitize_post_roles',
@@ -159,7 +232,57 @@ final class Meta_Box_Content_Permissions {
 					'sanitize_callback' => 'wp_kses_post',
 				)
 			);
+
+			add_filter( "rest_prepare_{$post_type}", array( $this, 'prepare_rest_content_permissions_meta' ), 10, 3 );
 		}
+	}
+
+	/**
+	 * Normalizes stored role meta for REST responses (array, legacy string, or multi-row).
+	 *
+	 * @since  3.2.22
+	 * @access public
+	 * @param  mixed            $value    Meta value from the database.
+	 * @param  \WP_REST_Request $request  REST request object.
+	 * @param  array            $args     Meta registration args.
+	 * @return array
+	 */
+	public function prepare_access_roles_for_rest( $value, $request, $args ) {
+
+		if ( is_array( $value ) ) {
+			return array_values( $value );
+		}
+
+		if ( is_string( $value ) && '' !== $value ) {
+			return array( $value );
+		}
+
+		return array();
+	}
+
+	/**
+	 * Ensures the block editor receives stored roles (including legacy formats).
+	 *
+	 * @since  3.2.22
+	 * @access public
+	 * @param  \WP_REST_Response  $response  REST response object.
+	 * @param  \WP_Post           $post      Post object.
+	 * @param  \WP_REST_Request   $request   REST request object.
+	 * @return \WP_REST_Response
+	 */
+	public function prepare_rest_content_permissions_meta( $response, $post, $request ) {
+
+		if ( ! $post instanceof \WP_Post || ! current_user_can( 'restrict_content' ) ) {
+			return $response;
+		}
+
+		if ( ! isset( $response->data['meta'] ) || ! is_array( $response->data['meta'] ) ) {
+			return $response;
+		}
+
+		$response->data['meta']['_members_access_role'] = members_get_post_roles_for_display( $post->ID );
+
+		return $response;
 	}
 
 	/**
@@ -170,10 +293,6 @@ final class Meta_Box_Content_Permissions {
 	 * @return void
 	 */
 	public function enqueue_block_editor_panel() {
-
-		if ( ! members_content_permissions_enabled() ) {
-			return;
-		}
 
 		if ( ! current_user_can( 'restrict_content' ) ) {
 			return;
@@ -198,28 +317,48 @@ final class Meta_Box_Content_Permissions {
 			$roles[ $role ] = members_translate_role( $role );
 		}
 
+		$post_id       = $post ? $post->ID : 0;
+		$default_roles = array();
+
+		if ( $post_id && empty( members_get_post_roles_for_display( $post_id ) ) && 'auto-draft' === $post->post_status ) {
+			$default_roles = apply_filters( 'members_default_post_roles', array(), $post_id );
+		}
+
+		$min        = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
+		$panel_file = members_plugin()->dir . "js/editor-content-permissions-panel{$min}.js";
+		$panel_ver  = file_exists( $panel_file ) ? filemtime( $panel_file ) : false;
+
+		wp_enqueue_style( 'members-admin' );
+
 		wp_enqueue_script(
 			'members-cp-panel',
-			members_plugin()->uri . 'js/editor-content-permissions-panel.js',
+			members_plugin()->uri . "js/editor-content-permissions-panel{$min}.js",
 			array(
 				'wp-plugins',
 				'wp-editor',
 				'wp-edit-post',
+				'wp-block-editor',
+				'wp-api-fetch',
 				'wp-components',
 				'wp-data',
 				'wp-core-data',
 				'wp-element',
 				'wp-i18n',
 			),
-			null,
+			$panel_ver,
 			true
 		);
+
+		if ( function_exists( 'wp_set_script_translations' ) ) {
+			wp_set_script_translations( 'members-cp-panel', 'members', members_plugin()->dir . 'languages' );
+		}
 
 		wp_localize_script(
 			'members-cp-panel',
 			'membersCpPanel',
 			array(
-				'roles' => $roles,
+				'roles'        => $roles,
+				'defaultRoles' => array_values( $default_roles ),
 			)
 		);
 	}
@@ -374,14 +513,11 @@ final class Meta_Box_Content_Permissions {
 		asort( $_wp_roles );
 
 		// Get the roles saved for the post.
-		$roles = get_post_meta( $post->ID, '_members_access_role', false );
+		$roles = members_get_post_roles_for_display( $post->ID );
 
-		if ( ! $roles && $this->is_new_post )
+		if ( empty( $roles ) && $this->is_new_post ) {
 			$roles = apply_filters( 'members_default_post_roles', array(), $post->ID );
-
-		// Convert old post meta to the new system if no roles were found.
-		if ( empty( $roles ) )
-			$roles = members_convert_old_post_meta( $post->ID );
+		}
 
 		// Nonce field to validate on save.
 		wp_nonce_field( 'members_cp_meta_nonce', 'members_cp_meta' );
@@ -489,18 +625,15 @@ final class Meta_Box_Content_Permissions {
 		global $wp_roles;
 
 		// Get roles and sort.
-		 $_wp_roles = $wp_roles->role_names;
+		$_wp_roles = apply_filters( 'members_wp_roles', $wp_roles->role_names, $this->get_post_for_members_wp_roles( $post ) );
 		asort( $_wp_roles );
 
 		// Get the roles saved for the post.
-		$roles = get_post_meta( $post->ID, '_members_access_role', false );
+		$roles = members_get_post_roles_for_display( $post->ID );
 
-		if ( ! $roles && $this->is_new_post )
+		if ( empty( $roles ) && $this->is_new_post ) {
 			$roles = apply_filters( 'members_default_post_roles', array(), $post->ID );
-
-		// Convert old post meta to the new system if no roles were found.
-		if ( empty( $roles ) )
-			$roles = members_convert_old_post_meta( $post->ID );
+		}
 
 		// Nonce field to validate on save.
 		wp_nonce_field( 'members_cp_meta_nonce', 'members_cp_meta' );

@@ -1,3 +1,29 @@
+.members-cp-document-panel .description {
+	margin-top: 0;
+}
+
+.members-cp-document-panel .components-checkbox-control {
+	margin-bottom: 8px;
+}
+
+.members-cp-error-message-control {
+	margin-top: 12px;
+}
+
+.members-cp-error-message {
+	min-height: 120px;
+	padding: 8px 12px;
+	border: 1px solid #949494;
+	border-radius: 2px;
+	background: #fff;
+}
+
+.members-cp-error-message:focus {
+	border-color: var( --wp-admin-theme-color, #3858e9 );
+	box-shadow: 0 0 0 1px var( --wp-admin-theme-color, #3858e9 );
+	outline: 2px solid transparent;
+}
+
 #members-cp h2.hndle,
 #members-cp-side h2.hndle {
 	border-bottom: none !important;

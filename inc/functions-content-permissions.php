@@ -36,27 +36,63 @@ function members_has_post_permissions( $post_id = '' ) {
  * @return array
  */
 function members_get_post_roles( $post_id ) {
-	return get_post_meta( $post_id, '_members_access_role', false );
+
+	$stored = get_post_meta( $post_id, '_members_access_role', true );
+
+	if ( is_array( $stored ) ) {
+		return array_values( $stored );
+	}
+
+	if ( is_string( $stored ) && '' !== $stored ) {
+		return array( $stored );
+	}
+
+	// Legacy storage: multiple meta rows (single => false).
+	$legacy = get_post_meta( $post_id, '_members_access_role', false );
+
+	return is_array( $legacy ) ? array_values( $legacy ) : array();
+}
+
+/**
+ * Returns access roles for a post, converting legacy `_role` meta when needed.
+ *
+ * @since  3.2.22
+ * @access public
+ * @param  int  $post_id  Post ID.
+ * @return array
+ */
+function members_get_post_roles_for_display( $post_id ) {
+
+	$roles = members_get_post_roles( $post_id );
+
+	if ( empty( $roles ) ) {
+		$converted = members_convert_old_post_meta( $post_id );
+
+		if ( $converted ) {
+			$roles = $converted;
+		}
+	}
+
+	return is_array( $roles ) ? $roles : array();
 }
 
 /**
  * Sanitizes one or more post access role slugs for storage.
  *
- * Registered meta for `_members_access_role` is multi-value (`single` => false), so this
- * callback may receive either a single role slug or an array of role slugs.
+ * Registered meta for `_members_access_role` is a single array value in REST.
  *
  * @since  3.2.22
  * @access public
  * @param  mixed  $roles  Role slug or list of role slugs.
- * @return string|array
+ * @return array
  */
 function members_sanitize_post_roles( $roles ) {
 
-	if ( is_array( $roles ) ) {
-		return array_values( array_map( 'members_sanitize_role', $roles ) );
+	if ( ! is_array( $roles ) ) {
+		$roles = array( $roles );
 	}
 
-	return members_sanitize_role( $roles );
+	return array_values( array_map( 'members_sanitize_role', $roles ) );
 }
 
 /**
@@ -88,7 +124,17 @@ function members_has_post_roles( $post_id = '' ) {
  */
 function members_add_post_role( $post_id, $role ) {
 
-	return add_post_meta( $post_id, '_members_access_role', $role, false );
+	$roles = members_get_post_roles( $post_id );
+	$role  = members_sanitize_role( $role );
+
+	if ( in_array( $role, $roles, true ) ) {
+		return false;
+	}
+
+	$roles[] = $role;
+	members_set_post_roles( $post_id, $roles );
+
+	return true;
 }
 
 /**
@@ -102,7 +148,18 @@ function members_add_post_role( $post_id, $role ) {
  */
 function members_remove_post_role( $post_id, $role ) {
 
-	return delete_post_meta( $post_id, '_members_access_role', $role );
+	$roles = members_get_post_roles( $post_id );
+	$role  = members_sanitize_role( $role );
+	$index = array_search( $role, $roles, true );
+
+	if ( false === $index ) {
+		return false;
+	}
+
+	unset( $roles[ $index ] );
+	members_set_post_roles( $post_id, array_values( $roles ) );
+
+	return true;
 }
 
 /**
@@ -116,25 +173,14 @@ function members_remove_post_role( $post_id, $role ) {
  * @return void
  */
 function members_set_post_roles( $post_id, $roles ) {
-	global $wp_roles;
 
-	// Get the current roles.
-	$current_roles = get_post_meta( $post_id, '_members_access_role', false );
+	$roles = array_values( array_map( 'members_sanitize_role', (array) $roles ) );
 
-	// Loop through new roles.
-	foreach ( $roles as $role ) {
+	// Remove legacy multi-row entries and the current value.
+	delete_post_meta( $post_id, '_members_access_role' );
 
-		// If new role is not already one of the current roles, add it.
-		if ( ! in_array( $role, $current_roles ) )
-			members_add_post_role( $post_id, $role );
-	}
-
-	// Loop through all WP roles.
-	foreach ( $wp_roles->role_names as $role => $name ) {
-
-		// If the WP role is one of the current roles but not a new role, remove it.
-		if ( ! in_array( $role, $roles ) && in_array( $role, $current_roles ) )
-			members_remove_post_role( $post_id, $role );
+	if ( ! empty( $roles ) ) {
+		update_post_meta( $post_id, '_members_access_role', $roles );
 	}
 }
 
@@ -314,17 +360,10 @@ function members_convert_old_post_meta( $post_id ) {
 		// Delete the old '_role' post meta.
 		delete_post_meta( $post_id, '_role' );
 
-		// Check if there are any roles for the '_members_access_role' meta key.
-		$new_roles = get_post_meta( $post_id, '_members_access_role', false );
-
 		// If new roles were found, don't do any conversion.
-		if ( empty( $new_roles ) ) {
+		if ( empty( members_get_post_roles( $post_id ) ) ) {
+			members_set_post_roles( $post_id, $old_roles );
 
-			// Loop through the old meta values for '_role' and add them to the new '_members_access_role' meta key.
-			foreach ( $old_roles as $role )
-				add_post_meta( $post_id, '_members_access_role', $role, false );
-
-			// Return the array of roles.
 			return $old_roles;
 		}
 	}
