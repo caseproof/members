@@ -21,13 +21,26 @@ var autoprefixer = require('gulp-autoprefixer'); // Autoprefixing magic.
 
 
 // JS related plugins.
-var uglify = require('gulp-uglify'); // Minifies JS files
+var terser = require('gulp-terser'); // Minifies JS files (supports ES6+).
 
 
 // Utility related plugins.
 var rename = require('gulp-rename'); // Renames files E.g. style.css -> style.min.css
 var lineec = require('gulp-line-ending-corrector'); // Consistent Line Endings for non UNIX systems. Gulp Plugin for Line Ending Corrector (A utility that makes sure your files have consistent line endings)
-var notify = require('gulp-notify'); // Sends message notification to you
+var Transform = require('stream').Transform;
+
+function logComplete( taskName ) {
+	return new Transform( {
+		objectMode: true,
+		transform: function ( file, enc, cb ) {
+			cb( null, file );
+		},
+		flush: function ( cb ) {
+			console.log( 'TASK: ' + taskName + ' completed.' );
+			cb();
+		},
+	} );
+}
 
 
 // Browsers you care about for autoprefixing.
@@ -60,20 +73,19 @@ gulp.task('styles', function () {
       maxLineLen: 0
     }))
     .pipe(gulp.dest(styleDestination))
-    .pipe(notify({ message: 'TASK: "styles" Completed! 💯', onLast: true }))
+    .pipe(logComplete('styles'))
 });
 
 
 /**
  * Task: `scripts`.
  *
- * Concatenate and uglify JS files.
+ * Minify JS files.
  *
  * This task does the following:
  *     1. Gets the source folder for JS files
- *     2. Concatenates all the files
- *     3. Renames the concatenated JS file with suffix .min.js
- *     4. Uglifes/Minifies the JS file and generates minified JS file
+ *     2. Renames each JS file with suffix .min.js
+ *     3. Minifies the JS file and generates minified JS file
  */
 gulp.task('scripts', function () {
   return gulp.src([
@@ -83,10 +95,10 @@ gulp.task('scripts', function () {
     .pipe(rename({
       suffix: '.min'
     }))
-    .pipe(uglify())
+    .pipe(terser())
     .pipe(lineec()) // Consistent Line Endings for non UNIX systems.
     .pipe(gulp.dest(jsDestination))
-    .pipe(notify({ message: 'TASK: "scripts" Completed! 💯', onLast: true }));
+    .pipe(logComplete('scripts'));
 });
 
 
