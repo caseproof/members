@@ -27,20 +27,6 @@ var terser = require('gulp-terser'); // Minifies JS files (supports ES6+).
 // Utility related plugins.
 var rename = require('gulp-rename'); // Renames files E.g. style.css -> style.min.css
 var lineec = require('gulp-line-ending-corrector'); // Consistent Line Endings for non UNIX systems. Gulp Plugin for Line Ending Corrector (A utility that makes sure your files have consistent line endings)
-var Transform = require('stream').Transform;
-
-function logComplete( taskName ) {
-	return new Transform( {
-		objectMode: true,
-		transform: function ( file, enc, cb ) {
-			cb( null, file );
-		},
-		flush: function ( cb ) {
-			console.log( 'TASK: ' + taskName + ' completed.' );
-			cb();
-		},
-	} );
-}
 
 
 // Browsers you care about for autoprefixing.
@@ -73,7 +59,6 @@ gulp.task('styles', function () {
       maxLineLen: 0
     }))
     .pipe(gulp.dest(styleDestination))
-    .pipe(logComplete('styles'))
 });
 
 
@@ -98,7 +83,6 @@ gulp.task('scripts', function () {
     .pipe(terser())
     .pipe(lineec()) // Consistent Line Endings for non UNIX systems.
     .pipe(gulp.dest(jsDestination))
-    .pipe(logComplete('scripts'));
 });
 
 
