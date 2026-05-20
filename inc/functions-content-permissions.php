@@ -40,6 +40,26 @@ function members_get_post_roles( $post_id ) {
 }
 
 /**
+ * Sanitizes one or more post access role slugs for storage.
+ *
+ * Registered meta for `_members_access_role` is multi-value (`single` => false), so this
+ * callback may receive either a single role slug or an array of role slugs.
+ *
+ * @since  3.2.22
+ * @access public
+ * @param  mixed  $roles  Role slug or list of role slugs.
+ * @return string|array
+ */
+function members_sanitize_post_roles( $roles ) {
+
+	if ( is_array( $roles ) ) {
+		return array_values( array_map( 'members_sanitize_role', $roles ) );
+	}
+
+	return members_sanitize_role( $roles );
+}
+
+/**
  * Conditional check to determine if a post has roles assigned to it.
  *
  * @since  2.0.0

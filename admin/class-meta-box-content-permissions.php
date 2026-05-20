@@ -55,6 +55,8 @@ final class Meta_Box_Content_Permissions {
 
 		add_action( 'load-post.php',     array( $this, 'load' ) );
 		add_action( 'load-post-new.php', array( $this, 'load' ) );
+		add_action( 'init',                        array( $this, 'register_content_permissions_post_meta' ), 20 );
+		add_action( 'enqueue_block_editor_assets', array( $this, 'enqueue_block_editor_panel' ) );
 	}
 
 	/**
@@ -93,8 +95,156 @@ final class Meta_Box_Content_Permissions {
 	 */
 	public function enqueue() {
 
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+
+		if ( $screen && method_exists( $screen, 'is_block_editor' ) && $screen->is_block_editor() ) {
+			wp_enqueue_style( 'members-admin' );
+			return;
+		}
+
 		wp_enqueue_script( 'members-edit-post' );
 		wp_enqueue_style( 'members-admin' );
+	}
+
+	/**
+	 * Registers post meta for the block editor document panel.
+	 *
+	 * @since  3.2.22
+	 * @access public
+	 * @return void
+	 */
+	public function register_content_permissions_post_meta() {
+
+		if ( ! members_content_permissions_enabled() ) {
+			return;
+		}
+
+		foreach ( get_post_types( array( 'public' => true ), 'names' ) as $post_type ) {
+
+			if ( ! $this->is_enabled_for_post_type( $post_type ) ) {
+				continue;
+			}
+
+			register_post_meta(
+				$post_type,
+				'_members_access_role',
+				array(
+					'type'              => 'string',
+					'single'            => false,
+					'show_in_rest'      => array(
+						'schema' => array(
+							'description' => __( 'User roles that may view this content.', 'members' ),
+							'items'       => array(
+								'type' => 'string',
+							),
+						),
+					),
+					'auth_callback'     => function () {
+						return current_user_can( 'restrict_content' );
+					},
+					'sanitize_callback' => 'members_sanitize_post_roles',
+				)
+			);
+
+			register_post_meta(
+				$post_type,
+				'_members_access_error',
+				array(
+					'type'              => 'string',
+					'single'            => true,
+					'show_in_rest'      => true,
+					'auth_callback'     => function () {
+						return current_user_can( 'restrict_content' );
+					},
+					'sanitize_callback' => 'wp_kses_post',
+				)
+			);
+		}
+	}
+
+	/**
+	 * Enqueues the block editor document panel script.
+	 *
+	 * @since  3.2.22
+	 * @access public
+	 * @return void
+	 */
+	public function enqueue_block_editor_panel() {
+
+		if ( ! members_content_permissions_enabled() ) {
+			return;
+		}
+
+		if ( ! current_user_can( 'restrict_content' ) ) {
+			return;
+		}
+
+		$post_type = $this->get_block_editor_post_type();
+
+		if ( ! $post_type || ! $this->is_enabled_for_post_type( $post_type ) ) {
+			return;
+		}
+
+		global $wp_roles;
+
+		$post = $this->get_post_for_members_wp_roles();
+
+		$_wp_roles = apply_filters( 'members_wp_roles', $wp_roles->role_names, $post );
+		asort( $_wp_roles );
+
+		$roles = array();
+
+		foreach ( $_wp_roles as $role => $name ) {
+			$roles[ $role ] = members_translate_role( $role );
+		}
+
+		wp_enqueue_script(
+			'members-cp-panel',
+			members_plugin()->uri . 'js/editor-content-permissions-panel.js',
+			array(
+				'wp-plugins',
+				'wp-editor',
+				'wp-edit-post',
+				'wp-components',
+				'wp-data',
+				'wp-core-data',
+				'wp-element',
+				'wp-i18n',
+			),
+			null,
+			true
+		);
+
+		wp_localize_script(
+			'members-cp-panel',
+			'membersCpPanel',
+			array(
+				'roles' => $roles,
+			)
+		);
+	}
+
+	/**
+	 * Resolves the post passed to the members_wp_roles filter (classic and block editor).
+	 *
+	 * @since  3.2.22
+	 * @access private
+	 * @param  \WP_Post|null  $post  Post from the meta box callback, if any.
+	 * @return \WP_Post|null
+	 */
+	private function get_post_for_members_wp_roles( $post = null ) {
+
+		if ( $post instanceof \WP_Post ) {
+			return $post;
+		}
+
+		$post = get_post();
+
+		if ( ! $post && ! empty( $_GET['post'] ) ) {
+			$post = get_post( absint( $_GET['post'] ) );
+		}
+
+		return $post instanceof \WP_Post ? $post : null;
 	}
 
 	/**
@@ -110,6 +260,13 @@ final class Meta_Box_Content_Permissions {
 		// If the current user can't restrict content, bail.
 		if ( ! current_user_can( 'restrict_content' ) )
 			return;
+
+		// Classic meta boxes conflict with the block editor save state; use the document panel instead.
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+
+		if ( $screen && method_exists( $screen, 'is_block_editor' ) && $screen->is_block_editor() ) {
+			return;
+		}
 
 		// Add the meta box.
 		add_meta_box( 'members-cp', __( 'Content Permissions (Members)', 'members' ), array( $this, 'meta_box' ), $post_type, 'advanced', 'high' );
@@ -138,13 +295,66 @@ final class Meta_Box_Content_Permissions {
 	 */
 	public function maybe_enable() {
 
-		// Get the post type object.
-		$type = get_post_type_object( get_current_screen()->post_type );
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 
-		// Only enable for public post types and non-attachments by default.
-		$enable = 'attachment' !== $type->name && $type->public;
+		if ( ! $screen || empty( $screen->post_type ) ) {
+			return false;
+		}
 
-		return apply_filters( "members_enable_{$type->name}_content_permissions", $enable );
+		return $this->is_enabled_for_post_type( $screen->post_type );
+	}
+
+	/**
+	 * Checks if Content Permissions is enabled for a post type.
+	 *
+	 * @since  3.2.22
+	 * @access private
+	 * @param  string  $post_type  Post type slug.
+	 * @return bool
+	 */
+	private function is_enabled_for_post_type( $post_type ) {
+
+		if ( empty( $post_type ) || 'attachment' === $post_type ) {
+			return false;
+		}
+
+		$type = get_post_type_object( $post_type );
+
+		if ( ! $type ) {
+			return false;
+		}
+
+		$enable = $type->public;
+
+		return apply_filters( "members_enable_{$post_type}_content_permissions", $enable );
+	}
+
+	/**
+	 * Returns the post type for the current block editor screen.
+	 *
+	 * @since  3.2.22
+	 * @access private
+	 * @return string Post type slug, or empty string when unavailable.
+	 */
+	private function get_block_editor_post_type() {
+
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+
+		if ( $screen && ! empty( $screen->post_type ) ) {
+			return $screen->post_type;
+		}
+
+		$post = $this->get_post_for_members_wp_roles();
+
+		if ( $post instanceof \WP_Post ) {
+			return $post->post_type;
+		}
+
+		if ( ! empty( $_GET['post_type'] ) ) {
+			return sanitize_key( wp_unslash( $_GET['post_type'] ) );
+		}
+
+		return '';
 	}
 
 	/**
@@ -160,7 +370,7 @@ final class Meta_Box_Content_Permissions {
 		global $wp_roles;
 
 		// Get roles and sort.
-		 $_wp_roles = apply_filters( 'members_wp_roles', $wp_roles->role_names, $post );
+		$_wp_roles = apply_filters( 'members_wp_roles', $wp_roles->role_names, $this->get_post_for_members_wp_roles( $post ) );
 		asort( $_wp_roles );
 
 		// Get the roles saved for the post.
@@ -252,7 +462,7 @@ final class Meta_Box_Content_Permissions {
 						'members_access_error',
 						array(
 							'drag_drop_upload' => true,
-							'editor_height'    => 200
+							'editor_height'    => 200,
 						)
 					); ?>
 
@@ -374,7 +584,7 @@ final class Meta_Box_Content_Permissions {
 						'members_access_error',
 						array(
 							'drag_drop_upload' => true,
-							'editor_height'    => 200
+							'editor_height'    => 200,
 						)
 					); ?>
 
