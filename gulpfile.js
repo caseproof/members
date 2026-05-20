@@ -39,14 +39,13 @@ const AUTOPREFIXER_BROWSERS = [
 /**
  * Task: `styles`.
  *
- * Compiles Sass, Autoprefixes it and Minifies CSS.
+ * Autoprefixes and minifies CSS files in ./css (excluding existing .min.css).
  *
  * This task does the following:
- *    1. Gets the source scss file
- *    2. Compiles Sass to CSS
- *    3. Autoprefixes it and generates style.css
- *    4. Renames the CSS file with suffix .min.css
- *    5. Minifies the CSS file and generates .min.css
+ *    1. Gets the source CSS files
+ *    2. Autoprefixes them
+ *    3. Renames each file with suffix .min.css
+ *    4. Minifies the CSS and writes to ./css/
  */
 gulp.task('styles', function () {
   return gulp.src([
@@ -99,9 +98,16 @@ function watchFiles() {
 
 
 /**
+ * Task: `build`.
+ *
+ * One-off build of styles and scripts (no watch).
+ */
+gulp.task('build', gulp.parallel('styles', 'scripts'));
+
+/**
  * Define default task using Gulp 4.x syntax.
  */
 gulp.task('default', gulp.series(
-  gulp.parallel('styles', 'scripts'),
+  'build',
   watchFiles
 ));

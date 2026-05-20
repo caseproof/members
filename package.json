@@ -4,7 +4,10 @@
   "description": "Members plugin for WordPress",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "gulp build",
+    "build:styles": "gulp styles",
+    "build:scripts": "gulp scripts",
+    "watch": "gulp"
   },
   "repository": {
     "type": "git",
