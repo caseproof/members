@@ -6,6 +6,12 @@
 	margin-bottom: 8px;
 }
 
+.members-cp-document-panel .members-cp-memberpress-upsell {
+	margin-top: 16px;
+	padding: 20px;
+	text-align: center;
+}
+
 .members-cp-error-message-control {
 	margin-top: 12px;
 }
@@ -18,7 +24,7 @@
 	background: #fff;
 }
 
-.members-cp-error-message:focus {
+.members-cp-error-message:focus-visible {
 	border-color: var( --wp-admin-theme-color, #3858e9 );
 	box-shadow: 0 0 0 1px var( --wp-admin-theme-color, #3858e9 );
 	outline: 2px solid transparent;

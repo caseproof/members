@@ -37,20 +37,30 @@ function members_has_post_permissions( $post_id = '' ) {
  */
 function members_get_post_roles( $post_id ) {
 
-	$stored = get_post_meta( $post_id, '_members_access_role', true );
+	$stored_rows = get_post_meta( $post_id, '_members_access_role', false );
 
-	if ( is_array( $stored ) ) {
-		return array_values( $stored );
+	if ( ! is_array( $stored_rows ) || empty( $stored_rows ) ) {
+		return array();
 	}
 
-	if ( is_string( $stored ) && '' !== $stored ) {
-		return array( $stored );
+	// Canonical storage: one meta row containing an array of role slugs.
+	if ( 1 === count( $stored_rows ) && is_array( $stored_rows[0] ) ) {
+		return array_values( $stored_rows[0] );
 	}
 
-	// Legacy storage: multiple meta rows (single => false).
-	$legacy = get_post_meta( $post_id, '_members_access_role', false );
+	$roles = array();
 
-	return is_array( $legacy ) ? array_values( $legacy ) : array();
+	foreach ( $stored_rows as $stored ) {
+		if ( is_array( $stored ) ) {
+			$roles = array_merge( $roles, array_values( $stored ) );
+		} elseif ( is_string( $stored ) && '' !== $stored ) {
+			$roles[] = $stored;
+		}
+	}
+
+	$roles = array_values( array_unique( array_map( 'members_sanitize_role', $roles ) ) );
+
+	return $roles;
 }
 
 /**
@@ -114,6 +124,102 @@ function members_has_post_roles( $post_id = '' ) {
 }
 
 /**
+ * Whether Content Permissions is enabled for a post type.
+ *
+ * @since  3.2.22
+ * @access public
+ * @param  string  $post_type  Post type slug.
+ * @return bool
+ */
+function members_is_content_permissions_enabled_for_post_type( $post_type ) {
+
+	if ( empty( $post_type ) || 'attachment' === $post_type ) {
+		return false;
+	}
+
+	$type = get_post_type_object( $post_type );
+
+	if ( ! $type ) {
+		return false;
+	}
+
+	$enable = $type->public;
+
+	return apply_filters( "members_enable_{$post_type}_content_permissions", $enable );
+}
+
+/**
+ * Resolves the post for Content Permissions UI (classic meta box and block editor).
+ *
+ * @since  3.2.22
+ * @access public
+ * @param  \WP_Post|null  $post  Known post object, if available.
+ * @return \WP_Post|null
+ */
+function members_get_post_for_content_permissions( $post = null ) {
+
+	if ( $post instanceof \WP_Post ) {
+		return $post;
+	}
+
+	$post = get_post();
+
+	if ( ! $post && ! empty( $_GET['post'] ) ) {
+		$post = get_post( absint( $_GET['post'] ) );
+	}
+
+	return $post instanceof \WP_Post ? $post : null;
+}
+
+/**
+ * Runs a callback while holding a short-lived lock for post role meta updates.
+ *
+ * Reentrant for the same post ID within one request (e.g. migration calling
+ * members_get_post_roles_for_display() which may convert legacy meta).
+ *
+ * @since  3.2.22
+ * @access public
+ * @param  int        $post_id   Post ID.
+ * @param  callable   $callback  Callback that performs the update.
+ * @return mixed|false Callback return value, or false when the lock is unavailable.
+ */
+function members_with_post_roles_lock( $post_id, $callback ) {
+
+	static $locks_held = array();
+
+	$post_id = (int) $post_id;
+
+	if ( ! $post_id || ! is_callable( $callback ) ) {
+		return false;
+	}
+
+	if ( ! empty( $locks_held[ $post_id ] ) ) {
+		return call_user_func( $callback );
+	}
+
+	$lock_key = 'members_cp_roles_' . $post_id;
+	$attempts = 0;
+
+	while ( $attempts < 10 && ! wp_cache_add( $lock_key, 1, 'members', 5 ) ) {
+		usleep( 5000 );
+		$attempts++;
+	}
+
+	if ( $attempts >= 10 ) {
+		return false;
+	}
+
+	try {
+		$locks_held[ $post_id ] = true;
+
+		return call_user_func( $callback );
+	} finally {
+		unset( $locks_held[ $post_id ] );
+		wp_cache_delete( $lock_key, 'members' );
+	}
+}
+
+/**
  * Adds a single role to a post's access roles.
  *
  * @since  1.0.0
@@ -124,17 +230,25 @@ function members_has_post_roles( $post_id = '' ) {
  */
 function members_add_post_role( $post_id, $role ) {
 
-	$roles = members_get_post_roles( $post_id );
-	$role  = members_sanitize_role( $role );
+	$role = members_sanitize_role( $role );
 
-	if ( in_array( $role, $roles, true ) ) {
-		return false;
-	}
+	$result = members_with_post_roles_lock(
+		$post_id,
+		function () use ( $post_id, $role ) {
+			$roles = members_get_post_roles( $post_id );
 
-	$roles[] = $role;
-	members_set_post_roles( $post_id, $roles );
+			if ( in_array( $role, $roles, true ) ) {
+				return false;
+			}
 
-	return true;
+			$roles[] = $role;
+			members_set_post_roles( $post_id, $roles );
+
+			return true;
+		}
+	);
+
+	return false === $result ? false : $result;
 }
 
 /**
@@ -148,22 +262,80 @@ function members_add_post_role( $post_id, $role ) {
  */
 function members_remove_post_role( $post_id, $role ) {
 
-	$roles = members_get_post_roles( $post_id );
-	$role  = members_sanitize_role( $role );
-	$index = array_search( $role, $roles, true );
+	$role = members_sanitize_role( $role );
 
-	if ( false === $index ) {
-		return false;
+	$result = members_with_post_roles_lock(
+		$post_id,
+		function () use ( $post_id, $role ) {
+			$roles = members_get_post_roles( $post_id );
+			$index = array_search( $role, $roles, true );
+
+			if ( false === $index ) {
+				return false;
+			}
+
+			unset( $roles[ $index ] );
+			members_set_post_roles( $post_id, array_values( $roles ) );
+
+			return true;
+		}
+	);
+
+	return false === $result ? false : (bool) $result;
+}
+
+/**
+ * Whether two role lists are equivalent after sanitization.
+ *
+ * @since  3.2.22
+ * @access public
+ * @param  array|string  $roles_a  Role list or single role slug.
+ * @param  array|string  $roles_b  Role list or single role slug.
+ * @return bool
+ */
+function members_post_roles_are_equal( $roles_a, $roles_b ) {
+
+	$roles_a = array_values( array_map( 'members_sanitize_role', (array) $roles_a ) );
+	$roles_b = array_values( array_map( 'members_sanitize_role', (array) $roles_b ) );
+
+	sort( $roles_a );
+	sort( $roles_b );
+
+	return $roles_a === $roles_b;
+}
+
+/**
+ * Whether a stored `_members_access_role` row matches the canonical role list.
+ *
+ * @since  3.2.22
+ * @access public
+ * @param  mixed   $stored  Meta value from get_post_meta().
+ * @param  array   $roles   Canonical sanitized role slugs.
+ * @return bool
+ */
+function members_stored_access_role_row_matches( $stored, array $roles ) {
+
+	if ( is_array( $stored ) ) {
+		return members_post_roles_are_equal( $stored, $roles );
 	}
 
-	unset( $roles[ $index ] );
-	members_set_post_roles( $post_id, array_values( $roles ) );
+	if ( is_string( $stored ) && '' !== $stored ) {
+		return members_post_roles_are_equal( array( $stored ), $roles );
+	}
 
-	return true;
+	return false;
 }
 
 /**
  * Sets a post's access roles given an array of roles.
+ *
+ * Storage format: one `_members_access_role` post meta row containing a PHP array of role
+ * slugs (required for block editor REST). Legacy sites used multiple rows with one slug per
+ * row; use members_maybe_migrate_access_role_storage() to upgrade existing data.
+ *
+ * Callers that may run concurrently (REST, classic save) should wrap this in
+ * members_with_post_roles_lock(). members_add_post_role() and members_remove_post_role()
+ * already acquire the lock before calling this function.
  *
  * @since  1.0.0
  * @access public
@@ -176,10 +348,50 @@ function members_set_post_roles( $post_id, $roles ) {
 
 	$roles = array_values( array_map( 'members_sanitize_role', (array) $roles ) );
 
-	// Remove legacy multi-row entries and the current value.
-	delete_post_meta( $post_id, '_members_access_role' );
+	if ( empty( $roles ) ) {
+		delete_post_meta( $post_id, '_members_access_role' );
+		return;
+	}
 
-	if ( ! empty( $roles ) ) {
+	// Write first so concurrent reads never see a transient empty meta value.
+	update_post_meta( $post_id, '_members_access_role', $roles );
+
+	$stored_rows = get_post_meta( $post_id, '_members_access_role', false );
+
+	if ( ! is_array( $stored_rows ) || count( $stored_rows ) <= 1 ) {
+		return;
+	}
+
+	$kept_row = null;
+
+	foreach ( $stored_rows as $stored ) {
+		if ( ! members_stored_access_role_row_matches( $stored, $roles ) ) {
+			delete_post_meta( $post_id, '_members_access_role', $stored );
+			continue;
+		}
+
+		// Prefer the canonical array row over a legacy single-string row with the same roles.
+		if ( is_array( $stored ) ) {
+			if ( null !== $kept_row ) {
+				delete_post_meta( $post_id, '_members_access_role', $kept_row );
+			}
+
+			$kept_row = $stored;
+			continue;
+		}
+
+		if ( null === $kept_row ) {
+			$kept_row = $stored;
+			continue;
+		}
+
+		delete_post_meta( $post_id, '_members_access_role', $stored );
+	}
+
+	if ( null === $kept_row ) {
+		update_post_meta( $post_id, '_members_access_role', $roles );
+	} elseif ( ! is_array( $kept_row ) ) {
+		delete_post_meta( $post_id, '_members_access_role', $kept_row );
 		update_post_meta( $post_id, '_members_access_role', $roles );
 	}
 }
@@ -351,25 +563,72 @@ function members_delete_post_access_message( $post_id ) {
  */
 function members_convert_old_post_meta( $post_id ) {
 
-	// Check if there are any meta values for the '_role' meta key.
 	$old_roles = get_post_meta( $post_id, '_role', false );
 
-	// If roles were found, let's convert them.
-	if ( !empty( $old_roles ) ) {
-
-		// Delete the old '_role' post meta.
-		delete_post_meta( $post_id, '_role' );
-
-		// If new roles were found, don't do any conversion.
-		if ( empty( members_get_post_roles( $post_id ) ) ) {
-			members_set_post_roles( $post_id, $old_roles );
-
-			return $old_roles;
-		}
+	if ( empty( $old_roles ) ) {
+		return false;
 	}
 
-	// Return false if we get to this point.
+	// Access roles already exist; remove stale legacy meta only.
+	if ( ! empty( members_get_post_roles( $post_id ) ) ) {
+		delete_post_meta( $post_id, '_role' );
+		return false;
+	}
+
+	$converted = members_with_post_roles_lock(
+		$post_id,
+		function () use ( $post_id ) {
+			$old_roles = get_post_meta( $post_id, '_role', false );
+
+			if ( empty( $old_roles ) ) {
+				$roles = members_get_post_roles( $post_id );
+
+				return ! empty( $roles ) ? $roles : false;
+			}
+
+			if ( ! empty( members_get_post_roles( $post_id ) ) ) {
+				delete_post_meta( $post_id, '_role' );
+
+				return false;
+			}
+
+			delete_post_meta( $post_id, '_role' );
+			members_set_post_roles( $post_id, $old_roles );
+
+			$roles = members_get_post_roles( $post_id );
+
+			return ! empty( $roles ) ? $roles : $old_roles;
+		}
+	);
+
+	if ( $converted ) {
+		return $converted;
+	}
+
 	return false;
+}
+
+/**
+ * Cached wrapper for members_can_current_user_view_post() during REST requests.
+ *
+ * @since  3.2.22
+ * @access public
+ * @param  int  $post_id  Post ID.
+ * @return bool
+ */
+function members_rest_can_current_user_view_post( $post_id ) {
+
+	static $cache = array();
+
+	$post_id = (int) $post_id;
+
+	if ( isset( $cache[ $post_id ] ) ) {
+		return $cache[ $post_id ];
+	}
+
+	$cache[ $post_id ] = members_can_current_user_view_post( $post_id );
+
+	return $cache[ $post_id ];
 }
 
 /**
@@ -382,23 +641,171 @@ function members_convert_old_post_meta( $post_id ) {
  * @return array
  */
 function members_filter_protected_posts_for_rest( $posts, $query ) {
-    // If not content permissions enabled, or it is enabled but not protected, bail.
-    if ( ! members_content_permissions_enabled() || ( members_content_permissions_enabled() && ! members_is_hidden_protected_posts_enabled() ) ) {
-        return $posts;
-    }
 
-    // Check if the current request is a REST API request and $posts is valid array
-    if ( defined( 'REST_REQUEST' ) && REST_REQUEST && is_array($posts) ) {
-        // Loop through the posts
-        foreach ( $posts as $key => $post ) {
-            if ( ! members_can_current_user_view_post( $post->ID ) ) {
-                // Remove the protected post from the results
-                unset( $posts[$key] );
-            }
-        }
-        // Re-index the array to prevent issues with keys
-        $posts = array_values( $posts );
-    }
+	if ( ! members_content_permissions_enabled() || ! members_is_hidden_protected_posts_enabled() ) {
+		return $posts;
+	}
 
-    return $posts;
+	if ( ! defined( 'REST_REQUEST' ) || ! REST_REQUEST || ! is_array( $posts ) || empty( $posts ) ) {
+		return $posts;
+	}
+
+	// Users who manage permissions can view every post in the editor REST context.
+	if ( current_user_can( 'restrict_content' ) ) {
+		return $posts;
+	}
+
+	foreach ( $posts as $key => $post ) {
+		if ( ! members_rest_can_current_user_view_post( $post->ID ) ) {
+			unset( $posts[ $key ] );
+		}
+	}
+
+	return array_values( $posts );
 }
+
+/**
+ * Database storage version for `_members_access_role` (single serialized array per post).
+ *
+ * @since  3.2.22
+ */
+if ( ! defined( 'MEMBERS_ACCESS_ROLES_STORAGE_VERSION' ) ) {
+	define( 'MEMBERS_ACCESS_ROLES_STORAGE_VERSION', 2 );
+}
+
+/**
+ * Whether a post still uses legacy `_members_access_role` storage.
+ *
+ * @since  3.2.22
+ * @access public
+ * @param  int  $post_id  Post ID.
+ * @return bool
+ */
+function members_post_needs_access_role_storage_migration( $post_id ) {
+
+	$rows = get_post_meta( $post_id, '_members_access_role', false );
+
+	if ( ! is_array( $rows ) || empty( $rows ) ) {
+		return false;
+	}
+
+	if ( count( $rows ) > 1 ) {
+		return true;
+	}
+
+	$stored = $rows[0];
+
+	return is_string( $stored );
+}
+
+/**
+ * Whether any posts still need `_members_access_role` storage migration.
+ *
+ * @since  3.2.22
+ * @access public
+ * @return bool
+ */
+function members_access_role_storage_migration_pending() {
+
+	global $wpdb;
+
+	$pending = $wpdb->get_var(
+		"SELECT post_id FROM {$wpdb->postmeta}
+		WHERE meta_key = '_members_access_role'
+		GROUP BY post_id
+		HAVING COUNT(*) > 1
+		OR ( COUNT(*) = 1 AND MAX( meta_value ) NOT LIKE 'a:%' )
+		LIMIT 1"
+	);
+
+	return ! empty( $pending );
+}
+
+/**
+ * Migrates a batch of posts from legacy `_members_access_role` rows to a single array value.
+ *
+ * @since  3.2.22
+ * @access public
+ * @param  int  $limit  Maximum number of posts to migrate in this batch.
+ * @return int Number of posts migrated.
+ */
+function members_migrate_access_role_storage_batch( $limit = 100 ) {
+
+	global $wpdb;
+
+	$limit = max( 1, (int) $limit );
+
+	$post_ids = $wpdb->get_col(
+		$wpdb->prepare(
+			"SELECT post_id FROM {$wpdb->postmeta}
+			WHERE meta_key = '_members_access_role'
+			GROUP BY post_id
+			HAVING COUNT(*) > 1
+			OR ( COUNT(*) = 1 AND MAX( meta_value ) NOT LIKE %s )
+			LIMIT %d",
+			$wpdb->esc_like( 'a:' ) . '%',
+			$limit
+		)
+	);
+
+	if ( empty( $post_ids ) ) {
+		return 0;
+	}
+
+	$migrated = 0;
+
+	foreach ( $post_ids as $post_id ) {
+		$post_id = (int) $post_id;
+
+		if ( ! $post_id ) {
+			continue;
+		}
+
+		$migrated_ok = members_with_post_roles_lock(
+			$post_id,
+			function () use ( $post_id ) {
+				$roles = members_get_post_roles_for_display( $post_id );
+				members_set_post_roles( $post_id, $roles );
+
+				return true;
+			}
+		);
+
+		if ( false !== $migrated_ok ) {
+			$migrated++;
+		}
+	}
+
+	return $migrated;
+}
+
+/**
+ * Runs batched `_members_access_role` storage migration after plugin updates.
+ *
+ * @since  3.2.22
+ * @access public
+ * @return void
+ */
+function members_maybe_migrate_access_role_storage() {
+
+	if ( (int) get_option( 'members_access_roles_storage_version', 0 ) >= MEMBERS_ACCESS_ROLES_STORAGE_VERSION ) {
+		return;
+	}
+
+	if ( wp_installing() ) {
+		return;
+	}
+
+	// Avoid adding latency to public requests; migrate in admin or cron contexts.
+	if ( ! is_admin() && ! wp_doing_cron() ) {
+		return;
+	}
+
+	members_migrate_access_role_storage_batch( 100 );
+
+	if ( ! members_access_role_storage_migration_pending() ) {
+		update_option( 'members_access_roles_storage_version', MEMBERS_ACCESS_ROLES_STORAGE_VERSION, false );
+	}
+}
+
+add_action( 'plugins_loaded', 'members_maybe_migrate_access_role_storage', 25 );

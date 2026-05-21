@@ -27,6 +27,7 @@
 	const panelConfig = window.membersCpPanel || {};
 	const roleLabels = panelConfig.roles ? panelConfig.roles : {};
 	const defaultRoles = panelConfig.defaultRoles ? panelConfig.defaultRoles : [];
+	const memberPressUpsell = panelConfig.memberPressUpsell || null;
 	const visibleRoleKeys = Object.keys( roleLabels );
 
 	function uniqueRoles( roles ) {
@@ -44,13 +45,7 @@
 			return select( 'core/editor' ).isEditedPostNew();
 		} );
 
-		const isSavingPost = useSelect( function ( select ) {
-			return select( 'core/editor' ).isSavingPost();
-		} );
-
 		const defaultsApplied = useRef( false );
-		const wasSaving = useRef( false );
-		const pendingRoles = useRef( [] );
 
 		const [ meta ] = useEntityProp( 'postType', postType, 'meta' );
 
@@ -69,36 +64,8 @@
 		}
 
 		function setAccessRoles( nextRoles ) {
-			const normalized = uniqueRoles( nextRoles );
-			pendingRoles.current = normalized;
-			patchMeta( { _members_access_role: normalized } );
+			patchMeta( { _members_access_role: uniqueRoles( nextRoles ) } );
 		}
-
-		useEffect(
-			function () {
-				if ( wasSaving.current && ! isSavingPost ) {
-					const postId = wp.data.select( 'core/editor' ).getCurrentPostId();
-					const rolesToSave = pendingRoles.current.length
-						? pendingRoles.current
-						: roleList;
-
-					if ( postId && wp.apiFetch ) {
-						wp.apiFetch( {
-							path: '/members/v1/content-permissions/' + postId,
-							method: 'POST',
-							data: { roles: rolesToSave.slice() },
-						} ).then( function ( response ) {
-							if ( response && response.roles ) {
-								setAccessRoles( response.roles );
-							}
-						} );
-					}
-				}
-
-				wasSaving.current = isSavingPost;
-			},
-			[ isSavingPost, roleList ]
-		);
 
 		useEffect(
 			function () {
@@ -179,6 +146,26 @@
 					},
 				} );
 			} ),
+			memberPressUpsell
+				? el(
+						'div',
+						{ className: 'memberpress-paid-memberships members-cp-memberpress-upsell' },
+						el( 'p', null, memberPressUpsell.message ),
+						el(
+							'p',
+							null,
+							el(
+								'a',
+								{
+									href: memberPressUpsell.url,
+									target: '_blank',
+									rel: 'noopener noreferrer',
+								},
+								memberPressUpsell.cta
+							)
+						)
+				  )
+				: null,
 			errorMessageField
 		);
 	}
