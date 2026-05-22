@@ -4,7 +4,10 @@
   "description": "Members plugin for WordPress",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "gulp build",
+    "build:styles": "gulp styles",
+    "build:scripts": "gulp scripts",
+    "watch": "gulp"
   },
   "repository": {
     "type": "git",
@@ -20,9 +23,8 @@
     "gulp": "^5.0.0",
     "gulp-autoprefixer": "^8.0.0",
     "gulp-line-ending-corrector": "^1.0.3",
-    "gulp-notify": "^4.0.0",
     "gulp-rename": "^2.0.0",
-    "gulp-uglify": "^3.0.2",
+    "gulp-terser": "^2.1.0",
     "gulp-uglifycss": "^1.1.0"
   }
 }
