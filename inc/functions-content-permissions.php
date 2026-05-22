@@ -87,6 +87,93 @@ function members_get_post_roles_for_display( $post_id ) {
 }
 
 /**
+ * Returns access roles for REST/block editor reads without writing to the database.
+ *
+ * @since  3.2.22
+ * @access public
+ * @param  int  $post_id  Post ID.
+ * @return array
+ */
+function members_get_post_roles_for_rest( $post_id ) {
+
+	$roles = members_get_post_roles( $post_id );
+
+	if ( empty( $roles ) ) {
+		$legacy = get_post_meta( $post_id, '_role', false );
+
+		if ( ! empty( $legacy ) ) {
+			$roles = members_sanitize_post_roles( $legacy );
+		}
+	}
+
+	return is_array( $roles ) ? $roles : array();
+}
+
+/**
+ * Normalizes a stored access-role meta value for REST (no DB writes).
+ *
+ * @since  3.2.22
+ * @access public
+ * @param  mixed  $value  Meta value from the database.
+ * @return array
+ */
+function members_prepare_access_roles_for_rest( $value ) {
+
+	return members_normalize_post_roles_value( $value );
+}
+
+/**
+ * Coerces legacy role meta shapes into a role slug array.
+ *
+ * @since  3.2.22
+ * @access public
+ * @param  mixed  $value  Meta value from the database.
+ * @return array
+ */
+function members_normalize_post_roles_value( $value ) {
+
+	if ( is_array( $value ) ) {
+		return members_sanitize_post_roles( $value );
+	}
+
+	if ( is_string( $value ) && '' !== $value ) {
+		return members_sanitize_post_roles( array( $value ) );
+	}
+
+	return array();
+}
+
+/**
+ * Transient key for a role lock failure tied to the current user and post.
+ *
+ * @since  3.2.22
+ * @access public
+ * @param  int  $post_id  Post ID.
+ * @return string
+ */
+function members_post_roles_lock_failed_transient_key( $post_id ) {
+
+	return 'members_cp_roles_lock_' . get_current_user_id() . '_' . (int) $post_id;
+}
+
+/**
+ * Stores a flag so the edit screen can show a lock failure notice.
+ *
+ * @since  3.2.22
+ * @access public
+ * @param  int  $post_id  Post ID.
+ * @return void
+ */
+function members_flag_post_roles_lock_failure( $post_id ) {
+
+	set_transient(
+		members_post_roles_lock_failed_transient_key( $post_id ),
+		1,
+		MINUTE_IN_SECONDS
+	);
+}
+
+/**
  * Sanitizes one or more post access role slugs for storage.
  *
  * Registered meta for `_members_access_role` is a single array value in REST.
@@ -102,7 +189,16 @@ function members_sanitize_post_roles( $roles ) {
 		$roles = array( $roles );
 	}
 
-	return array_values( array_map( 'members_sanitize_role', $roles ) );
+	$roles = array_values( array_map( 'members_sanitize_role', $roles ) );
+
+	$roles = array_filter(
+		$roles,
+		function ( $role ) {
+			return '' !== $role && members_role_exists( $role );
+		}
+	);
+
+	return array_values( array_unique( $roles ) );
 }
 
 /**
@@ -172,6 +268,95 @@ function members_get_post_for_content_permissions( $post = null ) {
 }
 
 /**
+ * Option name used for a cross-request post role lock (add_option is atomic in MySQL).
+ *
+ * @since  3.2.22
+ * @access public
+ * @param  int  $post_id  Post ID.
+ * @return string
+ */
+function members_post_roles_lock_option_key( $post_id ) {
+
+	return 'members_cp_roles_lock_' . (int) $post_id;
+}
+
+/**
+ * Acquires a lock that is visible across concurrent HTTP requests.
+ *
+ * Uses the object cache when a persistent drop-in is active; otherwise uses
+ * add_option(), which is stored in the database and works on default installs.
+ *
+ * @since  3.2.22
+ * @access public
+ * @param  int  $post_id  Post ID.
+ * @param  int  $timeout  Seconds to wait for the lock.
+ * @return array|false Lock handle, or false when unavailable.
+ */
+function members_acquire_post_roles_lock( $post_id, $timeout = 5 ) {
+
+	$post_id  = (int) $post_id;
+	$timeout  = max( 1, (int) $timeout );
+	$deadline = microtime( true ) + $timeout;
+	$cache_key = 'post_' . $post_id;
+
+	while ( microtime( true ) < $deadline ) {
+
+		if ( wp_using_ext_object_cache() && wp_cache_add( $cache_key, time(), 'members_post_roles_lock', $timeout + 25 ) ) {
+			return array(
+				'storage' => 'cache',
+				'key'     => $cache_key,
+			);
+		}
+
+		if ( ! wp_using_ext_object_cache() ) {
+			$option_key = members_post_roles_lock_option_key( $post_id );
+			$expires    = time() + $timeout + 25;
+
+			if ( add_option( $option_key, $expires, '', 'no' ) ) {
+				return array(
+					'storage' => 'option',
+					'key'     => $option_key,
+				);
+			}
+
+			$stale_expires = (int) get_option( $option_key, 0 );
+
+			if ( $stale_expires && $stale_expires < time() ) {
+				delete_option( $option_key );
+			}
+		}
+
+		usleep( 50000 );
+	}
+
+	return false;
+}
+
+/**
+ * Releases a lock acquired by members_acquire_post_roles_lock().
+ *
+ * @since  3.2.22
+ * @access public
+ * @param  array|false  $lock  Lock handle from members_acquire_post_roles_lock().
+ * @return void
+ */
+function members_release_post_roles_lock( $lock ) {
+
+	if ( ! is_array( $lock ) || empty( $lock['storage'] ) || empty( $lock['key'] ) ) {
+		return;
+	}
+
+	if ( 'cache' === $lock['storage'] ) {
+		wp_cache_delete( $lock['key'], 'members_post_roles_lock' );
+		return;
+	}
+
+	if ( 'option' === $lock['storage'] ) {
+		delete_option( $lock['key'] );
+	}
+}
+
+/**
  * Runs a callback while holding a short-lived lock for post role meta updates.
  *
  * Reentrant for the same post ID within one request (e.g. migration calling
@@ -197,15 +382,9 @@ function members_with_post_roles_lock( $post_id, $callback ) {
 		return call_user_func( $callback );
 	}
 
-	$lock_key = 'members_cp_roles_' . $post_id;
-	$attempts = 0;
+	$lock = members_acquire_post_roles_lock( $post_id, 5 );
 
-	while ( $attempts < 10 && ! wp_cache_add( $lock_key, 1, 'members', 5 ) ) {
-		usleep( 5000 );
-		$attempts++;
-	}
-
-	if ( $attempts >= 10 ) {
+	if ( false === $lock ) {
 		return false;
 	}
 
@@ -215,7 +394,7 @@ function members_with_post_roles_lock( $post_id, $callback ) {
 		return call_user_func( $callback );
 	} finally {
 		unset( $locks_held[ $post_id ] );
-		wp_cache_delete( $lock_key, 'members' );
+		members_release_post_roles_lock( $lock );
 	}
 }
 
@@ -809,3 +988,59 @@ function members_maybe_migrate_access_role_storage() {
 }
 
 add_action( 'plugins_loaded', 'members_maybe_migrate_access_role_storage', 25 );
+
+/**
+ * Persists `_members_access_role` via members_set_post_roles() when updated through meta APIs.
+ *
+ * @since  3.2.22
+ * @access public
+ * @param  null|bool  $check        Short-circuit return value.
+ * @param  int        $object_id    Post ID.
+ * @param  string     $meta_key     Meta key.
+ * @param  mixed      $meta_value   New meta value.
+ * @param  mixed      $prev_value   Previous meta value.
+ * @return null|bool
+ */
+function members_filter_update_post_roles_metadata( $check, $object_id, $meta_key, $meta_value, $prev_value ) {
+
+	unset( $prev_value );
+
+	if ( '_members_access_role' !== $meta_key || ! members_content_permissions_enabled() ) {
+		return $check;
+	}
+
+	$object_id = (int) $object_id;
+
+	if ( ! $object_id || ! get_post( $object_id ) ) {
+		return $check;
+	}
+
+	static $internal_update = array();
+
+	if ( ! empty( $internal_update[ $object_id ] ) ) {
+		return $check;
+	}
+
+	$roles = members_sanitize_post_roles( $meta_value );
+
+	$saved = members_with_post_roles_lock(
+		$object_id,
+		function () use ( $object_id, $roles, &$internal_update ) {
+			$internal_update[ $object_id ] = true;
+			members_set_post_roles( $object_id, $roles );
+			unset( $internal_update[ $object_id ] );
+
+			return true;
+		}
+	);
+
+	if ( false === $saved ) {
+		members_flag_post_roles_lock_failure( $object_id );
+
+		return false;
+	}
+
+	return true;
+}
+
+add_filter( 'update_post_metadata', 'members_filter_update_post_roles_metadata', 10, 5 );

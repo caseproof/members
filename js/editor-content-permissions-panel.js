@@ -28,6 +28,8 @@
 	const roleLabels = panelConfig.roles ? panelConfig.roles : {};
 	const defaultRoles = panelConfig.defaultRoles ? panelConfig.defaultRoles : [];
 	const memberPressUpsell = panelConfig.memberPressUpsell || null;
+	const lockFailedMessage = panelConfig.lockFailedMessage || '';
+	const showLockFailedNotice = !! panelConfig.showLockFailedNotice;
 	const visibleRoleKeys = Object.keys( roleLabels );
 
 	function uniqueRoles( roles ) {
@@ -46,6 +48,7 @@
 		} );
 
 		const defaultsApplied = useRef( false );
+		const lockNoticeShown = useRef( false );
 
 		const [ meta ] = useEntityProp( 'postType', postType, 'meta' );
 
@@ -66,6 +69,27 @@
 		function setAccessRoles( nextRoles ) {
 			patchMeta( { _members_access_role: uniqueRoles( nextRoles ) } );
 		}
+
+		useEffect(
+			function () {
+				if (
+					lockNoticeShown.current ||
+					! showLockFailedNotice ||
+					! lockFailedMessage ||
+					! wp.data ||
+					! wp.data.dispatch
+				) {
+					return;
+				}
+
+				lockNoticeShown.current = true;
+
+				wp.data.dispatch( 'core/notices' ).createErrorNotice( lockFailedMessage, {
+					isDismissible: true,
+				} );
+			},
+			[ showLockFailedNotice, lockFailedMessage ]
+		);
 
 		useEffect(
 			function () {

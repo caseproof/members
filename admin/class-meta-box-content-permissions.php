@@ -491,24 +491,7 @@ final class Meta_Box_Content_Permissions {
 	 */
 	protected function flag_role_lock_failure( $post_id ) {
 
-		set_transient(
-			$this->role_lock_failed_transient_key( $post_id ),
-			1,
-			MINUTE_IN_SECONDS
-		);
-	}
-
-	/**
-	 * Transient key for a role lock failure tied to the current user and post.
-	 *
-	 * @since  3.2.22
-	 * @access protected
-	 * @param  int  $post_id  Post ID.
-	 * @return string
-	 */
-	protected function role_lock_failed_transient_key( $post_id ) {
-
-		return 'members_cp_roles_lock_' . get_current_user_id() . '_' . (int) $post_id;
+		members_flag_post_roles_lock_failure( $post_id );
 	}
 
 	/**
@@ -524,8 +507,13 @@ final class Meta_Box_Content_Permissions {
 			return;
 		}
 
-		$post_id       = absint( $_GET['post'] );
-		$transient_key = $this->role_lock_failed_transient_key( $post_id );
+		$post_id = absint( $_GET['post'] );
+
+		if ( ! $post_id || ! current_user_can( 'restrict_content' ) || ! current_user_can( 'edit_post', $post_id ) ) {
+			return;
+		}
+
+		$transient_key = members_post_roles_lock_failed_transient_key( $post_id );
 
 		if ( ! get_transient( $transient_key ) ) {
 			return;

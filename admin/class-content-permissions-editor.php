@@ -46,106 +46,7 @@ final class Content_Permissions_Editor {
 		}
 
 		add_action( 'init', array( $this, 'register_content_permissions_post_meta' ), 20 );
-		add_action( 'rest_api_init', array( $this, 'register_content_permissions_rest_routes' ) );
 		add_action( 'enqueue_block_editor_assets', array( $this, 'enqueue_block_editor_panel' ) );
-	}
-
-	/**
-	 * Registers a dedicated REST route to persist role meta (optional; block editor uses core post meta).
-	 *
-	 * @since  3.2.22
-	 * @access public
-	 * @return void
-	 */
-	public function register_content_permissions_rest_routes() {
-
-		register_rest_route(
-			'members/v1',
-			'/content-permissions/(?P<id>[\d]+)',
-			array(
-				'methods'             => \WP_REST_Server::EDITABLE,
-				'callback'            => array( $this, 'rest_save_content_permissions' ),
-				'permission_callback' => array( $this, 'rest_save_content_permissions_permissions' ),
-				'args'                => array(
-					'id'    => array(
-						'type'              => 'integer',
-						'required'          => true,
-						'sanitize_callback' => 'absint',
-					),
-					'roles' => array(
-						'type'  => 'array',
-						'items' => array(
-							'type' => 'string',
-						),
-					),
-				),
-			)
-		);
-	}
-
-	/**
-	 * Permission check for the content permissions REST route.
-	 *
-	 * @since  3.2.22
-	 * @access public
-	 * @param  \WP_REST_Request  $request  REST request.
-	 * @return bool
-	 */
-	public function rest_save_content_permissions_permissions( $request ) {
-
-		$post_id = (int) $request->get_param( 'id' );
-
-		return $post_id && current_user_can( 'restrict_content' ) && current_user_can( 'edit_post', $post_id );
-	}
-
-	/**
-	 * Saves content permission roles for a post.
-	 *
-	 * @since  3.2.22
-	 * @access public
-	 * @param  \WP_REST_Request  $request  REST request.
-	 * @return \WP_REST_Response|\WP_Error
-	 */
-	public function rest_save_content_permissions( $request ) {
-
-		$post_id = (int) $request->get_param( 'id' );
-
-		if ( ! $request->has_param( 'roles' ) ) {
-			return new \WP_Error(
-				'missing_roles',
-				__( 'The roles parameter is required.', 'members' ),
-				array( 'status' => 400 )
-			);
-		}
-
-		$roles = $request->get_param( 'roles' );
-
-		if ( ! is_array( $roles ) ) {
-			$roles = array();
-		}
-
-		$saved_roles = members_with_post_roles_lock(
-			$post_id,
-			function () use ( $post_id, $roles ) {
-				members_set_post_roles( $post_id, $roles );
-
-				return members_get_post_roles( $post_id );
-			}
-		);
-
-		if ( false === $saved_roles ) {
-			return new \WP_Error(
-				'role_update_locked',
-				__( 'Content permissions could not be saved because another update is in progress. Please try again.', 'members' ),
-				array( 'status' => 409 )
-			);
-		}
-
-		return rest_ensure_response(
-			array(
-				'roles' => $saved_roles,
-			)
-		);
 	}
 
 	/**
@@ -177,6 +78,7 @@ final class Content_Permissions_Editor {
 								'type' => 'string',
 							),
 						),
+						'prepare_callback' => 'members_prepare_access_roles_for_rest',
 					),
 					'auth_callback'     => array( $this, 'auth_content_permissions_meta' ),
 					'sanitize_callback' => 'members_sanitize_post_roles',
@@ -234,7 +136,7 @@ final class Content_Permissions_Editor {
 			return $response;
 		}
 
-		$response->data['meta']['_members_access_role'] = members_get_post_roles_for_display( $post->ID );
+		$response->data['meta']['_members_access_role'] = members_get_post_roles_for_rest( $post->ID );
 
 		return $response;
 	}
@@ -274,8 +176,15 @@ final class Content_Permissions_Editor {
 		$post_id       = $post ? $post->ID : 0;
 		$default_roles = array();
 
-		if ( $post instanceof \WP_Post && $post_id && empty( members_get_post_roles_for_display( $post_id ) ) && 'auto-draft' === $post->post_status ) {
+		if ( $post instanceof \WP_Post && $post_id && empty( members_get_post_roles_for_rest( $post_id ) ) && 'auto-draft' === $post->post_status ) {
 			$default_roles = apply_filters( 'members_default_post_roles', array(), $post_id );
+		}
+
+		$lock_notice_key = $post_id ? members_post_roles_lock_failed_transient_key( $post_id ) : '';
+		$show_lock_notice = $lock_notice_key && get_transient( $lock_notice_key );
+
+		if ( $show_lock_notice ) {
+			delete_transient( $lock_notice_key );
 		}
 
 		$min        = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
@@ -297,6 +206,7 @@ final class Content_Permissions_Editor {
 				'wp-core-data',
 				'wp-element',
 				'wp-i18n',
+				'wp-notices',
 			),
 			$panel_ver,
 			true
@@ -309,6 +219,8 @@ final class Content_Permissions_Editor {
 		$panel_data = array(
 			'roles'        => $roles,
 			'defaultRoles' => array_values( $default_roles ),
+			'lockFailedMessage' => __( 'Content permissions roles could not be saved because another update is in progress. Please try saving again.', 'members' ),
+			'showLockFailedNotice' => (bool) $show_lock_notice,
 		);
 
 		if ( ! members_is_memberpress_active() ) {
