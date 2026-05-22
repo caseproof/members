@@ -21,13 +21,12 @@ var autoprefixer = require('gulp-autoprefixer'); // Autoprefixing magic.
 
 
 // JS related plugins.
-var uglify = require('gulp-uglify'); // Minifies JS files
+var terser = require('gulp-terser'); // Minifies JS files (supports ES6+).
 
 
 // Utility related plugins.
 var rename = require('gulp-rename'); // Renames files E.g. style.css -> style.min.css
 var lineec = require('gulp-line-ending-corrector'); // Consistent Line Endings for non UNIX systems. Gulp Plugin for Line Ending Corrector (A utility that makes sure your files have consistent line endings)
-var notify = require('gulp-notify'); // Sends message notification to you
 
 
 // Browsers you care about for autoprefixing.
@@ -40,14 +39,13 @@ const AUTOPREFIXER_BROWSERS = [
 /**
  * Task: `styles`.
  *
- * Compiles Sass, Autoprefixes it and Minifies CSS.
+ * Autoprefixes and minifies CSS files in ./css (excluding existing .min.css).
  *
  * This task does the following:
- *    1. Gets the source scss file
- *    2. Compiles Sass to CSS
- *    3. Autoprefixes it and generates style.css
- *    4. Renames the CSS file with suffix .min.css
- *    5. Minifies the CSS file and generates .min.css
+ *    1. Gets the source CSS files
+ *    2. Autoprefixes them
+ *    3. Renames each file with suffix .min.css
+ *    4. Minifies the CSS and writes to ./css/
  */
 gulp.task('styles', function () {
   return gulp.src([
@@ -60,20 +58,18 @@ gulp.task('styles', function () {
       maxLineLen: 0
     }))
     .pipe(gulp.dest(styleDestination))
-    .pipe(notify({ message: 'TASK: "styles" Completed! 💯', onLast: true }))
 });
 
 
 /**
  * Task: `scripts`.
  *
- * Concatenate and uglify JS files.
+ * Minify JS files.
  *
  * This task does the following:
  *     1. Gets the source folder for JS files
- *     2. Concatenates all the files
- *     3. Renames the concatenated JS file with suffix .min.js
- *     4. Uglifes/Minifies the JS file and generates minified JS file
+ *     2. Renames each JS file with suffix .min.js
+ *     3. Minifies the JS file and generates minified JS file
  */
 gulp.task('scripts', function () {
   return gulp.src([
@@ -83,10 +79,9 @@ gulp.task('scripts', function () {
     .pipe(rename({
       suffix: '.min'
     }))
-    .pipe(uglify())
+    .pipe(terser())
     .pipe(lineec()) // Consistent Line Endings for non UNIX systems.
     .pipe(gulp.dest(jsDestination))
-    .pipe(notify({ message: 'TASK: "scripts" Completed! 💯', onLast: true }));
 });
 
 
@@ -103,9 +98,16 @@ function watchFiles() {
 
 
 /**
+ * Task: `build`.
+ *
+ * One-off build of styles and scripts (no watch).
+ */
+gulp.task('build', gulp.parallel('styles', 'scripts'));
+
+/**
  * Define default task using Gulp 4.x syntax.
  */
 gulp.task('default', gulp.series(
-  gulp.parallel('styles', 'scripts'),
+  'build',
   watchFiles
 ));
