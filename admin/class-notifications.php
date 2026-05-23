@@ -379,18 +379,26 @@ class Notifications {
       return;
     }
 
+    $min = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
+
+    $notifications_style_file = members_plugin()->dir . "css/admin-notifications{$min}.css";
+    $notifications_style_ver  = file_exists( $notifications_style_file ) ? filemtime( $notifications_style_file ) : false;
+
     wp_enqueue_style(
       'members-admin-notifications',
-      members_plugin()->uri . "css/admin-notifications.css",
+      members_plugin()->uri . "css/admin-notifications{$min}.css",
       [],
-      ''
+      $notifications_style_ver
     );
+
+    $notifications_script_file = members_plugin()->dir . "js/admin-notifications{$min}.js";
+    $notifications_script_ver  = file_exists( $notifications_script_file ) ? filemtime( $notifications_script_file ) : false;
 
     wp_enqueue_script(
       'members-admin-notifications',
-      members_plugin()->uri . "js/admin-notifications.js",
+      members_plugin()->uri . "js/admin-notifications{$min}.js",
       [ 'jquery' ],
-      '',
+      $notifications_script_ver,
       true
     );
 
