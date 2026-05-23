@@ -50,16 +50,29 @@ function members_admin_register_scripts() {
 
 	$edit_role_file = members_plugin()->dir . "js/edit-role{$min}.js";
 	$edit_role_ver  = file_exists( $edit_role_file ) ? filemtime( $edit_role_file ) : false;
-	wp_register_script( 'members-edit-role', members_plugin()->uri . "js/edit-role{$min}.js", array( 'postbox', 'wp-util' ), $edit_role_ver, true );
+	wp_register_script( 'members-edit-role', members_plugin()->uri . "js/edit-role{$min}.js", array( 'postbox', 'wp-util', 'wp-i18n' ), $edit_role_ver, true );
+
+	// Load JSON translations for `wp.i18n._n()` / `wp.i18n.__()` calls used by
+	// the capability filter. Strings still translated via PHP `__()` continue to
+	// flow through `wp_localize_script()` below for backward compatibility.
+	if ( function_exists( 'wp_set_script_translations' ) ) {
+		wp_set_script_translations( 'members-edit-role', 'members' );
+	}
 
 	// Localize our script with some text we want to pass in.
 	$i18n = array(
-		'button_role_edit' => esc_html__( 'Edit',                'members' ),
-		'button_role_ok'   => esc_html__( 'OK',                  'members' ),
-		'label_grant_cap'  => esc_html__( 'Grant %s capability', 'members' ),
-		'label_deny_cap'   => esc_html__( 'Deny %s capability',  'members' ),
-		'ays_delete_role'  => esc_html__( 'Are you sure you want to delete this role? This is a permanent action and cannot be undone.', 'members' ),
-		'hidden_caps'      => members_get_hidden_caps(),
+		'button_role_edit'       => esc_html__( 'Edit',                'members' ),
+		'button_role_ok'         => esc_html__( 'OK',                  'members' ),
+		'label_grant_cap'        => esc_html__( 'Grant %s capability', 'members' ),
+		'label_deny_cap'         => esc_html__( 'Deny %s capability',  'members' ),
+		'ays_delete_role'        => esc_html__( 'Are you sure you want to delete this role? This is a permanent action and cannot be undone.', 'members' ),
+		'hidden_caps'            => members_get_hidden_caps(),
+		'cap_filter_no_results'         => esc_html__( 'No capabilities match your filter.', 'members' ),
+		'cap_filter_no_results_on_tab'  => esc_html__( 'No capabilities match your filter on this tab.', 'members' ),
+		'cap_filter_elsewhere_one'      => esc_html__( '%d capability match on other tabs.', 'members' ),
+		'cap_filter_elsewhere_other'    => esc_html__( '%d capabilities match on other tabs.', 'members' ),
+		'cap_filter_match'              => esc_html__( '%d match', 'members' ),
+		'cap_filter_matches'            => esc_html__( '%d matches', 'members' ),
 	);
 
 	wp_localize_script( 'members-edit-role', 'members_i18n', $i18n );
