@@ -33,6 +33,15 @@ final class Content_Permissions_Editor {
 	private static $instance;
 
 	/**
+	 * Post types that already have a `rest_prepare_{$post_type}` callback registered.
+	 *
+	 * @since  3.2.22
+	 * @access private
+	 * @var    array
+	 */
+	private static $rest_prepare_hooks_added = array();
+
+	/**
 	 * Sets up hooks.
 	 *
 	 * @since  3.2.22
@@ -58,11 +67,7 @@ final class Content_Permissions_Editor {
 	 */
 	public function register_content_permissions_post_meta() {
 
-		foreach ( get_post_types( array( 'public' => true ), 'names' ) as $post_type ) {
-
-			if ( ! members_is_content_permissions_enabled_for_post_type( $post_type ) ) {
-				continue;
-			}
+		foreach ( members_get_content_permissions_post_types() as $post_type ) {
 
 			register_post_meta(
 				$post_type,
@@ -97,7 +102,10 @@ final class Content_Permissions_Editor {
 				)
 			);
 
-			add_filter( "rest_prepare_{$post_type}", array( $this, 'prepare_rest_content_permissions_meta' ), 10, 3 );
+			if ( empty( self::$rest_prepare_hooks_added[ $post_type ] ) ) {
+				add_filter( "rest_prepare_{$post_type}", array( $this, 'prepare_rest_content_permissions_meta' ), 10, 3 );
+				self::$rest_prepare_hooks_added[ $post_type ] = true;
+			}
 		}
 	}
 
@@ -206,7 +214,7 @@ final class Content_Permissions_Editor {
 				'wp-core-data',
 				'wp-element',
 				'wp-i18n',
-				'wp-notices',
+				'wp-api-fetch',
 			),
 			$panel_ver,
 			true

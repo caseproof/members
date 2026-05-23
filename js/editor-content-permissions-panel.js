@@ -38,6 +38,31 @@
 		} );
 	}
 
+	function showRolesLockFailedNotice() {
+		if ( ! lockFailedMessage || ! wp.data || ! wp.data.dispatch ) {
+			return;
+		}
+
+		wp.data.dispatch( 'core/notices' ).createErrorNotice( lockFailedMessage, {
+			isDismissible: true,
+		} );
+	}
+
+	function maybeShowRolesLockFailedFromResponse( response ) {
+		if ( response && response.members_cp_roles_lock_failed ) {
+			showRolesLockFailedNotice();
+		}
+	}
+
+	if ( wp.apiFetch ) {
+		wp.apiFetch.use( function ( options, next ) {
+			return next( options ).then( function ( response ) {
+				maybeShowRolesLockFailedFromResponse( response );
+				return response;
+			} );
+		} );
+	}
+
 	function ContentPermissionsPanel() {
 		const postType = useSelect( function ( select ) {
 			return select( 'core/editor' ).getCurrentPostType();
@@ -83,12 +108,34 @@
 				}
 
 				lockNoticeShown.current = true;
-
-				wp.data.dispatch( 'core/notices' ).createErrorNotice( lockFailedMessage, {
-					isDismissible: true,
-				} );
+				showRolesLockFailedNotice();
 			},
 			[ showLockFailedNotice, lockFailedMessage ]
+		);
+
+		useEffect(
+			function () {
+				let wasSaving = false;
+
+				function checkSaveState() {
+					const editor = wp.data.select( 'core/editor' );
+
+					if ( ! editor ) {
+						return;
+					}
+
+					const isSaving = editor.isSavingPost() || editor.isAutosavingPost();
+
+					if ( wasSaving && ! isSaving && editor.didPostSaveRequestFail && editor.didPostSaveRequestFail() ) {
+						showRolesLockFailedNotice();
+					}
+
+					wasSaving = isSaving;
+				}
+
+				return wp.data.subscribe( checkSaveState );
+			},
+			[]
 		);
 
 		useEffect(

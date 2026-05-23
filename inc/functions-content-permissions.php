@@ -245,6 +245,118 @@ function members_is_content_permissions_enabled_for_post_type( $post_type ) {
 }
 
 /**
+ * Post types that support the Content Permissions UI and REST meta fields.
+ *
+ * @since  3.2.22
+ * @access public
+ * @return array Post type slugs.
+ */
+function members_get_content_permissions_post_types() {
+
+	$post_types = array();
+
+	foreach ( get_post_types( array(), 'names' ) as $post_type ) {
+		if ( members_is_content_permissions_enabled_for_post_type( $post_type ) ) {
+			$post_types[] = $post_type;
+		}
+	}
+
+	return $post_types;
+}
+
+/**
+ * Whether the current request is persisting an autosave (classic or REST).
+ *
+ * @since  3.2.22
+ * @access public
+ * @param  int  $post_id  Post ID being saved.
+ * @return bool
+ */
+function members_is_content_permissions_autosave( $post_id = 0 ) {
+
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+		return true;
+	}
+
+	$post_id = (int) $post_id;
+
+	if ( $post_id && wp_is_post_autosave( $post_id ) ) {
+		return true;
+	}
+
+	if ( ! empty( $GLOBALS['members_cp_rest_autosave'] ) ) {
+		return true;
+	}
+
+	return false;
+}
+
+/**
+ * Marks a REST autosave request so role locks can be bypassed safely.
+ *
+ * @since  3.2.22
+ * @access public
+ * @param  mixed             $result   Response to replace.
+ * @param  \WP_REST_Server   $server   REST server instance.
+ * @param  \WP_REST_Request  $request  Request used to generate the response.
+ * @return mixed
+ */
+function members_cp_rest_detect_autosave( $result, $server, $request ) {
+
+	if ( $request instanceof \WP_REST_Request && false !== strpos( $request->get_route(), '/autosaves' ) ) {
+		$GLOBALS['members_cp_rest_autosave'] = true;
+	}
+
+	return $result;
+}
+
+add_filter( 'rest_pre_dispatch', 'members_cp_rest_detect_autosave', 10, 3 );
+
+/**
+ * Clears per-request REST autosave state.
+ *
+ * @since  3.2.22
+ * @access public
+ * @param  \WP_REST_Response|mixed  $result   Result to send.
+ * @param  \WP_REST_Server          $server   REST server instance.
+ * @param  \WP_REST_Request         $request  Request used to generate the response.
+ * @return \WP_REST_Response|mixed
+ */
+function members_cp_rest_cleanup_request_state( $result, $server, $request ) {
+
+	unset( $GLOBALS['members_cp_rest_autosave'] );
+
+	return $result;
+}
+
+add_filter( 'rest_post_dispatch', 'members_cp_rest_cleanup_request_state', 999, 3 );
+
+/**
+ * Adds a REST response flag when a role lock failure occurred during the request.
+ *
+ * @since  3.2.22
+ * @access public
+ * @param  \WP_REST_Response|mixed  $result   Result to send.
+ * @param  \WP_REST_Server          $server   REST server instance.
+ * @param  \WP_REST_Request         $request  Request used to generate the response.
+ * @return \WP_REST_Response|mixed
+ */
+function members_cp_rest_add_roles_lock_failure_flag( $result, $server, $request ) {
+
+	if ( ! ( $result instanceof \WP_REST_Response ) || empty( $GLOBALS['members_cp_roles_lock_failed'] ) ) {
+		return $result;
+	}
+
+	$result->data['members_cp_roles_lock_failed'] = true;
+
+	unset( $GLOBALS['members_cp_roles_lock_failed'] );
+
+	return $result;
+}
+
+add_filter( 'rest_post_dispatch', 'members_cp_rest_add_roles_lock_failure_flag', 10, 3 );
+
+/**
  * Resolves the post for Content Permissions UI (classic meta box and block editor).
  *
  * @since  3.2.22
@@ -525,7 +637,7 @@ function members_stored_access_role_row_matches( $stored, array $roles ) {
  */
 function members_set_post_roles( $post_id, $roles ) {
 
-	$roles = array_values( array_map( 'members_sanitize_role', (array) $roles ) );
+	$roles = members_sanitize_post_roles( $roles );
 
 	if ( empty( $roles ) ) {
 		delete_post_meta( $post_id, '_members_access_role' );
@@ -936,7 +1048,7 @@ function members_migrate_access_role_storage_batch( $limit = 100 ) {
 	foreach ( $post_ids as $post_id ) {
 		$post_id = (int) $post_id;
 
-		if ( ! $post_id ) {
+		if ( ! $post_id || ! members_post_needs_access_role_storage_migration( $post_id ) ) {
 			continue;
 		}
 
@@ -1023,19 +1135,28 @@ function members_filter_update_post_roles_metadata( $check, $object_id, $meta_ke
 
 	$roles = members_sanitize_post_roles( $meta_value );
 
-	$saved = members_with_post_roles_lock(
-		$object_id,
-		function () use ( $object_id, $roles, &$internal_update ) {
-			$internal_update[ $object_id ] = true;
-			members_set_post_roles( $object_id, $roles );
-			unset( $internal_update[ $object_id ] );
+	$save_callback = function () use ( $object_id, $roles, &$internal_update ) {
+		$internal_update[ $object_id ] = true;
+		members_set_post_roles( $object_id, $roles );
+		unset( $internal_update[ $object_id ] );
 
-			return true;
-		}
-	);
+		return true;
+	};
+
+	if ( members_is_content_permissions_autosave( $object_id ) ) {
+		$save_callback();
+
+		return true;
+	}
+
+	$saved = members_with_post_roles_lock( $object_id, $save_callback );
 
 	if ( false === $saved ) {
 		members_flag_post_roles_lock_failure( $object_id );
+
+		if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+			$GLOBALS['members_cp_roles_lock_failed'] = true;
+		}
 
 		return false;
 	}
