@@ -89,13 +89,11 @@ jQuery( document ).ready( function() {
 	jQuery( 'input[name="role"]' ).keypress(
 		function( e ) {
 
-			// 13 is the key code for "Enter".
-			if ( 13 === e.keyCode ) {
+			if ( 'Enter' === e.key ) {
 
 				// Click the edit role button and trigger a focus.
 				jQuery( '.role-edit-button' ).click().trigger( 'focus' );
 
-				// Prevent default behavior and return false.
 				e.preventDefault();
 				return false;
 			}
@@ -125,6 +123,7 @@ jQuery( document ).ready( function() {
 	// Create Underscore templates.
 	var section_template = wp.template( 'members-cap-section' );
 	var control_template = wp.template( 'members-cap-control' );
+	var $tabcapsdiv   = jQuery( '#tabcapsdiv' );
 
 	// Check that the `members_sections` and `members_controls` variables were
 	// passed in via `wp_localize_script()`.
@@ -132,31 +131,42 @@ jQuery( document ).ready( function() {
 
 		// Loop through the sections and append the template for each.
 		_.each( members_sections, function( data ) {
-			jQuery( '.members-tab-wrap' ).append( section_template( data ) );
+			$tabcapsdiv.find( '.members-tab-wrap' ).append( section_template( data ) );
 		} );
 
 		// Loop through the controls and append the template for each.
 		_.each( members_controls, function( data ) {
-			jQuery( '#members-tab-' + data.section + ' tbody' ).append( control_template( data ) );
+			$tabcapsdiv.find( '#members-tab-' + data.section + ' tbody' ).append( control_template( data ) );
+		} );
+
+		// Cache the cap slug and search haystack on each row so subsequent filters
+		// don't re-query the DOM.
+		$tabcapsdiv.find( '.members-cap-checklist' ).each( function() {
+
+			var $row = jQuery( this );
+
+			$row.data( 'capSearch', members_get_cap_search_haystack( $row ) );
+			$row.data( 'capSlug', $row.find( 'input[data-grant-cap]' ).attr( 'data-grant-cap' ) || '' );
 		} );
 	}
 
 	/* ====== Tabs ====== */
 
+
 	// Hides the tab content.
-	jQuery( '.members-cap-tabs .members-tab-content' ).hide();
+	$tabcapsdiv.find( '.members-cap-tabs .members-tab-content' ).hide();
 
 	// Shows the first tab's content.
-	jQuery( '.members-cap-tabs .members-tab-content:first-child' ).show();
+	$tabcapsdiv.find( '.members-cap-tabs .members-tab-content:first-child' ).show();
 
 	// Makes the 'aria-selected' attribute true for the first tab nav item.
-	jQuery( '.members-tab-nav :first-child' ).attr( 'aria-selected', 'true' );
+	$tabcapsdiv.find( '.members-tab-nav :first-child' ).attr( 'aria-selected', 'true' );
 
 	// Copies the current tab item title to the box header.
-	jQuery( '.members-which-tab' ).text( jQuery( '.members-tab-nav :first-child a' ).text() );
+	$tabcapsdiv.find( '.members-which-tab' ).text( $tabcapsdiv.find( '.members-tab-nav :first-child a' ).text() );
 
 	// When a tab nav item is clicked.
-	jQuery( '.members-tab-nav li a' ).on(
+	$tabcapsdiv.find( '.members-tab-nav li a' ).on(
 		'click',
 		function( j ) {
 
@@ -164,24 +174,334 @@ jQuery( document ).ready( function() {
 			j.preventDefault();
 
 			// Get the `href` attribute of the item.
-			var href = jQuery( this ).attr( 'href' );
+			var href     = jQuery( this ).attr( 'href' );
+			var $capTabs = jQuery( this ).parents( '.members-cap-tabs' );
 
 			// Hide all tab content.
-			jQuery( this ).parents( '.members-cap-tabs' ).find( '.members-tab-content' ).hide();
+			$capTabs.find( '.members-tab-content' ).hide();
 
 			// Find the tab content that matches the tab nav item and show it.
-			jQuery( this ).parents( '.members-cap-tabs' ).find( href ).show();
+			var $activePanel = $capTabs.find( href ).show();
 
 			// Set the `aria-selected` attribute to false for all tab nav items.
-			jQuery( this ).parents( '.members-cap-tabs' ).find( '.members-tab-title' ).attr( 'aria-selected', 'false' );
+			$capTabs.find( '.members-tab-title' ).attr( 'aria-selected', 'false' );
 
 			// Set the `aria-selected` attribute to true for this tab nav item.
 			jQuery( this ).parent().attr( 'aria-selected', 'true' );
 
 			// Copy the current tab item title to the box header.
-			jQuery( '.members-which-tab' ).text( jQuery( this ).text() );
+			$tabcapsdiv.find( '.members-which-tab' ).text( jQuery( this ).text() );
+
+			// Re-apply the capability filter to the newly visible tab.
+			members_apply_cap_filter( $activePanel );
 		}
 	); // click()
+
+	/* ====== Capability Filter (search) ====== */
+
+	/**
+	 * Builds the lowercase search string for a capability row (slug + label text).
+	 *
+	 * @since  3.x.0
+	 * @access public
+	 * @param  jQuery  $row  `.members-cap-checklist` row.
+	 * @return string
+	 */
+	function members_get_cap_search_haystack( $row ) {
+
+		var cap = $row.find( 'input[data-grant-cap]' ).attr( 'data-grant-cap' ) || '';
+
+		return ( cap + ' ' + $row.find( '.column-cap button' ).text().trim() ).toLowerCase();
+	}
+
+	/**
+	 * Returns the cached search haystack for a capability row, building it if needed.
+	 *
+	 * @since  3.x.0
+	 * @access public
+	 * @param  jQuery  $row  `.members-cap-checklist` row.
+	 * @return string
+	 */
+	function members_get_or_build_cap_search_haystack( $row ) {
+
+		var haystack = $row.data( 'capSearch' );
+
+		if ( 'undefined' === typeof haystack ) {
+			haystack = members_get_cap_search_haystack( $row );
+			$row.data( 'capSearch', haystack );
+		}
+
+		return haystack;
+	}
+
+	/**
+	 * Returns the cached capability slug for a row, building it if needed.
+	 *
+	 * @since  3.x.0
+	 * @access public
+	 * @param  jQuery  $row  `.members-cap-checklist` row.
+	 * @return string
+	 */
+	function members_get_or_build_cap_slug( $row ) {
+
+		var cap = $row.data( 'capSlug' );
+
+		if ( 'undefined' === typeof cap ) {
+			cap = $row.find( 'input[data-grant-cap]' ).attr( 'data-grant-cap' ) || '';
+			$row.data( 'capSlug', cap );
+		}
+
+		return cap;
+	}
+
+	/**
+	 * Re-applies alternating-row striping to the visible capability rows in a
+	 * given table body. Replaces the previous CSS `:nth-child(even)` rule, which
+	 * counted hidden rows and produced inconsistent striping when filtering.
+	 *
+	 * @since  3.x.0
+	 * @access public
+	 * @param  jQuery  $tbody
+	 * @return void
+	 */
+	function members_stripe_rows( $tbody ) {
+
+		$tbody.find( 'tr.members-cap-checklist' ).removeClass( 'members-cap-row-alt' );
+		$tbody.find( 'tr.members-cap-checklist:visible:odd' ).addClass( 'members-cap-row-alt' );
+	}
+
+	/**
+	 * Counts distinct capabilities matching the filter outside the active tab.
+	 * Dedupes by capability slug so the same cap (e.g. on a group tab and the
+	 * "All" tab) counts once.
+	 *
+	 * @since  3.x.0
+	 * @access public
+	 * @param  string  query
+	 * @param  jQuery  $activeTab
+	 * @return number
+	 */
+	function members_count_elsewhere_matching_caps( query, $activeTab ) {
+
+		if ( ! query ) {
+			return 0;
+		}
+
+		var caps = {};
+		var hayOnly = {};
+		var $capTabs = $activeTab.closest( '.members-cap-tabs' );
+		// Group tabs are subsets of All; only Custom can hold caps not listed on All
+		// (e.g. user-added rows via the new-cap meta box).
+		var $otherTabs = $activeTab.is( '#members-tab-all' )
+			? $capTabs.find( '#members-tab-custom' )
+			: $capTabs.find( '.members-tab-content' ).not( $activeTab );
+
+		$otherTabs.each( function() {
+
+			jQuery( this ).find( 'tbody > tr.members-cap-checklist' ).each( function() {
+
+				var $row     = jQuery( this );
+				var haystack = members_get_or_build_cap_search_haystack( $row );
+
+				if ( -1 === haystack.indexOf( query ) ) {
+					return;
+				}
+
+				var cap = members_get_or_build_cap_slug( $row );
+
+				if ( cap ) {
+					caps[ cap ] = true;
+				} else {
+					hayOnly[ haystack ] = true;
+				}
+			} );
+		} );
+
+		return Object.keys( caps ).length + Object.keys( hayOnly ).length;
+	}
+
+	/**
+	 * Message for the empty-state row when the filter matches nothing on the
+	 * active tab (used only when the row is shown).
+	 *
+	 * @since  3.x.0
+	 * @access public
+	 * @param  string  query
+	 * @param  number  elsewhere_count  Distinct matches on other tabs.
+	 * @return string
+	 */
+	function members_cap_filter_empty_message( query, elsewhere_count ) {
+
+		if ( ! query ) {
+			return '';
+		}
+
+		if ( window.wp && wp.i18n && wp.i18n.__ && wp.i18n._n && wp.i18n.sprintf ) {
+
+			if ( 0 === elsewhere_count ) {
+				return wp.i18n.__( 'No capabilities match your filter.', 'members' );
+			}
+
+			return wp.i18n.__( 'No capabilities match your filter on this tab.', 'members' )
+				+ ' '
+				+ wp.i18n.sprintf(
+					wp.i18n._n(
+						'%d capability match on other tabs.',
+						'%d capabilities match on other tabs.',
+						elsewhere_count,
+						'members'
+					),
+					elsewhere_count
+				);
+
+		} else if ( 0 === elsewhere_count ) {
+			return members_i18n.cap_filter_no_results;
+
+		} else {
+			return members_i18n.cap_filter_no_results_on_tab
+				+ ' '
+				+ ( 1 === elsewhere_count
+					? members_i18n.cap_filter_elsewhere_one.replace( '%d', elsewhere_count )
+					: members_i18n.cap_filter_elsewhere_other.replace( '%d', elsewhere_count )
+				);
+		}
+	}
+
+	/**
+	 * Filters the rows in the currently active capability tab to those matching
+	 * the search input. The match is case-insensitive and runs against both the
+	 * capability slug and the visible label.
+	 *
+	 * @since  3.x.0
+	 * @access public
+	 * @param  jQuery|undefined  $passedActiveTab  Tab panel to filter (e.g. from tab
+	 *                                              click). When omitted, the active
+	 *                                              panel is resolved from `aria-selected`
+	 *                                              on the tab nav.
+	 * @return void
+	 */
+	function members_apply_cap_filter( $passedActiveTab ) {
+
+		var $input = $tabcapsdiv.find( '#members-cap-filter-input' );
+
+		if ( ! $input.length ) {
+			return;
+		}
+
+		var query = ( $input.val() || '' ).toLowerCase().trim();
+		var $activeTab;
+		var $capTabs = $tabcapsdiv.find( '.members-cap-tabs' );
+
+		if ( $passedActiveTab && $passedActiveTab.length ) {
+			$activeTab = $passedActiveTab;
+		} else {
+			var $activeLink = $capTabs.find( '.members-tab-nav li[aria-selected="true"] a' ).first();
+			var tabHref     = $activeLink.attr( 'href' );
+			$activeTab      = tabHref ? $capTabs.find( tabHref ) : jQuery();
+		}
+
+		if ( ! $activeTab.length ) {
+			return;
+		}
+
+		// Clearing the filter resets every tab so previously visited panels
+		// are not left with hidden rows.
+		if ( '' === query ) {
+			$capTabs.find( '.members-tab-content' ).each( function() {
+
+				var $tab  = jQuery( this );
+				var $tbody = $tab.find( 'tbody' ).first();
+
+				$tab.find( 'tbody > tr.members-cap-checklist' ).show();
+				$tbody.find( 'tr.members-cap-filter-empty' ).hide();
+				members_stripe_rows( $tbody );
+			} );
+
+			$input.siblings( '.members-cap-filter-count' ).text( '' );
+			return;
+		}
+
+		var $rows = $activeTab.find( 'tbody > tr.members-cap-checklist' );
+		var visible_count = 0;
+
+		$rows.each( function() {
+
+			var $row     = jQuery( this );
+			var haystack = members_get_or_build_cap_search_haystack( $row );
+
+			var is_match = '' === query || -1 !== haystack.indexOf( query );
+
+			$row.toggle( is_match );
+
+			if ( is_match ) {
+				visible_count++;
+			}
+		} );
+
+		members_stripe_rows( $activeTab.find( 'tbody' ).first() );
+
+		var elsewhere_count = ( query && 0 === visible_count )
+			? members_count_elsewhere_matching_caps( query, $activeTab )
+			: 0;
+
+		// Toggle a "no matches" empty-state row inside the active tab's table.
+		var $table  = $activeTab.find( 'table' ).first();
+		var $tbody  = $table.find( 'tbody' ).first();
+		var $empty  = $tbody.find( 'tr.members-cap-filter-empty' );
+		var col_cnt = $table.find( 'thead th' ).length || 3;
+
+		if ( ! $empty.length ) {
+			$empty = jQuery( '<tr class="members-cap-filter-empty"><td></td></tr>' );
+			$tbody.append( $empty );
+		}
+
+		$empty.find( 'td' ).attr( 'colspan', col_cnt ).text(
+			members_cap_filter_empty_message( query, elsewhere_count )
+		);
+
+		if ( query && 0 === visible_count ) {
+			$empty.show();
+		} else {
+			$empty.hide();
+		}
+
+		// Update the live match count next to the input.
+		var $count = $input.siblings( '.members-cap-filter-count' );
+
+		if ( '' === query ) {
+			$count.text( '' );
+		} else if ( window.wp && wp.i18n && wp.i18n._n && wp.i18n.sprintf ) {
+			$count.text(
+				wp.i18n.sprintf(
+					wp.i18n._n( '%d match', '%d matches', visible_count, 'members' ),
+					visible_count
+				)
+			);
+		} else {
+			$count.text(
+				( 1 === visible_count ? members_i18n.cap_filter_match : members_i18n.cap_filter_matches ).replace( '%d', visible_count )
+			);
+		}
+	}
+
+	// Apply initial striping to every cap section table after templates render.
+	$tabcapsdiv.find( '.members-tab-content table.members-roles-select tbody' ).each( function() {
+		members_stripe_rows( jQuery( this ) );
+	} );
+
+	// Filter on every keystroke in the search input.
+	jQuery( document ).on( 'input search', '#members-cap-filter-input', _.debounce( function() {
+		members_apply_cap_filter();
+	}, 250 ) );
+
+	// Don't let "Enter" in the filter input submit the form.
+	jQuery( document ).on( 'keydown', '#members-cap-filter-input', function( e ) {
+
+		if ( 'Enter' === e.key ) {
+			e.preventDefault();
+			return false;
+		}
+	} );
 
 	/* ====== Capability Checkboxes (inside tab content) ====== */
 
@@ -274,8 +594,8 @@ jQuery( document ).ready( function() {
 		        var isChecked = $this.is(':checked');
 		        var isGrantCheckbox = $this.hasClass('check-all-grant');
 		        var membersRoleSelect = $this.closest( '.members-roles-select' );
-		        var allGrantCheckboxes = membersRoleSelect.find( 'tbody input[data-grant-cap]' );
-		        var allDenyCheckboxes = membersRoleSelect.find( 'tbody input[data-deny-cap]' );
+		        var allGrantCheckboxes = membersRoleSelect.find( 'tbody tr.members-cap-checklist:visible input[data-grant-cap]' );
+		        var allDenyCheckboxes = membersRoleSelect.find( 'tbody tr.members-cap-checklist:visible input[data-deny-cap]' );
 		        var denyCheckboxes = membersRoleSelect.find( 'input.check-all-deny' );
 		        var grantCheckboxes = membersRoleSelect.find( 'input.check-all-grant' );
 
@@ -374,7 +694,7 @@ jQuery( document ).ready( function() {
 
 			// If there's a value in the input, enable the add new button.
 			//if ( 'do_not_allow' !== jQuery( this ).val() ) {
-			if ( -1 === jQuery.inArray( jQuery( this ).val(), members_i18n.hidden_caps ) ) {
+			if ( ! members_i18n.hidden_caps.includes( jQuery( this ).val() ) ) {
 
 				jQuery( '#members-add-new-cap' ).prop( 'disabled', false );
 
@@ -389,8 +709,7 @@ jQuery( document ).ready( function() {
 	jQuery( '#members-new-cap-field' ).keypress(
 		function( e ) {
 
-			// 13 is the key code for "Enter".
-			if ( 13 === e.keyCode ) {
+			if ( 'Enter' === e.key ) {
 				jQuery( '#members-add-new-cap' ).click();
 				e.preventDefault();
 				return false;
@@ -415,39 +734,49 @@ jQuery( document ).ready( function() {
 
 				// Don't allow the 'do_not_allow' cap.
 				//if ( 'do_not_allow' === new_cap ) {
-				if ( -1 !== jQuery.inArray( jQuery( this ).val(), members_i18n.hidden_caps ) ) {
+				if ( members_i18n.hidden_caps.includes( new_cap ) ) {
 					return;
 				}
 
+				// Clear any active filter so the new cap row is visible. Trigger
+				// `input` so the count text and empty-state row reset explicitly
+				// rather than relying on the tab-click handler.
+				$tabcapsdiv.find( '#members-cap-filter-input' ).val( '' ).trigger( 'input' );
+
 				// Trigger a click event on the "custom" tab in the edit caps box.
-				jQuery( 'a[href="#members-tab-custom"]' ).trigger( 'click' );
+				$tabcapsdiv.find( 'a[href="#members-tab-custom"]' ).trigger( 'click' );
 
-				// Replace text placeholder with cap.
-				members_i18n.label_grant_cap = members_i18n.label_grant_cap.replace( /%s/g, '<code>' + new_cap + '</code>' );
-				members_i18n.label_deny_cap  = members_i18n.label_deny_cap.replace( /%s/g,  '<code>' + new_cap + '</code>' );
+				var label_grant = members_i18n.label_grant_cap.replace( /%s/g, '<code>' + new_cap + '</code>' );
+				var label_deny  = members_i18n.label_deny_cap.replace( /%s/g,  '<code>' + new_cap + '</code>' );
 
-				// Set up some data to pass to our Underscore template.
 				var data = {
 					cap            : new_cap,
 					readonly       : '',
 					name           : { grant : 'grant-new-caps[]', deny : 'deny-new-caps[]' },
 					is_granted_cap : true,
 					is_denied_cap  : false,
-					label          : { cap : new_cap, grant : members_i18n.label_grant_cap, deny : members_i18n.label_deny_cap }
+					label          : { cap : new_cap, grant : label_grant, deny : label_deny }
 				};
 
 				// Prepend our template to the "custom" edit caps tab content.
-				jQuery( '#members-tab-custom tbody' ).prepend( control_template( data ) );
+				var $customTabBody = $tabcapsdiv.find( '#members-tab-custom tbody' );
 
-				// Get the new cap table row.
-				var parent = jQuery( '[data-grant-cap="' + new_cap + '"]' ).parents( '.members-cap-checklist' );
+				$customTabBody.prepend( control_template( data ) );
 
-				// Add the highlight class.
-				jQuery( parent ).addClass( 'members-highlight' );
+				// Re-stripe the custom tab body so the new row aligns with the
+				// alternating-row pattern.
+				members_stripe_rows( $customTabBody );
 
-				// Remove the class after a set time for a highlight effect.
+				// Highlight the row we just prepended (scoped to custom tab, not a
+				// duplicate cap row that may exist on another tab).
+				var $newRow = $customTabBody.find( 'tr.members-cap-checklist' ).first();
+
+				$newRow.data( 'capSlug', new_cap );
+				$newRow.data( 'capSearch', members_get_cap_search_haystack( $newRow ) );
+				$newRow.addClass( 'members-highlight' );
+
 				setTimeout( function() {
-					jQuery( parent ).removeClass( 'members-highlight' );
+					$newRow.removeClass( 'members-highlight' );
 				}, 500 );
 
 				// Set the new cap input value to an empty string.

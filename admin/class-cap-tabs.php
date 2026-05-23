@@ -195,6 +195,18 @@ final class Cap_Tabs {
 
 			<div class="inside">
 
+				<div class="members-cap-filter">
+					<label for="members-cap-filter-input" class="screen-reader-text"><?php esc_html_e( 'Filter capabilities', 'members' ); ?></label>
+					<input
+						type="search"
+						id="members-cap-filter-input"
+						class="members-cap-filter-input"
+						placeholder="<?php esc_attr_e( 'Filter capabilities...', 'members' ); ?>"
+						autocomplete="off"
+					/>
+					<span class="members-cap-filter-count" aria-live="polite"></span>
+				</div><!-- .members-cap-filter -->
+
 				<div class="members-cap-tabs">
 					<?php $this->tab_nav(); ?>
 					<div class="members-tab-wrap"></div>
