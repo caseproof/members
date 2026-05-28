@@ -46,7 +46,7 @@ Plugin entry point is `members.php` (current version 3.2.21, requires PHP 7.4+).
 
 ### Add-ons
 
-The integrations listed above (ACF, EDD, GiveWP, Meta Box, WooCommerce, Block Permissions, Privacy Caps, Admin Access / rescue link, Role Hierarchy, Role Levels, Category & Tag Caps, Core Create Caps) ship inside `addons/` and are enabled per-site from **Members → Add-Ons**.
+The integrations listed above (ACF, EDD, GiveWP, Meta Box, WooCommerce, Block Permissions, Privacy Caps, Admin Access, Role Hierarchy, Role Levels, Category & Tag Caps, Core Create Caps) ship inside `addons/` and are enabled per-site from **Members → Add-Ons**.
 
 How it works:
 
