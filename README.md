@@ -88,14 +88,12 @@ Commit both the source and the matching minified file — production loads the `
 
 ### Local development
 
-This repo ships a `CLAUDE.md` describing a [LocalWP](https://localwp.com/) setup and a `bin/wp` wrapper that runs WP-CLI against that site without opening Site Shell:
+Symlink (or clone) this repo into `wp-content/plugins/members` of any local WordPress install and activate. A `bin/wp` wrapper is included for convenience — point it at your local site (or a [LocalWP](https://localwp.com/) site) and it runs WP-CLI without needing to open Site Shell:
 
 ```bash
 ./bin/wp plugin list
 ./bin/wp user list
 ```
-
-Any LocalWP (or other WP) site works — symlink the repo into `wp-content/plugins/members` and activate.
 
 ### Translations
 
