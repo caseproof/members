@@ -6,4 +6,4 @@ namespace Members\CategoryAndTagCaps;
 defined( 'ABSPATH' ) || exit;
 
 # Load plugin files.
-require_once 'src/functions-filters.php';
+require_once __DIR__ . '/src/functions-filters.php';

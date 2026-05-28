@@ -23,9 +23,9 @@ function plugin() {
 }
 
 # Bootstrap plugin.
-require_once 'src/Plugin.php';
-require_once 'src/functions-caps.php';
-require_once 'src/functions-roles.php';
+require_once __DIR__ . '/src/Plugin.php';
+require_once __DIR__ . '/src/functions-caps.php';
+require_once __DIR__ . '/src/functions-roles.php';
 
 # Boot the plugin.
 plugin()->boot();

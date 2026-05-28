@@ -26,10 +26,10 @@ function plugin() {
 }
 
 # Bootstrap plugin.
-require_once 'src/Block.php';
-require_once 'src/Editor.php';
-require_once 'src/Integration.php';
-require_once 'src/Plugin.php';
+require_once __DIR__ . '/src/Block.php';
+require_once __DIR__ . '/src/Editor.php';
+require_once __DIR__ . '/src/Integration.php';
+require_once __DIR__ . '/src/Plugin.php';
 
 # Boot the plugin.
 plugin()->boot();
