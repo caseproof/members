@@ -268,7 +268,7 @@ final class Members_Plugin {
 		if ( ! empty( $addons ) ) {
 			foreach ( $addons as $addon ) {
 				if ( file_exists( __DIR__ . "/addons/{$addon}/addon.php" ) ) {
-					include "addons/{$addon}/addon.php";
+					include __DIR__ . "/addons/{$addon}/addon.php";
 				}
 			}
 		}
@@ -477,7 +477,7 @@ final class Members_Plugin {
 		if ( file_exists( trailingslashit( __DIR__ ) . "addons/{$addon}/src/Activator.php" ) ) {
 
 			// Require the add-on file
-			include "addons/{$addon}/src/Activator.php";
+			include trailingslashit( __DIR__ ) . "addons/{$addon}/src/Activator.php";
 
 			// Read the file contents into memory, and determine the namespace
 			$contents = file_get_contents( trailingslashit( __DIR__ ) . "addons/{$addon}/src/Activator.php" );
