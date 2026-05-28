@@ -88,12 +88,7 @@ Commit both the source and the matching minified file — production loads the `
 
 ### Local development
 
-Symlink (or clone) this repo into `wp-content/plugins/members` of any local WordPress install and activate. A `bin/wp` wrapper is included for convenience — point it at your local site (or a [LocalWP](https://localwp.com/) site) and it runs WP-CLI without needing to open Site Shell:
-
-```bash
-./bin/wp plugin list
-./bin/wp user list
-```
+Clone or symlink this repo into `wp-content/plugins/members` of any local WordPress install, run `composer install` + `npm install` + `npm run build`, and activate from the Plugins screen. [LocalWP](https://localwp.com/) works well — once activated you can drive the site with [WP-CLI](https://wp-cli.org/) (`wp plugin list`, `wp user list`, etc.) from its Site Shell.
 
 ### Translations
 
