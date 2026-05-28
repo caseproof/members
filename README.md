@@ -40,6 +40,60 @@ Members handles **who can do what**. If you also need to handle **who can pay fo
 
 See [contributing.md](./contributing.md). Open an issue before sending a PR.
 
+## Developer notes
+
+Plugin entry point is `members.php` (current version 3.2.21, requires PHP 7.4+). Core functions and classes live in `inc/`, admin screens in `admin/`, bundled add-ons in `addons/`, and shared PHP view partials in `templates/`.
+
+### Add-ons
+
+The integrations listed above (ACF, EDD, GiveWP, Meta Box, WooCommerce, Block Permissions, Privacy Caps, Admin Access, Role Hierarchy, Role Levels, Category & Tag Caps, Core Create Caps) ship inside `addons/` and are enabled per-site from **Members → Add-Ons**.
+
+How it works:
+
+- The list of active add-ons is stored in the `members_active_addons` WordPress option.
+- On every load, `members.php` walks that option and `include`s `addons/<name>/addon.php` for each active add-on (see `members.php:266`). Inactive add-ons cost nothing at runtime.
+- Activation runs `addons/<name>/src/Activator.php` if present.
+- Add-on metadata (title, description, icon, etc.) is registered through `members_register_addon()` in `admin/functions-addons.php`, driven by `admin/config/addons.php`.
+- A one-time `migrate_addons()` routine (`members.php:406`) detects users who previously had the stand-alone integration plugins installed and auto-activates the bundled equivalents.
+
+To add a new bundled add-on: drop a folder under `addons/` containing at least an `addon.php` bootstrap, optionally `src/Activator.php`, and register it in `admin/config/addons.php`. A few add-ons (e.g. `members-block-permissions`) ship their own JS build with `webpack.mix.js` / `package.json` — those are independent of the root Gulp build below.
+
+### Dependencies
+
+- **Composer** — runtime deps are prefixed via [Strauss](https://github.com/BrianHenryIE/strauss) into `vendor-prefixed/` to avoid collisions with other plugins. Don't edit that directory by hand.
+
+  ```bash
+  composer install
+  composer run strauss    # re-run after changing composer.json deps
+  ```
+
+- **npm** — used only for the asset build pipeline (Gulp 5 + Terser + uglifycss + autoprefixer).
+
+  ```bash
+  npm install
+  ```
+
+### Building assets
+
+CSS and JS sources live in `css/` and `js/`. The build reads non-`.min` files in those folders, runs them through autoprefixer + uglifycss (CSS) or Terser (JS, ES6+ supported), and writes `*.min.css` / `*.min.js` alongside the sources. See `gulpfile.js`.
+
+```bash
+npm run build           # one-off build of styles + scripts
+npm run build:styles    # CSS only
+npm run build:scripts   # JS only
+npm run watch           # rebuild on change
+```
+
+Commit both the source and the matching minified file — production loads the `.min` versions.
+
+### Local development
+
+Clone or symlink this repo into `wp-content/plugins/members` of any local WordPress install, run `composer install` + `npm install` + `npm run build`, and activate from the Plugins screen. [LocalWP](https://localwp.com/) works well — once activated you can drive the site with [WP-CLI](https://wp-cli.org/) (`wp plugin list`, `wp user list`, etc.) from its Site Shell.
+
+### Translations
+
+Text domain is `members`. `loco.xml` configures Loco Translate; POT files are no longer bundled in the repo (generated at release time).
+
 ## License
 
 GPL v2 or later. See [license.md](./license.md).

@@ -54,7 +54,7 @@ final class Members_Plugin {
 	 * @access public
 	 * @var    string
 	 */
-	private $php_version = '5.3.0';
+	private $php_version = '7.4.0';
 
 	/**
 	 * Plugin directory path.
