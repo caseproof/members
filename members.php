@@ -3,7 +3,7 @@
  * Plugin Name: Members
  * Plugin URI:  https://members-plugin.com/
  * Description: A user and role management plugin that puts you in full control of your site's permissions. This plugin allows you to edit your roles and their capabilities, clone existing roles, assign multiple roles per user, block post content, or even make your site completely private.
- * Version:     3.2.21
+ * Version:     3.2.22
  * Requires PHP: 7.4
  * Author:      MemberPress
  * Author URI:  https://memberpress.com
@@ -54,7 +54,7 @@ final class Members_Plugin {
 	 * @access public
 	 * @var    string
 	 */
-	private $php_version = '5.3.0';
+	private $php_version = '7.4.0';
 
 	/**
 	 * Plugin directory path.
@@ -269,7 +269,7 @@ final class Members_Plugin {
 		if ( ! empty( $addons ) ) {
 			foreach ( $addons as $addon ) {
 				if ( file_exists( __DIR__ . "/addons/{$addon}/addon.php" ) ) {
-					include "addons/{$addon}/addon.php";
+					include __DIR__ . "/addons/{$addon}/addon.php";
 				}
 			}
 		}
@@ -478,7 +478,7 @@ final class Members_Plugin {
 		if ( file_exists( trailingslashit( __DIR__ ) . "addons/{$addon}/src/Activator.php" ) ) {
 
 			// Require the add-on file
-			include "addons/{$addon}/src/Activator.php";
+			include trailingslashit( __DIR__ ) . "addons/{$addon}/src/Activator.php";
 
 			// Read the file contents into memory, and determine the namespace
 			$contents = file_get_contents( trailingslashit( __DIR__ ) . "addons/{$addon}/src/Activator.php" );
