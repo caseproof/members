@@ -678,13 +678,6 @@ function members_set_post_roles( $post_id, $roles ) {
 
 		delete_post_meta( $post_id, '_members_access_role', $stored );
 	}
-
-	if ( null === $kept_row ) {
-		update_post_meta( $post_id, '_members_access_role', $roles );
-	} elseif ( ! is_array( $kept_row ) ) {
-		delete_post_meta( $post_id, '_members_access_role', $kept_row );
-		update_post_meta( $post_id, '_members_access_role', $roles );
-	}
 }
 
 /**
@@ -1137,10 +1130,14 @@ function members_filter_update_post_roles_metadata( $check, $object_id, $meta_ke
 
 	$save_callback = function () use ( $object_id, $roles, &$internal_update ) {
 		$internal_update[ $object_id ] = true;
-		members_set_post_roles( $object_id, $roles );
-		unset( $internal_update[ $object_id ] );
 
-		return true;
+		try {
+			members_set_post_roles( $object_id, $roles );
+
+			return true;
+		} finally {
+			unset( $internal_update[ $object_id ] );
+		}
 	};
 
 	if ( members_is_content_permissions_autosave( $object_id ) ) {
