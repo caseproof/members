@@ -424,6 +424,10 @@ function members_acquire_post_roles_lock( $post_id, $timeout = 5 ) {
 			$option_key = members_post_roles_lock_option_key( $post_id );
 			$expires    = time() + $timeout + 25;
 
+			// Options are cached per request; clear before each attempt so concurrent
+			// lock acquire/release in other requests is visible while polling.
+			wp_cache_delete( $option_key, 'options' );
+
 			if ( add_option( $option_key, $expires, '', 'no' ) ) {
 				return array(
 					'storage' => 'option',
@@ -431,6 +435,7 @@ function members_acquire_post_roles_lock( $post_id, $timeout = 5 ) {
 				);
 			}
 
+			wp_cache_delete( $option_key, 'options' );
 			$stale_expires = (int) get_option( $option_key, 0 );
 
 			if ( $stale_expires && $stale_expires < time() ) {
