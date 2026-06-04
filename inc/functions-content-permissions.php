@@ -347,7 +347,14 @@ function members_cp_rest_add_roles_lock_failure_flag( $result, $server, $request
 		return $result;
 	}
 
-	$result->data['members_cp_roles_lock_failed'] = true;
+	$data = $result->get_data();
+
+	if ( is_array( $data ) ) {
+		$data['members_cp_roles_lock_failed'] = true;
+		$result->set_data( $data );
+	} elseif ( is_object( $data ) ) {
+		$data->members_cp_roles_lock_failed = true;
+	}
 
 	unset( $GLOBALS['members_cp_roles_lock_failed'] );
 
@@ -1090,10 +1097,18 @@ function members_maybe_migrate_access_role_storage() {
 		return;
 	}
 
+	// Rate-limit batches so the discovery query does not run on every admin request.
+	if ( get_transient( 'members_access_role_migration_lock' ) ) {
+		return;
+	}
+
+	set_transient( 'members_access_role_migration_lock', 1, 5 * MINUTE_IN_SECONDS );
+
 	members_migrate_access_role_storage_batch( 100 );
 
 	if ( ! members_access_role_storage_migration_pending() ) {
 		update_option( 'members_access_roles_storage_version', MEMBERS_ACCESS_ROLES_STORAGE_VERSION, false );
+		delete_transient( 'members_access_role_migration_lock' );
 	}
 }
 
