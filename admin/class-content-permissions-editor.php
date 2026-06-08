@@ -129,14 +129,14 @@ final class Content_Permissions_Editor {
 	 *
 	 * @since  3.2.22
 	 * @access public
-	 * @param  \WP_REST_Response  $response  REST response object.
-	 * @param  \WP_Post           $post      Post object.
-	 * @param  \WP_REST_Request   $request   REST request object.
-	 * @return \WP_REST_Response
+	 * @param  \WP_REST_Response|mixed  $response  REST response object.
+	 * @param  \WP_Post                 $post      Post object.
+	 * @param  \WP_REST_Request         $request   REST request object.
+	 * @return \WP_REST_Response|mixed
 	 */
 	public function prepare_rest_content_permissions_meta( $response, $post, $request ) {
 
-		if ( ! $post instanceof \WP_Post || ! current_user_can( 'restrict_content' ) ) {
+		if ( ! $response instanceof \WP_REST_Response || ! $post instanceof \WP_Post || ! current_user_can( 'restrict_content' ) ) {
 			return $response;
 		}
 
