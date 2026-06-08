@@ -1035,12 +1035,27 @@ function members_access_role_storage_migration_pending() {
 
 	global $wpdb;
 
+	$not_array = $wpdb->esc_like( 'a:' ) . '%';
+
+	$pending = $wpdb->get_var(
+		$wpdb->prepare(
+			"SELECT post_id FROM {$wpdb->postmeta}
+			WHERE meta_key = '_members_access_role'
+			AND meta_value NOT LIKE %s
+			LIMIT 1",
+			$not_array
+		)
+	);
+
+	if ( ! empty( $pending ) ) {
+		return true;
+	}
+
 	$pending = $wpdb->get_var(
 		"SELECT post_id FROM {$wpdb->postmeta}
 		WHERE meta_key = '_members_access_role'
 		GROUP BY post_id
 		HAVING COUNT(*) > 1
-		OR ( COUNT(*) = 1 AND MAX( meta_value ) NOT LIKE 'a:%' )
 		LIMIT 1"
 	);
 
@@ -1063,11 +1078,18 @@ function members_migrate_access_role_storage_batch( $limit = 100 ) {
 
 	$post_ids = $wpdb->get_col(
 		$wpdb->prepare(
-			"SELECT post_id FROM {$wpdb->postmeta}
-			WHERE meta_key = '_members_access_role'
-			GROUP BY post_id
-			HAVING COUNT(*) > 1
-			OR ( COUNT(*) = 1 AND MAX( meta_value ) NOT LIKE %s )
+			"SELECT post_id FROM (
+				SELECT DISTINCT post_id
+				FROM {$wpdb->postmeta}
+				WHERE meta_key = '_members_access_role'
+				AND meta_value NOT LIKE %s
+				UNION
+				SELECT post_id
+				FROM {$wpdb->postmeta}
+				WHERE meta_key = '_members_access_role'
+				GROUP BY post_id
+				HAVING COUNT(*) > 1
+			) AS members_pending_access_role_migration
 			LIMIT %d",
 			$wpdb->esc_like( 'a:' ) . '%',
 			$limit
