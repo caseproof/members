@@ -140,11 +140,14 @@ final class Content_Permissions_Editor {
 			return $response;
 		}
 
-		if ( ! isset( $response->data['meta'] ) || ! is_array( $response->data['meta'] ) ) {
+		$data = $response->get_data();
+
+		if ( ! is_array( $data ) || ! isset( $data['meta'] ) || ! is_array( $data['meta'] ) ) {
 			return $response;
 		}
 
-		$response->data['meta']['_members_access_role'] = members_get_post_roles_for_rest( $post->ID );
+		$data['meta']['_members_access_role'] = members_get_post_roles_for_rest( $post->ID );
+		$response->set_data( $data );
 
 		return $response;
 	}
