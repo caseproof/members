@@ -174,6 +174,27 @@ function members_flag_post_roles_lock_failure( $post_id ) {
 }
 
 /**
+ * Reads and clears a pending lock failure notice for the current user and post.
+ *
+ * @since  3.2.22
+ * @access public
+ * @param  int  $post_id  Post ID.
+ * @return bool True when a notice was pending.
+ */
+function members_consume_post_roles_lock_failed_notice( $post_id ) {
+
+	$transient_key = members_post_roles_lock_failed_transient_key( $post_id );
+
+	if ( ! get_transient( $transient_key ) ) {
+		return false;
+	}
+
+	delete_transient( $transient_key );
+
+	return true;
+}
+
+/**
  * Sanitizes one or more post access role slugs for storage.
  *
  * Registered meta for `_members_access_role` is a single array value in REST.

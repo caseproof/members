@@ -382,13 +382,16 @@ final class Meta_Box_Content_Permissions {
 			return;
 		}
 
-		$transient_key = members_post_roles_lock_failed_transient_key( $post_id );
+		$post = get_post( $post_id );
 
-		if ( ! get_transient( $transient_key ) ) {
+		// Block editor shows this notice via localized panel JS; leave the transient for enqueue.
+		if ( $post instanceof \WP_Post && use_block_editor_for_post( $post ) ) {
 			return;
 		}
 
-		delete_transient( $transient_key );
+		if ( ! members_consume_post_roles_lock_failed_notice( $post_id ) ) {
+			return;
+		}
 
 		printf(
 			'<div class="notice notice-error is-dismissible"><p>%s</p></div>',

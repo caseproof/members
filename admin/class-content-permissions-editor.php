@@ -191,12 +191,7 @@ final class Content_Permissions_Editor {
 			$default_roles = apply_filters( 'members_default_post_roles', array(), $post_id );
 		}
 
-		$lock_notice_key = $post_id ? members_post_roles_lock_failed_transient_key( $post_id ) : '';
-		$show_lock_notice = $lock_notice_key && get_transient( $lock_notice_key );
-
-		if ( $show_lock_notice ) {
-			delete_transient( $lock_notice_key );
-		}
+		$show_lock_notice = $post_id ? members_consume_post_roles_lock_failed_notice( $post_id ) : false;
 
 		$min        = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
 		$panel_file = members_plugin()->dir . "js/editor-content-permissions-panel{$min}.js";
