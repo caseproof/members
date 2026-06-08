@@ -259,7 +259,7 @@ final class Content_Permissions_Editor {
 			return $post->post_type;
 		}
 
-		if ( ! empty( $_GET['post_type'] ) ) {
+		if ( ! empty( $_GET['post_type'] ) && is_string( $_GET['post_type'] ) ) {
 			return sanitize_key( wp_unslash( $_GET['post_type'] ) );
 		}
 
