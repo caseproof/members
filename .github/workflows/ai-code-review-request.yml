@@ -38,6 +38,8 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false && github.event.pull_request.head.repo.full_name == github.repository
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
       - name: Request review from cspf-services
         env:
           GH_TOKEN: ${{ secrets.AI_CODE_REVIEW_PR_WRITE }}
