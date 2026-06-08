@@ -1,0 +1,66 @@
+###
+#
+# AI Code Review Request
+#
+# On each new pull request (or when a draft PR is marked ready for review), requests a code review
+# from the cspf-services bot so the [AI Code Review](./ai-code-review.yml) workflow runs automatically.
+# Fork PRs are skipped — org secrets required by ai-code-review.yml are not available on fork workflows.
+#
+# Secrets:
+#   AI_CODE_REVIEW_PR_WRITE — PAT for cspf-services (pull requests: write). Required here (not GITHUB_TOKEN)
+#     because GitHub suppresses workflow runs triggered by actions performed with the default GITHUB_TOKEN;
+#     a PAT-owned review request emits pull_request.review_requested and starts ai-code-review.yml.
+#
+# This workflow file is deployed into this repository via the "Sync AI Code Review Organization File" workflow
+#
+# Direct edits to this file are at risk of being overwritten by the next sync. All edits should be made
+# to the source file.
+#
+# @see Sync workflow {@link https://github.com/caseproof/org-admin/blob/main/.github/workflows/workflow-ai-code-review-sync.yml}
+# @see Workflow template {@link https://github.com/caseproof/org-admin/blob/main/.github/templates/workflow/ai-code-review-request.yml}
+#
+###
+name: AI Code Review Request
+
+on:
+  pull_request:
+    types:
+      - opened
+      - ready_for_review
+
+env:
+  REVIEWER_LOGIN: cspf-services
+
+jobs:
+  request-review:
+    name: Request AI code review
+    # Use GitHub-hosted runner to improve startup speed over self-hosted runners that take longer to find an available runner.
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false && github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - name: Request review from cspf-services
+        env:
+          GH_TOKEN: ${{ secrets.AI_CODE_REVIEW_PR_WRITE }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REVIEWER: ${{ env.REVIEWER_LOGIN }}
+        run: |
+          set -euo pipefail
+
+          reviewer_already_requested() {
+            gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/requested_reviewers" \
+              --jq '.users[].login' | grep -qx "$REVIEWER"
+          }
+
+          if reviewer_already_requested; then
+            echo "Review already requested from $REVIEWER; skipping."
+            exit 0
+          fi
+
+          if gh pr edit "$PR_NUMBER" --add-reviewer "$REVIEWER"; then
+            echo "Requested review from $REVIEWER."
+          elif reviewer_already_requested; then
+            echo "Review already requested from $REVIEWER; skipping."
+          else
+            echo "::error::Failed to request review from $REVIEWER on PR #${PR_NUMBER}."
+            exit 1
+          fi
