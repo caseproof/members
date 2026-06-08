@@ -198,6 +198,8 @@ function members_consume_post_roles_lock_failed_notice( $post_id ) {
  * Sanitizes one or more post access role slugs for storage.
  *
  * Registered meta for `_members_access_role` is a single array value in REST.
+ * Role slugs are normalized but not dropped when the role no longer exists so
+ * deleted custom roles keep their permission assignment until an editor removes it.
  *
  * @since  3.2.22
  * @access public
@@ -217,11 +219,56 @@ function members_sanitize_post_roles( $roles ) {
 	$roles = array_filter(
 		$roles,
 		function ( $role ) {
-			return '' !== $role && members_role_exists( $role );
+			return '' !== $role;
 		}
 	);
 
 	return array_values( array_unique( $roles ) );
+}
+
+/**
+ * Returns role slugs assigned to a post that are not in the current role registry.
+ *
+ * @since  3.2.22
+ * @access public
+ * @param  int          $post_id  Post ID.
+ * @param  \WP_Post|null $post     Optional post object for the members_wp_roles filter.
+ * @return array
+ */
+function members_get_unknown_post_role_slugs( $post_id, $post = null ) {
+
+	$post = $post instanceof \WP_Post ? $post : get_post( $post_id );
+
+	if ( ! $post ) {
+		return array();
+	}
+
+	$known_roles = apply_filters( 'members_wp_roles', wp_roles()->role_names, members_get_post_for_content_permissions( $post ) );
+	$roles       = members_get_post_roles( $post_id );
+
+	return array_values(
+		array_filter(
+			$roles,
+			function ( $role ) use ( $known_roles ) {
+				return ! isset( $known_roles[ $role ] );
+			}
+		)
+	);
+}
+
+/**
+ * Keeps unknown (e.g. deleted custom) role slugs when saving visible role checkboxes.
+ *
+ * @since  3.2.22
+ * @access public
+ * @param  int          $post_id  Post ID.
+ * @param  array        $roles    Sanitized role slugs from the current save request.
+ * @param  \WP_Post|null $post     Optional post object for the members_wp_roles filter.
+ * @return array
+ */
+function members_merge_unknown_post_roles( $post_id, array $roles, $post = null ) {
+
+	return array_values( array_unique( array_merge( $roles, members_get_unknown_post_role_slugs( $post_id, $post ) ) ) );
 }
 
 /**
@@ -1200,7 +1247,7 @@ function members_filter_update_post_roles_metadata( $check, $object_id, $meta_ke
 		return $check;
 	}
 
-	$roles = members_sanitize_post_roles( $meta_value );
+	$roles = members_merge_unknown_post_roles( $object_id, members_sanitize_post_roles( $meta_value ) );
 
 	$save_callback = function () use ( $object_id, $roles, &$internal_update ) {
 		$internal_update[ $object_id ] = true;

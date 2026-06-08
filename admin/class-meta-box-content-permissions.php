@@ -305,7 +305,11 @@ final class Meta_Box_Content_Permissions {
 
 		// If we have an array of new roles, set the roles.
 		if ( is_array( $new_roles ) ) {
-			$new_roles = members_sanitize_post_roles( $new_roles );
+			$new_roles = members_merge_unknown_post_roles(
+				$post_id,
+				members_sanitize_post_roles( $new_roles ),
+				$post instanceof \WP_Post ? $post : get_post( $post_id )
+			);
 
 			$roles_saved = false !== members_with_post_roles_lock(
 				$post_id,
@@ -318,15 +322,31 @@ final class Meta_Box_Content_Permissions {
 		}
 
 		// Else, if we have current roles but no new roles, delete them all.
-		elseif ( !empty( $current_roles ) ) {
-			$roles_saved = false !== members_with_post_roles_lock(
+		elseif ( ! empty( $current_roles ) ) {
+			$unknown_roles = members_get_unknown_post_role_slugs(
 				$post_id,
-				function () use ( $post_id ) {
-					members_delete_post_roles( $post_id );
-
-					return true;
-				}
+				$post instanceof \WP_Post ? $post : get_post( $post_id )
 			);
+
+			if ( ! empty( $unknown_roles ) ) {
+				$roles_saved = false !== members_with_post_roles_lock(
+					$post_id,
+					function () use ( $post_id, $unknown_roles ) {
+						members_set_post_roles( $post_id, $unknown_roles );
+
+						return true;
+					}
+				);
+			} else {
+				$roles_saved = false !== members_with_post_roles_lock(
+					$post_id,
+					function () use ( $post_id ) {
+						members_delete_post_roles( $post_id );
+
+						return true;
+					}
+				);
+			}
 		}
 
 		if ( ! $roles_saved ) {
