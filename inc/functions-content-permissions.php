@@ -1166,7 +1166,7 @@ function members_maybe_migrate_access_role_storage() {
 	}
 }
 
-add_action( 'plugins_loaded', 'members_maybe_migrate_access_role_storage', 25 );
+add_action( 'wp_loaded', 'members_maybe_migrate_access_role_storage' );
 
 /**
  * Persists `_members_access_role` via members_set_post_roles() when updated through meta APIs.
