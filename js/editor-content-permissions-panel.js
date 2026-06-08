@@ -56,10 +56,16 @@
 
 	if ( wp.apiFetch ) {
 		wp.apiFetch.use( function ( options, next ) {
-			return next( options ).then( function ( response ) {
-				maybeShowRolesLockFailedFromResponse( response );
-				return response;
-			} );
+			return next( options ).then(
+				function ( response ) {
+					maybeShowRolesLockFailedFromResponse( response );
+					return response;
+				},
+				function ( error ) {
+					maybeShowRolesLockFailedFromResponse( error );
+					return Promise.reject( error );
+				}
+			);
 		} );
 	}
 
@@ -111,31 +117,6 @@
 				showRolesLockFailedNotice();
 			},
 			[ showLockFailedNotice, lockFailedMessage ]
-		);
-
-		useEffect(
-			function () {
-				let wasSaving = false;
-
-				function checkSaveState() {
-					const editor = wp.data.select( 'core/editor' );
-
-					if ( ! editor ) {
-						return;
-					}
-
-					const isSaving = editor.isSavingPost() || editor.isAutosavingPost();
-
-					if ( wasSaving && ! isSaving && editor.didPostSaveRequestFail && editor.didPostSaveRequestFail() ) {
-						showRolesLockFailedNotice();
-					}
-
-					wasSaving = isSaving;
-				}
-
-				return wp.data.subscribe( checkSaveState );
-			},
-			[]
 		);
 
 		useEffect(
