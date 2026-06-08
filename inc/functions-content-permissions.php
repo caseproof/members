@@ -1021,7 +1021,7 @@ function members_post_needs_access_role_storage_migration( $post_id ) {
 
 	$stored = $rows[0];
 
-	return is_string( $stored );
+	return ! is_array( $stored );
 }
 
 /**
