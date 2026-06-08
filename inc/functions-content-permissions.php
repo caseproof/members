@@ -659,36 +659,45 @@ function members_set_post_roles( $post_id, $roles ) {
 	// Write first so concurrent reads never see a transient empty meta value.
 	update_post_meta( $post_id, '_members_access_role', $roles );
 
-	$stored_rows = get_post_meta( $post_id, '_members_access_role', false );
+	global $wpdb;
+
+	$stored_rows = $wpdb->get_results(
+		$wpdb->prepare(
+			"SELECT meta_id, meta_value FROM {$wpdb->postmeta} WHERE post_id = %d AND meta_key = '_members_access_role' ORDER BY meta_id ASC",
+			$post_id
+		)
+	);
 
 	if ( ! is_array( $stored_rows ) || count( $stored_rows ) <= 1 ) {
 		return;
 	}
 
-	$kept_row = null;
+	$kept_meta_id = null;
 
-	foreach ( $stored_rows as $stored ) {
+	foreach ( $stored_rows as $row ) {
+		$stored = maybe_unserialize( $row->meta_value );
+
 		if ( ! members_stored_access_role_row_matches( $stored, $roles ) ) {
-			delete_post_meta( $post_id, '_members_access_role', $stored );
+			delete_metadata_by_mid( 'post', $row->meta_id );
 			continue;
 		}
 
 		// Prefer the canonical array row over a legacy single-string row with the same roles.
 		if ( is_array( $stored ) ) {
-			if ( null !== $kept_row ) {
-				delete_post_meta( $post_id, '_members_access_role', $kept_row );
+			if ( null !== $kept_meta_id ) {
+				delete_metadata_by_mid( 'post', $kept_meta_id );
 			}
 
-			$kept_row = $stored;
+			$kept_meta_id = $row->meta_id;
 			continue;
 		}
 
-		if ( null === $kept_row ) {
-			$kept_row = $stored;
+		if ( null === $kept_meta_id ) {
+			$kept_meta_id = $row->meta_id;
 			continue;
 		}
 
-		delete_post_meta( $post_id, '_members_access_role', $stored );
+		delete_metadata_by_mid( 'post', $row->meta_id );
 	}
 }
 
