@@ -1,0 +1,420 @@
+###
+#
+# AI Code Review
+#
+# This workflow runs multiple AI code review models in parallel, then merges (when 2+ succeed) and posts one GitHub PR review.
+#
+# In order to initiate this workflow, on any PR request code review from the `cspf-services` bot user. The workflow
+# will run automatically and post the review to the PR. You may additionally rerequest using the "Rerequest Review" button.
+# If the bot approves your PR and you want to rerequest a review, remove the bot from the PR review request list and then add
+# the bot back to the PR review request list.
+#
+# If you wish to see the raw review files from each model (or the merged review file) you can download the artifacts
+# from the workflow run. One artifact will be created for each model, eg `review-$modelSlug` and a final `code-review-pr-$prNumber`
+# artifact will contain all review files, the merged file, and the GitHub review JSON payload (useful for debugging failed API calls).
+#
+# This workflow uses two Actions Variables, both are defined with default values on the organization level and can
+# be overridden on a per-repository basis:
+
+#   AI_CODE_REVIEW_MODELS
+#     Specifies the list of models to use for code review.
+#
+#     The default value includes one (close to latest) medium-thinking model from each of these families:
+#     composer, gpt, and sonnet (gemini is excluded from org defaults).
+#
+#     Example default:
+#       [{"model":"composer-2.5","slug":"composer"},{"model":"gpt-5.5-medium-fast","slug":"gpt"},{"model":"claude-4.6-sonnet-medium","slug":"sonnet"}]
+#
+#     The value must be a JSON array of objects with the following properties:
+#       - model: The actual API model name to use for the code review, eg `composer-2.5`.
+#       - slug: The slug of the model, used for file names and colloquial references, eg `composer`.
+#
+#     The available models can be viewed by using the Cursor Agent CLI: `agent models`.
+#
+#   AI_CODE_REVIEW_MERGE_MODEL
+#     Specifies the model to use for merging the reviews and posting the final review to GitHub.
+#
+#     The default org value is a (close to latest) Opus variant — chosen for merge quality on multi-file
+#     synthesis despite higher cost/latency vs Sonnet or Composer.
+#
+#     The value must be a string with the API model name passed to the Cursor agent CLI (eg an Opus model id).
+#
+#  For both variables, the available models can be viewed by using the Cursor Agent CLI: `agent models`.
+#
+# Secrets:
+#   AI_CODE_REVIEW_PR_WRITE — PAT for the service bot (cspf-services). Pull requests: write only.
+#     Used in ai-code-review-request (add reviewer) and merge submit (post review) so actions run as the bot,
+#     not github-actions[bot], and review_requested events are not suppressed.
+#
+# GITHUB_TOKEN permissions (job-scoped least privilege):
+#   review: contents:read, pull-requests:read — checkout, gh pr diff/view, upload-artifact
+#   merge:  contents:read, pull-requests:read — checkout, gh pr diff; prepare payload via gh-submit-code-review; submit uses AI_CODE_REVIEW_PR_WRITE
+#
+#
+#
+# This workflow file is deployed into this repository via the "Sync AI Code Review Organization File" workflow
+#
+# Direct edits to this file are at risk of being overwritten by the next sync. All edits should be made
+# to the source file.
+#
+# @see Sync workflow {@link https://github.com/caseproof/org-admin/blob/main/.github/workflows/workflow-ai-code-review-sync.yml}
+# @see Workflow template {@link https://github.com/caseproof/org-admin/blob/main/.github/templates/workflow/ai-code-review.yml}
+#
+###
+name: AI Code Review
+
+on:
+  pull_request:
+    types:
+      - review_requested
+
+concurrency:
+  group: ai-code-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  REVIEWS_DIR: .caseproof-dev/reviews
+  REVIEWER_LOGIN: cspf-services
+
+jobs:
+  gate:
+    name: Check review request
+    # This runs on ubuntu-latest because it will be faster than waiting for a runs-on runner to be available.
+    runs-on: ubuntu-latest
+    outputs:
+      proceed: ${{ steps.check.outputs.proceed }}
+    steps:
+      - name: Check requested reviewer
+        id: check
+        run: |
+          if [ "${{ github.event.requested_reviewer.login }}" = "${{ env.REVIEWER_LOGIN }}" ]; then
+            echo "proceed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "proceed=false" >> "$GITHUB_OUTPUT"
+            echo "Review requested from ${{ github.event.requested_reviewer.login }}; expected ${{ env.REVIEWER_LOGIN }}. Skipping."
+          fi
+
+  review:
+    runs-on: runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache
+    needs: gate
+    # Fork PRs are unsupported: head ref may not exist in the base repo and PR content is not trusted for agent execution.
+    if: needs.gate.outputs.proceed == 'true' && github.event.pull_request.head.repo.full_name == github.repository
+    permissions:
+      contents: read
+      pull-requests: read
+    name: Review by ${{ matrix.slug }}
+    outputs:
+      pr_number: ${{ steps.meta.outputs.pr_number }}
+      head_ref: ${{ steps.meta.outputs.head_ref }}
+      base_ref: ${{ steps.meta.outputs.base_ref }}
+      head_sha: ${{ steps.meta.outputs.head_sha }}
+      review_scope: ${{ steps.meta.outputs.review_scope }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(vars.AI_CODE_REVIEW_MODELS) }}
+
+    steps:
+      - uses: runs-on/action@v2
+
+      - name: Resolve pull request metadata
+        id: meta
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          {
+            echo "pr_number=${{ github.event.pull_request.number }}"
+            echo "head_ref=$HEAD_REF"
+            echo "base_ref=$BASE_REF"
+            echo "head_sha=$HEAD_SHA"
+            echo "review_scope=pr-${{ github.event.pull_request.number }}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ steps.meta.outputs.head_sha }}
+
+      - name: Install plugins
+        env:
+          GIT_TOKEN: ${{ secrets.CSPF_REPO_READ_PAT }}
+        run: |
+          PLUGIN_ROOT="${HOME}/.ai/plugins/caseproof-ai-plugins"
+          rm -rf "$PLUGIN_ROOT"
+          mkdir -p "$(dirname "$PLUGIN_ROOT")"
+          git clone --depth 1 "https://x-access-token:${GIT_TOKEN}@github.com/caseproof/caseproof-ai-plugins.git" "$PLUGIN_ROOT"
+          test -d "${PLUGIN_ROOT}/devkit"
+          echo "PLUGIN_DIR=${PLUGIN_ROOT}/devkit" >> "$GITHUB_ENV"
+
+      - name: Install Cursor CLI
+        run: |
+          curl https://cursor.com/install -fsS | bash
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          echo "$HOME/.cursor/bin" >> "$GITHUB_PATH"
+
+      - name: Review PR
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
+          AGENT_MODEL: ${{ matrix.model }}
+          AGENT_SLUG: ${{ matrix.slug }}
+          REVIEW_FILE: ${{ env.REVIEWS_DIR }}/code-review-${{ steps.meta.outputs.review_scope }}-${{ matrix.slug }}.md
+          AGENT_PROMPT: |
+            Perform this pull request code review using the code-reviewer agent (/code-reviewer).
+
+            ## Subagent rules (required)
+            - Invoke /code-reviewer as a subagent with model set to `inherit` only (same as parent: ${{ matrix.model }}).
+            - Model slug below is ONLY for the output filename — never pass it as a subagent or Task model.
+            - Valid model IDs look like `${{ matrix.model }}`, not `${{ matrix.slug }}`.
+            - If subagent dispatch fails, follow `devkit/agents/code-reviewer.md` directly in this session (do not substitute another model).
+
+            ## Review parameters
+            Follow `devkit/agents/code-reviewer.md` for scope, linked issues, checklist, output format, and file paths.
+
+            - Review target: pr
+            - Review output: markdown_file
+            - PR: ${{ steps.meta.outputs.pr_number }}
+            - PR URL: https://github.com/${{ github.repository }}/pull/${{ steps.meta.outputs.pr_number }}
+            - Repository: ${{ github.repository }}
+            - Branch: ${{ steps.meta.outputs.head_ref }}
+            - Base ref: ${{ steps.meta.outputs.base_ref }}
+            - Head SHA: ${{ steps.meta.outputs.head_sha }}
+            - Scope: ${{ steps.meta.outputs.review_scope }}
+            - Model slug: ${{ matrix.slug }}
+
+            ## Linked issues and task type
+            - Discover and load linked issues per code-reviewer (closing keywords, `closingIssuesReferences`, `gh issue view`).
+            - Infer task type (bugfix / feature / refactor / docs) from linked issues when present; otherwise from the PR title/body.
+
+            ## Output
+            Write the full structured review (Critical, Warning, Suggestion, Linked issues, Summary, Verdict) to exactly:
+            ${{ env.REVIEWS_DIR }}/code-review-${{ steps.meta.outputs.review_scope }}-${{ matrix.slug }}.md
+
+            This matches `.caseproof-dev/reviews/code-review-<scope>-<modelSlug>.md` with scope `${{ steps.meta.outputs.review_scope }}` and model slug `${{ matrix.slug }}`. Create parent directories if needed.
+
+            ## CI constraints
+            - Use `gh pr diff ${{ steps.meta.outputs.pr_number }}` and `gh pr view ${{ steps.meta.outputs.pr_number }}` with `--repo ${{ github.repository }}`.
+            - Do not post a PR comment. Do not invoke gh-submit-code-review — a later workflow job posts the merged review.
+            - Do not modify application code — review only.
+        run: |
+          mkdir -p "${{ env.REVIEWS_DIR }}"
+
+          agent --print --force --trust \
+            --plugin-dir "$PLUGIN_DIR" \
+            --model "$AGENT_MODEL" \
+            "$AGENT_PROMPT"
+
+      - name: Verify review file
+        run: |
+          test -s "${{ env.REVIEWS_DIR }}/code-review-${{ steps.meta.outputs.review_scope }}-${{ matrix.slug }}.md"
+
+      - name: Upload review artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: review-${{ matrix.slug }}
+          path: ${{ env.REVIEWS_DIR }}/code-review-${{ steps.meta.outputs.review_scope }}-${{ matrix.slug }}.md
+          if-no-files-found: error
+
+  merge:
+    runs-on: runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache
+    name: Merge reviews and post review
+    needs: [gate, review]
+    # Run after the review matrix even when some models fail; count step errors if zero files collected.
+    if: ${{ always() && !cancelled() && needs.gate.outputs.proceed == 'true' && github.event.pull_request.head.repo.full_name == github.repository }}
+    permissions:
+      contents: read
+      pull-requests: read
+
+    steps:
+      - uses: runs-on/action@v2
+
+      - name: Resolve pull request metadata
+        id: meta
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          PR="${{ github.event.pull_request.number }}"
+          {
+            echo "pr_number=$PR"
+            echo "head_ref=$HEAD_REF"
+            echo "base_ref=$BASE_REF"
+            echo "head_sha=$HEAD_SHA"
+            echo "review_scope=pr-$PR"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Checkout pull request head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.meta.outputs.head_sha }}
+          fetch-depth: 0
+
+      - name: Download review artifacts
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: review-*
+          merge-multiple: true
+          path: artifact-reviews
+
+      - name: Collect review files
+        run: |
+          mkdir -p artifact-reviews "${{ env.REVIEWS_DIR }}"
+          find artifact-reviews -type f -name 'code-review-${{ steps.meta.outputs.review_scope }}-*.md' ! -name '*-merged.md' -exec cp {} "${{ env.REVIEWS_DIR }}/" \;
+          ls -la "${{ env.REVIEWS_DIR }}/"
+
+      - name: Install plugins
+        env:
+          GIT_TOKEN: ${{ secrets.CSPF_REPO_READ_PAT }}
+        run: |
+          PLUGIN_ROOT="${HOME}/.ai/plugins/caseproof-ai-plugins"
+          rm -rf "$PLUGIN_ROOT"
+          mkdir -p "$(dirname "$PLUGIN_ROOT")"
+          git clone --depth 1 "https://x-access-token:${GIT_TOKEN}@github.com/caseproof/caseproof-ai-plugins.git" "$PLUGIN_ROOT"
+          test -d "${PLUGIN_ROOT}/devkit"
+          echo "PLUGIN_DIR=${PLUGIN_ROOT}/devkit" >> "$GITHUB_ENV"
+
+      - name: Install Cursor CLI
+        run: |
+          curl https://cursor.com/install -fsS | bash
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          echo "$HOME/.cursor/bin" >> "$GITHUB_PATH"
+
+      - name: Count and validate review files
+        id: reviews
+        run: |
+          mapfile -t REVIEW_FILES < <(find "${{ env.REVIEWS_DIR }}" -maxdepth 1 -type f -name 'code-review-${{ steps.meta.outputs.review_scope }}-*.md' ! -name '*-merged.md' | sort)
+          COUNT=${#REVIEW_FILES[@]}
+
+          if [ "$COUNT" -eq 0 ]; then
+            echo "::error::No review files were produced (all review jobs may have failed)."
+            exit 1
+          fi
+
+          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+          printf '%s\n' "${REVIEW_FILES[@]}"
+
+          if [ "$COUNT" -eq 1 ]; then
+            echo "use_merge=false" >> "$GITHUB_OUTPUT"
+            echo "source_file=${REVIEW_FILES[0]}" >> "$GITHUB_OUTPUT"
+            echo "Single review file; skipping merge."
+          else
+            echo "use_merge=true" >> "$GITHUB_OUTPUT"
+            echo "Found ${COUNT} review files; will merge before posting."
+          fi
+
+      - name: Merge reviews
+        if: steps.reviews.outputs.use_merge == 'true'
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          MERGED_FILE: ${{ env.REVIEWS_DIR }}/code-review-${{ steps.meta.outputs.review_scope }}-merged.md
+        run: |
+          mapfile -t REVIEW_FILES < <(find "${{ env.REVIEWS_DIR }}" -maxdepth 1 -type f -name 'code-review-${{ steps.meta.outputs.review_scope }}-*.md' ! -name '*-merged.md' | sort)
+          REVIEW_LIST=$(printf '%s\n' "${REVIEW_FILES[@]}")
+
+          agent --print --force --trust \
+            --plugin-dir "$PLUGIN_DIR" \
+            --model "${{ vars.AI_CODE_REVIEW_MERGE_MODEL }}" \
+            "$(cat <<EOF
+          Use the code-review-merge skill (/code-review-merge) to merge these parallel code review files into one report.
+
+          ## Input files
+          ${REVIEW_LIST}
+
+          ## Scope
+          ${{ steps.meta.outputs.review_scope }}
+
+          ## Output
+          Write the merged review to exactly:
+          ${MERGED_FILE}
+
+          Follow the skill rules: deduplicate similar findings, preserve unique items, note multi-model consensus, and include a verdict synthesis.
+          EOF
+          )"
+
+      - name: Verify merged review
+        if: steps.reviews.outputs.use_merge == 'true'
+        run: |
+          test -s "${{ env.REVIEWS_DIR }}/code-review-${{ steps.meta.outputs.review_scope }}-merged.md"
+
+      - name: Resolve source review for posting
+        id: source
+        run: |
+          if [ "${{ steps.reviews.outputs.use_merge }}" = "true" ]; then
+            FILE="${{ env.REVIEWS_DIR }}/code-review-${{ steps.meta.outputs.review_scope }}-merged.md"
+          else
+            FILE="${{ steps.reviews.outputs.source_file }}"
+          fi
+
+          test -s "$FILE"
+          echo "file=$FILE" >> "$GITHUB_OUTPUT"
+          echo "SOURCE_FILE=$FILE" >> "$GITHUB_ENV"
+
+      - name: Prepare pull request review payload
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
+          AGENT_MODEL: ${{ vars.AI_CODE_REVIEW_MERGE_MODEL }}
+          REVIEW_PAYLOAD: ${{ env.REVIEWS_DIR }}/code-review-${{ steps.meta.outputs.review_scope }}-github-payload.json
+          AGENT_PROMPT: |
+            Use the gh-submit-code-review skill (/gh-submit-code-review) in CI payload-only mode.
+
+            ## Parameters
+            - sourceFile: ${{ steps.source.outputs.file }}
+            - prNumber: ${{ steps.meta.outputs.pr_number }}
+            - repository: ${{ github.repository }}
+            - headSha: ${{ steps.meta.outputs.head_sha }}
+            - submit: false
+            - outputFile: ${{ env.REVIEWS_DIR }}/code-review-${{ steps.meta.outputs.review_scope }}-github-payload.json
+
+            ## Source provenance
+            ${{ steps.reviews.outputs.use_merge == 'true' && format('Merged report from {0} parallel reviews.', steps.reviews.outputs.count) || 'Single-model review (no merge step).' }}
+
+            ## CI context
+            - The review will be submitted as GitHub user `${{ env.REVIEWER_LOGIN }}`, not `github.actor`.
+            - For self-review detection, compare the PR author to `${{ env.REVIEWER_LOGIN }}` (use `pull_request.head.user.login` for fork PRs).
+            - Run `gh pr diff ${{ steps.meta.outputs.pr_number }}` with `--repo ${{ github.repository }}` before choosing inline comment lines.
+            - Route findings without a valid diff line to `body` (File-scoped findings), not `comments[]`.
+            - Write the validated JSON payload to exactly ${{ env.REVIEWS_DIR }}/code-review-${{ steps.meta.outputs.review_scope }}-github-payload.json. Do not call the GitHub API.
+            - Do not post `gh pr comment`. Do not modify application source files.
+        run: |
+          agent --print --force --trust \
+            --plugin-dir "$PLUGIN_DIR" \
+            --model "$AGENT_MODEL" \
+            "$AGENT_PROMPT"
+
+      - name: Submit pull request review
+        env:
+          GH_TOKEN: ${{ secrets.AI_CODE_REVIEW_PR_WRITE }}
+          REVIEW_PAYLOAD: ${{ env.REVIEWS_DIR }}/code-review-${{ steps.meta.outputs.review_scope }}-github-payload.json
+        run: |
+          set -euo pipefail
+          REVIEW_PAYLOAD_API="${REVIEW_PAYLOAD}.api.json"
+          jq '{commit_id, event, body, comments}' "$REVIEW_PAYLOAD" > "$REVIEW_PAYLOAD_API"
+
+          if ! gh api \
+            --method POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2026-03-10" \
+            "repos/${{ github.repository }}/pulls/${{ steps.meta.outputs.pr_number }}/reviews" \
+            --input "$REVIEW_PAYLOAD_API"; then
+            echo "::error::Failed to submit pull request review (see payload below)."
+            echo "::group::Review payload JSON"
+            cat "$REVIEW_PAYLOAD"
+            echo "::endgroup::"
+            exit 1
+          fi
+
+      - name: Upload review artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-reviews-${{ steps.meta.outputs.review_scope }}
+          path: |
+            ${{ env.REVIEWS_DIR }}/code-review-${{ steps.meta.outputs.review_scope }}-*.md
+            ${{ env.REVIEWS_DIR }}/code-review-${{ steps.meta.outputs.review_scope }}-github-payload.json
+          if-no-files-found: warn
