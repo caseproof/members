@@ -54,7 +54,7 @@ final class Content_Permissions_Editor {
 			return;
 		}
 
-		add_action( 'init', array( $this, 'register_content_permissions_post_meta' ), 20 );
+		add_action( 'init', array( $this, 'register_content_permissions_post_meta' ), 999 );
 		add_action( 'enqueue_block_editor_assets', array( $this, 'enqueue_block_editor_panel' ) );
 	}
 
