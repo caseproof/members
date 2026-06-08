@@ -171,11 +171,9 @@ final class Content_Permissions_Editor {
 			return;
 		}
 
-		global $wp_roles;
-
 		$post = members_get_post_for_content_permissions();
 
-		$_wp_roles = apply_filters( 'members_wp_roles', $wp_roles->role_names, $post );
+		$_wp_roles = apply_filters( 'members_wp_roles', wp_roles()->role_names, $post );
 		asort( $_wp_roles );
 
 		$roles = array();
