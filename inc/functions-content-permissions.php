@@ -210,6 +210,8 @@ function members_sanitize_post_roles( $roles ) {
 		$roles = array( $roles );
 	}
 
+	$roles = array_filter( $roles, 'is_string' );
+
 	$roles = array_values( array_map( 'members_sanitize_role', $roles ) );
 
 	$roles = array_filter(
