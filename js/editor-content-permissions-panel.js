@@ -43,9 +43,13 @@
 			return;
 		}
 
-		wp.data.dispatch( 'core/notices' ).createErrorNotice( lockFailedMessage, {
-			isDismissible: true,
-		} );
+		const notices = wp.data.dispatch( 'core/notices' );
+
+		if ( notices ) {
+			notices.createErrorNotice( lockFailedMessage, {
+				isDismissible: true,
+			} );
+		}
 	}
 
 	function maybeShowRolesLockFailedFromResponse( response ) {
