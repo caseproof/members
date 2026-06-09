@@ -73,8 +73,8 @@ final class Content_Permissions_Editor {
 				$post_type,
 				'_members_access_role',
 				array(
-					'type'              => 'array',
-					'single'            => true,
+					'type'              => 'string',
+					'single'            => false,
 					'show_in_rest'      => array(
 						'schema' => array(
 							'type'        => 'array',
@@ -83,10 +83,9 @@ final class Content_Permissions_Editor {
 								'type' => 'string',
 							),
 						),
-						'prepare_callback' => 'members_prepare_access_roles_for_rest',
 					),
 					'auth_callback'     => array( $this, 'auth_content_permissions_meta' ),
-					'sanitize_callback' => 'members_sanitize_post_roles',
+					'sanitize_callback' => 'members_sanitize_access_role_meta_value',
 				)
 			);
 
@@ -189,8 +188,6 @@ final class Content_Permissions_Editor {
 			$default_roles = apply_filters( 'members_default_post_roles', array(), $post_id );
 		}
 
-		$show_lock_notice = $post_id ? members_consume_post_roles_lock_failed_notice( $post_id ) : false;
-
 		$min        = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
 		$panel_file = members_plugin()->dir . "js/editor-content-permissions-panel{$min}.js";
 		$panel_ver  = file_exists( $panel_file ) ? filemtime( $panel_file ) : false;
@@ -223,8 +220,6 @@ final class Content_Permissions_Editor {
 		$panel_data = array(
 			'roles'        => $roles,
 			'defaultRoles' => array_values( $default_roles ),
-			'lockFailedMessage' => __( 'Content permissions roles could not be saved because another update is in progress. Please try saving again.', 'members' ),
-			'showLockFailedNotice' => (bool) $show_lock_notice,
 		);
 
 		if ( ! members_is_memberpress_active() ) {

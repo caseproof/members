@@ -28,48 +28,11 @@
 	const roleLabels = panelConfig.roles ? panelConfig.roles : {};
 	const defaultRoles = panelConfig.defaultRoles ? panelConfig.defaultRoles : [];
 	const memberPressUpsell = panelConfig.memberPressUpsell || null;
-	const lockFailedMessage = panelConfig.lockFailedMessage || '';
-	const showLockFailedNotice = !! panelConfig.showLockFailedNotice;
 	const visibleRoleKeys = Object.keys( roleLabels );
 
 	function uniqueRoles( roles ) {
 		return roles.filter( function ( value, index, list ) {
 			return list.indexOf( value ) === index;
-		} );
-	}
-
-	function showRolesLockFailedNotice() {
-		if ( ! lockFailedMessage || ! wp.data || ! wp.data.dispatch ) {
-			return;
-		}
-
-		const notices = wp.data.dispatch( 'core/notices' );
-
-		if ( notices ) {
-			notices.createErrorNotice( lockFailedMessage, {
-				isDismissible: true,
-			} );
-		}
-	}
-
-	function maybeShowRolesLockFailedFromResponse( response ) {
-		if ( response && response.members_cp_roles_lock_failed ) {
-			showRolesLockFailedNotice();
-		}
-	}
-
-	if ( wp.apiFetch ) {
-		wp.apiFetch.use( function ( options, next ) {
-			return next( options ).then(
-				function ( response ) {
-					maybeShowRolesLockFailedFromResponse( response );
-					return response;
-				},
-				function ( error ) {
-					maybeShowRolesLockFailedFromResponse( error );
-					return Promise.reject( error );
-				}
-			);
 		} );
 	}
 
@@ -83,7 +46,6 @@
 		} );
 
 		const defaultsApplied = useRef( false );
-		const lockNoticeShown = useRef( false );
 
 		const [ meta ] = useEntityProp( 'postType', postType, 'meta' );
 
@@ -104,24 +66,6 @@
 		function setAccessRoles( nextRoles ) {
 			patchMeta( { _members_access_role: uniqueRoles( nextRoles ) } );
 		}
-
-		useEffect(
-			function () {
-				if (
-					lockNoticeShown.current ||
-					! showLockFailedNotice ||
-					! lockFailedMessage ||
-					! wp.data ||
-					! wp.data.dispatch
-				) {
-					return;
-				}
-
-				lockNoticeShown.current = true;
-				showRolesLockFailedNotice();
-			},
-			[ showLockFailedNotice, lockFailedMessage ]
-		);
 
 		useEffect(
 			function () {

@@ -82,9 +82,6 @@ final class Meta_Box_Content_Permissions {
 
 		// Save metadata on post save.
 		add_action( 'save_post', array( $this, 'update' ), 10, 2 );
-
-		// Surface role lock failures after redirect back to the edit screen.
-		add_action( 'admin_notices', array( $this, 'role_lock_failed_notice' ) );
 	}
 
 	/**
@@ -167,11 +164,14 @@ final class Meta_Box_Content_Permissions {
 		asort( $_wp_roles );
 
 		// Get the roles saved for the post.
-		$roles = members_get_post_roles_for_display( $post->ID );
+		$roles = members_get_post_roles( $post->ID );
 
-		if ( empty( $roles ) && $this->is_new_post ) {
+		if ( empty( $roles ) && $this->is_new_post )
 			$roles = apply_filters( 'members_default_post_roles', array(), $post->ID );
-		}
+
+		// Convert old post meta to the new system if no roles were found.
+		if ( empty( $roles ) )
+			$roles = members_convert_old_post_meta( $post->ID );
 
 		// Nonce field to validate on save.
 		wp_nonce_field( 'members_cp_meta_nonce', 'members_cp_meta' );
@@ -301,57 +301,13 @@ final class Meta_Box_Content_Permissions {
 		// Get the new roles.
 		$new_roles = isset( $_POST['members_access_role'] ) ? $_POST['members_access_role'] : '';
 
-		$roles_saved = true;
-
 		// If we have an array of new roles, set the roles.
-		if ( is_array( $new_roles ) ) {
-			$new_roles = members_merge_unknown_post_roles(
-				$post_id,
-				members_sanitize_post_roles( $new_roles ),
-				$post instanceof \WP_Post ? $post : get_post( $post_id )
-			);
-
-			$roles_saved = false !== members_with_post_roles_lock(
-				$post_id,
-				function () use ( $post_id, $new_roles ) {
-					members_set_post_roles( $post_id, $new_roles );
-
-					return true;
-				}
-			);
-		}
+		if ( is_array( $new_roles ) )
+			members_set_post_roles( $post_id, array_map( 'members_sanitize_role', $new_roles ) );
 
 		// Else, if we have current roles but no new roles, delete them all.
-		elseif ( ! empty( $current_roles ) ) {
-			$unknown_roles = members_get_unknown_post_role_slugs(
-				$post_id,
-				$post instanceof \WP_Post ? $post : get_post( $post_id )
-			);
-
-			if ( ! empty( $unknown_roles ) ) {
-				$roles_saved = false !== members_with_post_roles_lock(
-					$post_id,
-					function () use ( $post_id, $unknown_roles ) {
-						members_set_post_roles( $post_id, $unknown_roles );
-
-						return true;
-					}
-				);
-			} else {
-				$roles_saved = false !== members_with_post_roles_lock(
-					$post_id,
-					function () use ( $post_id ) {
-						members_delete_post_roles( $post_id );
-
-						return true;
-					}
-				);
-			}
-		}
-
-		if ( ! $roles_saved ) {
-			$this->flag_role_lock_failure( $post_id );
-		}
+		elseif ( !empty( $current_roles ) )
+			members_delete_post_roles( $post_id );
 
 		/* === Error Message === */
 
@@ -368,55 +324,6 @@ final class Meta_Box_Content_Permissions {
 		// If the new message doesn't match the old message, set it.
 		else if ( $new_message !== $old_message )
 			members_set_post_access_message( $post_id, $new_message );
-	}
-
-	/**
-	 * Stores a flag so the next edit screen load can show a lock failure notice.
-	 *
-	 * @since  3.2.22
-	 * @access protected
-	 * @param  int  $post_id  Post ID.
-	 * @return void
-	 */
-	protected function flag_role_lock_failure( $post_id ) {
-
-		members_flag_post_roles_lock_failure( $post_id );
-	}
-
-	/**
-	 * Notifies the user when role updates were skipped due to lock contention.
-	 *
-	 * @since  3.2.22
-	 * @access public
-	 * @return void
-	 */
-	public function role_lock_failed_notice() {
-
-		if ( empty( $_GET['post'] ) ) {
-			return;
-		}
-
-		$post_id = absint( $_GET['post'] );
-
-		if ( ! $post_id || ! current_user_can( 'restrict_content' ) || ! current_user_can( 'edit_post', $post_id ) ) {
-			return;
-		}
-
-		$post = get_post( $post_id );
-
-		// Block editor shows this notice via localized panel JS; leave the transient for enqueue.
-		if ( $post instanceof \WP_Post && use_block_editor_for_post( $post ) ) {
-			return;
-		}
-
-		if ( ! members_consume_post_roles_lock_failed_notice( $post_id ) ) {
-			return;
-		}
-
-		printf(
-			'<div class="notice notice-error is-dismissible"><p>%s</p></div>',
-			esc_html__( 'Content permissions roles could not be saved because another update is in progress. Please try saving again.', 'members' )
-		);
 	}
 
 	/**
