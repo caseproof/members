@@ -30,41 +30,13 @@ function members_has_post_permissions( $post_id = '' ) {
 /**
  * Returns an array of the roles for a given post.
  *
- * Normalizes legacy shapes on read only: one meta row per role (canonical), or a
- * single row containing a PHP array from older plugin versions. Does not rewrite storage.
- *
  * @since  1.0.0
  * @access public
  * @param  int    $post_id
  * @return array
  */
 function members_get_post_roles( $post_id ) {
-
-	$stored_rows = get_post_meta( $post_id, '_members_access_role', false );
-
-	if ( ! is_array( $stored_rows ) || empty( $stored_rows ) ) {
-		return array();
-	}
-
-	$roles = array();
-
-	foreach ( $stored_rows as $stored ) {
-		if ( is_array( $stored ) ) {
-			foreach ( $stored as $role ) {
-				if ( is_string( $role ) && '' !== $role ) {
-					$roles[] = $role;
-				}
-			}
-		} elseif ( is_string( $stored ) && '' !== $stored ) {
-			$roles[] = $stored;
-		}
-	}
-
-	if ( empty( $roles ) ) {
-		return array();
-	}
-
-	return array_values( array_unique( array_map( 'members_sanitize_role', $roles ) ) );
+	return get_post_meta( $post_id, '_members_access_role', false );
 }
 
 /**
@@ -461,29 +433,6 @@ function members_convert_old_post_meta( $post_id ) {
 }
 
 /**
- * Cached wrapper for members_can_current_user_view_post() during REST requests.
- *
- * @since  3.2.22
- * @access public
- * @param  int  $post_id  Post ID.
- * @return bool
- */
-function members_rest_can_current_user_view_post( $post_id ) {
-
-	static $cache = array();
-
-	$post_id = (int) $post_id;
-
-	if ( isset( $cache[ $post_id ] ) ) {
-		return $cache[ $post_id ];
-	}
-
-	$cache[ $post_id ] = members_can_current_user_view_post( $post_id );
-
-	return $cache[ $post_id ];
-}
-
-/**
  * Filters protected posts from being returned in the REST API.
  *
  * @since 3.2.11
@@ -508,7 +457,7 @@ function members_filter_protected_posts_for_rest( $posts, $query ) {
 	}
 
 	foreach ( $posts as $key => $post ) {
-		if ( ! members_rest_can_current_user_view_post( $post->ID ) ) {
+		if ( ! members_can_current_user_view_post( $post->ID ) ) {
 			unset( $posts[ $key ] );
 		}
 	}

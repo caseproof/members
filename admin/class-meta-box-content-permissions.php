@@ -293,13 +293,16 @@ final class Meta_Box_Content_Permissions {
 		if ( ! isset( $_POST['members_cp_meta'] ) || ! wp_verify_nonce( $_POST['members_cp_meta'], 'members_cp_meta_nonce' ) )
 			return;
 
+		if ( ! current_user_can( 'restrict_content' ) || ! current_user_can( 'edit_post', $post_id ) )
+			return;
+
 		/* === Roles === */
 
 		// Get the current roles.
 		$current_roles = members_get_post_roles( $post_id );
 
 		// Get the new roles.
-		$new_roles = isset( $_POST['members_access_role'] ) ? $_POST['members_access_role'] : '';
+		$new_roles = isset( $_POST['members_access_role'] ) ? wp_unslash( $_POST['members_access_role'] ) : '';
 
 		// If we have an array of new roles, set the roles.
 		if ( is_array( $new_roles ) )
