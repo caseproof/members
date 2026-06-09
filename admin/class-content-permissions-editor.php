@@ -146,7 +146,7 @@ final class Content_Permissions_Editor {
 			return;
 		}
 
-		if ( $post_id && ( ! current_user_can( 'restrict_content' ) || ! current_user_can( 'edit_post', $post_id ) ) ) {
+		if ( ! $this->user_can_modify_content_permissions_via_rest( $post_id, $creating, $prepared_post, $request ) ) {
 			return;
 		}
 
@@ -168,6 +168,44 @@ final class Content_Permissions_Editor {
 
 		$meta['_members_access_role'] = $sanitized;
 		$request->set_param( 'meta', $meta );
+	}
+
+	/**
+	 * Capability check for REST content-permissions meta writes.
+	 *
+	 * @since  3.2.22
+	 * @access private
+	 * @param  int                  $post_id        Post ID on update, 0 on create.
+	 * @param  bool                 $creating       True when creating a post, false when updating.
+	 * @param  \stdClass|\WP_Post   $prepared_post  Post object prepared for insert/update.
+	 * @param  \WP_REST_Request     $request        REST request object.
+	 * @return bool
+	 */
+	private function user_can_modify_content_permissions_via_rest( $post_id, $creating, $prepared_post, $request ) {
+
+		if ( ! current_user_can( 'restrict_content' ) ) {
+			return false;
+		}
+
+		if ( ! $creating && $post_id ) {
+			return current_user_can( 'edit_post', $post_id );
+		}
+
+		if ( ! $creating ) {
+			return false;
+		}
+
+		$post_type = '';
+
+		if ( ! empty( $prepared_post->post_type ) ) {
+			$post_type = $prepared_post->post_type;
+		} elseif ( is_string( $request->get_param( 'type' ) ) ) {
+			$post_type = $request->get_param( 'type' );
+		}
+
+		$type = get_post_type_object( $post_type );
+
+		return $type && current_user_can( $type->cap->create_posts );
 	}
 
 	/**

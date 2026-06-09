@@ -56,13 +56,7 @@
 			[ meta ]
 		);
 
-		if ( ! postType ) {
-			return null;
-		}
-
 		const roles = editedMeta._members_access_role;
-		const message = editedMeta._members_access_error;
-
 		const roleList = Array.isArray( roles ) ? roles : roles ? [ roles ] : [];
 
 		function patchMeta( changes ) {
@@ -78,15 +72,21 @@
 
 		useEffect(
 			function () {
-				if ( defaultsApplied.current || ! isNewPost || ! defaultRoles.length || roleList.length ) {
+				if ( ! postType || defaultsApplied.current || ! isNewPost || ! defaultRoles.length || roleList.length ) {
 					return;
 				}
 
 				defaultsApplied.current = true;
 				setAccessRoles( defaultRoles.slice() );
 			},
-			[ isNewPost, roleList.length, defaultRoles ]
+			[ postType, isNewPost, roleList.length, defaultRoles ]
 		);
+
+		if ( ! postType ) {
+			return null;
+		}
+
+		const message = editedMeta._members_access_error;
 
 		function toggleRole( role, checked ) {
 			const hidden = roleList.filter( function ( r ) {
