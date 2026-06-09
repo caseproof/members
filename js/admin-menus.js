@@ -3427,12 +3427,48 @@
 		updateUndoButton();
 	}
 
+	/**
+	 * Drop user override blocks that only exist from preview scaffolding (empty hidden, etc.).
+	 */
+	function pruneEmptyUserConfigs() {
+		ensureSettings();
+		if (!state.settings.users || typeof state.settings.users !== 'object' || Array.isArray(state.settings.users)) {
+			return;
+		}
+		Object.keys(state.settings.users).forEach(function (uid) {
+			var u = state.settings.users[uid];
+			if (!u || typeof u !== 'object' || Array.isArray(u)) {
+				delete state.settings.users[uid];
+				return;
+			}
+			if (u.hidden && Array.isArray(u.hidden) && !u.hidden.length) {
+				delete u.hidden;
+			}
+			if (u.order && Array.isArray(u.order) && !u.order.length) {
+				delete u.order;
+			}
+			if (u.submenu_order && typeof u.submenu_order === 'object' && !Array.isArray(u.submenu_order) && !Object.keys(u.submenu_order).length) {
+				delete u.submenu_order;
+			}
+			if (u.overrides && typeof u.overrides === 'object' && !Array.isArray(u.overrides) && !Object.keys(u.overrides).length) {
+				delete u.overrides;
+			}
+			if (u.custom_items && Array.isArray(u.custom_items) && !u.custom_items.length) {
+				delete u.custom_items;
+			}
+			if (!Object.keys(u).length) {
+				delete state.settings.users[uid];
+			}
+		});
+	}
+
 	function saveSettings(loadingMessage) {
 		var saving =
 			loadingMessage ||
 			(membersAdminMenus.i18n && membersAdminMenus.i18n.saving) ||
 			'Saving…';
 		beginAjaxToolbarLoading(saving);
+		pruneEmptyUserConfigs();
 		var fallbackNetwork =
 			(membersAdminMenus.i18n && membersAdminMenus.i18n.networkError) ||
 			'Could not save settings. Check your connection and try again.';

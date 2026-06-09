@@ -27,7 +27,6 @@ var uglify = require('gulp-uglify'); // Minifies JS files
 // Utility related plugins.
 var rename = require('gulp-rename'); // Renames files E.g. style.css -> style.min.css
 var lineec = require('gulp-line-ending-corrector'); // Consistent Line Endings for non UNIX systems. Gulp Plugin for Line Ending Corrector (A utility that makes sure your files have consistent line endings)
-var notify = require('gulp-notify'); // Sends message notification to you
 
 
 // Browsers you care about for autoprefixing.
@@ -59,8 +58,7 @@ gulp.task('styles', function () {
     .pipe(minifycss({
       maxLineLen: 0
     }))
-    .pipe(gulp.dest(styleDestination))
-    .pipe(notify({ message: 'TASK: "styles" Completed! 💯', onLast: true }))
+    .pipe(gulp.dest(styleDestination));
 });
 
 
@@ -85,8 +83,7 @@ gulp.task('scripts', function () {
     }))
     .pipe(uglify())
     .pipe(lineec()) // Consistent Line Endings for non UNIX systems.
-    .pipe(gulp.dest(jsDestination))
-    .pipe(notify({ message: 'TASK: "scripts" Completed! 💯', onLast: true }));
+    .pipe(gulp.dest(jsDestination));
 });
 
 

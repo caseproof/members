@@ -247,9 +247,6 @@ function ensure_objects_for_js( $settings ) {
 						$settings[ $key ][ $id ][ $sub ] = (object) $cfg[ $sub ];
 					}
 				}
-				if ( isset( $cfg['capabilities'] ) && is_array( $cfg['capabilities'] ) ) {
-					$settings[ $key ][ $id ]['capabilities'] = empty( $cfg['capabilities'] ) ? new \stdClass() : (object) $cfg['capabilities'];
-				}
 			}
 			$settings[ $key ] = (object) $settings[ $key ];
 		}
@@ -1236,6 +1233,28 @@ function members_am_exempt_administrator_user_labels( array $ids ) {
 }
 
 /**
+ * Reject sanitized settings when admin_editable is on but no exempt administrator is stored.
+ *
+ * @param array $sanitized Sanitized settings payload.
+ * @return true|\WP_Error True when valid; WP_Error when save/import must abort.
+ */
+function members_am_validate_exempt_administrators_for_save( $sanitized ) {
+	if ( empty( $sanitized['_meta']['admin_editable'] ) ) {
+		return true;
+	}
+	$exempt = isset( $sanitized['_meta']['admin_menu_exempt_user_ids'] ) && is_array( $sanitized['_meta']['admin_menu_exempt_user_ids'] )
+		? $sanitized['_meta']['admin_menu_exempt_user_ids']
+		: array();
+	if ( ! empty( $exempt ) ) {
+		return true;
+	}
+	return new \WP_Error(
+		'members_am_exempt_required',
+		__( 'When administrator menu editing is enabled, at least one exempt administrator is required. Sign in as an administrator or add one using the search field.', 'members' )
+	);
+}
+
+/**
  * AJAX: save full settings JSON.
  *
  * @return void
@@ -1256,18 +1275,9 @@ function ajax_save_settings() {
 		wp_send_json_error( array( 'message' => $data->get_error_message() ), 400 );
 	}
 	$sanitized = sanitize_settings_payload( $data );
-	if ( ! empty( $sanitized['_meta']['admin_editable'] ) ) {
-		$exempt = isset( $sanitized['_meta']['admin_menu_exempt_user_ids'] ) && is_array( $sanitized['_meta']['admin_menu_exempt_user_ids'] )
-			? $sanitized['_meta']['admin_menu_exempt_user_ids']
-			: array();
-		if ( empty( $exempt ) ) {
-			wp_send_json_error(
-				array(
-					'message' => __( 'When administrator menu editing is enabled, at least one exempt administrator is required. Sign in as an administrator or add one using the search field.', 'members' ),
-				),
-				400
-			);
-		}
+	$valid     = members_am_validate_exempt_administrators_for_save( $sanitized );
+	if ( is_wp_error( $valid ) ) {
+		wp_send_json_error( array( 'message' => $valid->get_error_message() ), 400 );
 	}
 	update_settings_option( $sanitized );
 	members_am_invalidate_settings_cache();
@@ -1397,16 +1407,6 @@ function sanitize_role_config( $cfg ) {
 			$so[ $p ] = array_map( 'sanitize_text_field', $children );
 		}
 		$out['submenu_order'] = $so;
-	}
-	if ( isset( $cfg['capabilities'] ) && is_array( $cfg['capabilities'] ) ) {
-		$out['capabilities'] = array();
-		foreach ( $cfg['capabilities'] as $slug => $cap ) {
-			$s = sanitize_text_field( $slug );
-			if ( ! $s || members_am_is_protected_menu_slug( $s ) ) {
-				continue;
-			}
-			$out['capabilities'][ $s ] = sanitize_key( $cap );
-		}
 	}
 	if ( isset( $cfg['overrides'] ) && is_array( $cfg['overrides'] ) ) {
 		$out['overrides'] = array();
@@ -1542,7 +1542,12 @@ function ajax_import_settings() {
 	if ( is_wp_error( $data ) ) {
 		wp_send_json_error( array( 'message' => $data->get_error_message() ), 400 );
 	}
-	update_settings_option( sanitize_settings_payload( $data ) );
+	$sanitized = sanitize_settings_payload( $data );
+	$valid     = members_am_validate_exempt_administrators_for_save( $sanitized );
+	if ( is_wp_error( $valid ) ) {
+		wp_send_json_error( array( 'message' => $valid->get_error_message() ), 400 );
+	}
+	update_settings_option( $sanitized );
 	members_am_invalidate_settings_cache();
 	wp_send_json_success( array( 'message' => __( 'Settings imported.', 'members' ) ) );
 }

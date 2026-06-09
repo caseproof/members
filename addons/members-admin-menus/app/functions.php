@@ -263,7 +263,7 @@ function apply_menu_modifications() {
 
 	foreach ( $hidden as $slug ) {
 		$slug = sanitize_text_field( $slug );
-		if ( ! $slug ) {
+		if ( ! $slug || members_am_is_protected_menu_slug( $slug ) ) {
 			continue;
 		}
 		if ( false !== strpos( $slug, '::' ) ) {
@@ -458,6 +458,27 @@ function inject_separators( $menu, $order ) {
 }
 
 /**
+ * Safe image URL or data URI for the admin sidebar menu icon slot ($menu[][6]).
+ *
+ * @param string $icon Stored icon value (sanitized at save; re-validated here).
+ * @return string
+ */
+function members_am_menu_icon_image_value_for_sidebar( $icon ) {
+	$icon = is_string( $icon ) ? trim( $icon ) : '';
+	if ( '' === $icon ) {
+		return '';
+	}
+	if ( 0 === strpos( $icon, 'data:image/' ) ) {
+		if ( strlen( $icon ) > 200000 ) {
+			return '';
+		}
+		return preg_match( '/^data:image\/(png|jpeg|jpg|gif|webp);base64,[A-Za-z0-9+\/=]+$/i', $icon ) ? $icon : '';
+	}
+	$url = esc_url( $icon );
+	return $url ? $url : '';
+}
+
+/**
  * Apply label, icon, URL, colors to menu globals.
  *
  * @param array $overrides Overrides keyed by canonical slug.
@@ -514,7 +535,7 @@ function apply_menu_overrides( $overrides ) {
 					$fa_icons[ $id ] = esc_attr( $icon );
 				}
 			} elseif ( 'custom' === $icon_type || 'image' === $icon_type ) {
-				$menu[ $k ][6] = esc_url( $icon );
+				$menu[ $k ][6] = members_am_menu_icon_image_value_for_sidebar( $icon );
 				$id = members_am_menu_item_dom_id( $item );
 				if ( $id ) {
 					$img_icon_ids[] = $id;
@@ -1909,10 +1930,21 @@ function get_resolved_config_for_user( $user_id ) {
 	// empty or partial users[ id ].overrides entry does not wipe role styling (colors, labels, etc.).
 	if ( ! empty( $settings['users'][ $uid ] ) && is_array( $settings['users'][ $uid ] ) ) {
 		$u = $settings['users'][ $uid ];
-		foreach ( array( 'hidden', 'order', 'submenu_order', 'custom_items', 'capabilities' ) as $k ) {
+		foreach ( array( 'order', 'submenu_order', 'custom_items' ) as $k ) {
 			if ( isset( $u[ $k ] ) ) {
 				$base[ $k ] = $u[ $k ];
 			}
+		}
+		// Union: user-specific hidden adds to role-merged hidden (deny if any role or user hides).
+		if ( ! empty( $u['hidden'] ) && is_array( $u['hidden'] ) ) {
+			$role_hidden = isset( $base['hidden'] ) && is_array( $base['hidden'] ) ? $base['hidden'] : array();
+			foreach ( $u['hidden'] as $h ) {
+				$h = is_string( $h ) ? sanitize_text_field( $h ) : '';
+				if ( $h && ! in_array( $h, $role_hidden, true ) ) {
+					$role_hidden[] = $h;
+				}
+			}
+			$base['hidden'] = $role_hidden;
 		}
 		if ( ! empty( $u['overrides'] ) && is_array( $u['overrides'] ) ) {
 			if ( ! isset( $base['overrides'] ) || ! is_array( $base['overrides'] ) ) {
