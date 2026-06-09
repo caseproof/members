@@ -304,13 +304,21 @@ final class Meta_Box_Content_Permissions {
 		// Get the new roles.
 		$new_roles = isset( $_POST['members_access_role'] ) ? wp_unslash( $_POST['members_access_role'] ) : '';
 
-		// If we have an array of new roles, set the roles.
-		if ( is_array( $new_roles ) )
+		// If we have an array of new roles, set the roles (orphan slugs are left intact by members_set_post_roles).
+		if ( is_array( $new_roles ) ) {
 			members_set_post_roles( $post_id, array_map( 'members_sanitize_role', $new_roles ) );
+		}
 
-		// Else, if we have current roles but no new roles, delete them all.
-		elseif ( !empty( $current_roles ) )
-			members_delete_post_roles( $post_id );
+		// No checkboxes posted: clear visible roles but keep orphan slugs (deleted custom roles).
+		elseif ( ! empty( $current_roles ) ) {
+			$orphan_roles = members_get_orphan_post_roles( $post_id );
+
+			if ( ! empty( $orphan_roles ) ) {
+				members_set_post_roles( $post_id, $orphan_roles );
+			} else {
+				members_delete_post_roles( $post_id );
+			}
+		}
 
 		/* === Error Message === */
 

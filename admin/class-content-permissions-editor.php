@@ -135,7 +135,7 @@ final class Content_Permissions_Editor {
 	 */
 	public function prepare_rest_content_permissions_meta( $response, $post, $request ) {
 
-		if ( ! $response instanceof \WP_REST_Response || ! $post instanceof \WP_Post || ! current_user_can( 'restrict_content' ) ) {
+		if ( ! $response instanceof \WP_REST_Response || ! $post instanceof \WP_Post || ! current_user_can( 'restrict_content' ) || ! current_user_can( 'edit_post', $post->ID ) ) {
 			return $response;
 		}
 

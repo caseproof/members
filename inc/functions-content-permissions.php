@@ -205,6 +205,33 @@ function members_remove_post_role( $post_id, $role ) {
 }
 
 /**
+ * Returns stored role slugs that are not registered WordPress roles (e.g. deleted custom roles).
+ *
+ * @since  3.2.22
+ * @access public
+ * @param  int  $post_id  Post ID.
+ * @return array
+ */
+function members_get_orphan_post_roles( $post_id ) {
+	global $wp_roles;
+
+	$roles   = members_get_post_roles( $post_id );
+	$orphans = array();
+
+	if ( empty( $roles ) || ! is_array( $roles ) ) {
+		return $orphans;
+	}
+
+	foreach ( $roles as $role ) {
+		if ( is_string( $role ) && '' !== $role && ! isset( $wp_roles->role_names[ $role ] ) ) {
+			$orphans[] = members_sanitize_role( $role );
+		}
+	}
+
+	return array_values( array_unique( $orphans ) );
+}
+
+/**
  * Sets a post's access roles given an array of roles.
  *
  * @since  1.0.0
@@ -451,15 +478,17 @@ function members_filter_protected_posts_for_rest( $posts, $query ) {
 		return $posts;
 	}
 
-	// Users who manage permissions can view every post in the editor REST context.
-	if ( current_user_can( 'restrict_content' ) ) {
-		return $posts;
-	}
-
 	foreach ( $posts as $key => $post ) {
-		if ( ! members_can_current_user_view_post( $post->ID ) ) {
-			unset( $posts[ $key ] );
+		if ( members_can_current_user_view_post( $post->ID ) ) {
+			continue;
 		}
+
+		// Permission managers may load protected posts they can edit (block editor list/detail).
+		if ( current_user_can( 'restrict_content' ) && current_user_can( 'edit_post', $post->ID ) ) {
+			continue;
+		}
+
+		unset( $posts[ $key ] );
 	}
 
 	return array_values( $posts );
