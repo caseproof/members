@@ -228,6 +228,9 @@ final class Members_Plugin {
 		// Notifications (cannot be included inside is_admin() check or cron won't work)
 		require_once( $this->dir . 'admin/class-notifications.php' );
 
+		// Block editor REST saves run outside is_admin(); post meta + REST routes must load on every request.
+		require_once( $this->dir . 'admin/class-content-permissions-editor.php' );
+
 		// Load admin files.
 		if ( is_admin() ) {
 
@@ -244,9 +247,6 @@ final class Members_Plugin {
 			require_once( $this->dir . 'admin/class-user-edit.php'    );
 			require_once( $this->dir . 'admin/class-user-new.php'     );
 
-			// Edit posts.
-			require_once( $this->dir . 'admin/class-meta-box-content-permissions.php' );
-
 			// Role management.
 			require_once( $this->dir . 'admin/class-manage-roles.php'          );
 			require_once( $this->dir . 'admin/class-roles.php'                 );
@@ -256,6 +256,7 @@ final class Members_Plugin {
 			require_once( $this->dir . 'admin/class-role-import.php'           );
 			require_once( $this->dir . 'admin/class-meta-box-publish-role.php' );
 			require_once( $this->dir . 'admin/class-meta-box-custom-cap.php'   );
+			require_once( $this->dir . 'admin/class-meta-box-content-permissions.php' );
 
 			// Edit capabilities tabs and groups.
 			require_once( $this->dir . 'admin/class-cap-tabs.php'       );
@@ -492,6 +493,11 @@ final class Members_Plugin {
 	}
 
 	public function block_editor_assets() {
+		// Block-level upsell controls conflict with Content Permissions in the block editor.
+		if ( members_content_permissions_enabled() ) {
+			return;
+		}
+
 		$active_addons = get_option( 'members_active_addons', array() );
 		if ( ! in_array( 'members-block-permissions', $active_addons ) && ! members_is_memberpress_active() ) {
 			wp_enqueue_script( 'block-editor-mp-upsell', plugin_dir_url( __FILE__ ) . '/addons/members-block-permissions/public/js/upsell.js' , array(

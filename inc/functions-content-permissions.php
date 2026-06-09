@@ -40,6 +40,111 @@ function members_get_post_roles( $post_id ) {
 }
 
 /**
+ * Sanitizes a single `_members_access_role` meta value for storage.
+ *
+ * Registered meta uses `single => false`, so each value must be a string. Arrays are
+ * rejected so REST saves never pass nested role lists into members_sanitize_role().
+ *
+ * @since  3.2.22
+ * @access public
+ * @param  mixed  $value  Meta value from the database or REST request.
+ * @return string
+ */
+function members_sanitize_access_role_meta_value( $value ) {
+
+	if ( is_array( $value ) || ! is_string( $value ) || '' === $value ) {
+		return '';
+	}
+
+	$role = members_sanitize_role( $value );
+
+	return '' !== $role ? $role : '';
+}
+
+/**
+ * Sanitizes an array of `_members_access_role` values for REST and programmatic saves.
+ *
+ * @since  3.2.22
+ * @access public
+ * @param  mixed  $roles  Role slug list from a REST or form payload.
+ * @return array
+ */
+function members_sanitize_access_role_meta_list( $roles ) {
+
+	$sanitized = array();
+
+	if ( ! is_array( $roles ) ) {
+		return $sanitized;
+	}
+
+	foreach ( $roles as $role ) {
+		if ( is_string( $role ) && '' !== $role ) {
+			$role = members_sanitize_role( $role );
+
+			if ( '' !== $role ) {
+				$sanitized[] = $role;
+			}
+		}
+	}
+
+	return array_values( array_unique( $sanitized ) );
+}
+
+/**
+ * Prevents empty `_members_access_role` rows from being stored.
+ *
+ * @since  3.2.22
+ * @access public
+ * @param  null|bool  $check       Short-circuit return value.
+ * @param  int        $object_id   Post ID.
+ * @param  string     $meta_key    Meta key.
+ * @param  mixed      $meta_value  Meta value.
+ * @return null|bool
+ */
+function members_skip_empty_access_role_post_meta( $check, $object_id, $meta_key, $meta_value ) {
+
+	if ( '_members_access_role' !== $meta_key || ( is_string( $meta_value ) && '' !== $meta_value ) ) {
+		return $check;
+	}
+
+	return true;
+}
+
+add_filter( 'add_post_metadata', 'members_skip_empty_access_role_post_meta', 10, 4 );
+add_filter( 'update_post_metadata', 'members_skip_empty_access_role_post_meta', 10, 4 );
+
+/**
+ * Returns access roles for REST/block editor reads without writing to the database.
+ *
+ * @since  3.2.22
+ * @access public
+ * @param  int  $post_id  Post ID.
+ * @return array
+ */
+function members_get_post_roles_for_rest( $post_id ) {
+
+	$roles = members_get_post_roles( $post_id );
+
+	if ( empty( $roles ) ) {
+		$legacy = get_post_meta( $post_id, '_role', false );
+
+		if ( ! empty( $legacy ) ) {
+			$roles = array();
+
+			foreach ( (array) $legacy as $role ) {
+				if ( is_string( $role ) && '' !== $role ) {
+					$roles[] = members_sanitize_role( $role );
+				}
+			}
+
+			$roles = array_values( array_unique( $roles ) );
+		}
+	}
+
+	return is_array( $roles ) ? $roles : array();
+}
+
+/**
  * Conditional check to determine if a post has roles assigned to it.
  *
  * @since  2.0.0
@@ -55,6 +160,74 @@ function members_has_post_roles( $post_id = '' ) {
 	$roles = members_get_post_roles( $post_id );
 
 	return ! empty( $roles );
+}
+
+/**
+ * Whether Content Permissions is enabled for a post type.
+ *
+ * @since  3.2.22
+ * @access public
+ * @param  string  $post_type  Post type slug.
+ * @return bool
+ */
+function members_is_content_permissions_enabled_for_post_type( $post_type ) {
+
+	if ( empty( $post_type ) || 'attachment' === $post_type ) {
+		return false;
+	}
+
+	$type = get_post_type_object( $post_type );
+
+	if ( ! $type ) {
+		return false;
+	}
+
+	$enable = $type->public;
+
+	return apply_filters( "members_enable_{$post_type}_content_permissions", $enable );
+}
+
+/**
+ * Post types that support the Content Permissions UI and REST meta fields.
+ *
+ * @since  3.2.22
+ * @access public
+ * @return array Post type slugs.
+ */
+function members_get_content_permissions_post_types() {
+
+	$post_types = array();
+
+	foreach ( get_post_types( array(), 'names' ) as $post_type ) {
+		if ( members_is_content_permissions_enabled_for_post_type( $post_type ) ) {
+			$post_types[] = $post_type;
+		}
+	}
+
+	return $post_types;
+}
+
+/**
+ * Resolves the post for Content Permissions UI (classic meta box and block editor).
+ *
+ * @since  3.2.22
+ * @access public
+ * @param  \WP_Post|null  $post  Known post object, if available.
+ * @return \WP_Post|null
+ */
+function members_get_post_for_content_permissions( $post = null ) {
+
+	if ( $post instanceof \WP_Post ) {
+		return $post;
+	}
+
+	$post = get_post();
+
+	if ( ! $post && ! empty( $_GET['post'] ) ) {
+		$post = get_post( absint( $_GET['post'] ) );
+	}
+
+	return $post instanceof \WP_Post ? $post : null;
 }
 
 /**
@@ -83,6 +256,33 @@ function members_add_post_role( $post_id, $role ) {
 function members_remove_post_role( $post_id, $role ) {
 
 	return delete_post_meta( $post_id, '_members_access_role', $role );
+}
+
+/**
+ * Returns stored role slugs that are not registered WordPress roles (e.g. deleted custom roles).
+ *
+ * @since  3.2.22
+ * @access public
+ * @param  int  $post_id  Post ID.
+ * @return array
+ */
+function members_get_orphan_post_roles( $post_id ) {
+	global $wp_roles;
+
+	$roles   = members_get_post_roles( $post_id );
+	$orphans = array();
+
+	if ( empty( $roles ) || ! is_array( $roles ) ) {
+		return $orphans;
+	}
+
+	foreach ( $roles as $role ) {
+		if ( is_string( $role ) && '' !== $role && ! isset( $wp_roles->role_names[ $role ] ) ) {
+			$orphans[] = members_sanitize_role( $role );
+		}
+	}
+
+	return array_values( array_unique( $orphans ) );
 }
 
 /**
@@ -323,23 +523,27 @@ function members_convert_old_post_meta( $post_id ) {
  * @return array
  */
 function members_filter_protected_posts_for_rest( $posts, $query ) {
-    // If not content permissions enabled, or it is enabled but not protected, bail.
-    if ( ! members_content_permissions_enabled() || ( members_content_permissions_enabled() && ! members_is_hidden_protected_posts_enabled() ) ) {
-        return $posts;
-    }
 
-    // Check if the current request is a REST API request and $posts is valid array
-    if ( defined( 'REST_REQUEST' ) && REST_REQUEST && is_array($posts) ) {
-        // Loop through the posts
-        foreach ( $posts as $key => $post ) {
-            if ( ! members_can_current_user_view_post( $post->ID ) ) {
-                // Remove the protected post from the results
-                unset( $posts[$key] );
-            }
-        }
-        // Re-index the array to prevent issues with keys
-        $posts = array_values( $posts );
-    }
+	if ( ! members_content_permissions_enabled() || ! members_is_hidden_protected_posts_enabled() ) {
+		return $posts;
+	}
 
-    return $posts;
+	if ( ! defined( 'REST_REQUEST' ) || ! REST_REQUEST || ! is_array( $posts ) || empty( $posts ) ) {
+		return $posts;
+	}
+
+	foreach ( $posts as $key => $post ) {
+		if ( members_can_current_user_view_post( $post->ID ) ) {
+			continue;
+		}
+
+		// Permission managers may load protected posts they can edit (block editor list/detail).
+		if ( current_user_can( 'restrict_content' ) && current_user_can( 'edit_post', $post->ID ) ) {
+			continue;
+		}
+
+		unset( $posts[ $key ] );
+	}
+
+	return array_values( $posts );
 }
