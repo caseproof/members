@@ -56,8 +56,62 @@ function members_sanitize_access_role_meta_value( $value ) {
 		return '';
 	}
 
-	return members_sanitize_role( $value );
+	$role = members_sanitize_role( $value );
+
+	return '' !== $role ? $role : '';
 }
+
+/**
+ * Sanitizes an array of `_members_access_role` values for REST and programmatic saves.
+ *
+ * @since  3.2.22
+ * @access public
+ * @param  mixed  $roles  Role slug list from a REST or form payload.
+ * @return array
+ */
+function members_sanitize_access_role_meta_list( $roles ) {
+
+	$sanitized = array();
+
+	if ( ! is_array( $roles ) ) {
+		return $sanitized;
+	}
+
+	foreach ( $roles as $role ) {
+		if ( is_string( $role ) && '' !== $role ) {
+			$role = members_sanitize_role( $role );
+
+			if ( '' !== $role ) {
+				$sanitized[] = $role;
+			}
+		}
+	}
+
+	return array_values( array_unique( $sanitized ) );
+}
+
+/**
+ * Prevents empty `_members_access_role` rows from being stored.
+ *
+ * @since  3.2.22
+ * @access public
+ * @param  null|bool  $check       Short-circuit return value.
+ * @param  int        $object_id   Post ID.
+ * @param  string     $meta_key    Meta key.
+ * @param  mixed      $meta_value  Meta value.
+ * @return null|bool
+ */
+function members_skip_empty_access_role_post_meta( $check, $object_id, $meta_key, $meta_value ) {
+
+	if ( '_members_access_role' !== $meta_key || ( is_string( $meta_value ) && '' !== $meta_value ) ) {
+		return $check;
+	}
+
+	return true;
+}
+
+add_filter( 'add_post_metadata', 'members_skip_empty_access_role_post_meta', 10, 4 );
+add_filter( 'update_post_metadata', 'members_skip_empty_access_role_post_meta', 10, 4 );
 
 /**
  * Returns access roles for REST/block editor reads without writing to the database.

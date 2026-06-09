@@ -85,7 +85,7 @@
 				defaultsApplied.current = true;
 				setAccessRoles( defaultRoles.slice() );
 			},
-			[ isNewPost, roleList.length ]
+			[ isNewPost, roleList.length, defaultRoles ]
 		);
 
 		function toggleRole( role, checked ) {
