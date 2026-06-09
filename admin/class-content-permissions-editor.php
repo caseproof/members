@@ -147,6 +147,8 @@ final class Content_Permissions_Editor {
 		}
 
 		if ( ! $this->user_can_modify_content_permissions_via_rest( $post_id, $creating, $prepared_post, $request ) ) {
+			unset( $meta['_members_access_role'] );
+			$request->set_param( 'meta', $meta );
 			return;
 		}
 
@@ -224,7 +226,25 @@ final class Content_Permissions_Editor {
 			return false;
 		}
 
-		return current_user_can( 'restrict_content' ) && current_user_can( 'edit_post', (int) $object_id );
+		if ( ! current_user_can( 'restrict_content' ) ) {
+			return false;
+		}
+
+		$object_id = (int) $object_id;
+
+		if ( $object_id ) {
+			return current_user_can( 'edit_post', $object_id );
+		}
+
+		foreach ( members_get_content_permissions_post_types() as $post_type ) {
+			$type = get_post_type_object( $post_type );
+
+			if ( $type && current_user_can( $type->cap->create_posts ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
