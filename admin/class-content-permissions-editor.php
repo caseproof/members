@@ -42,6 +42,15 @@ final class Content_Permissions_Editor {
 	private static $rest_prepare_hooks_added = array();
 
 	/**
+	 * Post types that already have a `rest_after_insert_{$post_type}` callback registered.
+	 *
+	 * @since  3.2.22
+	 * @access private
+	 * @var    array
+	 */
+	private static $rest_insert_hooks_added = array();
+
+	/**
 	 * Sets up hooks.
 	 *
 	 * @since  3.2.22
@@ -75,15 +84,8 @@ final class Content_Permissions_Editor {
 				array(
 					'type'              => 'string',
 					'single'            => false,
-					'show_in_rest'      => array(
-						'schema' => array(
-							'type'        => 'array',
-							'description' => __( 'User roles that may view this content.', 'members' ),
-							'items'       => array(
-								'type' => 'string',
-							),
-						),
-					),
+					'description'       => __( 'User roles that may view this content.', 'members' ),
+					'show_in_rest'      => true,
 					'auth_callback'     => array( $this, 'auth_content_permissions_meta' ),
 					'sanitize_callback' => 'members_sanitize_access_role_meta_value',
 				)
@@ -104,6 +106,11 @@ final class Content_Permissions_Editor {
 			if ( empty( self::$rest_prepare_hooks_added[ $post_type ] ) ) {
 				add_filter( "rest_prepare_{$post_type}", array( $this, 'prepare_rest_content_permissions_meta' ), 10, 3 );
 				self::$rest_prepare_hooks_added[ $post_type ] = true;
+			}
+
+			if ( empty( self::$rest_insert_hooks_added[ $post_type ] ) ) {
+				add_action( "rest_after_insert_{$post_type}", array( $this, 'save_content_permissions_roles_from_rest' ), 10, 3 );
+				self::$rest_insert_hooks_added[ $post_type ] = true;
 			}
 		}
 	}
@@ -149,6 +156,55 @@ final class Content_Permissions_Editor {
 		$response->set_data( $data );
 
 		return $response;
+	}
+
+	/**
+	 * Persists access roles from REST using the same path as the classic meta box.
+	 *
+	 * `single => false` meta is exposed as a string array in REST. WordPress wraps the
+	 * registered item schema automatically; declaring `type => array` in `show_in_rest`
+	 * produces an invalid array-of-arrays schema and drops values on save.
+	 *
+	 * @since  3.2.22
+	 * @access public
+	 * @param  \WP_Post           $post      Inserted or updated post object.
+	 * @param  \WP_REST_Request   $request   REST request object.
+	 * @param  bool               $creating  True when creating a post, false when updating.
+	 * @return void
+	 */
+	public function save_content_permissions_roles_from_rest( $post, $request, $creating ) {
+
+		if ( ! $post instanceof \WP_Post || ! $request instanceof \WP_REST_Request ) {
+			return;
+		}
+
+		if ( ! current_user_can( 'restrict_content' ) || ! current_user_can( 'edit_post', $post->ID ) ) {
+			return;
+		}
+
+		$meta = $request->get_param( 'meta' );
+
+		if ( ! is_array( $meta ) || ! array_key_exists( '_members_access_role', $meta ) ) {
+			return;
+		}
+
+		$roles = $meta['_members_access_role'];
+
+		if ( ! is_array( $roles ) ) {
+			return;
+		}
+
+		$sanitized = array();
+
+		foreach ( $roles as $role ) {
+			if ( is_string( $role ) && '' !== $role ) {
+				$sanitized[] = members_sanitize_role( $role );
+			}
+		}
+
+		$sanitized = array_values( array_unique( $sanitized ) );
+
+		members_set_post_roles( $post->ID, $sanitized );
 	}
 
 	/**
@@ -207,7 +263,6 @@ final class Content_Permissions_Editor {
 				'wp-core-data',
 				'wp-element',
 				'wp-i18n',
-				'wp-api-fetch',
 			),
 			$panel_ver,
 			true

@@ -47,10 +47,21 @@
 
 		const defaultsApplied = useRef( false );
 
-		const [ meta ] = useEntityProp( 'postType', postType, 'meta' );
+		const [ meta, setMeta ] = useEntityProp( 'postType', postType, 'meta' );
 
-		const roles = meta && meta._members_access_role;
-		const message = meta && meta._members_access_error;
+		const editedMeta = useSelect(
+			function ( select ) {
+				return select( 'core/editor' ).getEditedPostAttribute( 'meta' ) || meta || {};
+			},
+			[ meta ]
+		);
+
+		if ( ! postType ) {
+			return null;
+		}
+
+		const roles = editedMeta._members_access_role;
+		const message = editedMeta._members_access_error;
 
 		const roleList = Array.isArray( roles ) ? roles : roles ? [ roles ] : [];
 
@@ -58,9 +69,7 @@
 			const editor = wp.data.select( 'core/editor' );
 			const currentMeta = editor.getEditedPostAttribute( 'meta' ) || meta || {};
 
-			wp.data.dispatch( 'core/editor' ).editPost( {
-				meta: Object.assign( {}, currentMeta, changes ),
-			} );
+			setMeta( Object.assign( {}, currentMeta, changes ) );
 		}
 
 		function setAccessRoles( nextRoles ) {
