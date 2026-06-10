@@ -146,9 +146,11 @@ class MediaLibraryController {
 
 		if ( ! $settings->isExtensionProtected( 'file.' . $extension ) ) {
 			$form_fields['members_fp_notice'] = array(
-				'label' => __( 'File Protection', 'members' ),
-				'input' => 'html',
-				'html'  => '<p class="description">' . esc_html__( 'This file type is not in the protected extensions list.', 'members' ) . ' <a href="' . esc_url( admin_url( 'admin.php?page=members-file-protection' ) ) . '">' . esc_html__( 'Settings', 'members' ) . '</a></p>',
+				'label'         => __( 'File Protection', 'members' ),
+				'input'         => 'html',
+				'html'          => '<p class="description">' . esc_html__( 'This file type is not in the protected extensions list.', 'members' ) . ' <a href="' . esc_url( admin_url( 'admin.php?page=members-file-protection' ) ) . '">' . esc_html__( 'Settings', 'members' ) . '</a></p>',
+				'show_in_edit'  => false,
+				'show_in_modal' => true,
 			);
 
 			return $form_fields;
@@ -209,9 +211,11 @@ class MediaLibraryController {
 		$html = ob_get_clean();
 
 		$form_fields['members_fp_protection'] = array(
-			'label' => __( 'File Protection', 'members' ),
-			'input' => 'html',
-			'html'  => $html,
+			'label'         => __( 'File Protection', 'members' ),
+			'input'         => 'html',
+			'html'          => $html,
+			'show_in_edit'  => false,
+			'show_in_modal' => true,
 		);
 
 		return $form_fields;
@@ -287,13 +291,21 @@ class MediaLibraryController {
 			'members-file-protection-admin',
 			plugin_dir_url( dirname( __DIR__ ) ) . 'assets/css/admin.css',
 			array(),
-			'1.0.0'
+			'1.0.1'
 		);
 
 		wp_enqueue_script(
 			'members-file-protection-media',
 			plugin_dir_url( dirname( __DIR__ ) ) . 'assets/js/media.js',
 			array(),
+			'1.0.0',
+			true
+		);
+
+		wp_enqueue_script(
+			'members-file-protection-block-editor',
+			plugin_dir_url( dirname( __DIR__ ) ) . 'assets/js/block-editor.js',
+			array( 'wp-hooks', 'wp-i18n' ),
 			'1.0.0',
 			true
 		);
