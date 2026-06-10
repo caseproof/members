@@ -107,4 +107,21 @@ class AccessCheckerTest extends TestCase {
 
 		$this->assertFalse( $checker->canAccess( 1, $user ) );
 	}
+
+	public function test_unprotected_file_runs_access_filter() {
+		$repo    = new FileRepositoryStub();
+		$repo->setFixture( 1, false, false, array() );
+		$checker = new AccessChecker( $repo );
+
+		add_filter(
+			'members_file_access_check',
+			static function ( $allowed ) {
+				return false;
+			}
+		);
+
+		$this->assertFalse( $checker->canAccess( 1, null ) );
+
+		remove_all_filters( 'members_file_access_check' );
+	}
 }

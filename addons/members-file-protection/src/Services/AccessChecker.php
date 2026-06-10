@@ -38,7 +38,7 @@ class AccessChecker implements AccessCheckerInterface {
 		}
 
 		if ( ! $this->repository->isProtected( $attachment_id ) ) {
-			return true;
+			return (bool) apply_filters( 'members_file_access_check', true, $attachment_id, $user );
 		}
 
 		if ( ! $user || 0 === $user->ID ) {

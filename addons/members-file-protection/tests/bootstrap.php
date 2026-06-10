@@ -58,7 +58,34 @@ require_once dirname( __DIR__ ) . '/src/Services/ApacheServerConfig.php';
 
 if ( ! function_exists( 'apply_filters' ) ) {
 	function apply_filters( $tag, $value ) {
+		global $members_fp_test_filters;
+		$args = func_get_args();
+		array_shift( $args );
+
+		if ( empty( $members_fp_test_filters[ $tag ] ) ) {
+			return $value;
+		}
+
+		foreach ( $members_fp_test_filters[ $tag ] as $callback ) {
+			$args[0] = $value;
+			$value   = call_user_func_array( $callback, $args );
+		}
+
 		return $value;
+	}
+}
+
+if ( ! function_exists( 'add_filter' ) ) {
+	function add_filter( $tag, $callback, $priority = 10, $accepted_args = 1 ) {
+		global $members_fp_test_filters;
+		$members_fp_test_filters[ $tag ][] = $callback;
+	}
+}
+
+if ( ! function_exists( 'remove_all_filters' ) ) {
+	function remove_all_filters( $tag ) {
+		global $members_fp_test_filters;
+		unset( $members_fp_test_filters[ $tag ] );
 	}
 }
 
