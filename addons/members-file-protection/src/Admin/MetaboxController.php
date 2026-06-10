@@ -58,11 +58,13 @@ class MetaboxController {
 			return;
 		}
 
+		wp_enqueue_style( 'dashicons' );
+
 		wp_enqueue_style(
 			'members-file-protection-admin',
 			plugin_dir_url( dirname( __DIR__ ) ) . 'assets/css/admin.css',
-			array(),
-			'1.0.2'
+			array( 'dashicons' ),
+			'1.0.6'
 		);
 
 		wp_enqueue_script(

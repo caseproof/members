@@ -24,9 +24,14 @@
 			render: function () {
 				Library.prototype.render.apply( this, arguments );
 
-				if ( this.model && this.model.get( 'membersFpExtensionOn' ) && this.model.get( 'membersFpProtected' ) ) {
+				var isProtected = this.model && this.model.get( 'membersFpExtensionOn' ) && this.model.get( 'membersFpProtected' );
+
+				if ( isProtected ) {
 					this.$el.addClass( 'members-fp-attachment-protected' );
 					this.$el.attr( 'title', wp.i18n.__( 'Protected file', 'members' ) );
+				} else {
+					this.$el.removeClass( 'members-fp-attachment-protected' );
+					this.$el.removeAttr( 'title' );
 				}
 
 				return this;

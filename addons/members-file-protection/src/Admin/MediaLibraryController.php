@@ -32,8 +32,6 @@ class MediaLibraryController {
 		add_action( 'manage_media_custom_column', array( $this, 'renderColumn' ), 10, 2 );
 		add_filter( 'bulk_actions-upload', array( $this, 'bulkActions' ) );
 		add_filter( 'handle_bulk_actions-upload', array( $this, 'handleBulkActions' ), 10, 3 );
-		add_filter( 'attachment_fields_to_edit', array( $this, 'attachmentFields' ), 10, 2 );
-		add_filter( 'attachment_fields_to_save', array( $this, 'saveAttachmentFields' ), 10, 2 );
 		add_filter( 'wp_prepare_attachment_for_js', array( $this, 'prepareAttachmentForJs' ), 10, 2 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue' ) );
 	}
@@ -128,136 +126,6 @@ class MediaLibraryController {
 	}
 
 	/**
-	 * Adds fields to the attachment details panel (grid modal and list quick edit).
-	 *
-	 * @param array    $form_fields Existing fields.
-	 * @param \WP_Post $post        Attachment post.
-	 * @return array
-	 */
-	public function attachmentFields( array $form_fields, $post ): array {
-		if ( ! Capabilities::currentUserCanManage() ) {
-			return $form_fields;
-		}
-
-		$settings   = $this->container->get( Settings::class );
-		$repository = $this->container->get( FileRepositoryInterface::class );
-		$file       = get_attached_file( $post->ID );
-		$extension  = $file ? strtolower( pathinfo( $file, PATHINFO_EXTENSION ) ) : '';
-
-		if ( ! $settings->isExtensionProtected( 'file.' . $extension ) ) {
-			$form_fields['members_fp_notice'] = array(
-				'label'         => __( 'File Protection', 'members' ),
-				'input'         => 'html',
-				'html'          => '<p class="description">' . esc_html__( 'This file type is not in the protected extensions list.', 'members' ) . ' <a href="' . esc_url( admin_url( 'admin.php?page=members-file-protection' ) ) . '">' . esc_html__( 'Settings', 'members' ) . '</a></p>',
-				'show_in_edit'  => false,
-				'show_in_modal' => true,
-			);
-
-			return $form_fields;
-		}
-
-		$protected  = $repository->isProtected( (int) $post->ID );
-		$all_logged = $repository->allowsAllLoggedIn( (int) $post->ID );
-		$roles      = $repository->getAllowedRoles( (int) $post->ID );
-		$dl_limit   = $repository->getDownloadLimit( (int) $post->ID );
-
-		global $wp_roles;
-		$_wp_roles = apply_filters( 'members_wp_roles', $wp_roles->role_names, $post );
-		asort( $_wp_roles );
-
-		ob_start();
-		?>
-		<div class="members-fp-media-fields" data-members-fp-media-fields>
-			<p>
-				<label>
-					<input type="checkbox" name="attachments[<?php echo esc_attr( (string) $post->ID ); ?>][members_fp_protected]" value="1" <?php checked( $protected ); ?> data-members-fp-toggle />
-					<?php esc_html_e( 'Enable file protection', 'members' ); ?>
-				</label>
-			</p>
-			<div class="members-fp-media-fields__roles<?php echo $protected ? '' : ' is-hidden'; ?>" data-members-fp-roles>
-				<p>
-					<label>
-						<input type="checkbox" name="attachments[<?php echo esc_attr( (string) $post->ID ); ?>][members_fp_all_logged_in]" value="1" <?php checked( $all_logged ); ?> data-members-fp-all-logged-in />
-						<?php esc_html_e( 'Allow all logged-in users', 'members' ); ?>
-					</label>
-				</p>
-				<fieldset class="members-fp-metabox__role-list<?php echo $all_logged ? ' is-disabled' : ''; ?>" data-members-fp-role-fieldset>
-					<legend class="screen-reader-text"><?php esc_html_e( 'Allowed roles', 'members' ); ?></legend>
-					<ul>
-						<?php foreach ( $_wp_roles as $role => $name ) : ?>
-							<li>
-								<label>
-									<input type="checkbox" name="attachments[<?php echo esc_attr( (string) $post->ID ); ?>][members_fp_roles][]" value="<?php echo esc_attr( $role ); ?>" <?php checked( in_array( $role, $roles, true ) ); ?> <?php disabled( $all_logged ); ?> data-members-fp-role />
-									<?php echo esc_html( translate_user_role( $name ) ); ?>
-								</label>
-							</li>
-						<?php endforeach; ?>
-					</ul>
-				</fieldset>
-				<p>
-					<label>
-						<?php esc_html_e( 'Download limit per user', 'members' ); ?>
-						<input type="number" min="0" step="1" class="small-text" name="attachments[<?php echo esc_attr( (string) $post->ID ); ?>][members_fp_download_limit]" value="<?php echo esc_attr( (string) $dl_limit ); ?>" />
-					</label>
-				</p>
-				<p class="description">
-					<a href="<?php echo esc_url( get_edit_post_link( $post->ID, 'raw' ) ); ?>">
-						<?php esc_html_e( 'Open attachment for share links and advanced options', 'members' ); ?>
-					</a>
-				</p>
-			</div>
-		</div>
-		<?php
-		$html = ob_get_clean();
-
-		$form_fields['members_fp_protection'] = array(
-			'label'         => __( 'File Protection', 'members' ),
-			'input'         => 'html',
-			'html'          => $html,
-			'show_in_edit'  => false,
-			'show_in_modal' => true,
-		);
-
-		return $form_fields;
-	}
-
-	/**
-	 * @param array $post       Attachment post data.
-	 * @param array $attachment Submitted attachment fields.
-	 * @return array
-	 */
-	public function saveAttachmentFields( array $post, array $attachment ): array {
-		if ( ! Capabilities::currentUserCanManage() || empty( $post['ID'] ) ) {
-			return $post;
-		}
-
-		$post_id = (int) $post['ID'];
-
-		if ( ! isset( $attachment['members_fp_protected'] ) && ! isset( $attachment['members_fp_all_logged_in'] ) && ! isset( $attachment['members_fp_roles'] ) ) {
-			return $post;
-		}
-
-		$repository = $this->container->get( FileRepositoryInterface::class );
-		$roles      = isset( $attachment['members_fp_roles'] ) ? array_map( 'sanitize_key', (array) $attachment['members_fp_roles'] ) : array();
-
-		$roles = array_values(
-			array_filter(
-				$roles,
-				static function ( $role ) {
-					return '' !== $role && function_exists( 'members_role_exists' ) && members_role_exists( $role );
-				}
-			)
-		);
-
-		$repository->setProtected( $post_id, ! empty( $attachment['members_fp_protected'] ) );
-		$repository->setAllowsAllLoggedIn( $post_id, ! empty( $attachment['members_fp_all_logged_in'] ) );
-		$repository->setAllowedRoles( $post_id, $roles );
-		$repository->setDownloadLimit( $post_id, isset( $attachment['members_fp_download_limit'] ) ? (int) $attachment['members_fp_download_limit'] : 0 );
-
-		return $post;
-	}
-
-	/**
 	 * @param array    $response Attachment JS data.
 	 * @param \WP_Post $attachment Attachment post.
 	 * @return array
@@ -279,27 +147,17 @@ class MediaLibraryController {
 	 * @return void
 	 */
 	public function enqueue( $hook ) {
-		if ( ! Capabilities::currentUserCanManage() ) {
+		if ( ! Capabilities::currentUserCanManage() || 'upload.php' !== $hook ) {
 			return;
 		}
 
-		if ( 'upload.php' !== $hook && 'post.php' !== $hook && 'post-new.php' !== $hook ) {
-			return;
-		}
+		wp_enqueue_style( 'dashicons' );
 
 		wp_enqueue_style(
 			'members-file-protection-admin',
 			plugin_dir_url( dirname( __DIR__ ) ) . 'assets/css/admin.css',
-			array(),
-			'1.0.1'
-		);
-
-		wp_enqueue_script(
-			'members-file-protection-media',
-			plugin_dir_url( dirname( __DIR__ ) ) . 'assets/js/media.js',
-			array(),
-			'1.0.0',
-			true
+			array( 'dashicons' ),
+			'1.0.6'
 		);
 
 		wp_enqueue_script(
