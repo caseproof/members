@@ -62,7 +62,7 @@ class MetaboxController {
 			'members-file-protection-admin',
 			plugin_dir_url( dirname( __DIR__ ) ) . 'assets/css/admin.css',
 			array(),
-			'1.0.0'
+			'1.0.2'
 		);
 
 		wp_enqueue_script(
@@ -204,7 +204,7 @@ class MetaboxController {
 					<div class="members-fp-metabox__share" data-members-fp-share>
 						<p><strong><?php esc_html_e( 'Private share links', 'members' ); ?></strong></p>
 						<p class="description"><?php esc_html_e( 'Generate expiring links that grant temporary access without login.', 'members' ); ?></p>
-						<p>
+						<p class="members-fp-metabox__share-options">
 							<select data-members-fp-share-expires>
 								<option value="hour"><?php esc_html_e( '1 hour', 'members' ); ?></option>
 								<option value="day" selected><?php esc_html_e( '1 day', 'members' ); ?></option>
@@ -213,6 +213,8 @@ class MetaboxController {
 								<option value="never"><?php esc_html_e( 'Never expires', 'members' ); ?></option>
 							</select>
 							<input type="number" min="0" step="1" class="small-text" placeholder="<?php esc_attr_e( 'Max uses', 'members' ); ?>" data-members-fp-share-max-uses title="<?php esc_attr_e( 'Max uses (0 = unlimited)', 'members' ); ?>" />
+						</p>
+						<p class="members-fp-metabox__share-actions">
 							<button type="button" class="button" data-members-fp-share-generate><?php esc_html_e( 'Generate link', 'members' ); ?></button>
 						</p>
 						<ul class="members-fp-metabox__share-list" data-members-fp-share-list>

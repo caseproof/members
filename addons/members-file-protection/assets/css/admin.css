@@ -75,6 +75,14 @@
 	list-style: none;
 }
 
+.members-fp-metabox__share-options {
+	margin-bottom: 0;
+}
+
+.members-fp-metabox__share-actions {
+	margin-top: 8px;
+}
+
 .members-fp-metabox__share-list li {
 	margin-bottom: 8px;
 }
