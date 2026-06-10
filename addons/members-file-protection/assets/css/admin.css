@@ -1,0 +1,121 @@
+.members-fp-metabox__disabled {
+	color: #646970;
+}
+
+.members-fp-metabox__roles.is-hidden {
+	display: none;
+}
+
+.members-fp-metabox__role-list {
+	margin-top: 8px;
+	max-height: 240px;
+	overflow-y: auto;
+}
+
+.members-fp-metabox__role-list.is-disabled {
+	opacity: 0.4;
+	pointer-events: none;
+}
+
+.members-fp-metabox__role-list ul {
+	margin: 0;
+}
+
+.members-fp-metabox__warning.is-hidden {
+	display: none;
+}
+
+.members-fp-switch {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.members-fp-settings__redirect.is-hidden,
+.members-fp-settings__image-warning.is-hidden,
+.members-fp-settings__test-result.is-hidden {
+	display: none;
+}
+
+.members-fp-code {
+	background: #f0f0f1;
+	padding: 12px;
+	font-family: monospace;
+	font-size: 13px;
+	overflow-x: auto;
+	border: 1px solid #dcdcde;
+	border-radius: 3px;
+}
+
+.members-fp-settings__server-label {
+	font-size: 14px;
+	font-weight: 400;
+	color: #646970;
+	margin-left: 8px;
+}
+
+.members-fp-settings__test-result {
+	margin-top: 12px;
+	padding: 8px 12px;
+	border-left: 4px solid #72aee6;
+	background: #fff;
+}
+
+.members-fp-settings__test-result.is-error {
+	border-left-color: #d63638;
+}
+
+.members-fp-settings__test-result.is-success {
+	border-left-color: #00a32a;
+}
+
+.members-fp-metabox__share-list {
+	margin: 8px 0 0;
+	padding: 0;
+	list-style: none;
+}
+
+.members-fp-metabox__share-list li {
+	margin-bottom: 8px;
+}
+
+.members-fp-share-url {
+	display: block;
+	word-break: break-all;
+	font-size: 11px;
+}
+
+.members-fp-settings__video-note.is-hidden {
+	display: none;
+}
+
+.members-fp-media-column--yes {
+	color: #00a32a;
+	font-weight: 600;
+}
+
+.members-fp-media-column--no {
+	color: #646970;
+}
+
+.members-fp-media-fields__roles.is-hidden {
+	display: none;
+}
+
+.attachments-browser .attachment.members-fp-attachment-protected .thumbnail::after,
+.media-frame .attachment.members-fp-attachment-protected .thumbnail::after {
+	content: '';
+	position: absolute;
+	top: 6px;
+	right: 6px;
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	background: #d63638;
+	box-shadow: 0 0 0 2px #fff;
+}
+
+.attachments-browser .attachment .thumbnail,
+.media-frame .attachment .thumbnail {
+	position: relative;
+}
