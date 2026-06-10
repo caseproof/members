@@ -13,9 +13,9 @@ require_once __DIR__ . '/../bootstrap/autoload.php';
 
 register_autoloader();
 
-use Members\FileProtection\Services\ApacheServerConfig;
 use Members\FileProtection\Services\Installer;
 use Members\FileProtection\Services\MaintenanceService;
+use Members\FileProtection\Services\ServerConfigResolver;
 use Members\FileProtection\Services\Settings;
 
 /**
@@ -37,7 +37,7 @@ class Activator {
 		MaintenanceService::schedule();
 
 		$settings = new Settings();
-		$apache   = new ApacheServerConfig( $settings );
-		$apache->write( $settings->getExtensions() );
+		$server   = ServerConfigResolver::create( $settings );
+		$server->write( $settings->getExtensions() );
 	}
 }

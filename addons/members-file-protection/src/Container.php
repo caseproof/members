@@ -15,14 +15,13 @@ use Members\FileProtection\Contracts\FileRepositoryInterface;
 use Members\FileProtection\Contracts\ServerConfigInterface;
 use Members\FileProtection\Contracts\UnauthorizedHandlerInterface;
 use Members\FileProtection\Services\AccessChecker;
-use Members\FileProtection\Services\ApacheServerConfig;
 use Members\FileProtection\Services\ContentPermissionsIntegration;
 use Members\FileProtection\Services\DownloadLimitService;
 use Members\FileProtection\Services\FileDelivery;
 use Members\FileProtection\Services\FileRepository;
 use Members\FileProtection\Services\MaintenanceService;
-use Members\FileProtection\Services\NginxServerConfig;
 use Members\FileProtection\Services\OffloadIntegration;
+use Members\FileProtection\Services\ServerConfigResolver;
 use Members\FileProtection\Services\Settings;
 use Members\FileProtection\Services\ShareTokenService;
 use Members\FileProtection\Services\UnauthorizedHandler;
@@ -101,7 +100,7 @@ class Container {
 			case ServerConfigInterface::class:
 				$class = apply_filters(
 					'members_file_protection_bind_server_config',
-					$this->serverConfigClass()
+					ServerConfigResolver::configClass()
 				);
 				return new $class( $this->get( Settings::class ) );
 
@@ -142,31 +141,4 @@ class Container {
 		}
 	}
 
-	/**
-	 * Detects server type and returns the config class name.
-	 *
-	 * @return string
-	 */
-	private function serverConfigClass() {
-		$type = apply_filters( 'members_fp_server_type', $this->detectServerType() );
-
-		return 'nginx' === $type ? NginxServerConfig::class : ApacheServerConfig::class;
-	}
-
-	/**
-	 * @return string apache|nginx|unknown
-	 */
-	private function detectServerType() {
-		$software = isset( $_SERVER['SERVER_SOFTWARE'] ) ? strtolower( wp_unslash( $_SERVER['SERVER_SOFTWARE'] ) ) : '';
-
-		if ( false !== strpos( $software, 'nginx' ) ) {
-			return 'nginx';
-		}
-
-		if ( false !== strpos( $software, 'apache' ) || false !== strpos( $software, 'litespeed' ) ) {
-			return 'apache';
-		}
-
-		return 'apache';
-	}
 }
