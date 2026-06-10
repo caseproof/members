@@ -29,6 +29,62 @@ class NoticesController {
 	public function __construct( Container $container ) {
 		$this->container = $container;
 		add_action( 'admin_notices', array( $this, 'render_notices' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue' ) );
+	}
+
+	/**
+	 * @return void
+	 */
+	public function enqueue() {
+		if ( ! Capabilities::currentUserCanManage() ) {
+			return;
+		}
+
+		wp_enqueue_script(
+			'members-file-protection-notices',
+			plugin_dir_url( dirname( __DIR__ ) ) . 'assets/js/notices.js',
+			array(),
+			'1.0.0',
+			true
+		);
+
+		wp_localize_script(
+			'members-file-protection-notices',
+			'membersFileProtectionNotices',
+			array(
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+				'nonce'   => wp_create_nonce( 'members_fp_dismiss' ),
+			)
+		);
+	}
+
+	/**
+	 * Persists a dismissed notice for the current user.
+	 *
+	 * @param string $key Notice key.
+	 * @return bool
+	 */
+	public static function dismiss( string $key ): bool {
+		$allowed = array( 'multisite', 'offload', 'test_fail', 'htaccess_manual' );
+
+		if ( ! in_array( $key, $allowed, true ) ) {
+			return false;
+		}
+
+		$user_id   = get_current_user_id();
+		$dismissed = get_user_meta( $user_id, 'members_fp_dismissed_notices', true );
+
+		if ( ! is_array( $dismissed ) ) {
+			$dismissed = array();
+		}
+
+		if ( in_array( $key, $dismissed, true ) ) {
+			return true;
+		}
+
+		$dismissed[] = $key;
+
+		return (bool) update_user_meta( $user_id, 'members_fp_dismissed_notices', $dismissed );
 	}
 
 	/**

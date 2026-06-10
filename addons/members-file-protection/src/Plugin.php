@@ -107,6 +107,7 @@ class Plugin {
 		add_action( 'wp_ajax_members_fp_mark_htaccess_done', array( $this, 'ajax_mark_htaccess_done' ) );
 		add_action( 'wp_ajax_members_fp_create_share_link', array( $this, 'ajax_create_share_link' ) );
 		add_action( 'wp_ajax_members_fp_revoke_share_link', array( $this, 'ajax_revoke_share_link' ) );
+		add_action( 'wp_ajax_members_fp_dismiss_notice', array( $this, 'ajax_dismiss_notice' ) );
 	}
 
 	/**
@@ -416,6 +417,27 @@ class Plugin {
 		}
 
 		$this->container->get( Services\ShareTokenService::class )->revoke( $token_id );
+		wp_send_json_success();
+	}
+
+	/**
+	 * Persists dismissal of a contextual admin notice.
+	 *
+	 * @return void
+	 */
+	public function ajax_dismiss_notice() {
+		check_ajax_referer( 'members_fp_dismiss', 'nonce' );
+
+		if ( ! Capabilities::currentUserCanManage() ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'members' ) ) );
+		}
+
+		$key = isset( $_POST['notice'] ) ? sanitize_key( wp_unslash( $_POST['notice'] ) ) : '';
+
+		if ( ! Admin\NoticesController::dismiss( $key ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid notice.', 'members' ) ) );
+		}
+
 		wp_send_json_success();
 	}
 }
