@@ -48,6 +48,12 @@ return array(
 		'excerpt'     => '<p>Hide or show blocks in the WordPress block editor (Gutenberg).</p>'
 	),
 
+	'members-file-protection' => array(
+		'url'         => '',
+		'title'       => 'Members - File Protection',
+		'excerpt'     => '<p>Protect Media Library files from direct URL access with role-based permissions, expiring share links, download limits, image thumbnail protection, and object storage signed URLs.</p>'
+	),
+
 	'members-acf-integration' => array(
 		'url'         => '',
 		'title'       => 'Members - ACF Integration',

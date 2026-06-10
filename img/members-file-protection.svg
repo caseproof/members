@@ -1,0 +1,18 @@
+<svg aria-hidden="true" focusable="false" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="52 58 148 145">
+  <!-- Back document -->
+  <rect x="62" y="80" width="72" height="90" rx="8" fill="#363b3f" stroke="currentColor" stroke-width="7.5" stroke-linejoin="round"/>
+  <!-- Front document -->
+  <rect x="78" y="64" width="72" height="90" rx="8" fill="#363b3f" stroke="currentColor" stroke-width="7.5" stroke-linejoin="round"/>
+  <!-- Folded corner -->
+  <polyline points="122,64 122,96 150,96" fill="none" stroke="currentColor" stroke-width="7.5" stroke-linejoin="round"/>
+  <!-- Doc lines -->
+  <line x1="90" y1="114" x2="138" y2="114" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+  <line x1="90" y1="130" x2="128" y2="130" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+  <!-- Lock body -->
+  <rect x="138" y="154" width="52" height="42" rx="7" fill="currentColor"/>
+  <!-- Lock shackle -->
+  <path d="M147 154 L147 140 C147 124 190 124 190 140 L190 154" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Lock keyhole -->
+  <circle cx="164" cy="172" r="6" fill="#363b3f"/>
+  <rect x="161" y="172" width="6" height="12" rx="2" fill="#363b3f"/>
+</svg>
