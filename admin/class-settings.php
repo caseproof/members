@@ -181,6 +181,7 @@ final class Settings_Page {
 			members_plugin()->run_addon_activator( $addon );
 
 		} else { // Deactivate the addon
+			members_plugin()->run_addon_deactivator( $addon );
 			$key = array_search( $addon, $active_addons );
 			unset( $active_addons[$key] );
 			$response = array(

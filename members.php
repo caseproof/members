@@ -492,6 +492,29 @@ final class Members_Plugin {
 		}
 	}
 
+	/**
+	 * Runs an add-on deactivation hook when toggled off in Members → Add-ons.
+	 *
+	 * @param string $addon Add-on directory name.
+	 * @return void
+	 */
+	public function run_addon_deactivator( $addon ) {
+
+		if ( file_exists( trailingslashit( __DIR__ ) . "addons/{$addon}/src/Deactivator.php" ) ) {
+
+			include trailingslashit( __DIR__ ) . "addons/{$addon}/src/Deactivator.php";
+
+			$contents = file_get_contents( trailingslashit( __DIR__ ) . "addons/{$addon}/src/Deactivator.php" );
+			preg_match( '/[\r\n]namespace\W(.+);[\r\n]/', $contents, $matches );
+			$namespace = $matches[1];
+
+			if ( ! empty( $namespace ) ) {
+				$namespace .= '\Deactivator';
+				$namespace::deactivate();
+			}
+		}
+	}
+
 	public function block_editor_assets() {
 		// Block-level upsell controls conflict with Content Permissions in the block editor.
 		if ( members_content_permissions_enabled() ) {
