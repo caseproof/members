@@ -15,7 +15,7 @@ use Members\FileProtection\Contracts\FileRepositoryInterface;
 use Members\FileProtection\Services\Settings;
 
 /**
- * Adds protection controls to the Media Library and attachment modal.
+ * Media Library list view, bulk actions, and read-only grid badge integration.
  */
 class MediaLibraryController {
 
@@ -147,7 +147,11 @@ class MediaLibraryController {
 	 * @return void
 	 */
 	public function enqueue( $hook ) {
-		if ( ! Capabilities::currentUserCanManage() || 'upload.php' !== $hook ) {
+		if ( ! Capabilities::currentUserCanManage() ) {
+			return;
+		}
+
+		if ( ! in_array( $hook, array( 'upload.php', 'post.php', 'post-new.php' ), true ) ) {
 			return;
 		}
 
@@ -157,14 +161,14 @@ class MediaLibraryController {
 			'members-file-protection-admin',
 			plugin_dir_url( dirname( __DIR__ ) ) . 'assets/css/admin.css',
 			array( 'dashicons' ),
-			'1.0.6'
+			'1.0.7'
 		);
 
 		wp_enqueue_script(
 			'members-file-protection-block-editor',
 			plugin_dir_url( dirname( __DIR__ ) ) . 'assets/js/block-editor.js',
 			array( 'wp-hooks', 'wp-i18n' ),
-			'1.0.0',
+			'1.0.1',
 			true
 		);
 	}

@@ -37,14 +37,14 @@ class BlockEditorController {
 			'members-file-protection-admin',
 			plugin_dir_url( dirname( __DIR__ ) ) . 'assets/css/admin.css',
 			array( 'dashicons' ),
-			'1.0.6'
+			'1.0.7'
 		);
 
 		wp_enqueue_script(
 			'members-file-protection-block-editor',
 			plugin_dir_url( dirname( __DIR__ ) ) . 'assets/js/block-editor.js',
 			array( 'wp-hooks', 'wp-i18n' ),
-			'1.0.0',
+			'1.0.1',
 			true
 		);
 

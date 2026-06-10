@@ -64,7 +64,7 @@ class MetaboxController {
 			'members-file-protection-admin',
 			plugin_dir_url( dirname( __DIR__ ) ) . 'assets/css/admin.css',
 			array( 'dashicons' ),
-			'1.0.6'
+			'1.0.7'
 		);
 
 		wp_enqueue_script(
@@ -249,6 +249,24 @@ class MetaboxController {
 		}
 
 		if ( empty( $_POST['members_fp_metabox_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['members_fp_metabox_nonce'] ) ), 'members_fp_metabox' ) ) {
+			return;
+		}
+
+		$post_id = (int) $post_id;
+
+		if ( $post_id <= 0 || 'attachment' !== get_post_type( $post_id ) ) {
+			return;
+		}
+
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			return;
+		}
+
+		$file      = get_attached_file( $post_id );
+		$extension = $file ? strtolower( pathinfo( $file, PATHINFO_EXTENSION ) ) : '';
+		$settings  = $this->container->get( Settings::class );
+
+		if ( ! $settings->isExtensionProtected( 'file.' . $extension ) ) {
 			return;
 		}
 
