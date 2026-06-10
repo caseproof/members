@@ -155,6 +155,11 @@ class MediaLibraryController {
 			return;
 		}
 
+		// Block editor screens enqueue the media modal badge via BlockEditorController.
+		if ( in_array( $hook, array( 'post.php', 'post-new.php' ), true ) && $this->usesBlockEditor( $hook ) ) {
+			return;
+		}
+
 		wp_enqueue_style( 'dashicons' );
 
 		wp_enqueue_style(
@@ -165,11 +170,45 @@ class MediaLibraryController {
 		);
 
 		wp_enqueue_script(
-			'members-file-protection-block-editor',
+			'members-file-protection-media-library',
 			plugin_dir_url( dirname( __DIR__ ) ) . 'assets/js/block-editor.js',
 			array( 'wp-hooks', 'wp-i18n' ),
-			'1.0.1',
+			'1.0.2',
 			true
 		);
+
+		if ( function_exists( 'wp_set_script_translations' ) ) {
+			wp_set_script_translations( 'members-file-protection-media-library', 'members' );
+		}
+	}
+
+	/**
+	 * Whether the current admin screen uses the block editor.
+	 *
+	 * @param string $hook Admin hook suffix.
+	 * @return bool
+	 */
+	private function usesBlockEditor( string $hook ): bool {
+		if ( ! function_exists( 'use_block_editor_for_post' ) || ! function_exists( 'use_block_editor_for_post_type' ) ) {
+			return false;
+		}
+
+		if ( 'post-new.php' === $hook ) {
+			$post_type = isset( $_GET['post_type'] ) ? sanitize_key( wp_unslash( $_GET['post_type'] ) ) : 'post';
+
+			return (bool) use_block_editor_for_post_type( $post_type );
+		}
+
+		if ( 'post.php' === $hook ) {
+			$post_id = isset( $_GET['post'] ) ? (int) $_GET['post'] : 0;
+
+			if ( $post_id <= 0 ) {
+				return false;
+			}
+
+			return (bool) use_block_editor_for_post( $post_id );
+		}
+
+		return false;
 	}
 }

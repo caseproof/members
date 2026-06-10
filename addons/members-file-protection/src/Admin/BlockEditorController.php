@@ -44,7 +44,7 @@ class BlockEditorController {
 			'members-file-protection-block-editor',
 			plugin_dir_url( dirname( __DIR__ ) ) . 'assets/js/block-editor.js',
 			array( 'wp-hooks', 'wp-i18n' ),
-			'1.0.1',
+			'1.0.2',
 			true
 		);
 

@@ -88,17 +88,36 @@
 				body.append( 'action', 'members_fp_revoke_share_link' );
 				body.append( 'nonce', membersFileProtectionMetabox.nonce );
 				body.append( 'token_id', tokenId );
+				revoke.disabled = true;
 				fetch( membersFileProtectionMetabox.ajaxUrl, {
 					method: 'POST',
 					credentials: 'same-origin',
 					headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
 					body: body.toString()
-				} ).then( function () {
-					var item = revoke.closest( 'li' );
-					if ( item ) {
-						item.remove();
-					}
-				} );
+				} )
+					.then( function ( response ) {
+						if ( ! response.ok ) {
+							throw new Error( 'HTTP ' + response.status );
+						}
+
+						return response.json();
+					} )
+					.then( function ( payload ) {
+						if ( ! payload.success ) {
+							throw new Error( 'revoke failed' );
+						}
+
+						var item = revoke.closest( 'li' );
+						if ( item ) {
+							item.remove();
+						}
+					} )
+					.catch( function () {
+						window.alert( membersFileProtectionMetabox.i18n.revokeError );
+					} )
+					.finally( function () {
+						revoke.disabled = false;
+					} );
 				return;
 			}
 

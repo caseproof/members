@@ -71,7 +71,7 @@ class MetaboxController {
 			'members-file-protection-metabox',
 			plugin_dir_url( dirname( __DIR__ ) ) . 'assets/js/metabox.js',
 			array(),
-			'1.0.0',
+			'1.0.1',
 			true
 		);
 
@@ -88,6 +88,7 @@ class MetaboxController {
 					'copied'   => __( 'Copied!', 'members' ),
 					'revoke'   => __( 'Revoke', 'members' ),
 					'error'    => __( 'Could not create share link.', 'members' ),
+					'revokeError' => __( 'Could not revoke share link.', 'members' ),
 				),
 			)
 		);
