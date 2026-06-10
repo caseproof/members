@@ -152,22 +152,7 @@ class FileRepository implements FileRepositoryInterface {
 			return null;
 		}
 
-		// Search serialized attachment metadata for generated size filenames.
-		$attachment_id = (int) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT post_id FROM {$wpdb->postmeta}
-				WHERE meta_key = '_wp_attachment_metadata'
-				AND meta_value LIKE %s
-				LIMIT 1",
-				'%' . $wpdb->esc_like( $basename ) . '%'
-			)
-		);
-
-		if ( $attachment_id > 0 ) {
-			return $attachment_id;
-		}
-
-		// Fallback: strip -WIDTHxHEIGHT before extension and match original file.
+		// Prefer matching the parent attachment from resized filename patterns.
 		if ( preg_match( '/^(.+)-(\d+)x(\d+)\.([a-zA-Z0-9]+)$/', $basename, $matches ) ) {
 			$original_name = $matches[1] . '.' . $matches[4];
 			$dir           = trailingslashit( dirname( $file_path ) );
@@ -194,6 +179,23 @@ class FileRepository implements FileRepositoryInterface {
 			if ( ! empty( $query->posts[0] ) ) {
 				return (int) $query->posts[0];
 			}
+		}
+
+		$serialized_fragment = 's:' . strlen( $basename ) . ':"' . $basename . '"';
+
+		// Search serialized attachment metadata for an exact generated-size filename.
+		$attachment_id = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT post_id FROM {$wpdb->postmeta}
+				WHERE meta_key = '_wp_attachment_metadata'
+				AND meta_value LIKE %s
+				LIMIT 1",
+				'%' . $wpdb->esc_like( $serialized_fragment ) . '%'
+			)
+		);
+
+		if ( $attachment_id > 0 ) {
+			return $attachment_id;
 		}
 
 		return null;
