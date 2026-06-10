@@ -11,5 +11,5 @@
 | Cloudflare proxy | No redirect loop on 404 behavior |
 | Large file (>100MB) | Chunked streaming completes |
 | manage_options user, no matching role | File served (bypass) |
-| WP Offload Media active | Warning notice about local-only protection |
+| WP Offload Media active | Info notice: files delivered via time-limited signed URLs after authorization |
 | Loopback blocked host | Nginx Test may fail; use manual confirmation |
