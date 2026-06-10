@@ -9,6 +9,7 @@ require __DIR__ . '/AccessCheckerTest.php';
 require __DIR__ . '/ApacheServerConfigTest.php';
 require __DIR__ . '/GatekeeperTest.php';
 require __DIR__ . '/NginxServerConfigTest.php';
+require __DIR__ . '/ContentPermissionsIntegrationTest.php';
 
 $classes = array(
 	'SettingsTest',
@@ -16,6 +17,7 @@ $classes = array(
 	'ApacheServerConfigTest',
 	'GatekeeperTest',
 	'NginxServerConfigTest',
+	'ContentPermissionsIntegrationTest',
 );
 
 $passed = 0;

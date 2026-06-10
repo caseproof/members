@@ -45,11 +45,11 @@ class ContentPermissionsIntegration {
 	}
 
 	/**
-	 * Allows access when the user can view a public or permitted parent post.
+	 * Allows access when the user can view a permitted parent or embedding post.
 	 *
-	 * @param bool     $allowed       Current decision.
-	 * @param int      $attachment_id Attachment ID.
-	 * @param \WP_User $user          Current user.
+	 * @param bool          $allowed       Current decision.
+	 * @param int           $attachment_id Attachment ID.
+	 * @param \WP_User|null $user          Current user.
 	 * @return bool
 	 */
 	public function filterAccessCheck( $allowed, $attachment_id, $user ) {
@@ -64,11 +64,19 @@ class ContentPermissionsIntegration {
 			return $allowed;
 		}
 
-		foreach ( $posts as $post_id ) {
-			if ( ! function_exists( 'members_has_post_permissions' ) || ! members_has_post_permissions( $post_id ) ) {
-				return true;
-			}
+		$restricted = array();
 
+		foreach ( $posts as $post_id ) {
+			if ( function_exists( 'members_has_post_permissions' ) && members_has_post_permissions( $post_id ) ) {
+				$restricted[] = (int) $post_id;
+			}
+		}
+
+		if ( empty( $restricted ) ) {
+			return true;
+		}
+
+		foreach ( $restricted as $post_id ) {
 			if ( function_exists( 'members_can_user_view_post' ) && members_can_user_view_post( $user_id, $post_id ) ) {
 				return true;
 			}
@@ -78,19 +86,26 @@ class ContentPermissionsIntegration {
 	}
 
 	/**
+	 * Finds posts that reference an attachment in content, blocks, or featured image.
+	 *
 	 * @param int $attachment_id Attachment ID.
 	 * @return int[]
 	 */
-	private function findReferencingPosts( int $attachment_id ): array {
+	protected function findReferencingPosts( int $attachment_id ): array {
 		global $wpdb;
 
-		$url   = wp_get_attachment_url( $attachment_id );
 		$ids   = array();
 		$types = get_post_types( array( 'public' => true ), 'names' );
 		unset( $types['attachment'] );
 
 		if ( empty( $types ) ) {
 			return array();
+		}
+
+		$parent = wp_get_post_parent_id( $attachment_id );
+
+		if ( $parent > 0 ) {
+			$ids[] = (int) $parent;
 		}
 
 		$thumbnail = $wpdb->get_col(
@@ -102,11 +117,16 @@ class ContentPermissionsIntegration {
 
 		$ids = array_merge( $ids, array_map( 'intval', (array) $thumbnail ) );
 
-		if ( $url ) {
-			$type_list = array_values( $types );
-			$holders   = implode( ',', array_fill( 0, count( $type_list ), '%s' ) );
-			$args      = array_merge( $type_list, array( '%' . $wpdb->esc_like( $url ) . '%' ) );
-			$sql       = "SELECT ID FROM {$wpdb->posts}
+		$type_list = array_values( $types );
+		$holders   = implode( ',', array_fill( 0, count( $type_list ), '%s' ) );
+
+		foreach ( $this->getContentSearchNeedles( $attachment_id ) as $needle ) {
+			if ( '' === $needle ) {
+				continue;
+			}
+
+			$args = array_merge( $type_list, array( '%' . $wpdb->esc_like( $needle ) . '%' ) );
+			$sql  = "SELECT ID FROM {$wpdb->posts}
 				WHERE post_type IN ({$holders})
 				AND post_status IN ('publish','private','draft')
 				AND post_content LIKE %s";
@@ -118,5 +138,49 @@ class ContentPermissionsIntegration {
 		}
 
 		return array_values( array_unique( array_filter( $ids ) ) );
+	}
+
+	/**
+	 * Builds content search fragments for attachment URLs, paths, and block IDs.
+	 *
+	 * @param int $attachment_id Attachment ID.
+	 * @return string[]
+	 */
+	protected function getContentSearchNeedles( int $attachment_id ): array {
+		$needles = array(
+			'"id":' . $attachment_id,
+			'"id": ' . $attachment_id,
+		);
+
+		$url = wp_get_attachment_url( $attachment_id );
+
+		if ( $url ) {
+			$needles[] = $url;
+
+			$path = wp_parse_url( $url, PHP_URL_PATH );
+
+			if ( is_string( $path ) && '' !== $path ) {
+				$needles[] = $path;
+			}
+		}
+
+		$file = get_attached_file( $attachment_id );
+
+		if ( is_string( $file ) && '' !== $file ) {
+			$needles[] = wp_basename( $file );
+			$needles[] = str_replace( '\\', '/', $file );
+
+			$uploads = wp_upload_dir();
+
+			if ( ! empty( $uploads['basedir'] ) && ! empty( $uploads['baseurl'] ) ) {
+				$relative = ltrim( str_replace( wp_normalize_path( trailingslashit( $uploads['basedir'] ) ), '', wp_normalize_path( $file ) ), '/' );
+
+				if ( '' !== $relative ) {
+					$needles[] = $relative;
+				}
+			}
+		}
+
+		return array_values( array_unique( array_filter( $needles ) ) );
 	}
 }

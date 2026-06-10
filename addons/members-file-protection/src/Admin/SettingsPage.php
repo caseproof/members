@@ -286,6 +286,7 @@ class SettingsPage {
 				<?php if ( function_exists( 'members_content_permissions_enabled' ) && members_content_permissions_enabled() ) : ?>
 					<p>
 						<label>
+							<input type="hidden" name="<?php echo esc_attr( ContentPermissionsIntegration::OPTION_INHERIT ); ?>" value="0" />
 							<input type="checkbox" name="<?php echo esc_attr( ContentPermissionsIntegration::OPTION_INHERIT ); ?>" value="1" <?php checked( (bool) get_option( ContentPermissionsIntegration::OPTION_INHERIT, false ) ); ?> />
 							<?php esc_html_e( 'Inherit access rules from Content Permissions on posts that use this file', 'members' ); ?>
 						</label>
