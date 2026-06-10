@@ -95,7 +95,15 @@ class OffloadIntegration {
 	public function deliver( $attachment_id ) {
 		$url = apply_filters( 'members_fp_offload_download_url', null, (int) $attachment_id );
 
-		if ( ! $url || ! is_string( $url ) ) {
+		if ( ! is_string( $url ) || '' === $url ) {
+			return false;
+		}
+
+		$url = esc_url_raw( $url );
+
+		// Signed URLs point at object storage (S3, GCS, etc.). wp_safe_redirect
+		// rejects external hosts and falls back to admin_url(), breaking delivery.
+		if ( ! $url || ! wp_http_validate_url( $url ) ) {
 			return false;
 		}
 
@@ -103,7 +111,7 @@ class OffloadIntegration {
 			header( 'X-Robots-Tag: noindex, nofollow', true );
 		}
 
-		wp_safe_redirect( esc_url_raw( $url ), 302 );
+		wp_redirect( $url, 302 );
 		exit;
 	}
 
