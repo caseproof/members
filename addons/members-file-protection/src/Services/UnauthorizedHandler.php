@@ -35,6 +35,12 @@ class UnauthorizedHandler implements UnauthorizedHandlerInterface {
 			CacheHeaders::sendNoStore();
 		}
 
+		if ( $attachment_id <= 0 ) {
+			status_header( 404 );
+			nocache_headers();
+			exit;
+		}
+
 		if ( 'redirect' === $this->settings->getUnauthorizedBehavior() ) {
 			$url = $this->settings->getRedirectUrl();
 			$url = str_replace(

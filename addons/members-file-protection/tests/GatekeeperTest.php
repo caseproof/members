@@ -45,8 +45,11 @@ class GatekeeperStubUnauthorized implements \Members\FileProtection\Contracts\Un
 
 	public $calls = 0;
 
+	public $last_attachment_id = null;
+
 	public function handle( int $attachment_id, $user ): void {
 		++$this->calls;
+		$this->last_attachment_id = $attachment_id;
 	}
 }
 
@@ -92,7 +95,7 @@ class GatekeeperStubRepository implements \Members\FileProtection\Contracts\File
 
 class GatekeeperTest extends TestCase {
 
-	public function test_orphan_files_are_not_delivered() {
+	public function test_orphan_files_use_unauthorized_handler() {
 		$unauthorized = new GatekeeperStubUnauthorized();
 		$delivery     = new GatekeeperStubDelivery();
 		$settings     = new Settings();
@@ -121,6 +124,7 @@ class GatekeeperTest extends TestCase {
 		$gatekeeper->handle( '/wp-content/uploads/orphan-test.pdf' );
 
 		$this->assertSame( 1, $unauthorized->calls );
+		$this->assertSame( 0, $unauthorized->last_attachment_id );
 		$this->assertSame( 0, $delivery->calls );
 
 		unlink( $path );

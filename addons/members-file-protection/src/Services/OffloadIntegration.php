@@ -75,6 +75,18 @@ class OffloadIntegration {
 	}
 
 	/**
+	 * Whether a signed offload download URL is available.
+	 *
+	 * @param int $attachment_id Attachment ID.
+	 * @return bool
+	 */
+	public function hasDownloadUrl( $attachment_id ) {
+		$url = apply_filters( 'members_fp_offload_download_url', null, (int) $attachment_id );
+
+		return is_string( $url ) && '' !== $url;
+	}
+
+	/**
 	 * Delivers an offloaded file via signed URL redirect after authorization.
 	 *
 	 * @param int $attachment_id Attachment ID.

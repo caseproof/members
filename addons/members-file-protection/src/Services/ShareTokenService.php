@@ -54,6 +54,43 @@ class ShareTokenService {
 	}
 
 	/**
+	 * Atomically validates and consumes a share token use.
+	 *
+	 * @param string $token         Raw token from the request.
+	 * @param int    $attachment_id Expected attachment ID.
+	 * @return bool
+	 */
+	public function consume( $token, $attachment_id ) {
+		global $wpdb;
+
+		$token = sanitize_text_field( $token );
+
+		if ( '' === $token || $attachment_id <= 0 ) {
+			return false;
+		}
+
+		$table = Installer::tokensTable();
+		$now   = current_time( 'mysql', true );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from Installer.
+		$updated = $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$table}
+				SET use_count = use_count + 1
+				WHERE token = %s
+				AND attachment_id = %d
+				AND (expires_at IS NULL OR expires_at = '' OR expires_at > %s)
+				AND (max_uses = 0 OR use_count < max_uses)",
+				$token,
+				(int) $attachment_id,
+				$now
+			)
+		);
+
+		return $updated > 0;
+	}
+
+	/**
 	 * Records a successful token use.
 	 *
 	 * @param string $token Token string.

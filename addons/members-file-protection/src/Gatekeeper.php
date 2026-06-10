@@ -101,10 +101,11 @@ class Gatekeeper {
 			return;
 		}
 
-		$allowed = false;
+		$uses_token = '' !== $token;
+		$allowed    = false;
 
-		if ( '' !== $token && $this->shareTokens->validate( $token, $attachment ) ) {
-			$allowed = true;
+		if ( $uses_token ) {
+			$allowed = $this->shareTokens->validate( $token, $attachment );
 		} elseif ( $this->access->canAccess( $attachment, $user ) ) {
 			$allowed = true;
 		}
@@ -114,22 +115,35 @@ class Gatekeeper {
 			return;
 		}
 
-		if ( ! $this->downloadLimits->canDownload( $attachment, $user ) && '' === $token ) {
+		if ( ! $uses_token && ! $this->downloadLimits->canDownload( $attachment, $user ) ) {
 			$this->unauthorized->handle( $attachment, $user );
 			return;
 		}
 
-		if ( '' !== $token ) {
-			$this->shareTokens->recordUse( $token );
-		} elseif ( $user && $user->ID > 0 ) {
-			$this->downloadLimits->recordDownload( $attachment, $user );
-		}
+		if ( is_file( $absolute ) && is_readable( $absolute ) ) {
+			if ( $uses_token ) {
+				if ( ! $this->shareTokens->consume( $token, $attachment ) ) {
+					$this->unauthorized->handle( $attachment, $user );
+					return;
+				}
+			} elseif ( $user && $user->ID > 0 ) {
+				$this->downloadLimits->recordDownload( $attachment, $user );
+			}
 
-		if ( is_file( $absolute ) ) {
 			$this->delivery->deliver( $absolute, $attachment );
 		}
 
-		if ( $this->offload->deliver( $attachment ) ) {
+		if ( $this->offload->hasDownloadUrl( $attachment ) ) {
+			if ( $uses_token ) {
+				if ( ! $this->shareTokens->consume( $token, $attachment ) ) {
+					$this->unauthorized->handle( $attachment, $user );
+					return;
+				}
+			} elseif ( $user && $user->ID > 0 ) {
+				$this->downloadLimits->recordDownload( $attachment, $user );
+			}
+
+			$this->offload->deliver( $attachment );
 			return;
 		}
 
