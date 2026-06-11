@@ -169,11 +169,17 @@ class MediaLibraryController {
 			'1.0.7'
 		);
 
+		$script_deps = array( 'media-views', 'wp-i18n' );
+
+		if ( 'upload.php' === $hook ) {
+			$script_deps = array( 'media-grid', 'wp-i18n' );
+		}
+
 		wp_enqueue_script(
 			'members-file-protection-media-library',
-			plugin_dir_url( dirname( __DIR__ ) ) . 'assets/js/block-editor.js',
-			array( 'wp-i18n' ),
-			'1.0.3',
+			plugin_dir_url( dirname( __DIR__ ) ) . 'assets/js/media-library.js',
+			$script_deps,
+			'1.0.0',
 			true
 		);
 

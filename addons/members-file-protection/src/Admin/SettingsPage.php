@@ -213,7 +213,7 @@ class SettingsPage {
 			'members-file-protection-settings',
 			plugin_dir_url( dirname( __DIR__ ) ) . 'assets/js/settings.js',
 			array(),
-			'1.0.0',
+			'1.0.1',
 			true
 		);
 

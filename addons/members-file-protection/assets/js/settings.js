@@ -84,6 +84,10 @@
 			body: body.toString()
 		} )
 			.then( function ( response ) {
+				if ( ! response.ok ) {
+					throw new Error( 'HTTP ' + response.status );
+				}
+
 				return response.json();
 			} )
 			.then( function ( payload ) {
