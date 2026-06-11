@@ -159,6 +159,10 @@ class Gatekeeper {
 	 * @return bool False when a share token could not be consumed.
 	 */
 	private function commitAuthorizedDownload( bool $uses_token, string $token, int $attachment, $user ): bool {
+		if ( ! $this->shouldCountDownloadUsage() ) {
+			return true;
+		}
+
 		if ( $uses_token ) {
 			return $this->shareTokens->consume( $token, $attachment );
 		}
@@ -168,6 +172,28 @@ class Gatekeeper {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Whether this request should increment download limits or share-token use counts.
+	 *
+	 * Media players and resumable downloads send many HTTP Range continuations; only
+	 * the initial request (no Range header, or bytes=0-) counts as a download.
+	 *
+	 * @return bool
+	 */
+	private function shouldCountDownloadUsage(): bool {
+		if ( ! isset( $_SERVER['HTTP_RANGE'] ) || '' === $_SERVER['HTTP_RANGE'] ) {
+			return true;
+		}
+
+		$range = trim( (string) wp_unslash( $_SERVER['HTTP_RANGE'] ) );
+
+		if ( ! preg_match( '/^bytes=(\d*)-(\d*)$/', $range, $matches ) ) {
+			return true;
+		}
+
+		return '' !== $matches[1] && '0' === $matches[1];
 	}
 
 	/**

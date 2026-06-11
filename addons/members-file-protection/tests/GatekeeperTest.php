@@ -45,6 +45,12 @@ if ( ! function_exists( 'wp_normalize_path' ) ) {
 	}
 }
 
+if ( ! function_exists( 'wp_unslash' ) ) {
+	function wp_unslash( $value ) {
+		return $value;
+	}
+}
+
 class GatekeeperStubUnauthorized implements \Members\FileProtection\Contracts\UnauthorizedHandlerInterface {
 
 	public $calls = 0;
@@ -108,7 +114,84 @@ class GatekeeperAuthorizedRepository extends GatekeeperStubRepository {
 	}
 }
 
+class GatekeeperCountingDownloadLimits extends \Members\FileProtection\Services\DownloadLimitService {
+
+	public $record_calls = 0;
+
+	public function canDownload( $attachment_id, $user ) {
+		return true;
+	}
+
+	public function recordDownload( $attachment_id, $user ) {
+		++$this->record_calls;
+	}
+}
+
+class GatekeeperCountingShareTokens extends \Members\FileProtection\Services\ShareTokenService {
+
+	public $consume_calls = 0;
+
+	public function validate( $token, $attachment_id ) {
+		return '' !== $token;
+	}
+
+	public function consume( $token, $attachment_id ) {
+		++$this->consume_calls;
+
+		return true;
+	}
+}
+
 class GatekeeperTest extends TestCase {
+
+	private function createAuthorizedGatekeeper( GatekeeperStubDelivery $delivery, $download_limits = null, $share_tokens = null ) {
+		$settings   = new Settings();
+		$repository = new GatekeeperAuthorizedRepository();
+		$user       = new WP_User();
+		$user->ID   = 1;
+		$user->allcaps = array( 'manage_options' => true );
+
+		$GLOBALS['gatekeeper_test_user'] = $user;
+
+		if ( null === $download_limits ) {
+			$download_limits = new GatekeeperCountingDownloadLimits( $repository );
+		}
+
+		if ( null === $share_tokens ) {
+			$share_tokens = new \Members\FileProtection\Services\ShareTokenService();
+		}
+
+		return new Gatekeeper(
+			$repository,
+			new \Members\FileProtection\Services\AccessChecker( $repository ),
+			$delivery,
+			new GatekeeperStubUnauthorized(),
+			$settings,
+			$share_tokens,
+			$download_limits,
+			new \Members\FileProtection\Services\OffloadIntegration( $repository, $settings )
+		);
+	}
+
+	private function createProtectedPdfFixture( $basename ) {
+		$uploads = wp_upload_dir();
+		$path    = $uploads['basedir'] . '/' . $basename;
+
+		if ( ! is_dir( $uploads['basedir'] ) ) {
+			mkdir( $uploads['basedir'], 0755, true );
+		}
+
+		file_put_contents( $path, str_repeat( 'x', 65536 ) );
+
+		return array(
+			'path'    => $path,
+			'gateway' => '/wp-content/uploads/' . $basename,
+		);
+	}
+
+	private function tearDownRangeServerVars() {
+		unset( $_SERVER['HTTP_RANGE'], $_GET['members_fp_token'], $GLOBALS['gatekeeper_test_user'] );
+	}
 
 	public function test_orphan_files_use_unauthorized_handler() {
 		$unauthorized = new GatekeeperStubUnauthorized();
@@ -204,5 +287,112 @@ class GatekeeperTest extends TestCase {
 		$this->assertSame( 0, $unauthorized->calls );
 
 		unlink( $path );
+	}
+
+	public function test_range_continuation_does_not_record_download() {
+		$delivery        = new GatekeeperStubDelivery();
+		$download_limits = new GatekeeperCountingDownloadLimits( new GatekeeperAuthorizedRepository() );
+		$gatekeeper      = $this->createAuthorizedGatekeeper( $delivery, $download_limits );
+		$fixture         = $this->createProtectedPdfFixture( 'range-continuation.pdf' );
+
+		$_SERVER['HTTP_RANGE'] = 'bytes=8192-16383';
+
+		for ( $i = 0; $i < 20; ++$i ) {
+			$gatekeeper->handle( $fixture['gateway'] );
+		}
+
+		$this->assertSame( 0, $download_limits->record_calls );
+		$this->assertSame( 20, $delivery->calls );
+
+		unlink( $fixture['path'] );
+		$this->tearDownRangeServerVars();
+	}
+
+	public function test_initial_request_without_range_records_one_download() {
+		$delivery        = new GatekeeperStubDelivery();
+		$download_limits = new GatekeeperCountingDownloadLimits( new GatekeeperAuthorizedRepository() );
+		$gatekeeper      = $this->createAuthorizedGatekeeper( $delivery, $download_limits );
+		$fixture         = $this->createProtectedPdfFixture( 'range-initial.pdf' );
+
+		$gatekeeper->handle( $fixture['gateway'] );
+
+		$this->assertSame( 1, $download_limits->record_calls );
+		$this->assertSame( 1, $delivery->calls );
+
+		unlink( $fixture['path'] );
+		$this->tearDownRangeServerVars();
+	}
+
+	public function test_initial_range_from_zero_records_one_download() {
+		$delivery        = new GatekeeperStubDelivery();
+		$download_limits = new GatekeeperCountingDownloadLimits( new GatekeeperAuthorizedRepository() );
+		$gatekeeper      = $this->createAuthorizedGatekeeper( $delivery, $download_limits );
+		$fixture         = $this->createProtectedPdfFixture( 'range-zero.pdf' );
+
+		$_SERVER['HTTP_RANGE'] = 'bytes=0-';
+		$gatekeeper->handle( $fixture['gateway'] );
+
+		$this->assertSame( 1, $download_limits->record_calls );
+
+		unlink( $fixture['path'] );
+		$this->tearDownRangeServerVars();
+	}
+
+	public function test_playback_session_with_mixed_range_requests_records_single_download() {
+		$delivery        = new GatekeeperStubDelivery();
+		$download_limits = new GatekeeperCountingDownloadLimits( new GatekeeperAuthorizedRepository() );
+		$gatekeeper      = $this->createAuthorizedGatekeeper( $delivery, $download_limits );
+		$fixture         = $this->createProtectedPdfFixture( 'range-playback.pdf' );
+
+		$_SERVER['HTTP_RANGE'] = 'bytes=0-8191';
+		$gatekeeper->handle( $fixture['gateway'] );
+
+		for ( $offset = 8192; $offset < 65536; $offset += 8192 ) {
+			$_SERVER['HTTP_RANGE'] = 'bytes=' . $offset . '-';
+			$gatekeeper->handle( $fixture['gateway'] );
+		}
+
+		$this->assertSame( 1, $download_limits->record_calls );
+
+		unlink( $fixture['path'] );
+		$this->tearDownRangeServerVars();
+	}
+
+	public function test_share_token_range_continuation_does_not_consume_use() {
+		if ( ! function_exists( 'sanitize_text_field' ) ) {
+			function sanitize_text_field( $str ) {
+				return is_string( $str ) ? trim( strip_tags( $str ) ) : '';
+			}
+		}
+
+		if ( ! function_exists( 'wp_unslash' ) ) {
+			function wp_unslash( $value ) {
+				return $value;
+			}
+		}
+
+		$delivery     = new GatekeeperStubDelivery();
+		$share_tokens = new GatekeeperCountingShareTokens();
+		$gatekeeper   = $this->createAuthorizedGatekeeper(
+			$delivery,
+			new GatekeeperCountingDownloadLimits( new GatekeeperAuthorizedRepository() ),
+			$share_tokens
+		);
+		$fixture = $this->createProtectedPdfFixture( 'range-share-token.pdf' );
+
+		$_GET['members_fp_token'] = 'test-token';
+
+		$_SERVER['HTTP_RANGE'] = 'bytes=0-';
+		$gatekeeper->handle( $fixture['gateway'] );
+
+		for ( $i = 0; $i < 19; ++$i ) {
+			$_SERVER['HTTP_RANGE'] = 'bytes=' . ( ( $i + 1 ) * 4096 ) . '-';
+			$gatekeeper->handle( $fixture['gateway'] );
+		}
+
+		$this->assertSame( 1, $share_tokens->consume_calls );
+
+		unlink( $fixture['path'] );
+		$this->tearDownRangeServerVars();
 	}
 }
