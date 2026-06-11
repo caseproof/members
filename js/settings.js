@@ -29,7 +29,7 @@ jQuery(document).ready(function($) {
 		}
 	);
 
-	function membersAddonToggleMessage( response ) {
+	var membersAddonToggleMessage = function( response ) {
 		if ( response && response.responseJSON && response.responseJSON.data && response.responseJSON.data.msg ) {
 			return response.responseJSON.data.msg;
 		}
@@ -43,7 +43,7 @@ jQuery(document).ready(function($) {
 		}
 
 		return 'Could not update the add-on.';
-	}
+	};
 
 	$('.activate-addon').on('click', function(e) {
 		var $this = $(this);
