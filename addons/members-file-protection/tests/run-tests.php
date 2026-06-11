@@ -8,6 +8,7 @@ require __DIR__ . '/SettingsTest.php';
 require __DIR__ . '/AccessCheckerTest.php';
 require __DIR__ . '/ApacheServerConfigTest.php';
 require __DIR__ . '/GatekeeperTest.php';
+require __DIR__ . '/FileRepositoryTest.php';
 require __DIR__ . '/NginxServerConfigTest.php';
 require __DIR__ . '/ContentPermissionsIntegrationTest.php';
 require __DIR__ . '/ShareTokenServiceTest.php';
@@ -17,6 +18,7 @@ $classes = array(
 	'AccessCheckerTest',
 	'ApacheServerConfigTest',
 	'GatekeeperTest',
+	'FileRepositoryTest',
 	'NginxServerConfigTest',
 	'ContentPermissionsIntegrationTest',
 	'ShareTokenServiceTest',
