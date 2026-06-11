@@ -148,6 +148,9 @@
 					copyButton.textContent = original;
 					copyButton.setAttribute( 'aria-label', membersFileProtection.i18n.copy );
 				}, 2000 );
+			} ).catch( function () {
+				copyButton.textContent = original;
+				copyButton.setAttribute( 'aria-label', membersFileProtection.i18n.copy );
 			} );
 		} );
 	}

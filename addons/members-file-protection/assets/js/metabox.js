@@ -160,9 +160,29 @@
 						throw new Error( 'create failed' );
 					}
 
+					var tokenId = String( payload.data.id );
 					var li = document.createElement( 'li' );
-					li.innerHTML = '<code class="members-fp-share-url"></code> <button type="button" class="button-link" data-members-fp-share-copy>' + membersFileProtectionMetabox.i18n.copy + '</button>';
-					li.querySelector( '.members-fp-share-url' ).textContent = payload.data.url;
+					var code = document.createElement( 'code' );
+					var copyBtn = document.createElement( 'button' );
+					var revokeBtn = document.createElement( 'button' );
+
+					li.setAttribute( 'data-token-id', tokenId );
+
+					code.className = 'members-fp-share-url';
+					code.textContent = payload.data.url;
+
+					copyBtn.type = 'button';
+					copyBtn.className = 'button-link';
+					copyBtn.setAttribute( 'data-members-fp-share-copy', '' );
+					copyBtn.textContent = membersFileProtectionMetabox.i18n.copy;
+
+					revokeBtn.type = 'button';
+					revokeBtn.className = 'button-link';
+					revokeBtn.setAttribute( 'data-members-fp-share-revoke', '' );
+					revokeBtn.setAttribute( 'data-token-id', tokenId );
+					revokeBtn.textContent = membersFileProtectionMetabox.i18n.revoke;
+
+					li.append( code, document.createTextNode( ' ' ), copyBtn, document.createTextNode( ' ' ), revokeBtn );
 					list.prepend( li );
 				} )
 				.catch( function () {

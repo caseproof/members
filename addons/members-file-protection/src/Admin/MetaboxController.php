@@ -71,7 +71,7 @@ class MetaboxController {
 			'members-file-protection-metabox',
 			plugin_dir_url( dirname( __DIR__ ) ) . 'assets/js/metabox.js',
 			array(),
-			'1.0.2',
+			'1.0.4',
 			true
 		);
 

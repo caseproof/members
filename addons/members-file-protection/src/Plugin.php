@@ -393,7 +393,11 @@ class Plugin {
 
 		$expires_in = isset( $map[ $expires ] ) ? $map[ $expires ] : DAY_IN_SECONDS;
 		$service    = $this->container->get( Services\ShareTokenService::class );
-		$link       = $service->create( $attachment_id, $expires_in, $max_uses );
+		$link = $service->create( $attachment_id, $expires_in, $max_uses );
+
+		if ( null === $link ) {
+			wp_send_json_error( array( 'message' => __( 'Could not create share link.', 'members' ) ) );
+		}
 
 		wp_send_json_success( $link );
 	}

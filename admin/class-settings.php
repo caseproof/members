@@ -167,7 +167,8 @@ final class Settings_Page {
 		}
 
 		// Grab the currently active add-ons
-		$active_addons = get_option( 'members_active_addons', array() );
+		$active_addons      = get_option( 'members_active_addons', array() );
+		$addon_to_deactivate = null;
 
 		if ( ! in_array( $addon, $active_addons, true ) ) { // Activate the addon
 			$active_addons[] = $addon;
@@ -181,11 +182,11 @@ final class Settings_Page {
 			members_plugin()->run_addon_activator( $addon );
 
 		} else { // Deactivate the addon
-			members_plugin()->run_addon_deactivator( $addon );
 			$key = array_search( $addon, $active_addons, true );
 			if ( false !== $key ) {
 				unset( $active_addons[ $key ] );
 			}
+			$addon_to_deactivate = $addon;
 			$response = array(
 				'status' => 'inactive',
 				'action_label' => esc_html__( 'Activate', 'members' ),
@@ -194,6 +195,10 @@ final class Settings_Page {
 		}
 
 		update_option( 'members_active_addons', $active_addons );
+
+		if ( null !== $addon_to_deactivate ) {
+			members_plugin()->run_addon_deactivator( $addon_to_deactivate );
+		}
 
 		wp_send_json_success( $response );
 	}

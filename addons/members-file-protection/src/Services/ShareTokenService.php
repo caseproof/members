@@ -115,7 +115,7 @@ class ShareTokenService {
 	 * @param int $attachment_id Attachment ID.
 	 * @param int $expires_in    Seconds until expiry (0 = never).
 	 * @param int $max_uses      Max uses (0 = unlimited).
-	 * @return array{token:string,url:string,expires_at:?string}
+	 * @return array{id:int,token:string,url:string,expires_at:?string}|null
 	 */
 	public function create( $attachment_id, $expires_in = 0, $max_uses = 0 ) {
 		global $wpdb;
@@ -123,7 +123,7 @@ class ShareTokenService {
 		$token      = wp_generate_password( 32, false, false );
 		$expires_at = $expires_in > 0 ? gmdate( 'Y-m-d H:i:s', time() + $expires_in ) : null;
 
-		$wpdb->insert(
+		$inserted = $wpdb->insert(
 			Installer::tokensTable(),
 			array(
 				'attachment_id' => (int) $attachment_id,
@@ -137,7 +137,12 @@ class ShareTokenService {
 			array( '%d', '%s', '%s', '%d', '%d', '%d', '%s' )
 		);
 
+		if ( false === $inserted ) {
+			return null;
+		}
+
 		return array(
+			'id'         => (int) $wpdb->insert_id,
 			'token'      => $token,
 			'url'        => $this->buildShareUrl( (int) $attachment_id, $token ),
 			'expires_at' => $expires_at,
