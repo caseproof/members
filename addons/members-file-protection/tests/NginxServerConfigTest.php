@@ -13,7 +13,8 @@ class NginxServerConfigTest extends TestCase {
 		$nginx = new NginxServerConfig( new \Members\FileProtection\Services\Settings() );
 		$block = $nginx->getConfigBlock( array( 'pdf', 'mp4' ) );
 
-		$this->assertStringContainsString( 'members_fp_gateway=$uri?', $block );
+		$this->assertStringContainsString( 'members_fp_gateway=$uri last;', $block );
+		$this->assertFalse( false !== strpos( $block, '$uri?' ), 'Nginx config must not use trailing ? after $uri' );
 		$this->assertFalse( false !== strpos( $block, '$request_uri' ), 'Nginx config must not use $request_uri' );
 	}
 

@@ -155,8 +155,8 @@ class FileRepository implements FileRepositoryInterface {
 		// Prefer matching the parent attachment from resized filename patterns.
 		if ( preg_match( '/^(.+)-(\d+)x(\d+)\.([a-zA-Z0-9]+)$/', $basename, $matches ) ) {
 			$original_name = $matches[1] . '.' . $matches[4];
-			$dir           = trailingslashit( dirname( $file_path ) );
-			$original_path = ( '.' === $dir ? '' : $dir ) . $original_name;
+			$dir           = dirname( $file_path );
+			$original_path = ( '.' === $dir ) ? $original_name : trailingslashit( $dir ) . $original_name;
 
 			$query = new \WP_Query(
 				array(
