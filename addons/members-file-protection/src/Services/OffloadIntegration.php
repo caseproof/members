@@ -108,6 +108,7 @@ class OffloadIntegration {
 		}
 
 		if ( ! headers_sent() ) {
+			CacheHeaders::sendNoStore();
 			header( 'X-Robots-Tag: noindex, nofollow', true );
 		}
 

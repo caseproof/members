@@ -76,6 +76,11 @@ class ContentPermissionsIntegration {
 			return true;
 		}
 
+		// At least one referencing post has no content permissions — file is public.
+		if ( count( $restricted ) < count( $posts ) ) {
+			return true;
+		}
+
 		foreach ( $restricted as $post_id ) {
 			if ( function_exists( 'members_can_user_view_post' ) && members_can_user_view_post( $user_id, $post_id ) ) {
 				return true;

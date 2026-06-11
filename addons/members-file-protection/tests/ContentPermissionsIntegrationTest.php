@@ -153,4 +153,17 @@ class ContentPermissionsIntegrationTest extends TestCase {
 
 		$this->assertTrue( $integration->filterAccessCheck( true, 5, $user ) );
 	}
+
+	public function test_allows_when_mixed_public_and_restricted_parents_exist() {
+		global $members_fp_test_post_permissions, $members_fp_test_can_view;
+
+		$members_fp_test_post_permissions = array( 10 => true );
+		$members_fp_test_can_view         = array();
+
+		$integration = new ContentPermissionsIntegrationTestable( new ContentPermissionsRepositoryStub() );
+		$integration->forceEnabled( true );
+		$integration->setReferencingPosts( array( 10, 20 ) );
+
+		$this->assertTrue( $integration->filterAccessCheck( true, 5, null ) );
+	}
 }
