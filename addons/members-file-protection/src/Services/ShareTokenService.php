@@ -42,7 +42,9 @@ class ShareTokenService {
 			return false;
 		}
 
-		if ( ! empty( $row->expires_at ) && strtotime( $row->expires_at ) < time() ) {
+		$now = current_time( 'mysql', true );
+
+		if ( ! empty( $row->expires_at ) && $row->expires_at <= $now ) {
 			return false;
 		}
 

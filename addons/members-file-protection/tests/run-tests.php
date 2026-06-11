@@ -10,6 +10,7 @@ require __DIR__ . '/ApacheServerConfigTest.php';
 require __DIR__ . '/GatekeeperTest.php';
 require __DIR__ . '/NginxServerConfigTest.php';
 require __DIR__ . '/ContentPermissionsIntegrationTest.php';
+require __DIR__ . '/ShareTokenServiceTest.php';
 
 $classes = array(
 	'SettingsTest',
@@ -18,6 +19,7 @@ $classes = array(
 	'GatekeeperTest',
 	'NginxServerConfigTest',
 	'ContentPermissionsIntegrationTest',
+	'ShareTokenServiceTest',
 );
 
 $passed = 0;
