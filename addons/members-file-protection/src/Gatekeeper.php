@@ -94,28 +94,22 @@ class Gatekeeper {
 		$absolute   = path_join( $uploads['basedir'], $relative );
 		$attachment = $this->repository->resolveAttachmentId( $file_path );
 		$user       = wp_get_current_user();
-		$token      = isset( $_GET['members_fp_token'] ) ? sanitize_text_field( wp_unslash( $_GET['members_fp_token'] ) ) : '';
 
 		if ( null === $attachment ) {
 			$this->unauthorized->handle( 0, $user );
 			return;
 		}
 
-		$uses_token = '' !== $token;
-		$allowed    = false;
-
-		if ( $uses_token ) {
-			$allowed = $this->shareTokens->validate( $token, $attachment );
-		} elseif ( $this->access->canAccess( $attachment, $user ) ) {
-			$allowed = true;
-		}
+		$token       = isset( $_GET['members_fp_token'] ) ? sanitize_text_field( wp_unslash( $_GET['members_fp_token'] ) ) : '';
+		$token_valid = '' !== $token && $this->shareTokens->validate( $token, $attachment );
+		$allowed     = $token_valid || $this->access->canAccess( $attachment, $user );
 
 		if ( ! $allowed ) {
 			$this->unauthorized->handle( $attachment, $user );
 			return;
 		}
 
-		if ( ! $uses_token && ! $this->downloadLimits->canDownload( $attachment, $user ) ) {
+		if ( ! $token_valid && ! $this->downloadLimits->canDownload( $attachment, $user ) ) {
 			$this->unauthorized->handle( $attachment, $user );
 			return;
 		}
@@ -129,7 +123,7 @@ class Gatekeeper {
 		}
 
 		if ( $local_available ) {
-			if ( ! $this->commitAuthorizedDownload( $uses_token, $token, $attachment, $user ) ) {
+			if ( ! $this->commitAuthorizedDownload( $token_valid, $token, $attachment, $user ) ) {
 				$this->unauthorized->handle( $attachment, $user );
 				return;
 			}
@@ -143,7 +137,7 @@ class Gatekeeper {
 			return;
 		}
 
-		if ( ! $this->commitAuthorizedDownload( $uses_token, $token, $attachment, $user ) ) {
+		if ( ! $this->commitAuthorizedDownload( $token_valid, $token, $attachment, $user ) ) {
 			$this->unauthorized->handle( $attachment, $user );
 			return;
 		}
