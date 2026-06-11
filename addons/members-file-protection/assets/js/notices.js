@@ -6,7 +6,7 @@
 	}
 
 	document.addEventListener( 'click', function ( event ) {
-		var dismiss = event.target.closest( '.notice.is-dismissible[data-members-fp-notice] .notice-dismiss' );
+		var dismiss = event.target.closest( '.notice-dismiss' );
 
 		if ( ! dismiss ) {
 			return;
