@@ -187,13 +187,21 @@ final class Settings_Page {
 
 		if ( 'active' === $desired_state ) {
 			if ( $is_active ) {
-				wp_send_json_success(
-					array(
-						'status'       => 'active',
-						'action_label' => esc_html__( 'Active', 'members' ),
-						'msg'          => esc_html__( 'Add-on activated', 'members' ),
-					)
+				$response = array(
+					'status'       => 'active',
+					'action_label' => esc_html__( 'Active', 'members' ),
+					'msg'          => esc_html__( 'Add-on activated', 'members' ),
 				);
+
+				if ( 'members-file-protection' === $addon ) {
+					if ( get_option( 'members_fp_htaccess_manual', false ) ) {
+						$response['warning'] = esc_html__( 'File protection is active, but rewrite rules could not be written automatically. Check File Protection settings for manual steps.', 'members' );
+					} elseif ( get_option( 'members_fp_nginx_manual', false ) ) {
+						$response['warning'] = esc_html__( 'File protection is active, but server rules must be applied manually. Check File Protection settings for Nginx configuration.', 'members' );
+					}
+				}
+
+				wp_send_json_success( $response );
 			}
 
 			try {
@@ -217,6 +225,8 @@ final class Settings_Page {
 
 			if ( 'members-file-protection' === $addon && get_option( 'members_fp_htaccess_manual', false ) ) {
 				$response['warning'] = esc_html__( 'File protection is active, but rewrite rules could not be written automatically. Check File Protection settings for manual steps.', 'members' );
+			} elseif ( 'members-file-protection' === $addon && get_option( 'members_fp_nginx_manual', false ) ) {
+				$response['warning'] = esc_html__( 'File protection is active, but server rules must be applied manually. Check File Protection settings for Nginx configuration.', 'members' );
 			}
 		} else {
 			if ( ! $is_active ) {
