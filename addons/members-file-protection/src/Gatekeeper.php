@@ -128,13 +128,23 @@ class Gatekeeper {
 			return;
 		}
 
-		if ( ! $this->commitAuthorizedDownload( $uses_token, $token, $attachment, $user ) ) {
+		if ( $local_available ) {
+			if ( ! $this->commitAuthorizedDownload( $uses_token, $token, $attachment, $user ) ) {
+				$this->unauthorized->handle( $attachment, $user );
+				return;
+			}
+
+			$this->delivery->deliver( $absolute, $attachment );
+			return;
+		}
+
+		if ( null === $this->offload->resolveDownloadUrl( $attachment ) ) {
 			$this->unauthorized->handle( $attachment, $user );
 			return;
 		}
 
-		if ( $local_available ) {
-			$this->delivery->deliver( $absolute, $attachment );
+		if ( ! $this->commitAuthorizedDownload( $uses_token, $token, $attachment, $user ) ) {
+			$this->unauthorized->handle( $attachment, $user );
 			return;
 		}
 
@@ -146,7 +156,7 @@ class Gatekeeper {
 	}
 
 	/**
-	 * Records token use or download limit once before streaming.
+	 * Records token use or download limit immediately before delivery starts.
 	 *
 	 * @param bool     $uses_token    Whether a share token is present.
 	 * @param string   $token         Share token value.

@@ -109,6 +109,10 @@ class MediaLibraryController {
 				continue;
 			}
 
+			if ( ! current_user_can( 'edit_post', $id ) ) {
+				continue;
+			}
+
 			if ( 'members_fp_protect' === $action ) {
 				$repository->setProtected( $id, true );
 				++$changed;

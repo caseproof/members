@@ -93,23 +93,6 @@ class ShareTokenService {
 	}
 
 	/**
-	 * Records a successful token use.
-	 *
-	 * @param string $token Token string.
-	 * @return void
-	 */
-	public function recordUse( $token ) {
-		global $wpdb;
-
-		$wpdb->query(
-			$wpdb->prepare(
-				'UPDATE ' . Installer::tokensTable() . ' SET use_count = use_count + 1 WHERE token = %s',
-				sanitize_text_field( $token )
-			)
-		);
-	}
-
-	/**
 	 * Creates a share token.
 	 *
 	 * @param int $attachment_id Attachment ID.
@@ -162,6 +145,23 @@ class ShareTokenService {
 				(int) $attachment_id
 			)
 		);
+	}
+
+	/**
+	 * @param int $token_id Token row ID.
+	 * @return int|null Attachment ID when found.
+	 */
+	public function getTokenAttachmentId( $token_id ) {
+		global $wpdb;
+
+		$attachment_id = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT attachment_id FROM ' . Installer::tokensTable() . ' WHERE id = %d LIMIT 1',
+				(int) $token_id
+			)
+		);
+
+		return $attachment_id > 0 ? $attachment_id : null;
 	}
 
 	/**

@@ -87,23 +87,37 @@ class OffloadIntegration {
 	}
 
 	/**
+	 * Resolves a validated offload download URL.
+	 *
+	 * @param int $attachment_id Attachment ID.
+	 * @return string|null
+	 */
+	public function resolveDownloadUrl( $attachment_id ) {
+		$url = apply_filters( 'members_fp_offload_download_url', null, (int) $attachment_id );
+
+		if ( ! is_string( $url ) || '' === $url ) {
+			return null;
+		}
+
+		$url = esc_url_raw( $url );
+
+		if ( ! $url || ! wp_http_validate_url( $url ) ) {
+			return null;
+		}
+
+		return $url;
+	}
+
+	/**
 	 * Delivers an offloaded file via signed URL redirect after authorization.
 	 *
 	 * @param int $attachment_id Attachment ID.
 	 * @return bool True when handled.
 	 */
 	public function deliver( $attachment_id ) {
-		$url = apply_filters( 'members_fp_offload_download_url', null, (int) $attachment_id );
+		$url = $this->resolveDownloadUrl( $attachment_id );
 
-		if ( ! is_string( $url ) || '' === $url ) {
-			return false;
-		}
-
-		$url = esc_url_raw( $url );
-
-		// Signed URLs point at object storage (S3, GCS, etc.). wp_safe_redirect
-		// rejects external hosts and falls back to admin_url(), breaking delivery.
-		if ( ! $url || ! wp_http_validate_url( $url ) ) {
+		if ( null === $url ) {
 			return false;
 		}
 

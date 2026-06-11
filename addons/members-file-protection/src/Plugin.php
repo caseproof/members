@@ -207,11 +207,23 @@ class Plugin {
 				'show_in_rest'      => true,
 				'auth_callback'     => $auth,
 				'sanitize_callback' => static function ( $value ) {
-					if ( is_array( $value ) || ! is_string( $value ) || '' === $value ) {
-						return '';
+					$sanitize_role = static function ( $role ) {
+						if ( ! is_string( $role ) || '' === $role ) {
+							return '';
+						}
+
+						return function_exists( 'members_sanitize_role' ) ? members_sanitize_role( $role ) : sanitize_key( $role );
+					};
+
+					if ( is_array( $value ) ) {
+						return array_values(
+							array_filter(
+								array_map( $sanitize_role, $value )
+							)
+						);
 					}
 
-					return function_exists( 'members_sanitize_role' ) ? members_sanitize_role( $value ) : sanitize_key( $value );
+					return $sanitize_role( $value );
 				},
 			)
 		);
@@ -383,6 +395,10 @@ class Plugin {
 			wp_send_json_error( array( 'message' => __( 'Invalid attachment.', 'members' ) ) );
 		}
 
+		if ( ! current_user_can( 'edit_post', $attachment_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'members' ) ) );
+		}
+
 		$map = array(
 			'hour'  => HOUR_IN_SECONDS,
 			'day'   => DAY_IN_SECONDS,
@@ -420,7 +436,14 @@ class Plugin {
 			wp_send_json_error( array( 'message' => __( 'Invalid token.', 'members' ) ) );
 		}
 
-		$this->container->get( Services\ShareTokenService::class )->revoke( $token_id );
+		$service       = $this->container->get( Services\ShareTokenService::class );
+		$attachment_id = $service->getTokenAttachmentId( $token_id );
+
+		if ( null === $attachment_id || ! current_user_can( 'edit_post', $attachment_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'members' ) ) );
+		}
+
+		$service->revoke( $token_id );
 		wp_send_json_success();
 	}
 

@@ -21,6 +21,9 @@ class ContentPermissionsIntegration {
 	/** @var FileRepositoryInterface */
 	private $repository;
 
+	/** @var array<int, int[]> */
+	private $referencing_cache = array();
+
 	/**
 	 * @param FileRepositoryInterface $repository File meta repository.
 	 */
@@ -97,6 +100,10 @@ class ContentPermissionsIntegration {
 	 * @return int[]
 	 */
 	protected function findReferencingPosts( int $attachment_id ): array {
+		if ( isset( $this->referencing_cache[ $attachment_id ] ) ) {
+			return $this->referencing_cache[ $attachment_id ];
+		}
+
 		global $wpdb;
 
 		$ids   = array();
@@ -142,7 +149,9 @@ class ContentPermissionsIntegration {
 			$ids = array_merge( $ids, array_map( 'intval', (array) $content_ids ) );
 		}
 
-		return array_values( array_unique( array_filter( $ids ) ) );
+		$this->referencing_cache[ $attachment_id ] = array_values( array_unique( array_filter( $ids ) ) );
+
+		return $this->referencing_cache[ $attachment_id ];
 	}
 
 	/**
