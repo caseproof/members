@@ -148,17 +148,25 @@
 				headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
 				body: body.toString()
 			} )
-				.then( function ( response ) { return response.json(); } )
+				.then( function ( response ) {
+					if ( ! response.ok ) {
+						throw new Error( 'HTTP ' + response.status );
+					}
+
+					return response.json();
+				} )
 				.then( function ( payload ) {
 					if ( ! payload.success ) {
-						window.alert( membersFileProtectionMetabox.i18n.error );
-						return;
+						throw new Error( 'create failed' );
 					}
 
 					var li = document.createElement( 'li' );
 					li.innerHTML = '<code class="members-fp-share-url"></code> <button type="button" class="button-link" data-members-fp-share-copy>' + membersFileProtectionMetabox.i18n.copy + '</button>';
 					li.querySelector( '.members-fp-share-url' ).textContent = payload.data.url;
 					list.prepend( li );
+				} )
+				.catch( function () {
+					window.alert( membersFileProtectionMetabox.i18n.error );
 				} )
 				.finally( function () {
 					generateBtn.disabled = false;

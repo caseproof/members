@@ -481,9 +481,13 @@ final class Members_Plugin {
 			include trailingslashit( __DIR__ ) . "addons/{$addon}/src/Activator.php";
 
 			// Read the file contents into memory, and determine the namespace
-			$contents = file_get_contents( trailingslashit( __DIR__ ) . "addons/{$addon}/src/Activator.php" );
-			preg_match( '/[\r\n]namespace\W(.+);[\r\n]/', $contents, $matches );
-			$namespace = $matches[1];
+			$contents  = file_get_contents( trailingslashit( __DIR__ ) . "addons/{$addon}/src/Activator.php" );
+			$namespace = '';
+
+			if ( preg_match( '/[\r\n]namespace\W(.+);[\r\n]/', $contents, $matches ) ) {
+				$namespace = $matches[1];
+			}
+
 			// Run the activator
 			if ( ! empty( $namespace ) ) {
 				$namespace .= '\Activator';
@@ -504,9 +508,12 @@ final class Members_Plugin {
 
 			include trailingslashit( __DIR__ ) . "addons/{$addon}/src/Deactivator.php";
 
-			$contents = file_get_contents( trailingslashit( __DIR__ ) . "addons/{$addon}/src/Deactivator.php" );
-			preg_match( '/[\r\n]namespace\W(.+);[\r\n]/', $contents, $matches );
-			$namespace = $matches[1];
+			$contents  = file_get_contents( trailingslashit( __DIR__ ) . "addons/{$addon}/src/Deactivator.php" );
+			$namespace = '';
+
+			if ( preg_match( '/[\r\n]namespace\W(.+);[\r\n]/', $contents, $matches ) ) {
+				$namespace = $matches[1];
+			}
 
 			if ( ! empty( $namespace ) ) {
 				$namespace .= '\Deactivator';

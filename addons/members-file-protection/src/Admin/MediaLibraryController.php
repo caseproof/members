@@ -172,8 +172,8 @@ class MediaLibraryController {
 		wp_enqueue_script(
 			'members-file-protection-media-library',
 			plugin_dir_url( dirname( __DIR__ ) ) . 'assets/js/block-editor.js',
-			array( 'wp-hooks', 'wp-i18n' ),
-			'1.0.2',
+			array( 'wp-i18n' ),
+			'1.0.3',
 			true
 		);
 

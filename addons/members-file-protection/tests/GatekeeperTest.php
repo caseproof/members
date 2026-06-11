@@ -21,6 +21,10 @@ if ( ! function_exists( 'path_join' ) ) {
 
 if ( ! function_exists( 'wp_get_current_user' ) ) {
 	function wp_get_current_user() {
+		if ( isset( $GLOBALS['gatekeeper_test_user'] ) && $GLOBALS['gatekeeper_test_user'] instanceof WP_User ) {
+			return $GLOBALS['gatekeeper_test_user'];
+		}
+
 		return new WP_User();
 	}
 }
@@ -93,6 +97,17 @@ class GatekeeperStubRepository implements \Members\FileProtection\Contracts\File
 	}
 }
 
+class GatekeeperAuthorizedRepository extends GatekeeperStubRepository {
+
+	public function resolveAttachmentId( string $file_path ): ?int {
+		return 42;
+	}
+
+	public function isProtected( int $attachment_id ): bool {
+		return true;
+	}
+}
+
 class GatekeeperTest extends TestCase {
 
 	public function test_orphan_files_use_unauthorized_handler() {
@@ -126,6 +141,67 @@ class GatekeeperTest extends TestCase {
 		$this->assertSame( 1, $unauthorized->calls );
 		$this->assertSame( 0, $unauthorized->last_attachment_id );
 		$this->assertSame( 0, $delivery->calls );
+
+		unlink( $path );
+	}
+
+	public function test_local_delivery_skips_offload_when_both_available() {
+		$unauthorized = new GatekeeperStubUnauthorized();
+		$delivery     = new GatekeeperStubDelivery();
+		$settings     = new Settings();
+		$repository   = new GatekeeperAuthorizedRepository();
+		$user         = new WP_User();
+		$user->ID     = 1;
+		$user->allcaps = array( 'manage_options' => true );
+
+		$GLOBALS['gatekeeper_test_user'] = $user;
+		$GLOBALS['wpdb']                 = new class() {
+			public $prefix = 'wp_';
+
+			public function insert( $table, $data, $format = null ) {
+				return 1;
+			}
+		};
+
+		if ( ! function_exists( 'current_time' ) ) {
+			function current_time( $type, $gmt = 0 ) {
+				return '2020-01-01 00:00:00';
+			}
+		}
+
+		add_filter(
+			'members_fp_offload_download_url',
+			static function () {
+				return 'https://s3.example.test/protected.pdf';
+			}
+		);
+
+		$gatekeeper = new Gatekeeper(
+			$repository,
+			new \Members\FileProtection\Services\AccessChecker( $repository ),
+			$delivery,
+			$unauthorized,
+			$settings,
+			new \Members\FileProtection\Services\ShareTokenService(),
+			new \Members\FileProtection\Services\DownloadLimitService( $repository ),
+			new \Members\FileProtection\Services\OffloadIntegration( $repository, $settings )
+		);
+
+		$uploads = wp_upload_dir();
+		$path    = $uploads['basedir'] . '/local-and-offload.pdf';
+
+		if ( ! is_dir( $uploads['basedir'] ) ) {
+			mkdir( $uploads['basedir'], 0755, true );
+		}
+
+		file_put_contents( $path, 'test' );
+
+		$gatekeeper->handle( '/wp-content/uploads/local-and-offload.pdf' );
+
+		unset( $GLOBALS['gatekeeper_test_user'], $GLOBALS['wpdb'] );
+
+		$this->assertSame( 1, $delivery->calls );
+		$this->assertSame( 0, $unauthorized->calls );
 
 		unlink( $path );
 	}

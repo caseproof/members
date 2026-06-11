@@ -120,34 +120,50 @@ class Gatekeeper {
 			return;
 		}
 
-		if ( is_file( $absolute ) && is_readable( $absolute ) ) {
-			if ( $uses_token ) {
-				if ( ! $this->shareTokens->consume( $token, $attachment ) ) {
-					$this->unauthorized->handle( $attachment, $user );
-					return;
-				}
-			} elseif ( $user && $user->ID > 0 ) {
-				$this->downloadLimits->recordDownload( $attachment, $user );
-			}
+		$local_available   = is_file( $absolute ) && is_readable( $absolute );
+		$offload_available = $this->offload->hasDownloadUrl( $attachment );
 
-			$this->delivery->deliver( $absolute, $attachment );
+		if ( ! $local_available && ! $offload_available ) {
+			$this->unauthorized->handle( $attachment, $user );
+			return;
 		}
 
-		if ( $this->offload->hasDownloadUrl( $attachment ) ) {
-			if ( $uses_token ) {
-				if ( ! $this->shareTokens->consume( $token, $attachment ) ) {
-					$this->unauthorized->handle( $attachment, $user );
-					return;
-				}
-			} elseif ( $user && $user->ID > 0 ) {
-				$this->downloadLimits->recordDownload( $attachment, $user );
-			}
+		if ( ! $this->commitAuthorizedDownload( $uses_token, $token, $attachment, $user ) ) {
+			$this->unauthorized->handle( $attachment, $user );
+			return;
+		}
 
-			$this->offload->deliver( $attachment );
+		if ( $local_available ) {
+			$this->delivery->deliver( $absolute, $attachment );
+			return;
+		}
+
+		if ( $this->offload->deliver( $attachment ) ) {
 			return;
 		}
 
 		$this->unauthorized->handle( $attachment, $user );
+	}
+
+	/**
+	 * Records token use or download limit once before streaming.
+	 *
+	 * @param bool     $uses_token    Whether a share token is present.
+	 * @param string   $token         Share token value.
+	 * @param int      $attachment    Attachment ID.
+	 * @param \WP_User $user          Current user.
+	 * @return bool False when a share token could not be consumed.
+	 */
+	private function commitAuthorizedDownload( bool $uses_token, string $token, int $attachment, $user ): bool {
+		if ( $uses_token ) {
+			return $this->shareTokens->consume( $token, $attachment );
+		}
+
+		if ( $user && $user->ID > 0 ) {
+			$this->downloadLimits->recordDownload( $attachment, $user );
+		}
+
+		return true;
 	}
 
 	/**
