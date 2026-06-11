@@ -169,7 +169,7 @@ final class Settings_Page {
 		// Grab the currently active add-ons
 		$active_addons = get_option( 'members_active_addons', array() );
 
-		if ( ! in_array( $addon, $active_addons ) ) { // Activate the addon
+		if ( ! in_array( $addon, $active_addons, true ) ) { // Activate the addon
 			$active_addons[] = $addon;
 			$response = array(
 				'status' => 'active',
@@ -182,8 +182,10 @@ final class Settings_Page {
 
 		} else { // Deactivate the addon
 			members_plugin()->run_addon_deactivator( $addon );
-			$key = array_search( $addon, $active_addons );
-			unset( $active_addons[$key] );
+			$key = array_search( $addon, $active_addons, true );
+			if ( false !== $key ) {
+				unset( $active_addons[ $key ] );
+			}
 			$response = array(
 				'status' => 'inactive',
 				'action_label' => esc_html__( 'Activate', 'members' ),
