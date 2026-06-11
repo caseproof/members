@@ -115,6 +115,7 @@ class MediaLibraryController {
 
 			if ( 'members_fp_protect' === $action ) {
 				$repository->setProtected( $id, true );
+				$repository->setAllowsAllLoggedIn( $id, true );
 				++$changed;
 			} elseif ( 'members_fp_unprotect' === $action ) {
 				$repository->setProtected( $id, false );

@@ -288,7 +288,9 @@ class MetaboxController {
 		$repository->setProtected( (int) $post_id, $protected );
 		$repository->setAllowsAllLoggedIn( (int) $post_id, $all_logged );
 
-		if ( ! $all_logged ) {
+		if ( $all_logged ) {
+			$repository->setAllowedRoles( (int) $post_id, array() );
+		} else {
 			$repository->setAllowedRoles( (int) $post_id, $roles );
 		}
 		$repository->setDownloadLimit( (int) $post_id, isset( $_POST['members_fp_download_limit'] ) ? (int) $_POST['members_fp_download_limit'] : 0 );

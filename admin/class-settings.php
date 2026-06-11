@@ -176,27 +176,66 @@ final class Settings_Page {
 
 		// Grab the currently active add-ons
 		$active_addons = get_option( 'members_active_addons', array() );
+		$is_active     = in_array( $addon, $active_addons, true );
 
-		if ( ! in_array( $addon, $active_addons, true ) ) { // Activate the addon
+		if ( isset( $_POST['state'] ) && in_array( $_POST['state'], array( 'active', 'inactive' ), true ) ) {
+			$desired_state = sanitize_key( wp_unslash( $_POST['state'] ) );
+		} else {
+			// Back-compat: toggle when the client does not send an explicit desired state.
+			$desired_state = $is_active ? 'inactive' : 'active';
+		}
+
+		if ( 'active' === $desired_state ) {
+			if ( $is_active ) {
+				wp_send_json_success(
+					array(
+						'status'       => 'active',
+						'action_label' => esc_html__( 'Active', 'members' ),
+						'msg'          => esc_html__( 'Add-on activated', 'members' ),
+					)
+				);
+			}
+
+			try {
+				members_plugin()->run_addon_activator( $addon );
+			} catch ( \Throwable $e ) {
+				wp_send_json_error(
+					array(
+						'msg' => esc_html__( 'Add-on activation failed. Please refresh the page and try again.', 'members' ),
+					)
+				);
+			}
+
 			$active_addons[] = $addon;
-
-			// Persist before activation side effects so a failed activator can self-heal on next load.
 			update_option( 'members_active_addons', array_values( $active_addons ) );
 
-			members_plugin()->run_addon_activator( $addon );
-
 			$response = array(
-				'status' => 'active',
+				'status'       => 'active',
 				'action_label' => esc_html__( 'Active', 'members' ),
-				'msg' => esc_html__( 'Add-on activated', 'members' )
+				'msg'          => esc_html__( 'Add-on activated', 'members' ),
 			);
 
-		} else { // Deactivate the addon
+			if ( 'members-file-protection' === $addon && get_option( 'members_fp_htaccess_manual', false ) ) {
+				$response['warning'] = esc_html__( 'File protection is active, but rewrite rules could not be written automatically. Check File Protection settings for manual steps.', 'members' );
+			}
+		} else {
+			if ( ! $is_active ) {
+				wp_send_json_success(
+					array(
+						'status'       => 'inactive',
+						'action_label' => esc_html__( 'Activate', 'members' ),
+						'msg'          => esc_html__( 'Add-on deactivated', 'members' ),
+					)
+				);
+			}
+
 			// Run cleanup while the add-on is still marked active (matches WP plugin deactivation order).
 			if ( ! members_plugin()->run_addon_deactivator( $addon ) ) {
-				wp_send_json_error( array(
-					'msg' => esc_html__( 'Add-on cleanup did not complete. The add-on is still active.', 'members' ),
-				) );
+				wp_send_json_error(
+					array(
+						'msg' => esc_html__( 'Add-on cleanup did not complete. The add-on is still active.', 'members' ),
+					)
+				);
 			}
 
 			$key = array_search( $addon, $active_addons, true );
@@ -207,9 +246,9 @@ final class Settings_Page {
 			update_option( 'members_active_addons', array_values( $active_addons ) );
 
 			$response = array(
-				'status' => 'inactive',
+				'status'       => 'inactive',
 				'action_label' => esc_html__( 'Activate', 'members' ),
-				'msg' => esc_html__( 'Add-on deactivated', 'members' )
+				'msg'          => esc_html__( 'Add-on deactivated', 'members' ),
 			);
 		}
 

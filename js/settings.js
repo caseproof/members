@@ -38,16 +38,15 @@ jQuery(document).ready(function($) {
 			return response.data.msg;
 		}
 
-		if ( typeof membersAddons !== 'undefined' && membersAddons.i18n && membersAddons.i18n.toggleError ) {
-			return membersAddons.i18n.toggleError;
-		}
-
-		return 'Could not update the add-on.';
+		return ( typeof membersAddons !== 'undefined' && membersAddons.i18n && membersAddons.i18n.toggleError )
+			? membersAddons.i18n.toggleError
+			: 'Could not update the add-on.';
 	};
 
 	$('.activate-addon').on('click', function(e) {
 		var $this = $(this);
 		var addon = $this.data('addon');
+		var isActive = $this.find('svg').hasClass('active');
 		$this.addClass('processing');
 
 		$.ajax({
@@ -56,7 +55,8 @@ jQuery(document).ready(function($) {
 			data: {
 				action: 'mbrs_toggle_addon',
 				nonce: membersAddons.nonce,
-				addon: addon
+				addon: addon,
+				state: isActive ? 'inactive' : 'active'
 			},
 		})
 		.done(function(response) {
@@ -65,6 +65,9 @@ jQuery(document).ready(function($) {
 				var svg = $this.find('svg');
 				svg.removeClass();
 				svg.addClass(response.data.status);
+				if ( response.data.warning ) {
+					alert( response.data.warning );
+				}
 			} else {
 				alert( membersAddonToggleMessage( response ) );
 			}

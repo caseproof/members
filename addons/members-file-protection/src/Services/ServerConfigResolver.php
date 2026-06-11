@@ -30,7 +30,8 @@ class ServerConfigResolver {
 			return 'apache';
 		}
 
-		return 'apache';
+		// Unknown server — avoid writing .htaccess on stacks that may not use it.
+		return 'nginx';
 	}
 
 	/**

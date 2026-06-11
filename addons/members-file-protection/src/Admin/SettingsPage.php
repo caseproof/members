@@ -206,14 +206,14 @@ class SettingsPage {
 			'members-file-protection-admin',
 			plugin_dir_url( dirname( __DIR__ ) ) . 'assets/css/admin.css',
 			array( 'members-admin' ),
-			'1.0.0'
+			'1.0.7'
 		);
 
 		wp_enqueue_script(
 			'members-file-protection-settings',
 			plugin_dir_url( dirname( __DIR__ ) ) . 'assets/js/settings.js',
 			array(),
-			'1.0.2',
+			'1.0.3',
 			true
 		);
 
