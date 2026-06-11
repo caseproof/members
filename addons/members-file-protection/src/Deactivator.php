@@ -15,6 +15,7 @@ register_autoloader();
 
 use Members\FileProtection\Services\ApacheServerConfig;
 use Members\FileProtection\Services\MaintenanceService;
+use Members\FileProtection\Services\ServerConfigResolver;
 use Members\FileProtection\Services\Settings;
 
 /**
@@ -23,13 +24,16 @@ use Members\FileProtection\Services\Settings;
 class Deactivator {
 
 	/**
-	 * @return void
+	 * @return bool False when server rule cleanup could not complete.
 	 */
-	public static function deactivate() {
+	public static function deactivate(): bool {
 		MaintenanceService::unschedule();
 
-		$apache = new ApacheServerConfig( new Settings() );
-		$apache->remove();
+		$settings = new Settings();
+		$removed  = ServerConfigResolver::create( $settings )->remove();
+
+		// Always strip uploads .htaccess markers; nginx sites may still have them from prior stacks.
+		$removed = ( new ApacheServerConfig( $settings ) )->remove() && $removed;
 
 		delete_option( 'members_fp_nginx_manual' );
 		delete_option( 'members_fp_htaccess_manual' );
@@ -41,5 +45,7 @@ class Deactivator {
 		 * Database tables and attachment meta are preserved so data survives reactivation.
 		 */
 		do_action( 'members_fp_deactivated' );
+
+		return $removed;
 	}
 }

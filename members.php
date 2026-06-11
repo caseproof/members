@@ -500,7 +500,7 @@ final class Members_Plugin {
 	 * Runs an add-on deactivation hook when toggled off in Members → Add-ons.
 	 *
 	 * @param string $addon Add-on directory name.
-	 * @return void
+	 * @return bool False when a deactivator reports incomplete cleanup.
 	 */
 	public function run_addon_deactivator( $addon ) {
 
@@ -517,9 +517,12 @@ final class Members_Plugin {
 
 			if ( ! empty( $namespace ) ) {
 				$namespace .= '\Deactivator';
-				$namespace::deactivate();
+
+				return (bool) $namespace::deactivate();
 			}
 		}
+
+		return true;
 	}
 
 	public function block_editor_assets() {

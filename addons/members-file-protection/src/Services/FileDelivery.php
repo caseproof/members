@@ -47,8 +47,20 @@ class FileDelivery implements FileDeliveryInterface {
 		$method   = isset( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) : 'GET';
 
 		if ( $size > 0 && isset( $_SERVER['HTTP_RANGE'] ) && preg_match( '/bytes=(\d*)-(\d*)/', wp_unslash( $_SERVER['HTTP_RANGE'] ), $matches ) ) {
-			$start = '' !== $matches[1] ? (int) $matches[1] : 0;
-			$end   = '' !== $matches[2] ? (int) $matches[2] : $size - 1;
+			if ( '' !== $matches[1] ) {
+				$start = (int) $matches[1];
+				$end   = '' !== $matches[2] ? (int) $matches[2] : $size - 1;
+			} elseif ( '' !== $matches[2] ) {
+				$suffix = (int) $matches[2];
+
+				if ( $suffix >= $size ) {
+					$start = 0;
+					$end   = $size - 1;
+				} else {
+					$start = $size - $suffix;
+					$end   = $size - 1;
+				}
+			}
 
 			if ( $start > $end || $start >= $size ) {
 				status_header( 416 );

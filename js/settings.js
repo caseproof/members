@@ -29,6 +29,22 @@ jQuery(document).ready(function($) {
 		}
 	);
 
+	function membersAddonToggleMessage( response ) {
+		if ( response && response.responseJSON && response.responseJSON.data && response.responseJSON.data.msg ) {
+			return response.responseJSON.data.msg;
+		}
+
+		if ( response && response.data && response.data.msg ) {
+			return response.data.msg;
+		}
+
+		if ( typeof membersAddons !== 'undefined' && membersAddons.i18n && membersAddons.i18n.toggleError ) {
+			return membersAddons.i18n.toggleError;
+		}
+
+		return 'Could not update the add-on.';
+	}
+
 	$('.activate-addon').on('click', function(e) {
 		var $this = $(this);
 		var addon = $this.data('addon');
@@ -44,19 +60,19 @@ jQuery(document).ready(function($) {
 			},
 		})
 		.done(function(response) {
-			if (response.success == true) {
+			if ( response.success === true ) {
 				$this.find('.action-label').html(response.data.action_label);
 				var svg = $this.find('svg');
 				svg.removeClass();
 				svg.addClass(response.data.status);
 			} else {
-				alert(response.data.msg);
+				alert( membersAddonToggleMessage( response ) );
 			}
 		})
-		.fail(function(response) {
-			alert(response.data.msg);
+		.fail(function( jqXHR ) {
+			alert( membersAddonToggleMessage( jqXHR ) );
 		})
-		.always(function(response) {
+		.always(function() {
 			$this.removeClass('processing');
 		});
 	});

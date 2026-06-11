@@ -149,9 +149,11 @@ final class Settings_Page {
 	 * @return void
 	 */
 	public function toggle_addon() {
-		
+
 		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( $_POST['nonce'], 'mbrs_toggle_addon' ) ) {
-			die();
+			wp_send_json_error( array(
+				'msg' => esc_html__( 'Your session has expired. Please refresh the page and try again.', 'members' ),
+			) );
 		}
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( array(
@@ -166,38 +168,49 @@ final class Settings_Page {
 			) );
 		}
 
+		if ( ! file_exists( trailingslashit( members_plugin()->dir ) . "addons/{$addon}/addon.php" ) ) {
+			wp_send_json_error( array(
+				'msg' => esc_html__( 'Unknown add-on.', 'members' ),
+			) );
+		}
+
 		// Grab the currently active add-ons
-		$active_addons      = get_option( 'members_active_addons', array() );
-		$addon_to_deactivate = null;
+		$active_addons = get_option( 'members_active_addons', array() );
 
 		if ( ! in_array( $addon, $active_addons, true ) ) { // Activate the addon
 			$active_addons[] = $addon;
+
+			// Persist before activation side effects so a failed activator can self-heal on next load.
+			update_option( 'members_active_addons', array_values( $active_addons ) );
+
+			members_plugin()->run_addon_activator( $addon );
+
 			$response = array(
 				'status' => 'active',
 				'action_label' => esc_html__( 'Active', 'members' ),
 				'msg' => esc_html__( 'Add-on activated', 'members' )
 			);
 
-			// Run the add-on's activation hook
-			members_plugin()->run_addon_activator( $addon );
-
 		} else { // Deactivate the addon
+			// Run cleanup while the add-on is still marked active (matches WP plugin deactivation order).
+			if ( ! members_plugin()->run_addon_deactivator( $addon ) ) {
+				wp_send_json_error( array(
+					'msg' => esc_html__( 'Add-on cleanup did not complete. The add-on is still active.', 'members' ),
+				) );
+			}
+
 			$key = array_search( $addon, $active_addons, true );
 			if ( false !== $key ) {
 				unset( $active_addons[ $key ] );
 			}
-			$addon_to_deactivate = $addon;
+
+			update_option( 'members_active_addons', array_values( $active_addons ) );
+
 			$response = array(
 				'status' => 'inactive',
 				'action_label' => esc_html__( 'Activate', 'members' ),
 				'msg' => esc_html__( 'Add-on deactivated', 'members' )
 			);
-		}
-
-		update_option( 'members_active_addons', $active_addons );
-
-		if ( null !== $addon_to_deactivate ) {
-			members_plugin()->run_addon_deactivator( $addon_to_deactivate );
 		}
 
 		wp_send_json_success( $response );
