@@ -1471,6 +1471,12 @@ body.admin_page_members-about #wpbody-content {
 
 /* Role checkboxes in the Content Permissions meta box. */
 
+.members-cp-all-logged-in {
+	margin: 0.75em 0;
+	padding-bottom: 0.75em;
+	border-bottom: 1px solid rgb(223, 223, 223);
+}
+
 .members-cp-role-list-wrap {
 	overflow: auto;
 	min-height: 42px;
@@ -1478,6 +1484,12 @@ body.admin_page_members-about #wpbody-content {
 	padding: 0 0.9em;
 	border: solid 1px rgb(223, 223, 223);
 	background-color: rgb(253, 253, 253);
+}
+
+.members-cp-role-list-wrap.is-disabled,
+.members-cp-role-list.is-disabled {
+	opacity: 0.4;
+	pointer-events: none;
 }
 
 /* Promotional Footer */

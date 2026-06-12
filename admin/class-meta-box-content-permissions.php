@@ -165,8 +165,9 @@ final class Meta_Box_Content_Permissions {
 
 		// Get the roles saved for the post.
 		$roles = members_get_post_roles( $post->ID );
+		$all_logged_in = members_post_allows_all_logged_in( $post->ID );
 
-		if ( empty( $roles ) && $this->is_new_post )
+		if ( empty( $roles ) && $this->is_new_post && ! $all_logged_in )
 			$roles = apply_filters( 'members_default_post_roles', array(), $post->ID );
 
 		// Convert old post meta to the new system if no roles were found.
@@ -212,14 +213,21 @@ final class Meta_Box_Content_Permissions {
 						<?php esc_html_e( 'Limit access to the content to users of the selected roles.', 'members' ); ?>
 					</span>
 
-					<div class="members-cp-role-list-wrap">
+					<p class="members-cp-all-logged-in">
+						<label>
+							<input type="checkbox" name="members_access_all_logged_in" value="1" <?php checked( $all_logged_in ); ?> data-members-cp-all-logged-in />
+							<?php esc_html_e( 'Allow all logged-in users', 'members' ); ?>
+						</label>
+					</p>
+
+					<div class="members-cp-role-list-wrap<?php echo $all_logged_in ? ' is-disabled' : ''; ?>" data-members-cp-role-fieldset>
 
 						<ul class="members-cp-role-list">
 
 						<?php foreach ( $_wp_roles as $role => $name ) : ?>
 							<li>
 								<label>
-									<input type="checkbox" name="members_access_role[]" <?php checked( is_array( $roles ) && in_array( $role, $roles ) ); ?> value="<?php echo esc_attr( $role ); ?>" />
+									<input type="checkbox" name="members_access_role[]" <?php checked( is_array( $roles ) && in_array( $role, $roles ) ); ?> <?php disabled( $all_logged_in ); ?> value="<?php echo esc_attr( $role ); ?>" data-members-cp-role />
 									<?php echo esc_html( members_translate_role( $role ) ); ?>
 								</label>
 							</li>
@@ -229,7 +237,7 @@ final class Meta_Box_Content_Permissions {
 					</div>
 
 					<span class="members-tabs-description">
-						<?php printf( esc_html__( 'If no roles are selected, everyone can view the content. The author, any users who can edit the content, and users with the %s capability can view the content regardless of role.', 'members' ), '<code>restrict_content</code>' ); ?>
+						<?php printf( esc_html__( 'Allow all logged-in users, or select specific roles to restrict access. If no restriction is set, everyone can view the content. The author, any users who can edit the content, and users with the %s capability can view the content regardless of role.', 'members' ), '<code>restrict_content</code>' ); ?>
 					</span>
 
 				</div>
@@ -298,25 +306,34 @@ final class Meta_Box_Content_Permissions {
 
 		/* === Roles === */
 
-		// Get the current roles.
-		$current_roles = members_get_post_roles( $post_id );
+		$all_logged_in = ! empty( $_POST['members_access_all_logged_in'] );
 
-		// Get the new roles.
-		$new_roles = isset( $_POST['members_access_role'] ) ? wp_unslash( $_POST['members_access_role'] ) : '';
+		members_set_post_allows_all_logged_in( $post_id, $all_logged_in );
 
-		// If we have an array of new roles, set the roles (orphan slugs are left intact by members_set_post_roles).
-		if ( is_array( $new_roles ) ) {
-			members_set_post_roles( $post_id, array_map( 'members_sanitize_role', $new_roles ) );
-		}
+		if ( $all_logged_in ) {
+			members_delete_post_roles( $post_id );
+		} else {
 
-		// No checkboxes posted: clear visible roles but keep orphan slugs (deleted custom roles).
-		elseif ( ! empty( $current_roles ) ) {
-			$orphan_roles = members_get_orphan_post_roles( $post_id );
+			// Get the current roles.
+			$current_roles = members_get_post_roles( $post_id );
 
-			if ( ! empty( $orphan_roles ) ) {
-				members_set_post_roles( $post_id, $orphan_roles );
-			} else {
-				members_delete_post_roles( $post_id );
+			// Get the new roles.
+			$new_roles = isset( $_POST['members_access_role'] ) ? wp_unslash( $_POST['members_access_role'] ) : '';
+
+			// If we have an array of new roles, set the roles (orphan slugs are left intact by members_set_post_roles).
+			if ( is_array( $new_roles ) ) {
+				members_set_post_roles( $post_id, array_map( 'members_sanitize_role', $new_roles ) );
+			}
+
+			// No checkboxes posted: clear visible roles but keep orphan slugs (deleted custom roles).
+			elseif ( ! empty( $current_roles ) ) {
+				$orphan_roles = members_get_orphan_post_roles( $post_id );
+
+				if ( ! empty( $orphan_roles ) ) {
+					members_set_post_roles( $post_id, $orphan_roles );
+				} else {
+					members_delete_post_roles( $post_id );
+				}
 			}
 		}
 
