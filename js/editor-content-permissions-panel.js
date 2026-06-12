@@ -58,6 +58,7 @@
 
 		const roles = editedMeta._members_access_role;
 		const roleList = Array.isArray( roles ) ? roles : roles ? [ roles ] : [];
+		const allLoggedIn = !! editedMeta._members_access_all_logged_in;
 
 		function patchMeta( changes ) {
 			const editor = wp.data.select( 'core/editor' );
@@ -72,14 +73,14 @@
 
 		useEffect(
 			function () {
-				if ( ! postType || defaultsApplied.current || ! isNewPost || ! defaultRoles.length || roleList.length ) {
+				if ( ! postType || defaultsApplied.current || ! isNewPost || ! defaultRoles.length || roleList.length || allLoggedIn ) {
 					return;
 				}
 
 				defaultsApplied.current = true;
 				setAccessRoles( defaultRoles.slice() );
 			},
-			[ postType, isNewPost, roleList.length, defaultRoles ]
+			[ postType, isNewPost, roleList.length, defaultRoles, allLoggedIn ]
 		);
 
 		if ( ! postType ) {
@@ -141,20 +142,42 @@
 				'p',
 				{ className: 'description' },
 				__(
-					'Limit access to users with the selected roles. If none are selected, everyone can view the content.',
+					'Allow all logged-in users, or select specific roles to restrict access. If no restriction is set, everyone can view the content. The author, users who can edit the content, and users with the restrict_content capability can always view the content.',
 					'members'
 				)
 			),
-			Object.keys( roleLabels ).map( function ( role ) {
-				return el( CheckboxControl, {
-					key: role,
-					label: roleLabels[ role ],
-					checked: roleList.indexOf( role ) !== -1,
-					onChange: function ( checked ) {
-						toggleRole( role, checked );
-					},
-				} );
+			el( CheckboxControl, {
+				label: __( 'Allow all logged-in users', 'members' ),
+				checked: allLoggedIn,
+				onChange: function ( checked ) {
+					if ( checked ) {
+						patchMeta( {
+							_members_access_all_logged_in: true,
+							_members_access_role: [],
+						} );
+					} else {
+						patchMeta( { _members_access_all_logged_in: false } );
+					}
+				},
 			} ),
+			el(
+				'div',
+				{
+					className:
+						'members-cp-role-list' + ( allLoggedIn ? ' is-disabled' : '' ),
+				},
+				Object.keys( roleLabels ).map( function ( role ) {
+					return el( CheckboxControl, {
+						key: role,
+						label: roleLabels[ role ],
+						checked: roleList.indexOf( role ) !== -1,
+						disabled: allLoggedIn,
+						onChange: function ( checked ) {
+							toggleRole( role, checked );
+						},
+					} );
+				} )
+			),
 			memberPressUpsell
 				? el(
 						'div',

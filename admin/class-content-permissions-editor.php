@@ -103,6 +103,20 @@ final class Content_Permissions_Editor {
 				)
 			);
 
+			register_post_meta(
+				$post_type,
+				'_members_access_all_logged_in',
+				array(
+					'type'              => 'boolean',
+					'single'            => true,
+					'default'           => false,
+					'description'       => __( 'Whether any logged-in user may view this content.', 'members' ),
+					'show_in_rest'      => true,
+					'auth_callback'     => array( $this, 'auth_content_permissions_meta' ),
+					'sanitize_callback' => 'rest_sanitize_boolean',
+				)
+			);
+
 			if ( empty( self::$rest_prepare_hooks_added[ $post_type ] ) ) {
 				add_filter( "rest_prepare_{$post_type}", array( $this, 'prepare_rest_content_permissions_meta' ), 10, 3 );
 				self::$rest_prepare_hooks_added[ $post_type ] = true;
@@ -142,33 +156,60 @@ final class Content_Permissions_Editor {
 
 		$meta = $request->get_param( 'meta' );
 
-		if ( ! is_array( $meta ) || ! array_key_exists( '_members_access_role', $meta ) ) {
+		if ( ! is_array( $meta ) ) {
+			return;
+		}
+
+		$has_role_meta       = array_key_exists( '_members_access_role', $meta );
+		$has_all_logged_meta = array_key_exists( '_members_access_all_logged_in', $meta );
+
+		if ( ! $has_role_meta && ! $has_all_logged_meta ) {
 			return;
 		}
 
 		if ( ! $this->user_can_modify_content_permissions_via_rest( $post_id, $creating, $prepared_post, $request ) ) {
-			unset( $meta['_members_access_role'] );
+			if ( $has_role_meta ) {
+				unset( $meta['_members_access_role'] );
+			}
+
+			if ( $has_all_logged_meta ) {
+				unset( $meta['_members_access_all_logged_in'] );
+			}
+
 			$request->set_param( 'meta', $meta );
 			return;
 		}
 
-		$roles = $meta['_members_access_role'];
+		$all_logged_in = false;
 
-		if ( ! is_array( $roles ) ) {
-			return;
+		if ( $has_all_logged_meta ) {
+			$all_logged_in = rest_sanitize_boolean( $meta['_members_access_all_logged_in'] );
+			$meta['_members_access_all_logged_in'] = $all_logged_in;
 		}
 
-		$sanitized = members_sanitize_access_role_meta_list( $roles );
+		if ( $all_logged_in ) {
+			$meta['_members_access_role'] = array();
+		} elseif ( $has_role_meta ) {
+			$roles = $meta['_members_access_role'];
 
-		if ( $post_id && ! $creating ) {
-			$orphans = members_get_orphan_post_roles( $post_id );
-
-			if ( ! empty( $orphans ) ) {
-				$sanitized = array_values( array_unique( array_merge( $sanitized, $orphans ) ) );
+			if ( ! is_array( $roles ) ) {
+				return;
 			}
+
+			$sanitized = members_sanitize_access_role_meta_list( $roles );
+
+			if ( $post_id && ! $creating ) {
+				$orphans = members_get_orphan_post_roles( $post_id );
+
+				if ( ! empty( $orphans ) ) {
+					$sanitized = array_values( array_unique( array_merge( $sanitized, $orphans ) ) );
+				}
+			}
+
+			$meta['_members_access_role'] = $sanitized;
+			$meta['_members_access_all_logged_in'] = false;
 		}
 
-		$meta['_members_access_role'] = $sanitized;
 		$request->set_param( 'meta', $meta );
 	}
 
@@ -222,9 +263,8 @@ final class Content_Permissions_Editor {
 	 */
 	public function auth_content_permissions_meta( $allowed, $meta_key, $object_id ) {
 
-		if ( ! $allowed ) {
-			return false;
-		}
+		// Protected meta keys (leading underscore) are passed with $allowed = false.
+		// This callback must authorize the request itself rather than trusting $allowed.
 
 		if ( ! current_user_can( 'restrict_content' ) ) {
 			return false;
@@ -308,7 +348,7 @@ final class Content_Permissions_Editor {
 		$post_id       = $post ? $post->ID : 0;
 		$default_roles = array();
 
-		if ( $post instanceof \WP_Post && $post_id && empty( members_get_post_roles_for_rest( $post_id ) ) && 'auto-draft' === $post->post_status ) {
+		if ( $post instanceof \WP_Post && $post_id && empty( members_get_post_roles_for_rest( $post_id ) ) && ! members_post_allows_all_logged_in( $post_id ) && 'auto-draft' === $post->post_status ) {
 			$default_roles = apply_filters( 'members_default_post_roles', array(), $post_id );
 		}
 
