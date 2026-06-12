@@ -24,7 +24,57 @@ add_action( 'after_setup_theme', 'members_enable_content_permissions', 0 );
  */
 function members_has_post_permissions( $post_id = '' ) {
 
-	return members_has_post_roles( $post_id );
+	return members_has_post_roles( $post_id ) || members_post_allows_all_logged_in( $post_id );
+}
+
+/**
+ * Whether a post allows any logged-in user to view its content.
+ *
+ * @since  3.2.23
+ * @access public
+ * @param  int  $post_id  Post ID.
+ * @return bool
+ */
+function members_post_allows_all_logged_in( $post_id ) {
+
+	if ( ! $post_id ) {
+		$post_id = get_the_ID();
+	}
+
+	$value = get_post_meta( $post_id, '_members_access_all_logged_in', true );
+
+	return ! empty( $value ) && '0' !== $value;
+}
+
+/**
+ * Sets whether a post allows any logged-in user to view its content.
+ *
+ * @since  3.2.23
+ * @access public
+ * @param  int   $post_id  Post ID.
+ * @param  bool  $allowed  Whether all logged-in users may view the post.
+ * @return void
+ */
+function members_set_post_allows_all_logged_in( $post_id, $allowed ) {
+
+	if ( $allowed ) {
+		update_post_meta( $post_id, '_members_access_all_logged_in', 1 );
+	} else {
+		members_delete_post_allows_all_logged_in( $post_id );
+	}
+}
+
+/**
+ * Deletes the all-logged-in access flag for a post.
+ *
+ * @since  3.2.23
+ * @access public
+ * @param  int  $post_id  Post ID.
+ * @return bool
+ */
+function members_delete_post_allows_all_logged_in( $post_id ) {
+
+	return delete_post_meta( $post_id, '_members_access_all_logged_in' );
 }
 
 /**
