@@ -156,6 +156,8 @@
 							_members_access_role: [],
 						} );
 					} else {
+						// Let the defaults effect run again when roles were cleared above.
+						defaultsApplied.current = false;
 						patchMeta( { _members_access_all_logged_in: false } );
 					}
 				},
