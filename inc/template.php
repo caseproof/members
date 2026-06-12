@@ -14,14 +14,16 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * Conditional tag to check if a user can view a specific post.  A user cannot view a post if their
- * user role has not been selected in the 'Content Permissions' meta box on the edit post screen in
- * the admin.  Non-logged in site visitors cannot view posts if roles were selected.  If no roles
- * were selected, all users and site visitors can view the content.
+ * Conditional tag to check if a user can view a specific post.
  *
- * There are exceptions to this rule though.  The post author, any user with the `restrict_content`
- * capability, and users that have the ability to edit the post can always view the post, even if
- * their role was not granted permission to view it.
+ * Content may be restricted in three ways:
+ *
+ * - All logged-in users: guests are blocked; any logged-in user may view.
+ * - Selected roles: guests are blocked; only users with a selected role may view.
+ * - No restriction: everyone may view.
+ *
+ * The post author, any user with the `restrict_content` capability, and users that have the
+ * ability to edit the post can always view the post, even when access is restricted.
  *
  * @since  0.2.0
  * @access public
@@ -40,22 +42,43 @@ function members_can_user_view_post( $user_id, $post_id = '' ) {
 	$post = get_post( $post_id );
 
 	// Assume the user can view the post at this point. */
-	$can_view = true;
+	$can_view      = true;
+	$roles         = array();
+	$all_logged_in = false;
 
 	// The plugin is only going to handle permissions if the 'content permissions' feature
 	// is active.  If not active, the user can always view the post.  However, developers
 	// can roll their own handling of this and filter `members_can_user_view_post`.
 	if ( $post instanceof \WP_Post && members_content_permissions_enabled() ) {
 
+		$all_logged_in = members_post_allows_all_logged_in( $post_id );
+
 		// Get the roles selected by the user.
 		$roles = members_get_post_roles( $post_id );
 
 		// Check if there are any old roles with the '_role' meta key.
-		if ( empty( $roles ) )
+		if ( empty( $roles ) ) {
 			$roles = members_convert_old_post_meta( $post_id );
+		}
 
-		// If we have an array of roles, let's get to work.
-		if ( ! empty( $roles ) && is_array( $roles ) ) {
+		if ( ! is_array( $roles ) ) {
+			$roles = array();
+		}
+
+		// Restricted to any logged-in user (flag takes precedence over stale role meta).
+		if ( $all_logged_in ) {
+
+			$can_view = false;
+
+			if ( is_feed() || ! is_user_logged_in() ) {
+				$can_view = false;
+			} else {
+				$can_view = true;
+			}
+		}
+
+		// Restricted to specific roles.
+		elseif ( ! empty( $roles ) ) {
 
 			// Since specific roles were given, let's assume the user can't view
 			// the post at this point.  The rest of this functionality should try
@@ -91,7 +114,9 @@ function members_can_user_view_post( $user_id, $post_id = '' ) {
 	}
 
 	// Set the check for the parent post based on whether we have permissions for this post.
-	$check_parent = empty( $roles ) && $can_view;
+	$check_parent = empty( $roles )
+		&& ! $all_logged_in
+		&& $can_view;
 
 	// Set to `FALSE` to avoid hierarchical checking.
 	if ( apply_filters( 'members_check_parent_post_permission', $check_parent, $post_id, $user_id ) ) {
