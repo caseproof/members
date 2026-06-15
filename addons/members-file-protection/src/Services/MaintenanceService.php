@@ -56,7 +56,7 @@ class MaintenanceService {
 
 		$wpdb->query(
 			$wpdb->prepare(
-				'DELETE FROM ' . Installer::tokensTable() . " WHERE expires_at IS NOT NULL AND expires_at != '' AND expires_at < %s",
+				'DELETE FROM ' . Installer::tokensTable() . ' WHERE expires_at IS NOT NULL AND expires_at < %s',
 				$now
 			)
 		);

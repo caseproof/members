@@ -64,14 +64,14 @@ class MetaboxController {
 			'members-file-protection-admin',
 			plugin_dir_url( dirname( __DIR__ ) ) . 'assets/css/admin.css',
 			array( 'dashicons' ),
-			'1.0.7'
+			'1.0.8'
 		);
 
 		wp_enqueue_script(
 			'members-file-protection-metabox',
 			plugin_dir_url( dirname( __DIR__ ) ) . 'assets/js/metabox.js',
 			array(),
-			'1.0.4',
+			'1.0.6',
 			true
 		);
 
@@ -87,6 +87,9 @@ class MetaboxController {
 					'copy'     => __( 'Copy', 'members' ),
 					'copied'   => __( 'Copied!', 'members' ),
 					'revoke'   => __( 'Revoke', 'members' ),
+					'revokeAll' => __( 'Delete all', 'members' ),
+					'revokeAllConfirm' => __( 'Delete all share links for this file?', 'members' ),
+					'revokeAllError' => __( 'Could not delete share links.', 'members' ),
 					'error'    => __( 'Could not create share link.', 'members' ),
 					'revokeError' => __( 'Could not revoke share link.', 'members' ),
 				),
@@ -208,27 +211,34 @@ class MetaboxController {
 						<p><strong><?php esc_html_e( 'Private share links', 'members' ); ?></strong></p>
 						<p class="description"><?php esc_html_e( 'Generate expiring links that grant temporary access without login.', 'members' ); ?></p>
 						<p class="members-fp-metabox__share-options">
-							<select data-members-fp-share-expires>
-								<option value="hour"><?php esc_html_e( '1 hour', 'members' ); ?></option>
-								<option value="day" selected><?php esc_html_e( '1 day', 'members' ); ?></option>
-								<option value="week"><?php esc_html_e( '1 week', 'members' ); ?></option>
-								<option value="month"><?php esc_html_e( '30 days', 'members' ); ?></option>
-								<option value="never"><?php esc_html_e( 'Never expires', 'members' ); ?></option>
-							</select>
-							<input type="number" min="0" step="1" class="small-text" placeholder="<?php esc_attr_e( 'Max uses', 'members' ); ?>" data-members-fp-share-max-uses title="<?php esc_attr_e( 'Max uses (0 = unlimited)', 'members' ); ?>" />
+							<label>
+								<span class="screen-reader-text"><?php esc_html_e( 'Link expiry', 'members' ); ?></span>
+								<select data-members-fp-share-expires>
+									<option value="hour"><?php esc_html_e( '1 hour', 'members' ); ?></option>
+									<option value="day" selected><?php esc_html_e( '1 day', 'members' ); ?></option>
+									<option value="week"><?php esc_html_e( '1 week', 'members' ); ?></option>
+									<option value="month"><?php esc_html_e( '30 days', 'members' ); ?></option>
+									<option value="never"><?php esc_html_e( 'Never expires', 'members' ); ?></option>
+								</select>
+							</label>
+							<label class="members-fp-metabox__share-max-uses">
+								<?php esc_html_e( 'Max uses', 'members' ); ?>
+								<input type="number" min="0" step="1" class="small-text" value="0" data-members-fp-share-max-uses title="<?php esc_attr_e( '0 = unlimited', 'members' ); ?>" />
+							</label>
 						</p>
 						<p class="members-fp-metabox__share-actions">
 							<button type="button" class="button" data-members-fp-share-generate><?php esc_html_e( 'Generate link', 'members' ); ?></button>
+							<button type="button" class="button-link<?php echo empty( $tokens ) ? ' is-hidden' : ''; ?>" data-members-fp-share-revoke-all><?php esc_html_e( 'Delete all', 'members' ); ?></button>
 						</p>
 						<ul class="members-fp-metabox__share-list" data-members-fp-share-list>
 							<?php foreach ( $tokens as $token ) : ?>
 								<?php
 								$share_url = $this->container->get( ShareTokenService::class )->buildShareUrl( (int) $post->ID, $token->token );
-								$expires   = $token->expires_at ? get_date_from_gmt( $token->expires_at, get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) : __( 'Never', 'members' );
+								$summary   = $this->container->get( ShareTokenService::class )->formatTokenSummary( $token->expires_at, (int) $token->use_count, (int) $token->max_uses );
 								?>
 								<li data-token-id="<?php echo esc_attr( (string) $token->id ); ?>">
 									<code class="members-fp-share-url"><?php echo esc_html( $share_url ); ?></code>
-									<span class="description"><?php echo esc_html( sprintf( __( 'Expires: %s · Uses: %d/%s', 'members' ), $expires, (int) $token->use_count, (int) $token->max_uses > 0 ? (string) $token->max_uses : '∞' ) ); ?></span>
+									<span class="description members-fp-metabox__share-summary"><?php echo esc_html( $summary ); ?></span>
 									<button type="button" class="button-link" data-members-fp-share-revoke data-token-id="<?php echo esc_attr( (string) $token->id ); ?>"><?php esc_html_e( 'Revoke', 'members' ); ?></button>
 								</li>
 							<?php endforeach; ?>

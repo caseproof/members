@@ -107,6 +107,7 @@ class Plugin {
 		add_action( 'wp_ajax_members_fp_mark_htaccess_done', array( $this, 'ajax_mark_htaccess_done' ) );
 		add_action( 'wp_ajax_members_fp_create_share_link', array( $this, 'ajax_create_share_link' ) );
 		add_action( 'wp_ajax_members_fp_revoke_share_link', array( $this, 'ajax_revoke_share_link' ) );
+		add_action( 'wp_ajax_members_fp_revoke_all_share_links', array( $this, 'ajax_revoke_all_share_links' ) );
 		add_action( 'wp_ajax_members_fp_dismiss_notice', array( $this, 'ajax_dismiss_notice' ) );
 	}
 
@@ -252,6 +253,7 @@ class Plugin {
 	 */
 	public function register_query_var( $vars ) {
 		$vars[] = 'members_fp_gateway';
+		$vars[] = 'members_fp_token';
 		return $vars;
 	}
 
@@ -445,6 +447,38 @@ class Plugin {
 
 		$service->revoke( $token_id );
 		wp_send_json_success();
+	}
+
+	/**
+	 * Revokes all share link tokens for an attachment.
+	 *
+	 * @return void
+	 */
+	public function ajax_revoke_all_share_links() {
+		check_ajax_referer( 'members_fp_metabox', 'nonce' );
+
+		if ( ! Capabilities::currentUserCanManage() ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'members' ) ) );
+		}
+
+		$attachment_id = isset( $_POST['attachment_id'] ) ? (int) $_POST['attachment_id'] : 0;
+
+		if ( $attachment_id <= 0 || 'attachment' !== get_post_type( $attachment_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid attachment.', 'members' ) ) );
+		}
+
+		if ( ! current_user_can( 'edit_post', $attachment_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'members' ) ) );
+		}
+
+		$service = $this->container->get( Services\ShareTokenService::class );
+		$deleted   = $service->revokeAllForAttachment( $attachment_id );
+
+		wp_send_json_success(
+			array(
+				'deleted' => $deleted,
+			)
+		);
 	}
 
 	/**

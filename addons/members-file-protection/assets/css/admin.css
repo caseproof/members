@@ -76,7 +76,27 @@
 }
 
 .members-fp-metabox__share-options {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 12px;
+	align-items: center;
 	margin-bottom: 0;
+}
+
+.members-fp-metabox__share-max-uses {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	white-space: nowrap;
+}
+
+.members-fp-metabox__share-summary {
+	display: block;
+	margin-top: 4px;
+}
+
+.members-fp-metabox__share-actions .is-hidden {
+	display: none;
 }
 
 .members-fp-metabox__share-actions {

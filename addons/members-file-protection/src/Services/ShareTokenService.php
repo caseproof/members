@@ -81,7 +81,7 @@ class ShareTokenService {
 				SET use_count = use_count + 1
 				WHERE token = %s
 				AND attachment_id = %d
-				AND (expires_at IS NULL OR expires_at = '' OR expires_at > %s)
+				AND (expires_at IS NULL OR expires_at > %s)
 				AND (max_uses = 0 OR use_count < max_uses)",
 				$token,
 				(int) $attachment_id,
@@ -129,6 +129,9 @@ class ShareTokenService {
 			'token'      => $token,
 			'url'        => $this->buildShareUrl( (int) $attachment_id, $token ),
 			'expires_at' => $expires_at,
+			'max_uses'   => max( 0, (int) $max_uses ),
+			'use_count'  => 0,
+			'summary'    => $this->formatTokenSummary( $expires_at, 0, $max_uses ),
 		);
 	}
 
@@ -175,6 +178,46 @@ class ShareTokenService {
 	}
 
 	/**
+	 * Removes all share tokens for an attachment.
+	 *
+	 * @param int $attachment_id Attachment ID.
+	 * @return int Number of rows deleted.
+	 */
+	public function revokeAllForAttachment( $attachment_id ) {
+		global $wpdb;
+
+		return (int) $wpdb->delete(
+			Installer::tokensTable(),
+			array( 'attachment_id' => (int) $attachment_id ),
+			array( '%d' )
+		);
+	}
+
+	/**
+	 * Human-readable expiry and usage summary for admin UI.
+	 *
+	 * @param string|null $expires_at Expiry in GMT MySQL format.
+	 * @param int         $use_count  Times the link has been used.
+	 * @param int         $max_uses   Max uses (0 = unlimited).
+	 * @return string
+	 */
+	public function formatTokenSummary( $expires_at, $use_count, $max_uses ) {
+		$expires = $expires_at
+			? get_date_from_gmt( $expires_at, get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) )
+			: __( 'Never', 'members' );
+
+		$max_label = (int) $max_uses > 0 ? (string) (int) $max_uses : __( 'Unlimited', 'members' );
+
+		return sprintf(
+			/* translators: 1: expiry date/time, 2: current use count, 3: max uses or Unlimited */
+			__( 'Expires: %1$s · Uses: %2$d/%3$s', 'members' ),
+			$expires,
+			(int) $use_count,
+			$max_label
+		);
+	}
+
+	/**
 	 * Builds a shareable URL for an attachment.
 	 *
 	 * @param int    $attachment_id Attachment ID.
@@ -188,6 +231,19 @@ class ShareTokenService {
 			return '';
 		}
 
-		return add_query_arg( 'members_fp_token', rawurlencode( $token ), $url );
+		$gateway_path = wp_parse_url( $url, PHP_URL_PATH );
+
+		if ( ! is_string( $gateway_path ) || '' === $gateway_path ) {
+			return '';
+		}
+
+		// Route through WordPress so the token survives server rewrites on direct file URLs.
+		return add_query_arg(
+			array(
+				'members_fp_gateway' => $gateway_path,
+				'members_fp_token'     => $token,
+			),
+			home_url( '/' )
+		);
 	}
 }

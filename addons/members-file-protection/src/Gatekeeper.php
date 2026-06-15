@@ -100,7 +100,7 @@ class Gatekeeper {
 			return;
 		}
 
-		$token       = isset( $_GET['members_fp_token'] ) ? sanitize_text_field( wp_unslash( $_GET['members_fp_token'] ) ) : '';
+		$token       = $this->resolveShareToken();
 		$token_valid = '' !== $token && $this->shareTokens->validate( $token, $attachment );
 		$allowed     = $token_valid || $this->access->canAccess( $attachment, $user );
 
@@ -194,6 +194,29 @@ class Gatekeeper {
 		}
 
 		return '' !== $matches[1] && '0' === $matches[1];
+	}
+
+	/**
+	 * Reads a share token from the current request.
+	 *
+	 * @return string
+	 */
+	private function resolveShareToken(): string {
+		if ( isset( $_GET['members_fp_token'] ) ) {
+			$token = sanitize_text_field( wp_unslash( $_GET['members_fp_token'] ) );
+
+			if ( '' !== $token ) {
+				return $token;
+			}
+		}
+
+		$query_var = get_query_var( 'members_fp_token', '' );
+
+		if ( is_string( $query_var ) && '' !== $query_var ) {
+			return sanitize_text_field( $query_var );
+		}
+
+		return '';
 	}
 
 	/**

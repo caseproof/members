@@ -107,7 +107,7 @@ class NginxServerConfig implements ServerConfigInterface {
 
 		$lines = array(
 			'location ~* ^' . preg_quote( rtrim( $path, '/' ), '/' ) . '/.+\.(' . $exts . ')$ {',
-			'    rewrite ^ ' . $index . '?members_fp_gateway=$uri last;',
+			'    rewrite ^ ' . $index . '?members_fp_gateway=$uri$is_args$args last;',
 			'}',
 		);
 

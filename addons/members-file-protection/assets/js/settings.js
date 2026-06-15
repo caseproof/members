@@ -1,6 +1,42 @@
 ( function () {
 	'use strict';
 
+	function copyTextToClipboard( text ) {
+		if ( ! text ) {
+			return Promise.reject();
+		}
+
+		if ( window.navigator.clipboard && window.isSecureContext ) {
+			return window.navigator.clipboard.writeText( text );
+		}
+
+		return new Promise( function ( resolve, reject ) {
+			var textarea = document.createElement( 'textarea' );
+
+			textarea.value = text;
+			textarea.setAttribute( 'readonly', '' );
+			textarea.style.position = 'absolute';
+			textarea.style.left = '-9999px';
+			document.body.appendChild( textarea );
+			textarea.select();
+
+			try {
+				var copied = document.execCommand( 'copy' );
+				document.body.removeChild( textarea );
+
+				if ( copied ) {
+					resolve();
+					return;
+				}
+
+				reject();
+			} catch ( error ) {
+				document.body.removeChild( textarea );
+				reject( error );
+			}
+		} );
+	}
+
 	if ( typeof membersFileProtection === 'undefined' ) {
 		return;
 	}
@@ -140,7 +176,7 @@
 			var text = codeBlock.textContent || '';
 			var original = copyButton.textContent;
 
-			navigator.clipboard.writeText( text ).then( function () {
+			copyTextToClipboard( text ).then( function () {
 				copyButton.textContent = membersFileProtection.i18n.copied;
 				copyButton.setAttribute( 'aria-label', 'Copied to clipboard' );
 
