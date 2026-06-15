@@ -35,7 +35,7 @@ function members_has_post_permissions( $post_id = '' ) {
  * @param  int  $post_id  Post ID.
  * @return bool
  */
-function members_post_allows_all_logged_in( $post_id ) {
+function members_post_allows_all_logged_in( $post_id = '' ) {
 
 	if ( ! $post_id ) {
 		$post_id = get_the_ID();

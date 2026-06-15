@@ -68,13 +68,7 @@ function members_can_user_view_post( $user_id, $post_id = '' ) {
 		// Restricted to any logged-in user (flag takes precedence over stale role meta).
 		if ( $all_logged_in ) {
 
-			$can_view = false;
-
-			if ( is_feed() || ! is_user_logged_in() ) {
-				$can_view = false;
-			} else {
-				$can_view = true;
-			}
+			$can_view = is_user_logged_in() && ! is_feed();
 		}
 
 		// Restricted to specific roles.
