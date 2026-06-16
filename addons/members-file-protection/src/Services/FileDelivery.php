@@ -10,6 +10,7 @@ namespace Members\FileProtection\Services;
 defined( 'ABSPATH' ) || exit;
 
 use Members\FileProtection\Contracts\FileDeliveryInterface;
+use Members\FileProtection\Services\DownloadRequestDetector;
 
 /**
  * Secure chunked file delivery.
@@ -85,7 +86,9 @@ class FileDelivery implements FileDeliveryInterface {
 			}
 
 			header( 'Content-Length: ' . (string) $length );
-			header( 'Content-Disposition: inline; filename="' . rawurlencode( $filename ) . '"' );
+			header(
+				'Content-Disposition: ' . DownloadRequestDetector::contentDisposition( $filename ) . '; filename="' . rawurlencode( $filename ) . '"'
+			);
 			header( 'Pragma: no-cache' );
 		}
 

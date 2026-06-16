@@ -204,7 +204,7 @@ class MetaboxController {
 					<p>
 						<label for="members_fp_download_limit"><strong><?php esc_html_e( 'Download limit per user', 'members' ); ?></strong></label><br />
 						<input type="number" min="0" step="1" class="small-text" id="members_fp_download_limit" name="members_fp_download_limit" value="<?php echo esc_attr( (string) $dl_limit ); ?>" />
-						<span class="description"><?php esc_html_e( '0 = unlimited. Share links bypass this limit.', 'members' ); ?></span>
+						<span class="description"><?php esc_html_e( '0 = unlimited. Inline viewing does not count. Append ?members_fp_download=1 to download links. Share links and administrators bypass this limit.', 'members' ); ?></span>
 					</p>
 
 					<div class="members-fp-metabox__share" data-members-fp-share>

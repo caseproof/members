@@ -14,6 +14,7 @@ use Members\FileProtection\Contracts\FileDeliveryInterface;
 use Members\FileProtection\Contracts\FileRepositoryInterface;
 use Members\FileProtection\Contracts\UnauthorizedHandlerInterface;
 use Members\FileProtection\Services\DownloadLimitService;
+use Members\FileProtection\Services\DownloadRequestDetector;
 use Members\FileProtection\Services\OffloadIntegration;
 use Members\FileProtection\Services\Settings;
 use Members\FileProtection\Services\ShareTokenService;
@@ -103,13 +104,14 @@ class Gatekeeper {
 		$token       = $this->resolveShareToken();
 		$token_valid = '' !== $token && $this->shareTokens->validate( $token, $attachment );
 		$allowed     = $token_valid || $this->access->canAccess( $attachment, $user );
+		$is_download = DownloadRequestDetector::isDownloadRequest( $file_path );
 
 		if ( ! $allowed ) {
 			$this->unauthorized->handle( $attachment, $user );
 			return;
 		}
 
-		if ( ! $token_valid && ! $this->downloadLimits->canDownload( $attachment, $user ) ) {
+		if ( $is_download && ! $token_valid && ! $this->downloadLimits->canDownload( $attachment, $user ) ) {
 			$this->unauthorized->handle( $attachment, $user );
 			return;
 		}
@@ -123,7 +125,7 @@ class Gatekeeper {
 		}
 
 		if ( $local_available ) {
-			if ( ! $this->commitAuthorizedDownload( $token_valid, $token, $attachment, $user ) ) {
+			if ( ! $this->commitAuthorizedDownload( $token_valid, $token, $attachment, $user, $is_download ) ) {
 				$this->unauthorized->handle( $attachment, $user );
 				return;
 			}
@@ -137,7 +139,7 @@ class Gatekeeper {
 			return;
 		}
 
-		if ( ! $this->commitAuthorizedDownload( $token_valid, $token, $attachment, $user ) ) {
+		if ( ! $this->commitAuthorizedDownload( $token_valid, $token, $attachment, $user, $is_download ) ) {
 			$this->unauthorized->handle( $attachment, $user );
 			return;
 		}
@@ -156,9 +158,10 @@ class Gatekeeper {
 	 * @param string   $token         Share token value.
 	 * @param int      $attachment    Attachment ID.
 	 * @param \WP_User $user          Current user.
+	 * @param bool     $is_download   Whether this request counts as a download.
 	 * @return bool False when a share token could not be consumed.
 	 */
-	private function commitAuthorizedDownload( bool $uses_token, string $token, int $attachment, $user ): bool {
+	private function commitAuthorizedDownload( bool $uses_token, string $token, int $attachment, $user, bool $is_download ): bool {
 		if ( ! $this->shouldCountDownloadUsage() ) {
 			return true;
 		}
@@ -167,7 +170,7 @@ class Gatekeeper {
 			return $this->shareTokens->consume( $token, $attachment );
 		}
 
-		if ( $user && $user->ID > 0 ) {
+		if ( $is_download && $user && $user->ID > 0 ) {
 			$this->downloadLimits->recordDownload( $attachment, $user );
 		}
 

@@ -9,6 +9,7 @@ namespace Members\FileProtection\Services;
 
 defined( 'ABSPATH' ) || exit;
 
+use Members\FileProtection\Capabilities;
 use Members\FileProtection\Contracts\FileRepositoryInterface;
 
 /**
@@ -44,6 +45,10 @@ class DownloadLimitService {
 			return false;
 		}
 
+		if ( user_can( $user, Capabilities::manage() ) ) {
+			return true;
+		}
+
 		return $this->getUserDownloadCount( (int) $attachment_id, (int) $user->ID ) < $limit;
 	}
 
@@ -55,6 +60,10 @@ class DownloadLimitService {
 	 * @return void
 	 */
 	public function recordDownload( $attachment_id, $user ) {
+		if ( ! $user || 0 === $user->ID || user_can( $user, Capabilities::manage() ) ) {
+			return;
+		}
+
 		global $wpdb;
 
 		$wpdb->insert(

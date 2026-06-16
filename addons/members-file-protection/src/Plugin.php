@@ -254,6 +254,7 @@ class Plugin {
 	public function register_query_var( $vars ) {
 		$vars[] = 'members_fp_gateway';
 		$vars[] = 'members_fp_token';
+		$vars[] = 'members_fp_download';
 		return $vars;
 	}
 
