@@ -532,6 +532,8 @@ function members_filter_protected_posts_for_rest( $posts, $query ) {
 		return $posts;
 	}
 
+	$removed = 0;
+
 	foreach ( $posts as $key => $post ) {
 		if ( members_can_current_user_view_post( $post->ID ) ) {
 			continue;
@@ -543,7 +545,92 @@ function members_filter_protected_posts_for_rest( $posts, $query ) {
 		}
 
 		unset( $posts[ $key ] );
+		$removed++;
+	}
+
+	// Recompute the query metadata so the REST pagination headers (X-WP-Total /
+	// X-WP-TotalPages) reflect the filtered result set rather than the raw count.
+	// This is a defense-in-depth backstop for any posts not already excluded at
+	// the SQL level by members_exclude_protected_posts_from_rest_query().
+	if ( $removed > 0 && $query instanceof \WP_Query ) {
+
+		$query->found_posts = max( 0, (int) $query->found_posts - $removed );
+
+		$per_page = (int) $query->get( 'posts_per_page' );
+
+		if ( $per_page > 0 ) {
+			$query->max_num_pages = (int) ceil( $query->found_posts / $per_page );
+		}
 	}
 
 	return array_values( $posts );
+}
+
+/**
+ * Excludes protected posts from REST API queries at the SQL level.
+ *
+ * Filtering the results after the query runs (see
+ * members_filter_protected_posts_for_rest()) hides the post bodies but leaves
+ * the row count intact, so the X-WP-Total / X-WP-TotalPages headers and the
+ * per-page "empty array" responses can be used as a side channel to infer the
+ * existence and contents of hidden posts. Excluding the rows in the SQL query
+ * itself keeps the counts accurate and closes that side channel.
+ *
+ * @since 3.2.23
+ * @access public
+ * @param string    $where  The WHERE clause of the query.
+ * @param WP_Query  $query  The WP_Query object.
+ * @return string
+ */
+function members_exclude_protected_posts_from_rest_query( $where, $query ) {
+
+	global $wpdb;
+
+	if ( ! members_content_permissions_enabled() || ! members_is_hidden_protected_posts_enabled() ) {
+		return $where;
+	}
+
+	if ( ! defined( 'REST_REQUEST' ) || ! REST_REQUEST ) {
+		return $where;
+	}
+
+	// Permission managers may legitimately load protected posts (e.g. the block
+	// editor). They are still filtered per-post by the posts_results filter.
+	if ( current_user_can( 'restrict_content' ) ) {
+		return $where;
+	}
+
+	$roles = array();
+
+	if ( is_user_logged_in() ) {
+		$roles = (array) wp_get_current_user()->roles;
+	}
+
+	if ( empty( $roles ) ) {
+
+		// No roles to satisfy any restriction: exclude every post that carries an
+		// access-role restriction.
+		$where .= " AND {$wpdb->posts}.ID NOT IN ( SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_members_access_role' )";
+
+	} else {
+
+		$placeholders = implode( ', ', array_fill( 0, count( $roles ), '%s' ) );
+
+		// Exclude posts that are restricted by at least one role but none of the
+		// roles held by the current user.
+		$subquery = $wpdb->prepare(
+			"SELECT restricted.post_id FROM {$wpdb->postmeta} AS restricted
+				WHERE restricted.meta_key = '_members_access_role'
+				AND restricted.post_id NOT IN (
+					SELECT allowed.post_id FROM {$wpdb->postmeta} AS allowed
+					WHERE allowed.meta_key = '_members_access_role'
+					AND allowed.meta_value IN ( {$placeholders} )
+				)",
+			$roles
+		);
+
+		$where .= " AND {$wpdb->posts}.ID NOT IN ( {$subquery} )";
+	}
+
+	return $where;
 }
