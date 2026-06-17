@@ -112,7 +112,7 @@ class Gatekeeper {
 		}
 
 		if ( $is_download && ! $token_valid && ! $this->downloadLimits->canDownload( $attachment, $user ) ) {
-			$this->unauthorized->handle( $attachment, $user );
+			$this->unauthorized->handle( $attachment, $user, 'download_limit' );
 			return;
 		}
 

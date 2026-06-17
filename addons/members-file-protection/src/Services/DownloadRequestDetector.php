@@ -73,14 +73,18 @@ class DownloadRequestDetector {
 	 * @return bool
 	 */
 	private static function hasExplicitDownloadParam(): bool {
-		if ( isset( $_GET[ self::QUERY_ARG ] ) ) {
-			return rest_sanitize_boolean( wp_unslash( $_GET[ self::QUERY_ARG ] ) );
-		}
+		$args = array( self::QUERY_ARG, 'dl' );
 
-		$query_var = get_query_var( self::QUERY_ARG, '' );
+		foreach ( $args as $arg ) {
+			if ( isset( $_GET[ $arg ] ) && rest_sanitize_boolean( wp_unslash( $_GET[ $arg ] ) ) ) {
+				return true;
+			}
 
-		if ( is_string( $query_var ) && '' !== $query_var ) {
-			return rest_sanitize_boolean( $query_var );
+			$query_var = get_query_var( $arg, '' );
+
+			if ( is_string( $query_var ) && '' !== $query_var && rest_sanitize_boolean( $query_var ) ) {
+				return true;
+			}
 		}
 
 		return false;

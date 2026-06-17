@@ -306,7 +306,7 @@ class SettingsPage {
 				<hr />
 
 				<h2><?php esc_html_e( 'Unauthorized access', 'members' ); ?></h2>
-				<p class="description"><?php esc_html_e( 'What should happen when a user tries to access a protected file without permission.', 'members' ); ?></p>
+				<p class="description"><?php esc_html_e( 'What should happen when a guest tries to access a protected file without permission. Logged-in users who are denied (wrong role, download limit, etc.) always receive a 403 response instead of being redirected.', 'members' ); ?></p>
 				<fieldset>
 					<legend class="screen-reader-text"><?php esc_html_e( 'Unauthorized access behavior', 'members' ); ?></legend>
 					<p>

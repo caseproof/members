@@ -19,7 +19,8 @@ interface UnauthorizedHandlerInterface {
 	 *
 	 * @param int           $attachment_id Attachment ID (0 if unknown).
 	 * @param \WP_User|null $user          Current user.
+	 * @param string        $context       Optional denial context (e.g. download_limit).
 	 * @return void
 	 */
-	public function handle( int $attachment_id, ?\WP_User $user ): void;
+	public function handle( int $attachment_id, ?\WP_User $user, string $context = '' ): void;
 }

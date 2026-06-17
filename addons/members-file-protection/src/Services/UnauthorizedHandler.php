@@ -29,7 +29,7 @@ class UnauthorizedHandler implements UnauthorizedHandlerInterface {
 	/**
 	 * @inheritDoc
 	 */
-	public function handle( int $attachment_id, ?\WP_User $user ): void {
+	public function handle( int $attachment_id, ?\WP_User $user, string $context = '' ): void {
 		if ( ! headers_sent() ) {
 			header( 'X-Robots-Tag: noindex, nofollow', true );
 			CacheHeaders::sendNoStore();
@@ -39,6 +39,22 @@ class UnauthorizedHandler implements UnauthorizedHandlerInterface {
 			status_header( 404 );
 			nocache_headers();
 			exit;
+		}
+
+		$is_logged_in = $user && $user->ID > 0;
+
+		if ( $is_logged_in ) {
+			$message = 'download_limit' === $context
+				? __( 'You have reached the download limit for this file.', 'members' )
+				: __( 'You do not have permission to access this file.', 'members' );
+
+			status_header( 403 );
+			nocache_headers();
+			wp_die(
+				esc_html( $message ),
+				esc_html__( 'Forbidden', 'members' ),
+				array( 'response' => 403 )
+			);
 		}
 
 		if ( 'redirect' === $this->settings->getUnauthorizedBehavior() ) {

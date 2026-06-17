@@ -80,6 +80,7 @@ class Plugin {
 			return;
 		}
 
+		add_action( 'init', array( $this, 'register_shortcodes' ), 20 );
 		add_action( 'init', array( $this, 'register_meta' ), 20 );
 		add_action( 'init', array( $this, 'maybe_install_tables' ), 5 );
 		add_filter( 'query_vars', array( $this, 'register_query_var' ) );
@@ -246,6 +247,57 @@ class Plugin {
 	}
 
 	/**
+	 * Registers front-end shortcodes.
+	 *
+	 * @return void
+	 */
+	public function register_shortcodes() {
+		add_shortcode( 'members_fp_download', array( $this, 'render_download_shortcode' ) );
+	}
+
+	/**
+	 * Renders a download link for a protected attachment.
+	 *
+	 * Usage: [members_fp_download id="123"]Download file[/members_fp_download]
+	 *
+	 * @param array  $atts    Shortcode attributes.
+	 * @param string $content Link label.
+	 * @return string
+	 */
+	public function render_download_shortcode( $atts, $content = '' ) {
+		$atts = shortcode_atts(
+			array(
+				'id'    => 0,
+				'class' => '',
+			),
+			$atts,
+			'members_fp_download'
+		);
+
+		$attachment_id = (int) $atts['id'];
+
+		if ( $attachment_id <= 0 || 'attachment' !== get_post_type( $attachment_id ) ) {
+			return '';
+		}
+
+		$url = members_fp_get_download_url( $attachment_id );
+
+		if ( '' === $url ) {
+			return '';
+		}
+
+		$label = '' !== trim( (string) $content ) ? trim( (string) $content ) : get_the_title( $attachment_id );
+		$class = '' !== $atts['class'] ? ' class="' . esc_attr( $atts['class'] ) . '"' : '';
+
+		return sprintf(
+			'<a href="%1$s"%2$s download>%3$s</a>',
+			esc_url( $url ),
+			$class,
+			esc_html( $label )
+		);
+	}
+
+	/**
 	 * Registers the gateway query var.
 	 *
 	 * @param array $vars Query vars.
@@ -255,6 +307,7 @@ class Plugin {
 		$vars[] = 'members_fp_gateway';
 		$vars[] = 'members_fp_token';
 		$vars[] = 'members_fp_download';
+		$vars[] = 'dl';
 		return $vars;
 	}
 

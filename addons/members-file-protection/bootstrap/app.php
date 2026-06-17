@@ -13,6 +13,8 @@ require_once __DIR__ . '/autoload.php';
 
 register_autoloader();
 
+require_once dirname( __DIR__ ) . '/inc/functions.php';
+
 /**
  * Returns the plugin instance.
  *
