@@ -45,22 +45,20 @@
 	}
 
 	function getCopyText( button ) {
-		var field = button.closest( '.members-fp-copy-field, .members-fp-share-item, .members-fp-shortcode-hint' );
+		var shareItem = button.closest( '.members-fp-share-item' );
 
-		if ( ! field ) {
-			return '';
+		if ( shareItem ) {
+			var shareInput = shareItem.querySelector( '.members-fp-share-item__url' );
+
+			return shareInput ? shareInput.value || '' : '';
 		}
 
-		var input = field.querySelector( '.members-fp-copy-field__input' );
+		var field = button.closest( '.members-fp-copy-field' );
 
-		if ( input ) {
-			return input.value || '';
-		}
+		if ( field ) {
+			var input = field.querySelector( '.members-fp-copy-field__input' );
 
-		var shortcode = field.querySelector( '.members-fp-shortcode' );
-
-		if ( shortcode ) {
-			return shortcode.textContent || '';
+			return input ? input.value || '' : '';
 		}
 
 		return '';
@@ -70,6 +68,7 @@
 		var toggle = root.querySelector( '[data-members-fp-toggle]' );
 		var settingsSection = root.querySelector( '[data-members-fp-roles]' );
 		var statusBadge = root.querySelector( '[data-members-fp-status]' );
+		var intro = root.querySelector( '[data-members-fp-intro]' );
 		var allLoggedIn = root.querySelector( '[data-members-fp-all-logged-in]' );
 		var fieldset = root.querySelector( '[data-members-fp-role-fieldset]' );
 		var warning = root.querySelector( '[data-members-fp-warning]' );
@@ -113,6 +112,11 @@
 			var on = toggle.checked;
 			toggle.setAttribute( 'aria-checked', on ? 'true' : 'false' );
 			settingsSection.classList.toggle( 'is-hidden', ! on );
+
+			if ( intro ) {
+				intro.classList.toggle( 'is-hidden', on );
+			}
+
 			syncStatusBadge();
 			validateRoles();
 		}
@@ -174,6 +178,7 @@
 
 		function buildShareListItem( data ) {
 			var li = document.createElement( 'li' );
+			var head = document.createElement( 'div' );
 			var input = document.createElement( 'input' );
 			var meta = document.createElement( 'span' );
 			var actions = document.createElement( 'div' );
@@ -184,11 +189,14 @@
 			li.className = 'members-fp-share-item';
 			li.setAttribute( 'data-token-id', tokenId );
 
+			head.className = 'members-fp-share-item__head';
+
 			input.type = 'text';
 			input.className = 'members-fp-copy-field__input members-fp-share-item__url';
 			input.readOnly = true;
 			input.value = data.url || '';
 			input.setAttribute( 'aria-label', 'Share link URL' );
+			input.setAttribute( 'data-members-fp-select-on-click', '' );
 			input.addEventListener( 'click', function () {
 				input.select();
 			} );
@@ -204,13 +212,14 @@
 			copyBtn.textContent = membersFileProtectionMetabox.i18n.copy;
 
 			revokeBtn.type = 'button';
-			revokeBtn.className = 'button button-small';
+			revokeBtn.className = 'button button-small members-fp-share-item__revoke';
 			revokeBtn.setAttribute( 'data-members-fp-share-revoke', '' );
 			revokeBtn.setAttribute( 'data-token-id', tokenId );
 			revokeBtn.textContent = membersFileProtectionMetabox.i18n.revoke;
 
 			actions.append( copyBtn, revokeBtn );
-			li.append( input, meta, actions );
+			head.append( meta, actions );
+			li.append( head, input );
 
 			return li;
 		}
@@ -310,12 +319,13 @@
 					copyTextToClipboard( text ).then( function () {
 						flashCopied( copyBtn, original );
 					} ).catch( function () {
-						var input = copyBtn.closest( '.members-fp-copy-field, .members-fp-share-item' );
+						var field = copyBtn.closest( '.members-fp-copy-field, .members-fp-share-item' );
 
-						if ( input ) {
-							var field = input.querySelector( '.members-fp-copy-field__input' );
-							if ( field ) {
-								field.select();
+						if ( field ) {
+							var inputField = field.querySelector( '.members-fp-copy-field__input' );
+
+							if ( inputField ) {
+								inputField.select();
 							}
 						}
 					} );

@@ -64,14 +64,14 @@ class MetaboxController {
 			'members-file-protection-admin',
 			plugin_dir_url( dirname( __DIR__ ) ) . 'assets/css/admin.css',
 			array( 'dashicons' ),
-			'1.1.0'
+			'1.2.2'
 		);
 
 		wp_enqueue_script(
 			'members-file-protection-metabox',
 			plugin_dir_url( dirname( __DIR__ ) ) . 'assets/js/metabox.js',
 			array(),
-			'1.1.0',
+			'1.2.2',
 			true
 		);
 
@@ -169,119 +169,136 @@ class MetaboxController {
 						<?php echo $protected ? esc_html__( 'Protected', 'members' ) : esc_html__( 'Public', 'members' ); ?>
 					</span>
 				</div>
-				<p class="description members-fp-metabox__intro"><?php esc_html_e( 'Protected files require permission to access. Direct URLs are routed through the Members gateway.', 'members' ); ?></p>
+				<p class="description members-fp-metabox__intro<?php echo $protected ? ' is-hidden' : ''; ?>" data-members-fp-intro><?php esc_html_e( 'Enable protection to restrict who can access this file.', 'members' ); ?></p>
 
 				<div class="members-fp-metabox__settings<?php echo $protected ? '' : ' is-hidden'; ?>" data-members-fp-roles>
-					<section class="members-fp-panel">
-						<h3 class="members-fp-panel__title"><?php esc_html_e( 'Who can access', 'members' ); ?></h3>
+					<div class="members-fp-metabox__grid">
+						<section class="members-fp-panel members-fp-panel--access">
+							<h3 class="members-fp-panel__title">
+								<span class="dashicons dashicons-groups" aria-hidden="true"></span>
+								<?php esc_html_e( 'Who can access', 'members' ); ?>
+							</h3>
 
-						<label class="members-fp-option">
-							<input type="checkbox" name="members_fp_all_logged_in" value="1" <?php checked( $all_logged ); ?> data-members-fp-all-logged-in />
-							<span class="members-fp-option__label"><?php esc_html_e( 'All logged-in users', 'members' ); ?></span>
-						</label>
+							<label class="members-fp-option members-fp-option--highlight">
+								<input type="checkbox" name="members_fp_all_logged_in" value="1" <?php checked( $all_logged ); ?> data-members-fp-all-logged-in />
+								<span class="members-fp-option__label"><?php esc_html_e( 'All logged-in users', 'members' ); ?></span>
+							</label>
 
-						<fieldset class="members-fp-metabox__role-list<?php echo $all_logged ? ' is-disabled' : ''; ?>" data-members-fp-role-fieldset>
-							<legend class="members-fp-panel__legend"><?php esc_html_e( 'Or limit to these roles', 'members' ); ?></legend>
-							<?php if ( empty( $_wp_roles ) ) : ?>
-								<p class="description"><?php esc_html_e( 'No custom roles found. Enable “All logged-in users” above.', 'members' ); ?></p>
-							<?php else : ?>
-								<ul>
-									<?php foreach ( $_wp_roles as $role => $name ) : ?>
-										<li>
-											<label class="members-fp-option members-fp-option--compact">
-												<input
-													type="checkbox"
-													name="members_fp_roles[]"
-													value="<?php echo esc_attr( $role ); ?>"
-													<?php checked( in_array( $role, $roles, true ) ); ?>
-													<?php disabled( $all_logged ); ?>
-													data-members-fp-role
-												/>
-												<span class="members-fp-option__label"><?php echo esc_html( translate_user_role( $name ) ); ?></span>
-											</label>
+							<fieldset class="members-fp-metabox__role-list<?php echo $all_logged ? ' is-disabled' : ''; ?>" data-members-fp-role-fieldset>
+								<legend class="members-fp-panel__legend"><?php esc_html_e( 'Or specific roles', 'members' ); ?></legend>
+								<?php if ( empty( $_wp_roles ) ) : ?>
+									<p class="description"><?php esc_html_e( 'No roles found. Enable “All logged-in users” above.', 'members' ); ?></p>
+								<?php else : ?>
+									<div class="members-fp-metabox__role-scroll">
+										<ul>
+											<?php foreach ( $_wp_roles as $role => $name ) : ?>
+												<li>
+													<label class="members-fp-option members-fp-option--compact">
+														<input
+															type="checkbox"
+															name="members_fp_roles[]"
+															value="<?php echo esc_attr( $role ); ?>"
+															<?php checked( in_array( $role, $roles, true ) ); ?>
+															<?php disabled( $all_logged ); ?>
+															data-members-fp-role
+														/>
+														<span class="members-fp-option__label"><?php echo esc_html( translate_user_role( $name ) ); ?></span>
+													</label>
+												</li>
+											<?php endforeach; ?>
+										</ul>
+									</div>
+								<?php endif; ?>
+							</fieldset>
+
+							<div class="notice notice-warning inline members-fp-metabox__warning is-hidden" role="alert" data-members-fp-warning>
+								<p><?php esc_html_e( 'Select at least one role, or enable “All logged-in users”.', 'members' ); ?></p>
+							</div>
+
+							<p class="description members-fp-panel__footnote"><?php esc_html_e( 'Administrators always have access.', 'members' ); ?></p>
+						</section>
+
+						<section class="members-fp-panel members-fp-panel--limit">
+							<h3 class="members-fp-panel__title">
+								<span class="dashicons dashicons-download" aria-hidden="true"></span>
+								<?php esc_html_e( 'Download limit', 'members' ); ?>
+							</h3>
+							<div class="members-fp-limit-control">
+								<label for="members_fp_download_limit" class="members-fp-limit-control__label"><?php esc_html_e( 'Per user', 'members' ); ?></label>
+								<input type="number" min="0" step="1" class="small-text" id="members_fp_download_limit" name="members_fp_download_limit" value="<?php echo esc_attr( (string) $dl_limit ); ?>" />
+								<span class="description"><?php esc_html_e( '0 = unlimited', 'members' ); ?></span>
+							</div>
+							<p class="description members-fp-panel__footnote"><?php esc_html_e( 'Inline viewing does not count. Share links and admins are exempt.', 'members' ); ?></p>
+						</section>
+					</div>
+
+					<section class="members-fp-panel members-fp-panel--sharing" data-members-fp-sharing>
+						<h3 class="members-fp-panel__title">
+							<span class="dashicons dashicons-admin-links" aria-hidden="true"></span>
+							<?php esc_html_e( 'Sharing', 'members' ); ?>
+						</h3>
+
+						<?php if ( '' !== $download_url ) : ?>
+							<div class="members-fp-subsection" data-members-fp-download-section>
+								<h4 class="members-fp-subsection__title"><?php esc_html_e( 'Member download link', 'members' ); ?></h4>
+								<p class="description members-fp-subsection__desc"><?php esc_html_e( 'Counts toward the download limit for logged-in users.', 'members' ); ?></p>
+								<div class="members-fp-copy-field">
+									<input type="text" class="members-fp-copy-field__input" readonly value="<?php echo esc_attr( $download_url ); ?>" aria-label="<?php esc_attr_e( 'Download URL', 'members' ); ?>" data-members-fp-select-on-click />
+									<button type="button" class="button" data-members-fp-share-copy><?php esc_html_e( 'Copy URL', 'members' ); ?></button>
+								</div>
+								<div class="members-fp-copy-field members-fp-copy-field--shortcode">
+									<input type="text" class="members-fp-copy-field__input members-fp-copy-field__input--mono" readonly value="<?php echo esc_attr( $shortcode ); ?>" aria-label="<?php esc_attr_e( 'Download shortcode', 'members' ); ?>" data-members-fp-select-on-click />
+									<button type="button" class="button" data-members-fp-shortcode-copy><?php esc_html_e( 'Copy shortcode', 'members' ); ?></button>
+								</div>
+							</div>
+						<?php endif; ?>
+
+						<div class="members-fp-subsection<?php echo '' !== $download_url ? ' members-fp-subsection--divider' : ''; ?>" data-members-fp-share>
+								<div class="members-fp-panel__head">
+									<h4 class="members-fp-subsection__title"><?php esc_html_e( 'Private share links', 'members' ); ?></h4>
+									<button type="button" class="button-link members-fp-revoke-all<?php echo empty( $tokens ) ? ' is-hidden' : ''; ?>" data-members-fp-share-revoke-all><?php esc_html_e( 'Revoke all', 'members' ); ?></button>
+								</div>
+								<p class="description members-fp-subsection__desc"><?php esc_html_e( 'Guest links that bypass login and download limits.', 'members' ); ?></p>
+
+								<div class="members-fp-share-form">
+									<label class="members-fp-share-form__field">
+										<span class="members-fp-share-form__label"><?php esc_html_e( 'Expires', 'members' ); ?></span>
+										<select data-members-fp-share-expires>
+											<option value="hour"><?php esc_html_e( '1 hour', 'members' ); ?></option>
+											<option value="day" selected><?php esc_html_e( '1 day', 'members' ); ?></option>
+											<option value="week"><?php esc_html_e( '1 week', 'members' ); ?></option>
+											<option value="month"><?php esc_html_e( '30 days', 'members' ); ?></option>
+											<option value="never"><?php esc_html_e( 'Never', 'members' ); ?></option>
+										</select>
+									</label>
+									<label class="members-fp-share-form__field">
+										<span class="members-fp-share-form__label"><?php esc_html_e( 'Max uses', 'members' ); ?></span>
+										<input type="number" min="0" step="1" class="small-text" value="0" data-members-fp-share-max-uses title="<?php esc_attr_e( '0 = unlimited', 'members' ); ?>" />
+									</label>
+									<button type="button" class="button button-primary" data-members-fp-share-generate><?php esc_html_e( 'Generate link', 'members' ); ?></button>
+								</div>
+
+								<p class="members-fp-share-empty<?php echo empty( $tokens ) ? '' : ' is-hidden'; ?>" data-members-fp-share-empty><?php esc_html_e( 'No share links yet.', 'members' ); ?></p>
+
+								<ul class="members-fp-metabox__share-list" data-members-fp-share-list>
+									<?php foreach ( $tokens as $token ) : ?>
+										<?php
+										$share_url = $this->container->get( ShareTokenService::class )->buildShareUrl( (int) $post->ID, $token->token );
+										$summary   = $this->container->get( ShareTokenService::class )->formatTokenSummary( $token->expires_at, (int) $token->use_count, (int) $token->max_uses );
+										?>
+										<li class="members-fp-share-item" data-token-id="<?php echo esc_attr( (string) $token->id ); ?>">
+											<div class="members-fp-share-item__head">
+												<span class="description members-fp-share-item__meta"><?php echo esc_html( $summary ); ?></span>
+												<div class="members-fp-share-item__actions">
+													<button type="button" class="button button-small" data-members-fp-share-copy><?php esc_html_e( 'Copy', 'members' ); ?></button>
+													<button type="button" class="button button-small members-fp-share-item__revoke" data-members-fp-share-revoke data-token-id="<?php echo esc_attr( (string) $token->id ); ?>"><?php esc_html_e( 'Revoke', 'members' ); ?></button>
+												</div>
+											</div>
+											<input type="text" class="members-fp-copy-field__input members-fp-share-item__url" readonly value="<?php echo esc_attr( $share_url ); ?>" aria-label="<?php esc_attr_e( 'Share link URL', 'members' ); ?>" data-members-fp-select-on-click />
 										</li>
 									<?php endforeach; ?>
 								</ul>
-							<?php endif; ?>
-						</fieldset>
-
-						<div class="notice notice-warning inline members-fp-metabox__warning is-hidden" role="alert" data-members-fp-warning>
-							<p><?php esc_html_e( 'Select at least one role, or enable “All logged-in users”.', 'members' ); ?></p>
 						</div>
-
-						<p class="description members-fp-panel__footnote"><?php esc_html_e( 'Site administrators always have access.', 'members' ); ?></p>
-					</section>
-
-					<section class="members-fp-panel">
-						<h3 class="members-fp-panel__title"><?php esc_html_e( 'Download limit', 'members' ); ?></h3>
-						<div class="members-fp-field-row">
-							<label for="members_fp_download_limit" class="screen-reader-text"><?php esc_html_e( 'Download limit per user', 'members' ); ?></label>
-							<input type="number" min="0" step="1" class="small-text" id="members_fp_download_limit" name="members_fp_download_limit" value="<?php echo esc_attr( (string) $dl_limit ); ?>" />
-							<span class="description"><?php esc_html_e( 'downloads per user (0 = unlimited)', 'members' ); ?></span>
-						</div>
-						<p class="description members-fp-panel__footnote"><?php esc_html_e( 'Viewing a file inline does not count. Share links and administrators bypass this limit.', 'members' ); ?></p>
-					</section>
-
-					<?php if ( '' !== $download_url ) : ?>
-						<section class="members-fp-panel" data-members-fp-download-section>
-							<h3 class="members-fp-panel__title"><?php esc_html_e( 'Download link', 'members' ); ?></h3>
-							<p class="description"><?php esc_html_e( 'Use this URL when you want a link that counts toward the download limit.', 'members' ); ?></p>
-							<div class="members-fp-copy-field">
-								<input type="text" class="members-fp-copy-field__input" readonly value="<?php echo esc_attr( $download_url ); ?>" aria-label="<?php esc_attr_e( 'Download URL', 'members' ); ?>" data-members-fp-select-on-click />
-								<button type="button" class="button" data-members-fp-share-copy><?php esc_html_e( 'Copy', 'members' ); ?></button>
-							</div>
-							<p class="description members-fp-shortcode-hint">
-								<?php esc_html_e( 'Shortcode:', 'members' ); ?>
-								<code class="members-fp-shortcode"><?php echo esc_html( $shortcode ); ?></code>
-								<button type="button" class="button-link" data-members-fp-shortcode-copy><?php esc_html_e( 'Copy', 'members' ); ?></button>
-							</p>
-						</section>
-					<?php endif; ?>
-
-					<section class="members-fp-panel members-fp-panel--share" data-members-fp-share>
-						<h3 class="members-fp-panel__title"><?php esc_html_e( 'Private share links', 'members' ); ?></h3>
-						<p class="description"><?php esc_html_e( 'Temporary links that work without logging in.', 'members' ); ?></p>
-
-						<div class="members-fp-share-form">
-							<label class="members-fp-share-form__field">
-								<span class="members-fp-share-form__label"><?php esc_html_e( 'Expires', 'members' ); ?></span>
-								<select data-members-fp-share-expires>
-									<option value="hour"><?php esc_html_e( '1 hour', 'members' ); ?></option>
-									<option value="day" selected><?php esc_html_e( '1 day', 'members' ); ?></option>
-									<option value="week"><?php esc_html_e( '1 week', 'members' ); ?></option>
-									<option value="month"><?php esc_html_e( '30 days', 'members' ); ?></option>
-									<option value="never"><?php esc_html_e( 'Never', 'members' ); ?></option>
-								</select>
-							</label>
-							<label class="members-fp-share-form__field">
-								<span class="members-fp-share-form__label"><?php esc_html_e( 'Max uses', 'members' ); ?></span>
-								<input type="number" min="0" step="1" class="small-text" value="0" data-members-fp-share-max-uses title="<?php esc_attr_e( '0 = unlimited', 'members' ); ?>" />
-							</label>
-							<button type="button" class="button button-primary" data-members-fp-share-generate><?php esc_html_e( 'Generate link', 'members' ); ?></button>
-						</div>
-
-						<p class="members-fp-metabox__share-actions">
-							<button type="button" class="button-link<?php echo empty( $tokens ) ? ' is-hidden' : ''; ?>" data-members-fp-share-revoke-all><?php esc_html_e( 'Revoke all links', 'members' ); ?></button>
-						</p>
-
-						<p class="members-fp-share-empty<?php echo empty( $tokens ) ? '' : ' is-hidden'; ?>" data-members-fp-share-empty><?php esc_html_e( 'No share links yet.', 'members' ); ?></p>
-
-						<ul class="members-fp-metabox__share-list" data-members-fp-share-list>
-							<?php foreach ( $tokens as $token ) : ?>
-								<?php
-								$share_url = $this->container->get( ShareTokenService::class )->buildShareUrl( (int) $post->ID, $token->token );
-								$summary   = $this->container->get( ShareTokenService::class )->formatTokenSummary( $token->expires_at, (int) $token->use_count, (int) $token->max_uses );
-								?>
-								<li class="members-fp-share-item" data-token-id="<?php echo esc_attr( (string) $token->id ); ?>">
-									<input type="text" class="members-fp-copy-field__input members-fp-share-item__url" readonly value="<?php echo esc_attr( $share_url ); ?>" aria-label="<?php esc_attr_e( 'Share link URL', 'members' ); ?>" data-members-fp-select-on-click />
-									<span class="description members-fp-share-item__meta"><?php echo esc_html( $summary ); ?></span>
-									<div class="members-fp-share-item__actions">
-										<button type="button" class="button button-small" data-members-fp-share-copy><?php esc_html_e( 'Copy', 'members' ); ?></button>
-										<button type="button" class="button button-small" data-members-fp-share-revoke data-token-id="<?php echo esc_attr( (string) $token->id ); ?>"><?php esc_html_e( 'Revoke', 'members' ); ?></button>
-									</div>
-								</li>
-							<?php endforeach; ?>
-						</ul>
 					</section>
 				</div>
 			<?php endif; ?>
