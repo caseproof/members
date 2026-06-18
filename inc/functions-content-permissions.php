@@ -594,43 +594,43 @@ function members_exclude_protected_posts_from_rest_query( $where, $query ) {
 		return $where;
 	}
 
-	// Permission managers may legitimately load protected posts (e.g. the block
-	// editor). They are still filtered per-post by the posts_results filter.
+	// Permission managers may legitimately load protected posts (e.g. in the block
+	// editor). The posts_results filter still vets each one per-post.
 	if ( current_user_can( 'restrict_content' ) ) {
 		return $where;
 	}
 
-	$roles = array();
-
-	if ( is_user_logged_in() ) {
-		$roles = (array) wp_get_current_user()->roles;
-	}
+	// Posts are restricted via the current '_members_access_role' meta key or the
+	// legacy '_role' key. A user can view a restricted post only when it lists one
+	// of the roles they hold.
+	$roles = is_user_logged_in() ? (array) wp_get_current_user()->roles : array();
 
 	if ( empty( $roles ) ) {
 
-		// No roles to satisfy any restriction: exclude every post that carries an
-		// access-role restriction.
-		$where .= " AND {$wpdb->posts}.ID NOT IN ( SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_members_access_role' )";
+		// No roles means no restriction can be satisfied: exclude every restricted post.
+		$where .= " AND {$wpdb->posts}.ID NOT IN (
+			SELECT post_id FROM {$wpdb->postmeta}
+			WHERE meta_key IN ( '_members_access_role', '_role' )
+		)";
 
-	} else {
-
-		$placeholders = implode( ', ', array_fill( 0, count( $roles ), '%s' ) );
-
-		// Exclude posts that are restricted by at least one role but none of the
-		// roles held by the current user.
-		$subquery = $wpdb->prepare(
-			"SELECT restricted.post_id FROM {$wpdb->postmeta} AS restricted
-				WHERE restricted.meta_key = '_members_access_role'
-				AND restricted.post_id NOT IN (
-					SELECT allowed.post_id FROM {$wpdb->postmeta} AS allowed
-					WHERE allowed.meta_key = '_members_access_role'
-					AND allowed.meta_value IN ( {$placeholders} )
-				)",
-			$roles
-		);
-
-		$where .= " AND {$wpdb->posts}.ID NOT IN ( {$subquery} )";
+		return $where;
 	}
+
+	// Exclude posts that carry a role restriction none of the current user's roles satisfy.
+	$placeholders = implode( ', ', array_fill( 0, count( $roles ), '%s' ) );
+
+	$where .= $wpdb->prepare(
+		" AND {$wpdb->posts}.ID NOT IN (
+			SELECT restricted.post_id FROM {$wpdb->postmeta} AS restricted
+			WHERE restricted.meta_key IN ( '_members_access_role', '_role' )
+			AND restricted.post_id NOT IN (
+				SELECT allowed.post_id FROM {$wpdb->postmeta} AS allowed
+				WHERE allowed.meta_key IN ( '_members_access_role', '_role' )
+				AND allowed.meta_value IN ( {$placeholders} )
+			)
+		)",
+		$roles
+	);
 
 	return $where;
 }
