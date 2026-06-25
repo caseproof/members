@@ -423,7 +423,7 @@ function members_get_hidden_caps() {
 		$caps[] = 'update_core';
 	}
 
-	return array_unique( $caps );
+	return array_values( array_unique( $caps ) );
 }
 
 /**

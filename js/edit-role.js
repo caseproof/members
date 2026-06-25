@@ -685,6 +685,12 @@ jQuery( document ).ready( function() {
 	// when we hit the "Enter" key in our input or toggle open/close the meta box.
 	jQuery( '#newcapdiv button.handlediv' ).attr( 'type', 'button' );
 
+	// Normalize hidden caps to an array. `wp_localize_script` JSON-encodes a PHP
+	// array with non-sequential keys as an object, which has no `.includes()`.
+	if ( ! Array.isArray( members_i18n.hidden_caps ) ) {
+		members_i18n.hidden_caps = members_i18n.hidden_caps ? Object.values( members_i18n.hidden_caps ) : [];
+	}
+
 	// Disable the new cap button so that it's not clicked until there's a cap.
 	jQuery( '#members-add-new-cap' ).prop( 'disabled', true );
 
