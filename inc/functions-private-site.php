@@ -38,14 +38,6 @@ add_filter( 'members_feed_error_message',                              'shortcod
 # Authenticate when accessing the REST API.
 add_filter( 'rest_authentication_errors', 'members_private_rest_api', 95 );
 
-# Exclude protected posts from REST API queries at the SQL level so the result
-# count and pagination headers (X-WP-Total / X-WP-TotalPages) never leak the
-# existence of hidden posts.
-add_filter( 'posts_where', 'members_exclude_protected_posts_from_rest_query', 10, 2 );
-
-# Filter protected posts from being returned in the REST API.
-add_filter( 'posts_results', 'members_filter_protected_posts_for_rest', 10, 2 );
-
 /**
  * Conditional tag to see if we have a private blog.
  *
