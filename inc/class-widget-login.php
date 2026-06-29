@@ -85,8 +85,6 @@ class Widget_Login extends \WP_Widget {
 	 * @return void
 	 */
 	function widget( $sidebar, $instance ) {
-		global $user_identity, $user_ID;
-
 		$instance = wp_parse_args( $instance, $this->defaults );
 
 		// Set up the arguments for wp_login_form().
@@ -126,8 +124,9 @@ class Widget_Login extends \WP_Widget {
 		if ( is_user_logged_in() ) {
 
 			// Show avatar if enabled.
-			if ( ! empty( $instance['show_avatar'] ) )
-				echo get_avatar( $user_ID );
+			if ( ! empty( $instance['show_avatar'] ) ) {
+				echo get_avatar( get_current_user_id() );
+			}
 
 			// Show logged in text if any is written.
 			if ( $logged_in_text )
@@ -136,10 +135,6 @@ class Widget_Login extends \WP_Widget {
 
 		// If the current user is not logged in.
 		else {
-
-			// Show avatar if enabled.
-			if ( ! empty( $instance['show_avatar'] ) )
-				echo get_avatar( $user_ID );
 
 			// Show logged out text if any is written.
 			if ( $logged_out_text )
