@@ -354,8 +354,14 @@ function members_get_role_user_count( $role = '' ) {
 
 			if ( is_array( $results ) ) {
 				foreach ( $results as $meta_value ) {
+					$meta_value = trim( $meta_value );
+
+					if ( ! is_serialized( $meta_value ) ) {
+						continue;
+					}
+
 					// Safe deserialization: prevent object injection (allowed_classes => false).
-					$caps = @unserialize( trim( $meta_value ), array( 'allowed_classes' => false ) );
+					$caps = unserialize( $meta_value, array( 'allowed_classes' => false ) );
 					if ( ! is_array( $caps ) ) {
 						continue;
 					}
