@@ -319,7 +319,7 @@ function members_get_role_user_count( $role = '' ) {
 		if ( is_array( $cached ) ) {
 			members_plugin()->role_user_count = $cached;
 		} elseif ( function_exists( 'wp_is_large_user_count' ) && wp_is_large_user_count() ) {
-// On large sites, use core `count_users()` aggregation (may differ from the multi-role scan below) to avoid loading every capabilities row.
+			// On large sites, use core `count_users()` aggregation (may differ from the multi-role scan below) to avoid loading every capabilities row.
 			$users_of_blog = count_users( 'time' );
 			$all_roles     = array_keys( wp_roles()->get_names() );
 			$role_counts   = array_fill_keys( $all_roles, 0 );
