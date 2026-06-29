@@ -318,6 +318,22 @@ function members_get_role_user_count( $role = '' ) {
 		$cached = get_transient( members_role_user_count_transient_key() );
 		if ( is_array( $cached ) ) {
 			members_plugin()->role_user_count = $cached;
+		} elseif ( wp_is_large_user_count() ) {
+			// On large sites, use core's `count_users( 'time' )` SQL aggregation to avoid loading every capabilities row into memory. Counts primary + secondary roles, matching the scan below.
+			$users_of_blog = count_users( 'time' );
+			$all_roles     = array_keys( wp_roles()->get_names() );
+			$role_counts   = array_fill_keys( $all_roles, 0 );
+
+			if ( ! empty( $users_of_blog['avail_roles'] ) && is_array( $users_of_blog['avail_roles'] ) ) {
+				foreach ( $users_of_blog['avail_roles'] as $role_name => $count ) {
+					if ( isset( $role_counts[ $role_name ] ) ) {
+						$role_counts[ $role_name ] = (int) $count;
+					}
+				}
+			}
+
+			members_plugin()->role_user_count = $role_counts;
+			set_transient( members_role_user_count_transient_key(), $role_counts, 12 * HOUR_IN_SECONDS );
 		} else {
 			// Count all users with each role anywhere in wp_capabilities (primary or secondary).
 			// Matches wp user list --role= behavior and fixes undercounting when multiple roles are enabled.
@@ -338,8 +354,14 @@ function members_get_role_user_count( $role = '' ) {
 
 			if ( is_array( $results ) ) {
 				foreach ( $results as $meta_value ) {
+					$meta_value = trim( $meta_value );
+
+					if ( ! is_serialized( $meta_value ) ) {
+						continue;
+					}
+
 					// Safe deserialization: prevent object injection (allowed_classes => false).
-					$caps = @unserialize( trim( $meta_value ), array( 'allowed_classes' => false ) );
+					$caps = unserialize( $meta_value, array( 'allowed_classes' => false ) );
 					if ( ! is_array( $caps ) ) {
 						continue;
 					}
