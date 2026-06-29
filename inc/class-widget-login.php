@@ -124,9 +124,8 @@ class Widget_Login extends \WP_Widget {
 		if ( is_user_logged_in() ) {
 
 			// Show avatar if enabled.
-			if ( ! empty( $instance['show_avatar'] ) ) {
+			if ( ! empty( $instance['show_avatar'] ) )
 				echo get_avatar( get_current_user_id() );
-			}
 
 			// Show logged in text if any is written.
 			if ( $logged_in_text )
@@ -135,6 +134,10 @@ class Widget_Login extends \WP_Widget {
 
 		// If the current user is not logged in.
 		else {
+
+			// Show avatar if enabled.
+			if ( ! empty( $instance['show_avatar'] ) )
+				echo get_avatar( 0 );
 
 			// Show logged out text if any is written.
 			if ( $logged_out_text )
