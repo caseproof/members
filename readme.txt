@@ -164,6 +164,11 @@ If that doesn't apply or didn't work, stop by our [support forums](https://wordp
 
 = 3.2.23 =
 * Fixed: Unauthenticated sensitive information disclosure via a REST API pagination side channel (CVE-2026-12426). Protected posts are now excluded from REST queries at the SQL level so the result counts and pagination headers no longer reveal hidden posts.
+* Fixed: REST API and block editor hangs when saving posts that use content permissions. Content permissions handling in the block editor was reworked for reliable saving.
+* Fixed: Custom capability creation could break when a role's hidden capabilities were not stored as an array.
+* Fixed: Trailing space in the `members_show_roles_page_cap` filter name that prevented the filter from ever firing.
+* Changed: Optimized role user counting on sites with large numbers of users to reduce database load.
+* Changed: Refactored the login widget to use get_current_user_id() for improved security and maintainability.
 
 = 3.2.22 =
 * Added import/export feature
