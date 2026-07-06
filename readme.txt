@@ -6,7 +6,7 @@ Tags: permissions, memberships, roles, capabilities, access
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 3.2.23
+Stable tag: 3.2.24
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -161,6 +161,9 @@ If that doesn't apply or didn't work, stop by our [support forums](https://wordp
 5. Select multiple roles per user (edit user screen)
 
 == Changelog ==
+
+= 3.2.24 =
+* Fixed: Content Permissions could not be saved via the REST API (block editor, Elementor, and other page builders) in 3.2.23, failing with "Sorry, you are not allowed to edit the _members_access_role custom field." The meta auth callback wrongly honored WordPress' default deny for protected meta keys, blocking every user including administrators.
 
 = 3.2.23 =
 * Fixed: Unauthenticated sensitive information disclosure via a REST API pagination side channel (CVE-2026-12426). Protected posts are now excluded from REST queries at the SQL level so the result counts and pagination headers no longer reveal hidden posts.
