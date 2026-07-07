@@ -164,6 +164,8 @@ If that doesn't apply or didn't work, stop by our [support forums](https://wordp
 
 = 3.2.24 =
 * Fixed: Content Permissions could not be saved via the REST API (block editor, Elementor, and other page builders) in 3.2.23, failing with "Sorry, you are not allowed to edit the _members_access_role custom field." The meta auth callback wrongly honored WordPress' default deny for protected meta keys, blocking every user including administrators.
+* Fixed: The 3.2.23 REST protected-posts exclusion (CVE-2026-12426 fix) generated deeply nested correlated subqueries that caused severe database load and timeouts on large sites. It is now resolved to a flat list of excluded IDs computed in PHP.
+* Fixed: The same REST exclusion query could exceed MySQL's join/subquery limits and return zero posts even when nothing was restricted. Pagination counts remain accurate and the side channel stays closed.
 
 = 3.2.23 =
 * Fixed: Unauthenticated sensitive information disclosure via a REST API pagination side channel (CVE-2026-12426). Protected posts are now excluded from REST queries at the SQL level so the result counts and pagination headers no longer reveal hidden posts.

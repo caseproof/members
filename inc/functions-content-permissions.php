@@ -567,15 +567,6 @@ function members_filter_protected_posts_for_rest( $posts, $query ) {
 }
 
 /**
- * Maximum ancestor depth considered when mirroring hierarchical permissions in SQL.
- *
- * @since 3.2.23
- * @access private
- * @var int
- */
-$GLOBALS['members_rest_protected_posts_ancestor_depth'] = 15;
-
-/**
  * Whether the REST protected-post SQL exclusion should run for a query.
  *
  * Only paginated collection queries expose X-WP-Total / X-WP-TotalPages headers.
@@ -607,277 +598,128 @@ function members_should_apply_rest_protected_posts_sql( $query ) {
 }
 
 /**
- * Returns a SQL expression for the post ID at a given ancestor depth.
+ * Returns the post IDs the current user cannot view, for REST collection exclusion.
  *
- * Depth 0 is the current row, depth 1 is post_parent, and so on.
+ * Earlier releases mirrored members_can_user_view_post() directly in SQL, walking the
+ * post hierarchy with deeply nested correlated subqueries. On large sites that caused
+ * severe database load, and it could exceed MySQL's join/subquery limits so the whole
+ * query failed and returned zero posts. Instead we resolve the (usually small) set of
+ * posts that actually carry a role restriction, reuse the vetted PHP permission logic,
+ * then expand to the descendants that inherit an unsatisfied restriction.
  *
- * @since 3.2.23
+ * @since 3.2.24
  * @access public
- * @param  int  $depth  Ancestor depth.
- * @return string
+ * @param  WP_Query  $query  The query being filtered.
+ * @return int[]  Post IDs to exclude from the collection (may be empty).
  */
-function members_sql_post_id_at_depth( $depth ) {
+function members_get_rest_hidden_post_ids( $query ) {
 
 	global $wpdb;
 
-	if ( 0 === $depth ) {
-		return "{$wpdb->posts}.ID";
-	}
+	// Limit to the queried post type(s) when known; inheritance follows same-type parents.
+	$post_types = array_filter( array_map( 'strval', (array) $query->get( 'post_type' ) ) );
 
-	$id = "{$wpdb->posts}.post_parent";
+	if ( ! empty( $post_types ) ) {
+		$placeholders = implode( ', ', array_fill( 0, count( $post_types ), '%s' ) );
 
-	for ( $i = 2; $i <= $depth; $i++ ) {
-		$id = "(SELECT p_depth_{$i}.post_parent FROM {$wpdb->posts} p_depth_{$i} WHERE p_depth_{$i}.ID = {$id} LIMIT 1)";
-	}
-
-	return $id;
-}
-
-/**
- * Returns SQL that is true when a post has content-permission role meta.
- *
- * @since 3.2.23
- * @access public
- * @param  string  $post_id_sql  SQL expression for a post ID column.
- * @return string
- */
-function members_sql_post_has_access_role_meta( $post_id_sql ) {
-
-	global $wpdb;
-
-	return "EXISTS (
-		SELECT 1 FROM {$wpdb->postmeta} pm_roles
-		WHERE pm_roles.post_id = {$post_id_sql}
-		AND pm_roles.meta_key IN ( '_members_access_role', '_role' )
-	)";
-}
-
-/**
- * Returns SQL that is true when a restricted post is viewable for the given roles.
- *
- * Mirrors the role, post-author, and ancestor-author checks from members_can_user_view_post().
- * Does not cover edit_post / restrict_content bypasses; those are applied separately.
- *
- * @since 3.2.23
- * @access public
- * @param  string  $post_id_sql  SQL expression for a post ID column.
- * @param  array   $roles        Current user role slugs.
- * @param  int     $user_id      Current user ID.
- * @return string
- */
-function members_sql_post_access_roles_satisfied( $post_id_sql, $roles, $user_id ) {
-
-	global $wpdb;
-
-	$parts = array();
-
-	if ( ! empty( $roles ) ) {
-		$placeholders = implode( ', ', array_fill( 0, count( $roles ), '%s' ) );
-
-		// WordPress $wpdb->prepare() accepts a roles array when placeholder count matches.
-		$parts[] = $wpdb->prepare(
-			"EXISTS (
-				SELECT 1 FROM {$wpdb->postmeta} pm_allow
-				WHERE pm_allow.post_id = {$post_id_sql}
-				AND pm_allow.meta_key IN ( '_members_access_role', '_role' )
-				AND pm_allow.meta_value IN ( {$placeholders} )
-			)",
-			$roles
-		);
-	}
-
-	if ( $user_id ) {
-		$parts[] = $wpdb->prepare(
-			"EXISTS (
-				SELECT 1 FROM {$wpdb->posts} p_author
-				WHERE p_author.ID = {$post_id_sql}
-				AND p_author.post_author = %d
-			)",
-			$user_id
-		);
-	}
-
-	if ( empty( $parts ) ) {
-		return '0=1';
-	}
-
-	return '(' . implode( ' OR ', $parts ) . ')';
-}
-
-/**
- * Returns SQL that is true when any ancestor carries content-permission role meta.
- *
- * Used for logged-out users where no role can satisfy a restriction.
- *
- * @since 3.2.23
- * @access public
- * @return string
- */
-function members_sql_any_ancestor_has_access_role_meta() {
-
-	global $wpdb;
-
-	$depth_limit = (int) $GLOBALS['members_rest_protected_posts_ancestor_depth'];
-	$checks      = array();
-
-	for ( $depth = 1; $depth <= $depth_limit; $depth++ ) {
-		$ancestor_id = members_sql_post_id_at_depth( $depth );
-		$checks[]    = "(
-			{$ancestor_id} > 0
-			AND " . members_sql_post_has_access_role_meta( $ancestor_id ) . '
-		)';
-	}
-
-	return '(' . implode( ' OR ', $checks ) . ')';
-}
-
-/**
- * Returns SQL that is true when a post inherits an unsatisfied restriction from an ancestor.
- *
- * Walks up the parent chain and applies the first ancestor that carries role meta,
- * matching members_can_user_view_post() hierarchical checks.
- *
- * @since 3.2.23
- * @access public
- * @param  array  $roles    Current user role slugs.
- * @param  int    $user_id  Current user ID.
- * @return string
- */
-function members_sql_inherited_restriction_unsatisfied( $roles, $user_id ) {
-
-	global $wpdb;
-
-	$depth_limit = (int) $GLOBALS['members_rest_protected_posts_ancestor_depth'];
-	$self_id       = "{$wpdb->posts}.ID";
-	$no_self_meta  = 'NOT ' . members_sql_post_has_access_role_meta( $self_id );
-	$cases         = array();
-
-	for ( $depth = 1; $depth <= $depth_limit; $depth++ ) {
-		$ancestor_id = members_sql_post_id_at_depth( $depth );
-		$parts       = array( $no_self_meta );
-
-		for ( $intermediate = 1; $intermediate < $depth; $intermediate++ ) {
-			$parts[] = 'NOT ' . members_sql_post_has_access_role_meta( members_sql_post_id_at_depth( $intermediate ) );
-		}
-
-		$parts[] = "{$ancestor_id} > 0";
-		$parts[] = members_sql_post_has_access_role_meta( $ancestor_id );
-		$parts[] = 'NOT (' . members_sql_post_access_roles_satisfied( $ancestor_id, $roles, $user_id ) . ')';
-
-		$cases[] = '(' . implode( ' AND ', $parts ) . ')';
-	}
-
-	return '(' . implode( ' OR ', $cases ) . ')';
-}
-
-/**
- * Returns SQL that is true when the current user can edit others' posts of the row type.
- *
- * Approximates the edit_post bypass from members_can_user_view_post() for REST collections.
- *
- * @since 3.2.23
- * @access public
- * @param  int  $user_id  Current user ID.
- * @return string
- */
-function members_sql_user_can_edit_others_post_types( $user_id ) {
-
-	global $wpdb;
-
-	if ( ! $user_id ) {
-		return '0=1';
-	}
-
-	$parts = array();
-
-	foreach ( get_post_types( array(), 'objects' ) as $post_type ) {
-
-		if ( empty( $post_type->cap->edit_others_posts ) ) {
-			continue;
-		}
-
-		if ( user_can( $user_id, $post_type->cap->edit_others_posts ) ) {
-			$parts[] = $wpdb->prepare( "{$wpdb->posts}.post_type = %s", $post_type->name );
-		}
-	}
-
-	if ( empty( $parts ) ) {
-		return '0=1';
-	}
-
-	return '(' . implode( ' OR ', $parts ) . ')';
-}
-
-/**
- * Builds the SQL fragment that excludes posts the current user cannot view.
- *
- * @since 3.2.23
- * @access public
- * @param  array  $roles    Current user role slugs.
- * @param  int    $user_id  Current user ID.
- * @return string
- */
-function members_build_rest_protected_posts_exclusion_sql( $roles, $user_id ) {
-
-	global $wpdb;
-
-	$post_id   = "{$wpdb->posts}.ID";
-	$has_roles = members_sql_post_has_access_role_meta( $post_id );
-
-	if ( empty( $roles ) ) {
-
-		// Logged-out visitors cannot satisfy any role restriction on the post or an ancestor.
-		$restricted = "(
-			{$has_roles}
-			OR (
-				NOT {$has_roles}
-				AND " . members_sql_any_ancestor_has_access_role_meta() . '
+		$roots = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT DISTINCT p.ID
+				FROM {$wpdb->posts} p
+				INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID
+				WHERE pm.meta_key IN ( '_members_access_role', '_role' )
+				AND p.post_type IN ( {$placeholders} )",
+				$post_types
 			)
-		)';
-
-		return " AND NOT ({$restricted})";
+		);
+	} else {
+		$roots = $wpdb->get_col(
+			"SELECT DISTINCT post_id FROM {$wpdb->postmeta}
+			WHERE meta_key IN ( '_members_access_role', '_role' )"
+		);
 	}
 
-	$roles_unsatisfied = 'NOT (' . members_sql_post_access_roles_satisfied( $post_id, $roles, $user_id ) . ')';
+	$roots = array_values( array_unique( array_map( 'intval', (array) $roots ) ) );
 
-	$direct_restricted = "(
-		{$has_roles}
-		AND {$roles_unsatisfied}
-	)";
+	// No posts carry a restriction, so nothing is hidden.
+	if ( empty( $roots ) ) {
+		return array();
+	}
 
-	$inherited_restricted = members_sql_inherited_restriction_unsatisfied( $roles, $user_id );
+	// Prime caches so the per-post permission checks below don't each hit the database.
+	_prime_post_caches( $roots, false, true );
 
-	$edit_bypass = members_sql_user_can_edit_others_post_types( $user_id );
+	// Direct restrictions the current user cannot satisfy. members_can_current_user_view_post()
+	// already applies the role, author, edit_post, and restrict_content checks.
+	$hidden = array();
 
-	$restricted = "(
-		({$direct_restricted} OR {$inherited_restricted})
-		AND NOT ({$edit_bypass})
-	)";
+	foreach ( $roots as $root_id ) {
+		if ( ! members_can_current_user_view_post( $root_id ) ) {
+			$hidden[ $root_id ] = $root_id;
+		}
+	}
 
-	return " AND NOT ({$restricted})";
+	if ( empty( $hidden ) ) {
+		return array();
+	}
+
+	// Expand to descendants that inherit an unsatisfied restriction. A descendant that
+	// carries its own restriction is governed independently, so descent stops at any post
+	// that is itself a restriction root.
+	$root_lookup = array_flip( $roots );
+	$parents     = array_values( $hidden );
+	$guard       = 0;
+
+	while ( ! empty( $parents ) && $guard++ < 100 ) {
+
+		$placeholders = implode( ', ', array_fill( 0, count( $parents ), '%d' ) );
+
+		$children = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT ID FROM {$wpdb->posts} WHERE post_parent IN ( {$placeholders} )",
+				$parents
+			)
+		);
+
+		$parents = array();
+
+		foreach ( array_map( 'intval', (array) $children ) as $child_id ) {
+
+			// Already hidden, or a root that is governed on its own terms.
+			if ( isset( $hidden[ $child_id ] ) || isset( $root_lookup[ $child_id ] ) ) {
+				continue;
+			}
+
+			$hidden[ $child_id ] = $child_id;
+			$parents[]           = $child_id;
+		}
+	}
+
+	return array_values( $hidden );
 }
 
 /**
- * Excludes protected posts from REST API queries at the SQL level.
+ * Excludes protected posts from REST API collection queries so pagination stays accurate.
  *
- * Filtering the results after the query runs (see
- * members_filter_protected_posts_for_rest()) hides the post bodies but leaves
- * the row count intact, so the X-WP-Total / X-WP-TotalPages headers and the
- * per-page "empty array" responses can be used as a side channel to infer the
- * existence and contents of hidden posts. Excluding the rows in the SQL query
- * itself keeps the counts accurate and closes that side channel.
+ * Filtering the results after the query runs (see members_filter_protected_posts_for_rest())
+ * hides the post bodies but leaves the row count intact, so the X-WP-Total / X-WP-TotalPages
+ * headers and per-page "empty array" responses can be used as a side channel to infer the
+ * existence of hidden posts. Excluding the row IDs in the query itself keeps the counts
+ * accurate and closes that side channel.
  *
- * SQL exclusion mirrors members_can_user_view_post() for direct and inherited
- * (parent) restrictions, including post-author bypasses. Custom filters on
- * members_can_user_view_post do not apply here; use members_rest_protected_posts_where.
+ * The excluded IDs are resolved in PHP via members_get_rest_hidden_post_ids(), which reuses
+ * members_can_user_view_post(); custom filters on that function are therefore honored. Use
+ * the members_rest_hidden_post_ids filter to adjust the excluded set directly.
  *
  * @since 3.2.23
  * @access public
- * @param string    $where  The WHERE clause of the query.
- * @param WP_Query  $query  The WP_Query object.
+ * @param  string    $where  The WHERE clause of the query.
+ * @param  WP_Query  $query  The WP_Query object.
  * @return string
  */
 function members_exclude_protected_posts_from_rest_query( $where, $query ) {
+
+	global $wpdb;
 
 	if ( ! members_content_permissions_enabled() || ! members_is_hidden_protected_posts_enabled() ) {
 		return $where;
@@ -893,16 +735,26 @@ function members_exclude_protected_posts_from_rest_query( $where, $query ) {
 		return $where;
 	}
 
-	$user_id = is_user_logged_in() ? get_current_user_id() : 0;
-	$roles   = is_user_logged_in() ? (array) wp_get_current_user()->roles : array();
+	$hidden = members_get_rest_hidden_post_ids( $query );
 
-	$where .= members_build_rest_protected_posts_exclusion_sql( $roles, $user_id );
+	/**
+	 * Filters the post IDs excluded from REST collections for the current user.
+	 *
+	 * @since 3.2.24
+	 *
+	 * @param int[]    $hidden  Post IDs to exclude.
+	 * @param WP_Query $query   The WP_Query object.
+	 */
+	$hidden = apply_filters( 'members_rest_hidden_post_ids', $hidden, $query );
+
+	$hidden = array_filter( array_map( 'intval', (array) $hidden ) );
+
+	if ( ! empty( $hidden ) ) {
+		$where .= " AND {$wpdb->posts}.ID NOT IN ( " . implode( ', ', $hidden ) . ' )';
+	}
 
 	/**
 	 * Filters the SQL WHERE clause used to exclude protected posts from REST collections.
-	 *
-	 * Custom code filtering members_can_user_view_post does not automatically affect
-	 * this SQL exclusion. Use this hook to keep customized permission logic aligned.
 	 *
 	 * @since 3.2.23
 	 *
