@@ -213,18 +213,20 @@ final class Content_Permissions_Editor {
 	/**
 	 * Auth check for content permissions post meta in REST.
 	 *
+	 * Note: WordPress passes `$allowed` as `! is_protected_meta( $meta_key )`, which is
+	 * always false for our underscore-prefixed key. The whole point of an auth_callback is
+	 * to grant access to a protected meta key, so we must NOT bail on `$allowed` here or the
+	 * meta could never be written via REST (block editor, Elementor, and other page builders
+	 * would all fail with "you are not allowed to edit the _members_access_role custom field").
+	 *
 	 * @since  3.2.22
 	 * @access public
-	 * @param  bool   $allowed    Whether the user can add the meta.
+	 * @param  bool   $allowed    Whether the user can add the meta. Ignored (see note above).
 	 * @param  string $meta_key   Meta key.
 	 * @param  int    $object_id  Post ID.
 	 * @return bool
 	 */
 	public function auth_content_permissions_meta( $allowed, $meta_key, $object_id ) {
-
-		if ( ! $allowed ) {
-			return false;
-		}
 
 		if ( ! current_user_can( 'restrict_content' ) ) {
 			return false;
