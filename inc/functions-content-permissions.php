@@ -617,7 +617,12 @@ function members_get_rest_hidden_post_ids( $query ) {
 	global $wpdb;
 
 	// Limit to the queried post type(s) when known; inheritance follows same-type parents.
+	// 'any' (and an unset type) means no scoping, so fall back to scanning all restricted posts.
 	$post_types = array_filter( array_map( 'strval', (array) $query->get( 'post_type' ) ) );
+
+	if ( in_array( 'any', $post_types, true ) ) {
+		$post_types = array();
+	}
 
 	if ( ! empty( $post_types ) ) {
 		$placeholders = implode( ', ', array_fill( 0, count( $post_types ), '%s' ) );
