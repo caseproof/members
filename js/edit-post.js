@@ -36,4 +36,40 @@
 		}
 	); // click()
 
+	/* ====== Content Permissions: allow all logged-in users ====== */
+
+	function syncAllLoggedIn( metabox ) {
+		var allLoggedIn = metabox.querySelector( '[data-members-cp-all-logged-in]' );
+		var fieldset = metabox.querySelector( '[data-members-cp-role-fieldset]' );
+		var roleList = metabox.querySelector( '.members-cp-role-list' );
+		var roleInputs = metabox.querySelectorAll( '[data-members-cp-role]' );
+
+		if ( ! allLoggedIn || ! fieldset ) {
+			return;
+		}
+
+		var disabled = allLoggedIn.checked;
+
+		fieldset.classList.toggle( 'is-disabled', disabled );
+
+		if ( roleList ) {
+			roleList.classList.toggle( 'is-disabled', disabled );
+		}
+
+		roleInputs.forEach( function ( input ) {
+			input.disabled = disabled;
+			input.setAttribute( 'aria-disabled', disabled ? 'true' : 'false' );
+		} );
+	}
+
+	jQuery( '.members-cp-tabs' ).each( function () {
+		var metabox = this;
+
+		syncAllLoggedIn( metabox );
+
+		jQuery( metabox ).on( 'change', '[data-members-cp-all-logged-in]', function () {
+			syncAllLoggedIn( metabox );
+		} );
+	} );
+
 }() );
