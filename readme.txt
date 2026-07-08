@@ -6,7 +6,7 @@ Tags: permissions, memberships, roles, capabilities, access
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 3.2.24
+Stable tag: 3.2.25
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -161,6 +161,21 @@ If that doesn't apply or didn't work, stop by our [support forums](https://wordp
 5. Select multiple roles per user (edit user screen)
 
 == Changelog ==
+
+= 3.2.25 =
+* Fixed: Saving a post via the REST API as a user without the `restrict_content` capability (e.g. custom roles, Gutenberg + ACF Pro) failed with "Sorry, you are not allowed to edit the _members_access_role custom field," and silently dropped other meta such as ACF fields. The request pre-processor was hooked to a non-existent action (`rest_before_insert_{$post_type}`) so it never ran; it now correctly strips the Content Permissions meta keys for users who cannot manage them, before the save.
+* Fixed: The REST protected-posts exclusion scoped its restriction lookup to the queried post type, so posts inheriting a restriction from an ancestor of a different post type were not excluded, making X-WP-Total / pagination counts inaccurate. All restriction roots are now considered regardless of post type.
+* Fixed: Content Permissions role configuration and the custom error message were visible in REST API responses to any user who could read the post (registered meta is readable regardless of its write auth callback). Both meta keys are now blanked to their empty defaults in REST responses for users who cannot manage content permissions.
+* Fixed: Comments on role-protected posts were fully readable — bodies, author names, dates — via the REST API comments endpoint (/wp/v2/comments), including by anonymous visitors. Comment collections now exclude protected posts and single-comment reads are denied for users who cannot view the post.
+* Fixed: With "Hide protected posts from REST API" enabled, hidden posts remained enumerable by ID — a single-item GET (/wp/v2/posts/ID) returned a 200 response exposing the title, slug, date, and author. Hidden posts now return the same 404 as a nonexistent ID.
+* Fixed: A crafted form submission with nested array values could cause a PHP 8 TypeError fatal in the classic Content Permissions meta box save.
+* Fixed: Evaluating protected posts for the REST exclusion no longer triggers the legacy `_role` meta conversion, which performed database writes during unauthenticated GET requests and could destructively migrate `_role` postmeta belonging to unrelated plugins. The evaluation is now read-only and also guards against posts of unregistered post types (previously a source of PHP warnings).
+* Fixed: The block editor "Error Message" field in the Content Permissions panel was a rich-text control used outside a block context, so it silently ignored Enter and formatting — a multi-line message could not be entered. It is now a standard multi-line text field.
+* Fixed: Opening a brand-new post in the block editor marked it as having unsaved changes before the user touched anything, because default roles were written to post meta on load. Default roles are now shown pre-selected without dirtying the editor, and persist normally once the post is edited.
+* Fixed: Content Permissions REST meta and its block editor save now also register on rest_api_init, so post types registered later than other plugins/themes no longer show a Content Permissions panel that fails to save.
+* Fixed: Content Permissions can once again be enabled for attachments via the members_enable_attachment_content_permissions filter (a 3.2.22 change returned early for attachments before the filter ran).
+* Fixed: Saving the classic Content Permissions meta box no longer drops stored roles that were hidden from the checklist by the members_wp_roles filter; those roles are now preserved like deleted-role (orphan) slugs.
+* Changed: The REST protected-posts exclusion scopes its permission checks to the queried post type(s) — restriction roots of other post types are only evaluated when they can actually pass a restriction down to the queried type — computes its hidden-post list once per request per user and type combination, primes caches in bounded chunks, and no longer walks post revisions when expanding inherited restrictions.
 
 = 3.2.24 =
 * Fixed: Content Permissions could not be saved via the REST API (block editor, Elementor, and other page builders) in 3.2.23, failing with "Sorry, you are not allowed to edit the _members_access_role custom field." The meta auth callback wrongly honored WordPress' default deny for protected meta keys, blocking every user including administrators.

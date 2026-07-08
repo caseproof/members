@@ -42,13 +42,13 @@ final class Content_Permissions_Editor {
 	private static $rest_prepare_hooks_added = array();
 
 	/**
-	 * Post types that already have a `rest_before_insert_{$post_type}` callback registered.
+	 * Post types that already have a `rest_pre_insert_{$post_type}` callback registered.
 	 *
 	 * @since  3.2.22
 	 * @access private
 	 * @var    array
 	 */
-	private static $rest_before_insert_hooks_added = array();
+	private static $rest_pre_insert_hooks_added = array();
 
 	/**
 	 * Sets up hooks.
@@ -64,6 +64,10 @@ final class Content_Permissions_Editor {
 		}
 
 		add_action( 'init', array( $this, 'register_content_permissions_post_meta' ), 999 );
+		// Re-run on rest_api_init so post types registered later than init:999 still get their
+		// REST meta + hooks; without this their block editor panel appears but silently fails to
+		// save. Registration is idempotent and the hook guards prevent duplicate filters.
+		add_action( 'rest_api_init', array( $this, 'register_content_permissions_post_meta' ) );
 		add_action( 'enqueue_block_editor_assets', array( $this, 'enqueue_block_editor_panel' ) );
 	}
 
@@ -108,9 +112,9 @@ final class Content_Permissions_Editor {
 				self::$rest_prepare_hooks_added[ $post_type ] = true;
 			}
 
-			if ( empty( self::$rest_before_insert_hooks_added[ $post_type ] ) ) {
-				add_action( "rest_before_insert_{$post_type}", array( $this, 'prepare_rest_content_permissions_meta_request' ), 10, 3 );
-				self::$rest_before_insert_hooks_added[ $post_type ] = true;
+			if ( empty( self::$rest_pre_insert_hooks_added[ $post_type ] ) ) {
+				add_filter( "rest_pre_insert_{$post_type}", array( $this, 'prepare_rest_content_permissions_meta_request' ), 10, 2 );
+				self::$rest_pre_insert_hooks_added[ $post_type ] = true;
 			}
 		}
 	}
@@ -118,47 +122,66 @@ final class Content_Permissions_Editor {
 	/**
 	 * Normalizes role meta on REST saves before core persists it.
 	 *
-	 * Migrates legacy `_role` meta, strips invalid values, and merges orphan slugs so core's
-	 * bulk meta write matches the classic meta box save path.
+	 * Hooked to the `rest_pre_insert_{$post_type}` filter (which fires before core writes meta).
+	 * Note: an earlier version hooked the non-existent `rest_before_insert_{$post_type}` action,
+	 * so this never ran — leaving these protected keys in the request for users who cannot manage
+	 * them. Core then denied the write and returned a WP_Error, which aborts the *entire* meta
+	 * batch (including unrelated meta such as ACF fields) before `rest_after_insert` fires.
+	 *
+	 * For users who cannot modify content permissions we strip both keys so their save proceeds
+	 * untouched. For those who can, we migrate legacy `_role` meta, sanitize the roles, and merge
+	 * orphan slugs so the REST write matches the classic meta box save path.
 	 *
 	 * @since  3.2.22
 	 * @access public
-	 * @param  \stdClass|\WP_Post   $prepared_post  Post object prepared for insert/update.
-	 * @param  \WP_REST_Request     $request        REST request object.
-	 * @param  bool                 $creating       True when creating a post, false when updating.
-	 * @return void
+	 * @param  \stdClass         $prepared_post  Post object prepared for insert/update.
+	 * @param  \WP_REST_Request  $request        REST request object.
+	 * @return \stdClass
 	 */
-	public function prepare_rest_content_permissions_meta_request( $prepared_post, $request, $creating ) {
+	public function prepare_rest_content_permissions_meta_request( $prepared_post, $request ) {
 
 		if ( ! $request instanceof \WP_REST_Request ) {
-			return;
-		}
-
-		$post_id = $creating ? 0 : ( ! empty( $prepared_post->ID ) ? (int) $prepared_post->ID : (int) $request->get_param( 'id' ) );
-
-		if ( $post_id && ! $creating && current_user_can( 'restrict_content' ) && current_user_can( 'edit_post', $post_id ) ) {
-			members_convert_old_post_meta( $post_id );
+			return $prepared_post;
 		}
 
 		$meta = $request->get_param( 'meta' );
 
-		if ( ! is_array( $meta ) || ! array_key_exists( '_members_access_role', $meta ) ) {
-			return;
+		if ( ! is_array( $meta ) ) {
+			return $prepared_post;
 		}
 
+		$post_id  = ! empty( $prepared_post->ID ) ? (int) $prepared_post->ID : (int) $request->get_param( 'id' );
+		$creating = 0 === $post_id;
+
+		// Users who cannot manage content permissions must not touch these protected keys. Strip
+		// them so the save does not fail on protected-meta auth (which would also drop other meta).
 		if ( ! $this->user_can_modify_content_permissions_via_rest( $post_id, $creating, $prepared_post, $request ) ) {
-			unset( $meta['_members_access_role'] );
-			$request->set_param( 'meta', $meta );
-			return;
+
+			$changed = false;
+
+			foreach ( array( '_members_access_role', '_members_access_error' ) as $key ) {
+				if ( array_key_exists( $key, $meta ) ) {
+					unset( $meta[ $key ] );
+					$changed = true;
+				}
+			}
+
+			if ( $changed ) {
+				$request->set_param( 'meta', $meta );
+			}
+
+			return $prepared_post;
 		}
 
-		$roles = $meta['_members_access_role'];
-
-		if ( ! is_array( $roles ) ) {
-			return;
+		if ( $post_id && ! $creating ) {
+			members_convert_old_post_meta( $post_id );
 		}
 
-		$sanitized = members_sanitize_access_role_meta_list( $roles );
+		if ( ! array_key_exists( '_members_access_role', $meta ) || ! is_array( $meta['_members_access_role'] ) ) {
+			return $prepared_post;
+		}
+
+		$sanitized = members_sanitize_access_role_meta_list( $meta['_members_access_role'] );
 
 		if ( $post_id && ! $creating ) {
 			$orphans = members_get_orphan_post_roles( $post_id );
@@ -170,6 +193,8 @@ final class Content_Permissions_Editor {
 
 		$meta['_members_access_role'] = $sanitized;
 		$request->set_param( 'meta', $meta );
+
+		return $prepared_post;
 	}
 
 	/**
@@ -185,12 +210,12 @@ final class Content_Permissions_Editor {
 	 */
 	private function user_can_modify_content_permissions_via_rest( $post_id, $creating, $prepared_post, $request ) {
 
-		if ( ! current_user_can( 'restrict_content' ) ) {
-			return false;
+		if ( ! $creating && $post_id ) {
+			return members_current_user_can_manage_post_content_permissions( $post_id );
 		}
 
-		if ( ! $creating && $post_id ) {
-			return current_user_can( 'edit_post', $post_id );
+		if ( ! current_user_can( 'restrict_content' ) ) {
+			return false;
 		}
 
 		if ( ! $creating ) {
@@ -228,14 +253,14 @@ final class Content_Permissions_Editor {
 	 */
 	public function auth_content_permissions_meta( $allowed, $meta_key, $object_id ) {
 
-		if ( ! current_user_can( 'restrict_content' ) ) {
-			return false;
-		}
-
 		$object_id = (int) $object_id;
 
 		if ( $object_id ) {
-			return current_user_can( 'edit_post', $object_id );
+			return members_current_user_can_manage_post_content_permissions( $object_id );
+		}
+
+		if ( ! current_user_can( 'restrict_content' ) ) {
+			return false;
 		}
 
 		foreach ( members_get_content_permissions_post_types() as $post_type ) {
@@ -261,13 +286,33 @@ final class Content_Permissions_Editor {
 	 */
 	public function prepare_rest_content_permissions_meta( $response, $post, $request ) {
 
-		if ( ! $response instanceof \WP_REST_Response || ! $post instanceof \WP_Post || ! current_user_can( 'restrict_content' ) || ! current_user_can( 'edit_post', $post->ID ) ) {
+		if ( ! $response instanceof \WP_REST_Response || ! $post instanceof \WP_Post ) {
 			return $response;
 		}
 
 		$data = $response->get_data();
 
 		if ( ! is_array( $data ) || ! isset( $data['meta'] ) || ! is_array( $data['meta'] ) ) {
+			return $response;
+		}
+
+		// Core exposes registered show_in_rest meta to anyone who can read the post — the
+		// auth_callback only gates writes. Users who cannot manage content permissions should
+		// not see the role configuration or the custom error message, so blank both. Schema
+		// defaults (not unset) keep the declared REST response shape intact for headless
+		// clients, while non-manager editor sessions no longer round-trip real values on save.
+		if ( ! members_current_user_can_manage_post_content_permissions( $post->ID ) ) {
+
+			if ( array_key_exists( '_members_access_role', $data['meta'] ) ) {
+				$data['meta']['_members_access_role'] = array();
+			}
+
+			if ( array_key_exists( '_members_access_error', $data['meta'] ) ) {
+				$data['meta']['_members_access_error'] = '';
+			}
+
+			$response->set_data( $data );
+
 			return $response;
 		}
 

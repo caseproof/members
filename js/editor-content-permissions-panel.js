@@ -17,12 +17,11 @@
 	}
 
 	const { registerPlugin } = wp.plugins;
-	const { BaseControl, CheckboxControl, TextareaControl } = wp.components;
+	const { CheckboxControl, TextareaControl } = wp.components;
 	const { useSelect } = wp.data;
 	const { useEntityProp } = wp.coreData;
 	const { createElement: el, useEffect, useRef } = wp.element;
 	const { __ } = wp.i18n;
-	const RichText = wp.blockEditor && wp.blockEditor.RichText;
 
 	const panelConfig = window.membersCpPanel || {};
 	const roleLabels = panelConfig.roles ? panelConfig.roles : {};
@@ -56,8 +55,8 @@
 			[ meta ]
 		);
 
-		const roles = editedMeta._members_access_role;
-		const roleList = Array.isArray( roles ) ? roles : roles ? [ roles ] : [];
+		const storedRoles = editedMeta._members_access_role;
+		const roleList = Array.isArray( storedRoles ) ? storedRoles : storedRoles ? [ storedRoles ] : [];
 
 		function patchMeta( changes ) {
 			const editor = wp.data.select( 'core/editor' );
@@ -70,6 +69,10 @@
 			patchMeta( { _members_access_role: uniqueRoles( nextRoles ) } );
 		}
 
+		// Apply default roles to a brand-new post so a post shown as restricted actually saves
+		// restricted. This marks the new post as changed (like the classic editor's pre-checked
+		// boxes, which save on publish) — necessary so the default restriction is not silently
+		// dropped when the author publishes without toggling a checkbox.
 		useEffect(
 			function () {
 				if ( ! postType || defaultsApplied.current || ! isNewPost || ! defaultRoles.length || roleList.length ) {
@@ -79,7 +82,7 @@
 				defaultsApplied.current = true;
 				setAccessRoles( defaultRoles.slice() );
 			},
-			[ postType, isNewPost, roleList.length, defaultRoles ]
+			[ postType, isNewPost, roleList.length ]
 		);
 
 		if ( ! postType ) {
@@ -103,32 +106,6 @@
 
 			setAccessRoles( hidden.concat( nextVisible ) );
 		}
-
-		const errorMessageField = RichText
-			? el(
-					BaseControl,
-					{
-						label: __( 'Error Message', 'members' ),
-						help: __( 'Shown to users who cannot view this content.', 'members' ),
-						className: 'members-cp-error-message-control',
-					},
-					el( RichText, {
-						tagName: 'div',
-						className: 'members-cp-error-message',
-						value: message || '',
-						onChange: function ( newMessage ) {
-							patchMeta( { _members_access_error: newMessage } );
-						},
-					} )
-			  )
-			: el( TextareaControl, {
-					label: __( 'Error Message', 'members' ),
-					help: __( 'Shown to users who cannot view this content.', 'members' ),
-					value: message || '',
-					onChange: function ( newMessage ) {
-						patchMeta( { _members_access_error: newMessage } );
-					},
-			  } );
 
 		return el(
 			PluginDocumentSettingPanel,
@@ -175,7 +152,15 @@
 						)
 				  )
 				: null,
-			errorMessageField
+			el( TextareaControl, {
+				label: __( 'Error Message', 'members' ),
+				help: __( 'Shown to users who cannot view this content.', 'members' ),
+				className: 'members-cp-error-message',
+				value: message || '',
+				onChange: function ( newMessage ) {
+					patchMeta( { _members_access_error: newMessage } );
+				},
+			} )
 		);
 	}
 
