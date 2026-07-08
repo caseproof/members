@@ -661,42 +661,30 @@ function members_rest_user_can_view_restricted_post( $user_id, $post_id ) {
 }
 
 /**
- * Read-only equivalent of members_can_current_user_view_post() for REST reads.
+ * Whether a post is hidden from the current user for REST reads.
  *
- * Walks to the nearest ancestor-or-self carrying role meta and evaluates it, matching
- * members_can_user_view_post(), but never triggers the legacy `_role` conversion (a database
- * write). Safe on unauthenticated GETs, and consistent with members_get_hidden_protected_post_ids()
- * so single-item and collection decisions never disagree.
+ * Single source of truth shared by the collection exclusion, the single-item 404, and the
+ * comment filters, so those decisions can never disagree (an earlier per-request ancestor-walk
+ * helper diverged from the collection set and could embed a WP_Error into a comment collection).
+ * Read-only and scoped to the post's own type for efficiency.
  *
  * @since 3.2.25
  * @access public
  * @param  int  $post_id  Post ID.
  * @return bool
  */
-function members_rest_current_user_can_view_post( $post_id ) {
+function members_is_post_hidden_from_current_user_in_rest( $post_id ) {
 
-	$user_id = get_current_user_id();
-	$current = (int) $post_id;
-	$seen    = array();
+	$post_id = (int) $post_id;
 
-	while ( $current && ! isset( $seen[ $current ] ) ) {
-
-		$seen[ $current ] = true;
-
-		$post = get_post( $current );
-
-		if ( ! $post instanceof \WP_Post ) {
-			return true;
-		}
-
-		if ( ! empty( members_get_post_roles_for_rest( $current ) ) ) {
-			return members_rest_user_can_view_restricted_post( $user_id, $current );
-		}
-
-		$current = (int) $post->post_parent;
+	if ( ! $post_id ) {
+		return false;
 	}
 
-	return true;
+	$post_type = get_post_type( $post_id );
+	$scope     = $post_type ? array( $post_type ) : array();
+
+	return in_array( $post_id, members_get_hidden_protected_post_ids( $scope ), true );
 }
 
 /**
@@ -1020,10 +1008,10 @@ function members_hide_protected_post_comment_in_rest( $response, $comment, $requ
 		return $response;
 	}
 
-	// Read-only + consistent with the collection filter (members_get_hidden_protected_post_ids),
-	// so a comment that passed rest_comment_query is never turned into a WP_Error here — which
-	// prepare_response_for_collection() would otherwise embed as a garbled collection item.
-	if ( members_rest_current_user_can_view_post( $post_id ) ) {
+	// Same source of truth as the collection filter, so a comment that passed rest_comment_query
+	// is never turned into a WP_Error here — which prepare_response_for_collection() would
+	// otherwise embed as a garbled collection item.
+	if ( ! members_is_post_hidden_from_current_user_in_rest( $post_id ) ) {
 		return $response;
 	}
 

@@ -302,9 +302,10 @@ final class Content_Permissions_Editor {
 			return $response;
 		}
 
-		// Read-only view check: members_can_current_user_view_post() would run the legacy _role
-		// conversion, mutating the database on an unauthenticated GET.
-		if ( members_rest_current_user_can_view_post( $post->ID ) ) {
+		// Same read-only source of truth as the collection exclusion, so single-item and
+		// collection decisions always agree. (members_can_current_user_view_post() would also
+		// run the legacy _role conversion, mutating the database on an unauthenticated GET.)
+		if ( ! members_is_post_hidden_from_current_user_in_rest( $post->ID ) ) {
 			return $response;
 		}
 
