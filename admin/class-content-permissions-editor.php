@@ -42,13 +42,13 @@ final class Content_Permissions_Editor {
 	private static $rest_prepare_hooks_added = array();
 
 	/**
-	 * Post types that already have a `rest_before_insert_{$post_type}` callback registered.
+	 * Post types that already have a `rest_pre_insert_{$post_type}` callback registered.
 	 *
 	 * @since  3.2.22
 	 * @access private
 	 * @var    array
 	 */
-	private static $rest_before_insert_hooks_added = array();
+	private static $rest_pre_insert_hooks_added = array();
 
 	/**
 	 * Sets up hooks.
@@ -108,9 +108,9 @@ final class Content_Permissions_Editor {
 				self::$rest_prepare_hooks_added[ $post_type ] = true;
 			}
 
-			if ( empty( self::$rest_before_insert_hooks_added[ $post_type ] ) ) {
-				add_action( "rest_before_insert_{$post_type}", array( $this, 'prepare_rest_content_permissions_meta_request' ), 10, 3 );
-				self::$rest_before_insert_hooks_added[ $post_type ] = true;
+			if ( empty( self::$rest_pre_insert_hooks_added[ $post_type ] ) ) {
+				add_filter( "rest_pre_insert_{$post_type}", array( $this, 'prepare_rest_content_permissions_meta_request' ), 10, 2 );
+				self::$rest_pre_insert_hooks_added[ $post_type ] = true;
 			}
 		}
 	}
@@ -118,47 +118,66 @@ final class Content_Permissions_Editor {
 	/**
 	 * Normalizes role meta on REST saves before core persists it.
 	 *
-	 * Migrates legacy `_role` meta, strips invalid values, and merges orphan slugs so core's
-	 * bulk meta write matches the classic meta box save path.
+	 * Hooked to the `rest_pre_insert_{$post_type}` filter (which fires before core writes meta).
+	 * Note: an earlier version hooked the non-existent `rest_before_insert_{$post_type}` action,
+	 * so this never ran — leaving these protected keys in the request for users who cannot manage
+	 * them. Core then denied the write and returned a WP_Error, which aborts the *entire* meta
+	 * batch (including unrelated meta such as ACF fields) before `rest_after_insert` fires.
+	 *
+	 * For users who cannot modify content permissions we strip both keys so their save proceeds
+	 * untouched. For those who can, we migrate legacy `_role` meta, sanitize the roles, and merge
+	 * orphan slugs so the REST write matches the classic meta box save path.
 	 *
 	 * @since  3.2.22
 	 * @access public
-	 * @param  \stdClass|\WP_Post   $prepared_post  Post object prepared for insert/update.
-	 * @param  \WP_REST_Request     $request        REST request object.
-	 * @param  bool                 $creating       True when creating a post, false when updating.
-	 * @return void
+	 * @param  \stdClass         $prepared_post  Post object prepared for insert/update.
+	 * @param  \WP_REST_Request  $request        REST request object.
+	 * @return \stdClass
 	 */
-	public function prepare_rest_content_permissions_meta_request( $prepared_post, $request, $creating ) {
+	public function prepare_rest_content_permissions_meta_request( $prepared_post, $request ) {
 
 		if ( ! $request instanceof \WP_REST_Request ) {
-			return;
-		}
-
-		$post_id = $creating ? 0 : ( ! empty( $prepared_post->ID ) ? (int) $prepared_post->ID : (int) $request->get_param( 'id' ) );
-
-		if ( $post_id && ! $creating && current_user_can( 'restrict_content' ) && current_user_can( 'edit_post', $post_id ) ) {
-			members_convert_old_post_meta( $post_id );
+			return $prepared_post;
 		}
 
 		$meta = $request->get_param( 'meta' );
 
-		if ( ! is_array( $meta ) || ! array_key_exists( '_members_access_role', $meta ) ) {
-			return;
+		if ( ! is_array( $meta ) ) {
+			return $prepared_post;
 		}
 
+		$post_id  = ! empty( $prepared_post->ID ) ? (int) $prepared_post->ID : (int) $request->get_param( 'id' );
+		$creating = 0 === $post_id;
+
+		// Users who cannot manage content permissions must not touch these protected keys. Strip
+		// them so the save does not fail on protected-meta auth (which would also drop other meta).
 		if ( ! $this->user_can_modify_content_permissions_via_rest( $post_id, $creating, $prepared_post, $request ) ) {
-			unset( $meta['_members_access_role'] );
-			$request->set_param( 'meta', $meta );
-			return;
+
+			$changed = false;
+
+			foreach ( array( '_members_access_role', '_members_access_error' ) as $key ) {
+				if ( array_key_exists( $key, $meta ) ) {
+					unset( $meta[ $key ] );
+					$changed = true;
+				}
+			}
+
+			if ( $changed ) {
+				$request->set_param( 'meta', $meta );
+			}
+
+			return $prepared_post;
 		}
 
-		$roles = $meta['_members_access_role'];
-
-		if ( ! is_array( $roles ) ) {
-			return;
+		if ( $post_id && ! $creating ) {
+			members_convert_old_post_meta( $post_id );
 		}
 
-		$sanitized = members_sanitize_access_role_meta_list( $roles );
+		if ( ! array_key_exists( '_members_access_role', $meta ) || ! is_array( $meta['_members_access_role'] ) ) {
+			return $prepared_post;
+		}
+
+		$sanitized = members_sanitize_access_role_meta_list( $meta['_members_access_role'] );
 
 		if ( $post_id && ! $creating ) {
 			$orphans = members_get_orphan_post_roles( $post_id );
@@ -170,6 +189,8 @@ final class Content_Permissions_Editor {
 
 		$meta['_members_access_role'] = $sanitized;
 		$request->set_param( 'meta', $meta );
+
+		return $prepared_post;
 	}
 
 	/**

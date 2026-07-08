@@ -6,7 +6,7 @@ Tags: permissions, memberships, roles, capabilities, access
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 3.2.24
+Stable tag: 3.2.25
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -161,6 +161,10 @@ If that doesn't apply or didn't work, stop by our [support forums](https://wordp
 5. Select multiple roles per user (edit user screen)
 
 == Changelog ==
+
+= 3.2.25 =
+* Fixed: Saving a post via the REST API as a user without the `restrict_content` capability (e.g. custom roles, Gutenberg + ACF Pro) failed with "Sorry, you are not allowed to edit the _members_access_role custom field," and silently dropped other meta such as ACF fields. The request pre-processor was hooked to a non-existent action (`rest_before_insert_{$post_type}`) so it never ran; it now correctly strips the Content Permissions meta keys for users who cannot manage them, before the save.
+* Fixed: The REST protected-posts exclusion scoped its restriction lookup to the queried post type, so posts inheriting a restriction from an ancestor of a different post type were not excluded, making X-WP-Total / pagination counts inaccurate. All restriction roots are now considered regardless of post type.
 
 = 3.2.24 =
 * Fixed: Content Permissions could not be saved via the REST API (block editor, Elementor, and other page builders) in 3.2.23, failing with "Sorry, you are not allowed to edit the _members_access_role custom field." The meta auth callback wrongly honored WordPress' default deny for protected meta keys, blocking every user including administrators.

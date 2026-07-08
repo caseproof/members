@@ -616,33 +616,15 @@ function members_get_rest_hidden_post_ids( $query ) {
 
 	global $wpdb;
 
-	// Limit to the queried post type(s) when known; inheritance follows same-type parents.
-	// 'any' (and an unset type) means no scoping, so fall back to scanning all restricted posts.
-	$post_types = array_filter( array_map( 'strval', (array) $query->get( 'post_type' ) ) );
-
-	if ( in_array( 'any', $post_types, true ) ) {
-		$post_types = array();
-	}
-
-	if ( ! empty( $post_types ) ) {
-		$placeholders = implode( ', ', array_fill( 0, count( $post_types ), '%s' ) );
-
-		$roots = $wpdb->get_col(
-			$wpdb->prepare(
-				"SELECT DISTINCT p.ID
-				FROM {$wpdb->posts} p
-				INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID
-				WHERE pm.meta_key IN ( '_members_access_role', '_role' )
-				AND p.post_type IN ( {$placeholders} )",
-				$post_types
-			)
-		);
-	} else {
-		$roots = $wpdb->get_col(
-			"SELECT DISTINCT post_id FROM {$wpdb->postmeta}
-			WHERE meta_key IN ( '_members_access_role', '_role' )"
-		);
-	}
+	// Restriction roots are every post carrying role meta, regardless of post type. A post can
+	// inherit a restriction from an ancestor of a different post type (post_parent is not type
+	// constrained, and members_can_user_view_post() walks it either way), so scoping the root
+	// lookup to the queried type would miss those and leave the pagination counts inaccurate.
+	// Excess IDs in the exclusion list are harmless: the main query's own type clause ignores them.
+	$roots = $wpdb->get_col(
+		"SELECT DISTINCT post_id FROM {$wpdb->postmeta}
+		WHERE meta_key IN ( '_members_access_role', '_role' )"
+	);
 
 	$roots = array_values( array_unique( array_map( 'intval', (array) $roots ) ) );
 
