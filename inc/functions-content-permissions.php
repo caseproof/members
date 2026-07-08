@@ -712,7 +712,13 @@ function members_post_or_ancestor_has_role_meta( $post_id ) {
 	$seen    = array();
 	$guard   = 0;
 
-	while ( $current && ! isset( $seen[ $current ] ) && $guard++ < 100 ) {
+	while ( $current && ! isset( $seen[ $current ] ) ) {
+
+		// Hierarchy deeper than we will walk: we cannot prove the post is unrestricted, so be
+		// conservative and let the authoritative hidden-set check decide rather than fast-passing.
+		if ( $guard++ >= 100 ) {
+			return true;
+		}
 
 		$seen[ $current ] = true;
 
@@ -927,8 +933,17 @@ function members_get_hidden_protected_post_ids( $post_types = array() ) {
 
 			$child_id = (int) $child->ID;
 
-			// Already hidden, or a root that is governed on its own terms.
-			if ( isset( $hidden[ $child_id ] ) || isset( $root_lookup[ $child_id ] ) ) {
+			// Already hidden — skip.
+			if ( isset( $hidden[ $child_id ] ) ) {
+				continue;
+			}
+
+			// A root with its own effective roles is governed independently, so it does not
+			// inherit the ancestor's restriction and stops the walk. A "root" whose meta is empty
+			// (e.g. a blank legacy _role row) imposes no restriction of its own, so it must still
+			// inherit from above — otherwise it would shield its descendants from a real
+			// ancestor restriction and leak them.
+			if ( isset( $root_lookup[ $child_id ] ) && ! empty( members_get_post_roles_for_rest( $child_id ) ) ) {
 				continue;
 			}
 
@@ -1093,10 +1108,13 @@ function members_hide_protected_post_comment_in_rest( $response, $comment, $requ
 		return $response;
 	}
 
+	// Match core's WP_REST_Comments_Controller::get_comment() invalid-ID error verbatim (no text
+	// domain: core's own translation applies), so a hidden comment is indistinguishable from a
+	// nonexistent one — the same non-enumerable 404 the single-item post path returns.
 	return new \WP_Error(
-		'rest_cannot_read',
-		__( 'Sorry, you are not allowed to read this comment.', 'members' ),
-		array( 'status' => rest_authorization_required_code() )
+		'rest_comment_invalid_id',
+		__( 'Invalid comment ID.' ),
+		array( 'status' => 404 )
 	);
 }
 
