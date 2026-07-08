@@ -507,11 +507,14 @@ function members_is_rest_read_request() {
 		return false;
 	}
 
+	// Resolve the method exactly as WP_REST_Server::serve_request() does — ?_method= wins, then
+	// the X-HTTP-Method-Override header, then the transport method — so this classification always
+	// matches the verb core actually dispatches on (a POST ?_method=GET is a read).
 	$method = isset( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) ) : 'GET';
 
-	// Honor the method override some REST clients use (X-HTTP-Method-Override), so the classification
-	// matches the method WordPress actually dispatches on rather than the raw transport method.
-	if ( ! empty( $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'] ) ) {
+	if ( isset( $_GET['_method'] ) ) {
+		$method = strtoupper( sanitize_text_field( wp_unslash( $_GET['_method'] ) ) );
+	} elseif ( ! empty( $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'] ) ) {
 		$method = strtoupper( sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'] ) ) );
 	}
 
@@ -770,6 +773,16 @@ function members_is_post_hidden_from_current_user_in_rest( $post_id ) {
 
 	return in_array( $post_id, members_get_hidden_protected_post_ids( $scope ), true );
 }
+
+/*
+ * Known limitation (by design): REST hiding is role-meta based and always treats a child as
+ * inheriting its nearest role-bearing ancestor's restriction. It does NOT honor the developer-only
+ * `members_check_parent_post_permission` filter used to disable inheritance on the front end —
+ * mirroring that per-post filter in the REST hidden-set is what caused repeated inheritance
+ * regressions, and the case only arises with custom code. Content Permissions comment visibility in
+ * REST intentionally follows the `hide_posts_rest_api` setting (same switch as post bodies), so when
+ * that setting is off both protected posts and their comments are exposed for headless use.
+ */
 
 /**
  * Returns the post IDs the current user cannot view, for REST collection exclusion.
