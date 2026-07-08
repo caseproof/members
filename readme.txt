@@ -6,7 +6,7 @@ Tags: permissions, memberships, roles, capabilities, access
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 3.2.25
+Stable tag: 3.2.26
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -161,6 +161,10 @@ If that doesn't apply or didn't work, stop by our [support forums](https://wordp
 5. Select multiple roles per user (edit user screen)
 
 == Changelog ==
+
+= 3.2.26 =
+* Fixed: On the user profile / edit-user screen with Multiple User Roles enabled, the role checkboxes could appear to have no checkmark — looking "unresponsive" — when another plugin's admin CSS overrode core checkbox styles (e.g. line-height: 0). The checkboxes always toggled and saved; only the checkmark was hidden. The Members role checkboxes now defensively assert their own rendering so the checkmark shows regardless of such global overrides.
+* Fixed: Hardened the Multiple User Roles save against a possible PHP 8 TypeError from malformed submitted role data (a nested array reaching members_sanitize_role()).
 
 = 3.2.25 =
 * Fixed: Saving a post via the REST API as a user without the `restrict_content` capability (e.g. custom roles, Gutenberg + ACF Pro) failed with "Sorry, you are not allowed to edit the _members_access_role custom field," and silently dropped other meta such as ACF fields. The request pre-processor was hooked to a non-existent action (`rest_before_insert_{$post_type}`) so it never ran; it now correctly strips the Content Permissions meta keys for users who cannot manage them, before the save.
