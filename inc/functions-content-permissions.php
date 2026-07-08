@@ -509,6 +509,12 @@ function members_is_rest_read_request() {
 
 	$method = isset( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) ) : 'GET';
 
+	// Honor the method override some REST clients use (X-HTTP-Method-Override), so the classification
+	// matches the method WordPress actually dispatches on rather than the raw transport method.
+	if ( ! empty( $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'] ) ) {
+		$method = strtoupper( sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'] ) ) );
+	}
+
 	return in_array( $method, array( 'GET', 'HEAD' ), true );
 }
 
@@ -689,12 +695,50 @@ function members_rest_user_can_view_restricted_post( $user_id, $post_id ) {
 }
 
 /**
+ * Whether the post or any ancestor carries content-permission role meta.
+ *
+ * Cheap, read-only, meta-key based (the same signal members_get_hidden_protected_post_ids seeds
+ * its restriction roots from). Lets single-item reads skip the full hidden-set computation for the
+ * common case of an unrestricted post without ever disagreeing with the authoritative set.
+ *
+ * @since 3.2.25
+ * @access public
+ * @param  int  $post_id  Post ID.
+ * @return bool
+ */
+function members_post_or_ancestor_has_role_meta( $post_id ) {
+
+	$current = (int) $post_id;
+	$seen    = array();
+	$guard   = 0;
+
+	while ( $current && ! isset( $seen[ $current ] ) && $guard++ < 100 ) {
+
+		$seen[ $current ] = true;
+
+		if ( get_post_meta( $current, '_members_access_role', false ) || get_post_meta( $current, '_role', false ) ) {
+			return true;
+		}
+
+		$post = get_post( $current );
+
+		if ( ! $post instanceof \WP_Post ) {
+			break;
+		}
+
+		$current = (int) $post->post_parent;
+	}
+
+	return false;
+}
+
+/**
  * Whether a post is hidden from the current user for REST reads.
  *
  * Single source of truth shared by the collection exclusion, the single-item 404, and the
  * comment filters, so those decisions can never disagree (an earlier per-request ancestor-walk
  * helper diverged from the collection set and could embed a WP_Error into a comment collection).
- * Read-only and scoped to the post's own type for efficiency.
+ * Read-only and scoped to the post's own type.
  *
  * @since 3.2.25
  * @access public
@@ -706,6 +750,12 @@ function members_is_post_hidden_from_current_user_in_rest( $post_id ) {
 	$post_id = (int) $post_id;
 
 	if ( ! $post_id ) {
+		return false;
+	}
+
+	// Fast negative for the hot single-item path: a post with no role meta on itself or any
+	// ancestor cannot be restricted, so skip the full postmeta scan / descendant walk.
+	if ( ! members_post_or_ancestor_has_role_meta( $post_id ) ) {
 		return false;
 	}
 
@@ -1091,7 +1141,10 @@ function members_deny_hidden_post_single_rest_read( $response, $handler, $reques
 		return $response;
 	}
 
-	if ( 'get_item' !== ( isset( $callback[1] ) ? $callback[1] : '' ) || 'GET' !== $request->get_method() ) {
+	// HEAD falls back to the GET (get_item) callback in core but reports its own method, so it
+	// must be denied too — otherwise HEAD /wp/v2/<type>/<id> leaks a hidden post's existence and
+	// permalink (an enumeration oracle).
+	if ( 'get_item' !== ( isset( $callback[1] ) ? $callback[1] : '' ) || ! in_array( $request->get_method(), array( 'GET', 'HEAD' ), true ) ) {
 		return $response;
 	}
 
