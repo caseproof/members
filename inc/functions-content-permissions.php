@@ -492,6 +492,27 @@ function members_delete_post_access_message( $post_id ) {
 }
 
 /**
+ * Whether the current request is a read-only REST request (GET/HEAD).
+ *
+ * Used to keep read paths side-effect free — no database writes should happen while serving a
+ * REST GET, including the legacy _role meta migration.
+ *
+ * @since  3.2.25
+ * @access public
+ * @return bool
+ */
+function members_is_rest_read_request() {
+
+	if ( ! defined( 'REST_REQUEST' ) || ! REST_REQUEST ) {
+		return false;
+	}
+
+	$method = isset( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) ) : 'GET';
+
+	return in_array( $method, array( 'GET', 'HEAD' ), true );
+}
+
+/**
  * Converts the meta values of the old '_role' post meta key to the newer '_members_access_role' meta
  * key.  The reason for this change is to avoid any potential conflicts with other plugins/themes.  We're
  * now using a meta key that is extremely specific to the Members plugin.
@@ -505,6 +526,13 @@ function members_convert_old_post_meta( $post_id ) {
 
 	// Check if there are any meta values for the '_role' meta key.
 	$old_roles = get_post_meta( $post_id, '_role', false );
+
+	// Never mutate the database during a REST read (e.g. the posts_results backstop and the
+	// front-end permission checks run on unauthenticated GETs). Report the legacy roles read-only
+	// so the view check still works; migration happens on a write or a normal front-end view.
+	if ( ! empty( $old_roles ) && members_is_rest_read_request() ) {
+		return $old_roles;
+	}
 
 	// If roles were found, let's convert them.
 	if ( !empty( $old_roles ) ) {
@@ -1024,3 +1052,65 @@ function members_hide_protected_post_comment_in_rest( $response, $comment, $requ
 
 # Deny single-comment REST reads on protected posts.
 add_filter( 'rest_prepare_comment', 'members_hide_protected_post_comment_in_rest', 10, 3 );
+
+/**
+ * Denies single-item REST reads of hidden protected posts (GET /wp/v2/<type>/<id>).
+ *
+ * Collections are excluded at the query level, but a single-item GET fetches via get_post()
+ * with no WP_Query, and core's read check only inspects post status — so a hidden post would
+ * return 200 with its title/slug/date/author, enabling ID enumeration.
+ *
+ * This runs on rest_request_before_callbacks rather than rest_prepare_{$post_type}: returning
+ * a WP_Error from rest_prepare fatals, because WP_REST_Posts_Controller::get_item() calls
+ * $response->link_header() on the prepared value (which WP_Error does not implement). Returning
+ * a WP_Error here short-circuits before the callback runs (see WP_REST_Server::respond_to_request),
+ * yielding a clean 404 identical to core's invalid-ID response so a hidden post is
+ * indistinguishable from a nonexistent one. Covers every post type via the controller instance
+ * check (including attachments, whose controller extends WP_REST_Posts_Controller).
+ *
+ * @since 3.2.25
+ * @access public
+ * @param  mixed            $response  Current response; a WP_Error short-circuits the callback.
+ * @param  array            $handler   Matched route handler.
+ * @param  \WP_REST_Request $request   REST request object.
+ * @return mixed
+ */
+function members_deny_hidden_post_single_rest_read( $response, $handler, $request ) {
+
+	if ( is_wp_error( $response ) ) {
+		return $response;
+	}
+
+	if ( ! members_content_permissions_enabled() || ! members_is_hidden_protected_posts_enabled() ) {
+		return $response;
+	}
+
+	$callback = isset( $handler['callback'] ) ? $handler['callback'] : null;
+
+	if ( ! is_array( $callback ) || empty( $callback[0] ) || ! ( $callback[0] instanceof \WP_REST_Posts_Controller ) ) {
+		return $response;
+	}
+
+	if ( 'get_item' !== ( isset( $callback[1] ) ? $callback[1] : '' ) || 'GET' !== $request->get_method() ) {
+		return $response;
+	}
+
+	$post_id = (int) $request['id'];
+
+	if ( ! $post_id || members_current_user_can_manage_post_content_permissions( $post_id ) ) {
+		return $response;
+	}
+
+	if ( ! members_is_post_hidden_from_current_user_in_rest( $post_id ) ) {
+		return $response;
+	}
+
+	return new \WP_Error(
+		'rest_post_invalid_id',
+		__( 'Invalid post ID.' ),
+		array( 'status' => 404 )
+	);
+}
+
+# Deny single-item REST reads of hidden protected posts (before the controller callback runs).
+add_filter( 'rest_request_before_callbacks', 'members_deny_hidden_post_single_rest_read', 10, 3 );

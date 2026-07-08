@@ -108,7 +108,6 @@ final class Content_Permissions_Editor {
 			);
 
 			if ( empty( self::$rest_prepare_hooks_added[ $post_type ] ) ) {
-				add_filter( "rest_prepare_{$post_type}", array( $this, 'maybe_hide_protected_post_from_rest' ), 5, 3 );
 				add_filter( "rest_prepare_{$post_type}", array( $this, 'prepare_rest_content_permissions_meta' ), 10, 3 );
 				self::$rest_prepare_hooks_added[ $post_type ] = true;
 			}
@@ -273,49 +272,6 @@ final class Content_Permissions_Editor {
 		}
 
 		return false;
-	}
-
-	/**
-	 * Denies single-item REST reads of hidden protected posts.
-	 *
-	 * Collection queries are excluded at the SQL level, but single-item GETs
-	 * (GET /wp/v2/posts/<id>) fetch via get_post() — no WP_Query, so no posts_where /
-	 * posts_results filters — and core's read check only inspects post status. Without
-	 * this, "hidden" posts remain enumerable by ID with a 200 response exposing title,
-	 * slug, date, and author. The error mirrors core's invalid-ID 404 exactly so a hidden
-	 * post is indistinguishable from a nonexistent one.
-	 *
-	 * @since  3.2.25
-	 * @access public
-	 * @param  \WP_REST_Response|mixed  $response  REST response object.
-	 * @param  \WP_Post                 $post      Post object.
-	 * @param  \WP_REST_Request         $request   REST request object.
-	 * @return \WP_REST_Response|\WP_Error|mixed
-	 */
-	public function maybe_hide_protected_post_from_rest( $response, $post, $request ) {
-
-		if ( ! $post instanceof \WP_Post || ! members_is_hidden_protected_posts_enabled() ) {
-			return $response;
-		}
-
-		if ( members_current_user_can_manage_post_content_permissions( $post->ID ) ) {
-			return $response;
-		}
-
-		// Same read-only source of truth as the collection exclusion, so single-item and
-		// collection decisions always agree. (members_can_current_user_view_post() would also
-		// run the legacy _role conversion, mutating the database on an unauthenticated GET.)
-		if ( ! members_is_post_hidden_from_current_user_in_rest( $post->ID ) ) {
-			return $response;
-		}
-
-		// Match core's WP_REST_Posts_Controller::get_post() error verbatim (no text domain:
-		// core's own translation applies), so hidden and nonexistent posts are identical.
-		return new \WP_Error(
-			'rest_post_invalid_id',
-			__( 'Invalid post ID.' ),
-			array( 'status' => 404 )
-		);
 	}
 
 	/**
