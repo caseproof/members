@@ -98,7 +98,7 @@ final class User_Edit {
 				<th><?php esc_html_e( 'User Roles', 'members' ); ?></th>
 
 				<td>
-					<div class="wp-tab-panel">
+					<div class="wp-tab-panel members-user-roles-panel">
 						<ul>
 						<?php foreach ( $roles as $role ) : ?>
 
@@ -150,8 +150,10 @@ final class User_Edit {
 			// Get the current user roles.
 			$old_roles = (array) $old_user_data->roles;
 
-			// Sanitize the posted roles.
-			$new_roles = array_map( 'members_sanitize_role', $_POST['members_user_roles'] );
+			// Sanitize the posted roles. Using the list sanitizer (rather than a raw array_map
+			// over members_sanitize_role) drops non-string entries, so a crafted nested-array
+			// payload cannot fatal members_sanitize_role() with a TypeError on PHP 8.
+			$new_roles = members_sanitize_access_role_meta_list( wp_unslash( (array) $_POST['members_user_roles'] ) );
 
 			// Loop through the posted roles.
 			foreach ( $new_roles as $new_role ) {
@@ -221,7 +223,40 @@ final class User_Edit {
 	 */
 	public function print_styles() { ?>
 
-		<style type="text/css">.user-role-wrap{ display: none !important; }</style>
+		<style type="text/css">
+			.user-role-wrap{ display: none !important; }
+
+			/*
+			 * Defensive reset for our role checkboxes. Some plugins ship broad admin CSS that
+			 * clobbers core checkbox rendering (e.g. line-height:0), which hides the checkmark
+			 * even though the checkbox still toggles — making it look "unresponsive". Re-assert
+			 * the box model and the checked glyph, scoped to our own panel, so the check shows
+			 * regardless of such global overrides.
+			 */
+			.members-user-roles-panel input[type="checkbox"]{
+				display: inline-block !important;
+				width: 1rem !important;
+				height: 1rem !important;
+				min-width: 1rem !important;
+				min-height: 1rem !important;
+				line-height: normal !important;
+				vertical-align: middle;
+				opacity: 1 !important;
+			}
+			.members-user-roles-panel input[type="checkbox"]:checked::before{
+				display: inline-block !important;
+				float: none !important;
+				width: 1rem !important;
+				height: 1rem !important;
+				margin: -0.1875rem 0 0 -0.25rem !important;
+				line-height: 1 !important;
+			}
+			.members-user-roles-panel label{
+				display: inline-flex;
+				align-items: center;
+				gap: 4px;
+			}
+		</style>
 
 	<?php }
 
