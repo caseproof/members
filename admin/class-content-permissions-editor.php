@@ -64,6 +64,10 @@ final class Content_Permissions_Editor {
 		}
 
 		add_action( 'init', array( $this, 'register_content_permissions_post_meta' ), 999 );
+		// Re-run on rest_api_init so post types registered later than init:999 still get their
+		// REST meta + hooks; without this their block editor panel appears but silently fails to
+		// save. Registration is idempotent and the hook guards prevent duplicate filters.
+		add_action( 'rest_api_init', array( $this, 'register_content_permissions_post_meta' ) );
 		add_action( 'enqueue_block_editor_assets', array( $this, 'enqueue_block_editor_panel' ) );
 	}
 

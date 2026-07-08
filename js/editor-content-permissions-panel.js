@@ -17,12 +17,11 @@
 	}
 
 	const { registerPlugin } = wp.plugins;
-	const { BaseControl, CheckboxControl, TextareaControl } = wp.components;
+	const { CheckboxControl, TextareaControl } = wp.components;
 	const { useSelect } = wp.data;
 	const { useEntityProp } = wp.coreData;
-	const { createElement: el, useEffect, useRef } = wp.element;
+	const { createElement: el } = wp.element;
 	const { __ } = wp.i18n;
-	const RichText = wp.blockEditor && wp.blockEditor.RichText;
 
 	const panelConfig = window.membersCpPanel || {};
 	const roleLabels = panelConfig.roles ? panelConfig.roles : {};
@@ -45,8 +44,6 @@
 			return select( 'core/editor' ).isEditedPostNew();
 		} );
 
-		const defaultsApplied = useRef( false );
-
 		const [ meta, setMeta ] = useEntityProp( 'postType', postType, 'meta' );
 
 		const editedMeta = useSelect(
@@ -56,8 +53,14 @@
 			[ meta ]
 		);
 
-		const roles = editedMeta._members_access_role;
-		const roleList = Array.isArray( roles ) ? roles : roles ? [ roles ] : [];
+		const storedRoles = editedMeta._members_access_role;
+		const storedList = Array.isArray( storedRoles ) ? storedRoles : storedRoles ? [ storedRoles ] : [];
+
+		// Default roles are shown pre-checked on a brand-new post, but NOT written to meta on
+		// load — doing so would mark an untouched editor session dirty (unwanted "leave site?"
+		// prompt and autosave). They persist naturally once the user changes anything.
+		const showDefaults = isNewPost && storedList.length === 0 && defaultRoles.length > 0;
+		const roleList = showDefaults ? uniqueRoles( defaultRoles.slice() ) : storedList;
 
 		function patchMeta( changes ) {
 			const editor = wp.data.select( 'core/editor' );
@@ -69,18 +72,6 @@
 		function setAccessRoles( nextRoles ) {
 			patchMeta( { _members_access_role: uniqueRoles( nextRoles ) } );
 		}
-
-		useEffect(
-			function () {
-				if ( ! postType || defaultsApplied.current || ! isNewPost || ! defaultRoles.length || roleList.length ) {
-					return;
-				}
-
-				defaultsApplied.current = true;
-				setAccessRoles( defaultRoles.slice() );
-			},
-			[ postType, isNewPost, roleList.length, defaultRoles ]
-		);
 
 		if ( ! postType ) {
 			return null;
@@ -103,32 +94,6 @@
 
 			setAccessRoles( hidden.concat( nextVisible ) );
 		}
-
-		const errorMessageField = RichText
-			? el(
-					BaseControl,
-					{
-						label: __( 'Error Message', 'members' ),
-						help: __( 'Shown to users who cannot view this content.', 'members' ),
-						className: 'members-cp-error-message-control',
-					},
-					el( RichText, {
-						tagName: 'div',
-						className: 'members-cp-error-message',
-						value: message || '',
-						onChange: function ( newMessage ) {
-							patchMeta( { _members_access_error: newMessage } );
-						},
-					} )
-			  )
-			: el( TextareaControl, {
-					label: __( 'Error Message', 'members' ),
-					help: __( 'Shown to users who cannot view this content.', 'members' ),
-					value: message || '',
-					onChange: function ( newMessage ) {
-						patchMeta( { _members_access_error: newMessage } );
-					},
-			  } );
 
 		return el(
 			PluginDocumentSettingPanel,
@@ -175,7 +140,15 @@
 						)
 				  )
 				: null,
-			errorMessageField
+			el( TextareaControl, {
+				label: __( 'Error Message', 'members' ),
+				help: __( 'Shown to users who cannot view this content.', 'members' ),
+				className: 'members-cp-error-message',
+				value: message || '',
+				onChange: function ( newMessage ) {
+					patchMeta( { _members_access_error: newMessage } );
+				},
+			} )
 		);
 	}
 

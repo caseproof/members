@@ -301,26 +301,27 @@ final class Meta_Box_Content_Permissions {
 		// Get the current roles.
 		$current_roles = members_get_post_roles( $post_id );
 
-		// Get the new roles.
-		$new_roles = isset( $_POST['members_access_role'] ) ? wp_unslash( $_POST['members_access_role'] ) : '';
+		// Get the checked roles from the meta box. The list sanitizer drops non-string entries,
+		// so a crafted nested-array payload cannot fatal members_sanitize_role() on PHP 8.
+		$posted    = isset( $_POST['members_access_role'] ) ? wp_unslash( $_POST['members_access_role'] ) : array();
+		$new_roles = is_array( $posted ) ? members_sanitize_access_role_meta_list( $posted ) : array();
 
-		// If we have an array of new roles, set the roles (orphan slugs are left intact by
-		// members_set_post_roles). The list sanitizer drops non-string entries, so a crafted
-		// nested-array payload cannot fatal members_sanitize_role() on PHP 8.
-		if ( is_array( $new_roles ) ) {
-			members_set_post_roles( $post_id, members_sanitize_access_role_meta_list( $new_roles ) );
-		}
+		// The meta box only renders roles allowed by the members_wp_roles filter, so a stored role
+		// that was hidden from the UI (registered but filtered out) is absent from the checkboxes
+		// and would be silently deleted by members_set_post_roles(). Carry those forward. Deleted
+		// custom roles (orphans) are already retained by members_set_post_roles(), which only
+		// removes currently-registered roles.
+		$roles     = wp_roles()->role_names;
+		$displayed = array_keys( (array) apply_filters( 'members_wp_roles', $roles, members_get_post_for_content_permissions( $post ) ) );
 
-		// No checkboxes posted: clear visible roles but keep orphan slugs (deleted custom roles).
-		elseif ( ! empty( $current_roles ) ) {
-			$orphan_roles = members_get_orphan_post_roles( $post_id );
-
-			if ( ! empty( $orphan_roles ) ) {
-				members_set_post_roles( $post_id, $orphan_roles );
-			} else {
-				members_delete_post_roles( $post_id );
+		foreach ( (array) $current_roles as $stored ) {
+			if ( is_string( $stored ) && '' !== $stored && isset( $roles[ $stored ] ) && ! in_array( $stored, $displayed, true ) ) {
+				$new_roles[] = members_sanitize_role( $stored );
 			}
 		}
+
+		// Set the merged role list (empty clears registered roles while leaving orphans intact).
+		members_set_post_roles( $post_id, array_values( array_unique( $new_roles ) ) );
 
 		/* === Error Message === */
 

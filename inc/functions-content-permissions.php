@@ -188,7 +188,7 @@ function members_current_user_can_manage_post_content_permissions( $post_id ) {
  */
 function members_is_content_permissions_enabled_for_post_type( $post_type ) {
 
-	if ( empty( $post_type ) || 'attachment' === $post_type ) {
+	if ( empty( $post_type ) ) {
 		return false;
 	}
 
@@ -198,7 +198,9 @@ function members_is_content_permissions_enabled_for_post_type( $post_type ) {
 		return false;
 	}
 
-	$enable = $type->public;
+	// Attachments are off by default, but still honor the filter so a site can opt them in
+	// (an early return here previously broke sites using members_enable_attachment_content_permissions).
+	$enable = 'attachment' === $post_type ? false : $type->public;
 
 	return apply_filters( "members_enable_{$post_type}_content_permissions", $enable );
 }
