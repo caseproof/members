@@ -514,7 +514,7 @@ function members_is_rest_read_request() {
 
 	if ( isset( $_GET['_method'] ) ) {
 		$method = strtoupper( sanitize_text_field( wp_unslash( $_GET['_method'] ) ) );
-	} elseif ( ! empty( $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'] ) ) {
+	} elseif ( isset( $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'] ) ) {
 		$method = strtoupper( sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'] ) ) );
 	}
 
@@ -775,11 +775,15 @@ function members_is_post_hidden_from_current_user_in_rest( $post_id ) {
 }
 
 /*
- * Known limitation (by design): REST hiding is role-meta based and always treats a child as
- * inheriting its nearest role-bearing ancestor's restriction. It does NOT honor the developer-only
- * `members_check_parent_post_permission` filter used to disable inheritance on the front end —
- * mirroring that per-post filter in the REST hidden-set is what caused repeated inheritance
- * regressions, and the case only arises with custom code. Content Permissions comment visibility in
+ * Known limitation (by design): REST hiding is role-meta based. A restriction root (a post with
+ * its own effective roles) is evaluated per-post — honoring author/edit grants and the
+ * `members_can_user_view_post` filter — but posts that merely INHERIT a restriction from an
+ * ancestor (children with no effective roles of their own) are hidden structurally, without a
+ * per-post evaluation. So a `members_can_user_view_post` filter that grants access to a specific
+ * inheriting child, and the developer-only `members_check_parent_post_permission` filter that
+ * disables inheritance, are NOT honored by the REST hidden-set — they remain front-end concerns.
+ * Mirroring those per-post filters in the hidden-set is what caused repeated inheritance
+ * regressions, and the cases only arise with custom code. Content Permissions comment visibility in
  * REST intentionally follows the `hide_posts_rest_api` setting (same switch as post bodies), so when
  * that setting is off both protected posts and their comments are exposed for headless use.
  */
@@ -939,6 +943,21 @@ function members_get_hidden_protected_post_ids( $post_types = array() ) {
 				$parents
 			)
 		);
+
+		// Prime meta for the children that are themselves restriction roots — the only ones whose
+		// effective roles we read below — so it is one batched query per level instead of a lazy
+		// get_post_meta() query each.
+		$root_child_ids = array();
+
+		foreach ( (array) $children as $child ) {
+			if ( isset( $root_lookup[ (int) $child->ID ] ) ) {
+				$root_child_ids[] = (int) $child->ID;
+			}
+		}
+
+		if ( ! empty( $root_child_ids ) ) {
+			_prime_post_caches( $root_child_ids, false, true );
+		}
 
 		$parents = array();
 
