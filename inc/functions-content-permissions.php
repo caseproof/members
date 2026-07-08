@@ -661,6 +661,45 @@ function members_rest_user_can_view_restricted_post( $user_id, $post_id ) {
 }
 
 /**
+ * Read-only equivalent of members_can_current_user_view_post() for REST reads.
+ *
+ * Walks to the nearest ancestor-or-self carrying role meta and evaluates it, matching
+ * members_can_user_view_post(), but never triggers the legacy `_role` conversion (a database
+ * write). Safe on unauthenticated GETs, and consistent with members_get_hidden_protected_post_ids()
+ * so single-item and collection decisions never disagree.
+ *
+ * @since 3.2.25
+ * @access public
+ * @param  int  $post_id  Post ID.
+ * @return bool
+ */
+function members_rest_current_user_can_view_post( $post_id ) {
+
+	$user_id = get_current_user_id();
+	$current = (int) $post_id;
+	$seen    = array();
+
+	while ( $current && ! isset( $seen[ $current ] ) ) {
+
+		$seen[ $current ] = true;
+
+		$post = get_post( $current );
+
+		if ( ! $post instanceof \WP_Post ) {
+			return true;
+		}
+
+		if ( ! empty( members_get_post_roles_for_rest( $current ) ) ) {
+			return members_rest_user_can_view_restricted_post( $user_id, $current );
+		}
+
+		$current = (int) $post->post_parent;
+	}
+
+	return true;
+}
+
+/**
  * Returns the post IDs the current user cannot view, for REST collection exclusion.
  *
  * Earlier releases mirrored members_can_user_view_post() directly in SQL, walking the
@@ -936,7 +975,7 @@ add_filter( 'posts_results', 'members_filter_protected_posts_for_rest', 10, 2 );
  */
 function members_exclude_protected_post_comments_from_rest( $args, $request ) {
 
-	if ( ! members_content_permissions_enabled() || current_user_can( 'restrict_content' ) ) {
+	if ( ! members_content_permissions_enabled() || ! members_is_hidden_protected_posts_enabled() || current_user_can( 'restrict_content' ) ) {
 		return $args;
 	}
 
@@ -971,7 +1010,7 @@ add_filter( 'rest_comment_query', 'members_exclude_protected_post_comments_from_
  */
 function members_hide_protected_post_comment_in_rest( $response, $comment, $request ) {
 
-	if ( ! members_content_permissions_enabled() || ! $comment instanceof \WP_Comment ) {
+	if ( ! members_content_permissions_enabled() || ! members_is_hidden_protected_posts_enabled() || ! $comment instanceof \WP_Comment ) {
 		return $response;
 	}
 
@@ -981,7 +1020,10 @@ function members_hide_protected_post_comment_in_rest( $response, $comment, $requ
 		return $response;
 	}
 
-	if ( members_can_current_user_view_post( $post_id ) ) {
+	// Read-only + consistent with the collection filter (members_get_hidden_protected_post_ids),
+	// so a comment that passed rest_comment_query is never turned into a WP_Error here — which
+	// prepare_response_for_collection() would otherwise embed as a garbled collection item.
+	if ( members_rest_current_user_can_view_post( $post_id ) ) {
 		return $response;
 	}
 

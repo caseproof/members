@@ -302,7 +302,9 @@ final class Content_Permissions_Editor {
 			return $response;
 		}
 
-		if ( members_can_current_user_view_post( $post->ID ) ) {
+		// Read-only view check: members_can_current_user_view_post() would run the legacy _role
+		// conversion, mutating the database on an unauthenticated GET.
+		if ( members_rest_current_user_can_view_post( $post->ID ) ) {
 			return $response;
 		}
 
