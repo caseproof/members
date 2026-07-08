@@ -304,9 +304,11 @@ final class Meta_Box_Content_Permissions {
 		// Get the new roles.
 		$new_roles = isset( $_POST['members_access_role'] ) ? wp_unslash( $_POST['members_access_role'] ) : '';
 
-		// If we have an array of new roles, set the roles (orphan slugs are left intact by members_set_post_roles).
+		// If we have an array of new roles, set the roles (orphan slugs are left intact by
+		// members_set_post_roles). The list sanitizer drops non-string entries, so a crafted
+		// nested-array payload cannot fatal members_sanitize_role() on PHP 8.
 		if ( is_array( $new_roles ) ) {
-			members_set_post_roles( $post_id, array_map( 'members_sanitize_role', $new_roles ) );
+			members_set_post_roles( $post_id, members_sanitize_access_role_meta_list( $new_roles ) );
 		}
 
 		// No checkboxes posted: clear visible roles but keep orphan slugs (deleted custom roles).

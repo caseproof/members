@@ -682,14 +682,32 @@ function members_rest_user_can_view_restricted_post( $user_id, $post_id ) {
  */
 function members_get_rest_hidden_post_ids( $query ) {
 
-	global $wpdb;
-
 	// Queried post types scope the work. 'any' (or an unset type) means no scoping.
 	$post_types = array_filter( array_map( 'strval', (array) $query->get( 'post_type' ) ) );
 
 	if ( in_array( 'any', $post_types, true ) ) {
 		$post_types = array();
 	}
+
+	return members_get_hidden_protected_post_ids( $post_types );
+}
+
+/**
+ * Resolves the protected post IDs the current user cannot view.
+ *
+ * See members_get_rest_hidden_post_ids() for the strategy. Callers without a WP_Query
+ * (e.g. REST comment queries) may pass an explicit post type list, or none for all types.
+ *
+ * @since 3.2.25
+ * @access public
+ * @param  array  $post_types  Post type slugs to scope the result to; empty for all.
+ * @return int[]  Post IDs the current user cannot view (may be empty).
+ */
+function members_get_hidden_protected_post_ids( $post_types = array() ) {
+
+	global $wpdb;
+
+	$post_types = array_values( array_filter( array_map( 'strval', (array) $post_types ) ) );
 
 	sort( $post_types );
 
@@ -898,3 +916,79 @@ add_filter( 'posts_where', 'members_exclude_protected_posts_from_rest_query', 10
 
 # Filter protected posts from being returned in the REST API.
 add_filter( 'posts_results', 'members_filter_protected_posts_for_rest', 10, 2 );
+
+/**
+ * Excludes comments on protected posts from REST comment collections.
+ *
+ * The front end blocks the whole comment template on protected posts, but the REST
+ * comments controller queries with WP_Comment_Query — untouched by the posts_where /
+ * posts_results filters — and renders bodies through `comment_text`, not the
+ * `get_comment_text` filter this plugin protects. Without this, GET /wp/v2/comments?post=N
+ * returns the full discussion of a role-protected post to anonymous visitors.
+ *
+ * @since 3.2.25
+ * @access public
+ * @param  array            $args     WP_Comment_Query arguments.
+ * @param  \WP_REST_Request $request  REST request object.
+ * @return array
+ */
+function members_exclude_protected_post_comments_from_rest( $args, $request ) {
+
+	if ( ! members_content_permissions_enabled() || current_user_can( 'restrict_content' ) ) {
+		return $args;
+	}
+
+	$hidden = members_get_hidden_protected_post_ids();
+
+	if ( empty( $hidden ) ) {
+		return $args;
+	}
+
+	$not_in = isset( $args['post__not_in'] ) ? array_map( 'intval', (array) $args['post__not_in'] ) : array();
+
+	$args['post__not_in'] = array_values( array_unique( array_merge( $not_in, $hidden ) ) );
+
+	return $args;
+}
+
+# Exclude comments on protected posts from REST comment collections.
+add_filter( 'rest_comment_query', 'members_exclude_protected_post_comments_from_rest', 10, 2 );
+
+/**
+ * Denies single-comment REST reads for comments on posts the user cannot view.
+ *
+ * Collections are excluded by members_exclude_protected_post_comments_from_rest(); this
+ * covers GET /wp/v2/comments/<id> and acts as defense in depth for embedded responses.
+ *
+ * @since 3.2.25
+ * @access public
+ * @param  \WP_REST_Response|mixed  $response  REST response object.
+ * @param  \WP_Comment              $comment   Comment object.
+ * @param  \WP_REST_Request         $request   REST request object.
+ * @return \WP_REST_Response|\WP_Error|mixed
+ */
+function members_hide_protected_post_comment_in_rest( $response, $comment, $request ) {
+
+	if ( ! members_content_permissions_enabled() || ! $comment instanceof \WP_Comment ) {
+		return $response;
+	}
+
+	$post_id = (int) $comment->comment_post_ID;
+
+	if ( ! $post_id || members_current_user_can_manage_post_content_permissions( $post_id ) ) {
+		return $response;
+	}
+
+	if ( members_can_current_user_view_post( $post_id ) ) {
+		return $response;
+	}
+
+	return new \WP_Error(
+		'rest_cannot_read',
+		__( 'Sorry, you are not allowed to read this comment.', 'members' ),
+		array( 'status' => rest_authorization_required_code() )
+	);
+}
+
+# Deny single-comment REST reads on protected posts.
+add_filter( 'rest_prepare_comment', 'members_hide_protected_post_comment_in_rest', 10, 3 );
