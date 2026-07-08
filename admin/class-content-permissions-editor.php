@@ -206,12 +206,12 @@ final class Content_Permissions_Editor {
 	 */
 	private function user_can_modify_content_permissions_via_rest( $post_id, $creating, $prepared_post, $request ) {
 
-		if ( ! current_user_can( 'restrict_content' ) ) {
-			return false;
+		if ( ! $creating && $post_id ) {
+			return members_current_user_can_manage_post_content_permissions( $post_id );
 		}
 
-		if ( ! $creating && $post_id ) {
-			return current_user_can( 'edit_post', $post_id );
+		if ( ! current_user_can( 'restrict_content' ) ) {
+			return false;
 		}
 
 		if ( ! $creating ) {
@@ -249,14 +249,14 @@ final class Content_Permissions_Editor {
 	 */
 	public function auth_content_permissions_meta( $allowed, $meta_key, $object_id ) {
 
-		if ( ! current_user_can( 'restrict_content' ) ) {
-			return false;
-		}
-
 		$object_id = (int) $object_id;
 
 		if ( $object_id ) {
-			return current_user_can( 'edit_post', $object_id );
+			return members_current_user_can_manage_post_content_permissions( $object_id );
+		}
+
+		if ( ! current_user_can( 'restrict_content' ) ) {
+			return false;
 		}
 
 		foreach ( members_get_content_permissions_post_types() as $post_type ) {
@@ -294,10 +294,19 @@ final class Content_Permissions_Editor {
 
 		// Core exposes registered show_in_rest meta to anyone who can read the post — the
 		// auth_callback only gates writes. Users who cannot manage content permissions should
-		// not see the role configuration or the custom error message, so remove both. This
-		// also keeps non-manager editor sessions from round-tripping the keys on save.
-		if ( ! current_user_can( 'restrict_content' ) || ! current_user_can( 'edit_post', $post->ID ) ) {
-			unset( $data['meta']['_members_access_role'], $data['meta']['_members_access_error'] );
+		// not see the role configuration or the custom error message, so blank both. Schema
+		// defaults (not unset) keep the declared REST response shape intact for headless
+		// clients, while non-manager editor sessions no longer round-trip real values on save.
+		if ( ! members_current_user_can_manage_post_content_permissions( $post->ID ) ) {
+
+			if ( array_key_exists( '_members_access_role', $data['meta'] ) ) {
+				$data['meta']['_members_access_role'] = array();
+			}
+
+			if ( array_key_exists( '_members_access_error', $data['meta'] ) ) {
+				$data['meta']['_members_access_error'] = '';
+			}
+
 			$response->set_data( $data );
 
 			return $response;

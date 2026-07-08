@@ -163,6 +163,22 @@ function members_has_post_roles( $post_id = '' ) {
 }
 
 /**
+ * Whether the current user can manage content permissions for a specific post.
+ *
+ * The single definition of the "manager" policy used by the REST read strip, the REST
+ * write gate, and the protected-posts result filter. Keep them in sync by changing it here.
+ *
+ * @since  3.2.25
+ * @access public
+ * @param  int  $post_id  Post ID.
+ * @return bool
+ */
+function members_current_user_can_manage_post_content_permissions( $post_id ) {
+
+	return current_user_can( 'restrict_content' ) && current_user_can( 'edit_post', $post_id );
+}
+
+/**
  * Whether Content Permissions is enabled for a post type.
  *
  * @since  3.2.22
@@ -540,7 +556,7 @@ function members_filter_protected_posts_for_rest( $posts, $query ) {
 		}
 
 		// Permission managers may load protected posts they can edit (block editor list/detail).
-		if ( current_user_can( 'restrict_content' ) && current_user_can( 'edit_post', $post->ID ) ) {
+		if ( members_current_user_can_manage_post_content_permissions( $post->ID ) ) {
 			continue;
 		}
 
@@ -598,14 +614,66 @@ function members_should_apply_rest_protected_posts_sql( $query ) {
 }
 
 /**
+ * Whether a user can view a post that itself carries content-permission role meta.
+ *
+ * Mirrors the role, author, edit_post, and restrict_content checks from
+ * members_can_user_view_post() — including its filter — but is safe to run in bulk on
+ * read requests: it never triggers the legacy `_role` meta conversion (which deletes and
+ * rewrites postmeta), and it guards against unregistered post types. Only meaningful for
+ * restriction roots; it does not walk ancestors.
+ *
+ * @since 3.2.25
+ * @access public
+ * @param  int  $user_id  User ID (0 for logged-out visitors).
+ * @param  int  $post_id  Post ID of a restriction root.
+ * @return bool
+ */
+function members_rest_user_can_view_restricted_post( $user_id, $post_id ) {
+
+	$post = get_post( $post_id );
+
+	if ( ! $post instanceof \WP_Post ) {
+		return true;
+	}
+
+	// Read-only lookup: resolves legacy `_role` values without converting them.
+	$roles = members_get_post_roles_for_rest( $post_id );
+
+	if ( empty( $roles ) ) {
+		$can_view = true;
+	} elseif ( ! $user_id ) {
+		$can_view = false;
+	} elseif ( (int) $post->post_author === (int) $user_id || user_can( $user_id, 'restrict_content' ) ) {
+		$can_view = true;
+	} else {
+		$type     = get_post_type_object( $post->post_type );
+		$can_view = $type && ! empty( $type->cap->edit_post ) && user_can( $user_id, $type->cap->edit_post, $post_id );
+
+		if ( ! $can_view ) {
+			$can_view = members_user_has_role( $user_id, $roles );
+		}
+	}
+
+	/** This filter is documented in inc/template.php */
+	return apply_filters( 'members_can_user_view_post', $can_view, $user_id, $post_id );
+}
+
+/**
  * Returns the post IDs the current user cannot view, for REST collection exclusion.
  *
  * Earlier releases mirrored members_can_user_view_post() directly in SQL, walking the
  * post hierarchy with deeply nested correlated subqueries. On large sites that caused
  * severe database load, and it could exceed MySQL's join/subquery limits so the whole
- * query failed and returned zero posts. Instead we resolve the (usually small) set of
- * posts that actually carry a role restriction, reuse the vetted PHP permission logic,
- * then expand to the descendants that inherit an unsatisfied restriction.
+ * query failed and returned zero posts. Instead we resolve the set of posts that carry
+ * a role restriction, evaluate each with the vetted PHP permission logic (side-effect
+ * free — see members_rest_user_can_view_restricted_post()), then expand to descendants
+ * that inherit an unsatisfied restriction.
+ *
+ * Work is scoped to the queried post type(s): roots of those types are always checked,
+ * while roots of other types are checked only when they have children — a queried-type
+ * post can inherit a restriction from an ancestor of another type, but a childless root
+ * of another type can never affect this query. The returned list contains only IDs of
+ * the queried types, so the NOT IN clause stays as small as possible.
  *
  * @since 3.2.24
  * @access public
@@ -616,44 +684,91 @@ function members_get_rest_hidden_post_ids( $query ) {
 
 	global $wpdb;
 
-	// The result depends only on the current user, not on the query, so compute it once per
-	// request. REST clients and the block editor commonly run several collection queries in
-	// a single request, and each one passes through the posts_where filter.
+	// Queried post types scope the work. 'any' (or an unset type) means no scoping.
+	$post_types = array_filter( array_map( 'strval', (array) $query->get( 'post_type' ) ) );
+
+	if ( in_array( 'any', $post_types, true ) ) {
+		$post_types = array();
+	}
+
+	sort( $post_types );
+
+	// The result depends only on the current user and the queried types, so compute it once
+	// per request per combination. REST clients and the block editor commonly run several
+	// collection queries in a single request.
 	static $cache = array();
 
-	$cache_key = get_current_blog_id() . ':' . get_current_user_id();
+	$cache_key = get_current_blog_id() . ':' . get_current_user_id() . ':' . implode( ',', $post_types );
 
 	if ( isset( $cache[ $cache_key ] ) ) {
 		return $cache[ $cache_key ];
 	}
 
-	// Restriction roots are every post carrying role meta, regardless of post type. A post can
-	// inherit a restriction from an ancestor of a different post type (post_parent is not type
-	// constrained, and members_can_user_view_post() walks it either way), so scoping the root
-	// lookup to the queried type would miss those and leave the pagination counts inaccurate.
-	// Excess IDs in the exclusion list are harmless: the main query's own type clause ignores them.
-	$roots = $wpdb->get_col(
-		"SELECT DISTINCT post_id FROM {$wpdb->postmeta}
-		WHERE meta_key IN ( '_members_access_role', '_role' )"
+	// Every post carrying role meta, with its type. Cross-type inheritance (a post whose
+	// ancestor is another post type) means other-type roots cannot be ignored outright.
+	$roots = $wpdb->get_results(
+		"SELECT DISTINCT p.ID, p.post_type
+		FROM {$wpdb->posts} p
+		INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID
+		WHERE pm.meta_key IN ( '_members_access_role', '_role' )"
 	);
-
-	$roots = array_values( array_unique( array_map( 'intval', (array) $roots ) ) );
 
 	// No posts carry a restriction, so nothing is hidden.
 	if ( empty( $roots ) ) {
 		return $cache[ $cache_key ] = array();
 	}
 
-	// Prime caches so the per-post permission checks below don't each hit the database.
-	_prime_post_caches( $roots, false, true );
+	$type_of = array();
+	$direct  = array();
+	$foreign = array();
 
-	// Direct restrictions the current user cannot satisfy. members_can_current_user_view_post()
-	// already applies the role, author, edit_post, and restrict_content checks.
-	$hidden = array();
+	foreach ( $roots as $root ) {
+		$root_id = (int) $root->ID;
 
-	foreach ( $roots as $root_id ) {
-		if ( ! members_can_current_user_view_post( $root_id ) ) {
-			$hidden[ $root_id ] = $root_id;
+		$type_of[ $root_id ] = $root->post_type;
+
+		if ( empty( $post_types ) || in_array( $root->post_type, $post_types, true ) ) {
+			$direct[] = $root_id;
+		} else {
+			$foreign[] = $root_id;
+		}
+	}
+
+	// Other-type roots only matter as inheritance sources, so drop the childless ones
+	// before paying for permission checks. This keeps the common case — one queried type,
+	// restrictions concentrated on that type — as cheap as a type-scoped lookup.
+	$seeds = $direct;
+
+	if ( ! empty( $foreign ) ) {
+		$placeholders = implode( ', ', array_fill( 0, count( $foreign ), '%d' ) );
+
+		$with_children = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT DISTINCT post_parent FROM {$wpdb->posts}
+				WHERE post_parent IN ( {$placeholders} ) AND post_type != 'revision'",
+				$foreign
+			)
+		);
+
+		$seeds = array_merge( $seeds, array_map( 'intval', (array) $with_children ) );
+	}
+
+	if ( empty( $seeds ) ) {
+		return $cache[ $cache_key ] = array();
+	}
+
+	$user_id = get_current_user_id();
+	$hidden  = array();
+
+	// Chunked so cache priming stays bounded on sites with very large restricted sets.
+	foreach ( array_chunk( $seeds, 500 ) as $chunk ) {
+
+		_prime_post_caches( $chunk, false, true );
+
+		foreach ( $chunk as $seed_id ) {
+			if ( ! members_rest_user_can_view_restricted_post( $user_id, $seed_id ) ) {
+				$hidden[ $seed_id ] = $seed_id;
+			}
 		}
 	}
 
@@ -663,8 +778,9 @@ function members_get_rest_hidden_post_ids( $query ) {
 
 	// Expand to descendants that inherit an unsatisfied restriction. A descendant that
 	// carries its own restriction is governed independently, so descent stops at any post
-	// that is itself a restriction root.
-	$root_lookup = array_flip( $roots );
+	// that is itself a restriction root. Revisions link to their post via post_parent but
+	// never appear in REST collections, so walking them would only bloat the list.
+	$root_lookup = $type_of;
 	$parents     = array_values( $hidden );
 	$guard       = 0;
 
@@ -672,27 +788,40 @@ function members_get_rest_hidden_post_ids( $query ) {
 
 		$placeholders = implode( ', ', array_fill( 0, count( $parents ), '%d' ) );
 
-		// Revisions link to their post via post_parent but never appear in REST collections,
-		// so walking them only bloats the exclusion list (every revision of a hidden post).
-		$children = $wpdb->get_col(
+		$children = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT ID FROM {$wpdb->posts} WHERE post_parent IN ( {$placeholders} ) AND post_type != 'revision'",
+				"SELECT ID, post_type FROM {$wpdb->posts}
+				WHERE post_parent IN ( {$placeholders} ) AND post_type != 'revision'",
 				$parents
 			)
 		);
 
 		$parents = array();
 
-		foreach ( array_map( 'intval', (array) $children ) as $child_id ) {
+		foreach ( (array) $children as $child ) {
+
+			$child_id = (int) $child->ID;
 
 			// Already hidden, or a root that is governed on its own terms.
 			if ( isset( $hidden[ $child_id ] ) || isset( $root_lookup[ $child_id ] ) ) {
 				continue;
 			}
 
-			$hidden[ $child_id ] = $child_id;
-			$parents[]           = $child_id;
+			$type_of[ $child_id ] = $child->post_type;
+			$hidden[ $child_id ]  = $child_id;
+			$parents[]            = $child_id;
 		}
+	}
+
+	// Only IDs of the queried types can appear in this query; the walk may pass through
+	// other types to reach them, but those intermediate IDs have no business in NOT IN.
+	if ( ! empty( $post_types ) ) {
+		$hidden = array_filter(
+			$hidden,
+			function ( $hidden_id ) use ( $type_of, $post_types ) {
+				return isset( $type_of[ $hidden_id ] ) && in_array( $type_of[ $hidden_id ], $post_types, true );
+			}
+		);
 	}
 
 	return $cache[ $cache_key ] = array_values( $hidden );
