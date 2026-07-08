@@ -616,6 +616,17 @@ function members_get_rest_hidden_post_ids( $query ) {
 
 	global $wpdb;
 
+	// The result depends only on the current user, not on the query, so compute it once per
+	// request. REST clients and the block editor commonly run several collection queries in
+	// a single request, and each one passes through the posts_where filter.
+	static $cache = array();
+
+	$cache_key = get_current_blog_id() . ':' . get_current_user_id();
+
+	if ( isset( $cache[ $cache_key ] ) ) {
+		return $cache[ $cache_key ];
+	}
+
 	// Restriction roots are every post carrying role meta, regardless of post type. A post can
 	// inherit a restriction from an ancestor of a different post type (post_parent is not type
 	// constrained, and members_can_user_view_post() walks it either way), so scoping the root
@@ -630,7 +641,7 @@ function members_get_rest_hidden_post_ids( $query ) {
 
 	// No posts carry a restriction, so nothing is hidden.
 	if ( empty( $roots ) ) {
-		return array();
+		return $cache[ $cache_key ] = array();
 	}
 
 	// Prime caches so the per-post permission checks below don't each hit the database.
@@ -647,7 +658,7 @@ function members_get_rest_hidden_post_ids( $query ) {
 	}
 
 	if ( empty( $hidden ) ) {
-		return array();
+		return $cache[ $cache_key ] = array();
 	}
 
 	// Expand to descendants that inherit an unsatisfied restriction. A descendant that
@@ -661,9 +672,11 @@ function members_get_rest_hidden_post_ids( $query ) {
 
 		$placeholders = implode( ', ', array_fill( 0, count( $parents ), '%d' ) );
 
+		// Revisions link to their post via post_parent but never appear in REST collections,
+		// so walking them only bloats the exclusion list (every revision of a hidden post).
 		$children = $wpdb->get_col(
 			$wpdb->prepare(
-				"SELECT ID FROM {$wpdb->posts} WHERE post_parent IN ( {$placeholders} )",
+				"SELECT ID FROM {$wpdb->posts} WHERE post_parent IN ( {$placeholders} ) AND post_type != 'revision'",
 				$parents
 			)
 		);
@@ -682,7 +695,7 @@ function members_get_rest_hidden_post_ids( $query ) {
 		}
 	}
 
-	return array_values( $hidden );
+	return $cache[ $cache_key ] = array_values( $hidden );
 }
 
 /**

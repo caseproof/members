@@ -282,13 +282,24 @@ final class Content_Permissions_Editor {
 	 */
 	public function prepare_rest_content_permissions_meta( $response, $post, $request ) {
 
-		if ( ! $response instanceof \WP_REST_Response || ! $post instanceof \WP_Post || ! current_user_can( 'restrict_content' ) || ! current_user_can( 'edit_post', $post->ID ) ) {
+		if ( ! $response instanceof \WP_REST_Response || ! $post instanceof \WP_Post ) {
 			return $response;
 		}
 
 		$data = $response->get_data();
 
 		if ( ! is_array( $data ) || ! isset( $data['meta'] ) || ! is_array( $data['meta'] ) ) {
+			return $response;
+		}
+
+		// Core exposes registered show_in_rest meta to anyone who can read the post — the
+		// auth_callback only gates writes. Users who cannot manage content permissions should
+		// not see the role configuration or the custom error message, so remove both. This
+		// also keeps non-manager editor sessions from round-tripping the keys on save.
+		if ( ! current_user_can( 'restrict_content' ) || ! current_user_can( 'edit_post', $post->ID ) ) {
+			unset( $data['meta']['_members_access_role'], $data['meta']['_members_access_error'] );
+			$response->set_data( $data );
+
 			return $response;
 		}
 
