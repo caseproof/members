@@ -22,13 +22,17 @@ jobs:
     name: Run Project Automation
     runs-on: runs-on=${{ github.run_id }}/runner=2cpu-linux-x64
     steps:
-      - uses: runs-on/action@v2
+      # SHA-pinned: runs-on/action's "v2" is a moving branch, not a tag.
+      - uses: runs-on/action@46910bf61b41721b0579f237e186afb35477007a # v2 branch tip @ 2026-08-05
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Run Project Automation Action
         uses: caseproof/org-admin/.github/actions/project-automation@main
         with:
           issue: ${{ github.event.issue.number }}
           teams_config: ${{ vars.TEAMS_CONFIG_PATH }}
-          secrets: ${{ toJson(secrets) }}
+          # Only the two secrets src/index.js actually reads, rather than every
+          # secret each consuming repo happens to have. toJson() per value, not
+          # raw interpolation -- the PEM key contains literal newlines.
+          secrets: '{"CSPF_REPO_READ_PAT": ${{ toJson(secrets.CSPF_REPO_READ_PAT) }}, "CSPF_PROJECT_AUTOMATION_APP_PKEY": ${{ toJson(secrets.CSPF_PROJECT_AUTOMATION_APP_PKEY) }}}'
           vars: ${{ toJson(vars) }}
