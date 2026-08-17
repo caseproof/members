@@ -1,5 +1,6 @@
 name: Feature Request
 description: "For suggesting new features or enhancements to existing functionality"
+type: TASK
 labels:
   - feature request
 body:
