@@ -1,5 +1,6 @@
 name: Bug Report
 description: "A structured template for reporting customer-reported bugs or issues with complete details"
+type: TASK
 labels:
   - bug
 body:
