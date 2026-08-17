@@ -1,5 +1,6 @@
 name: Question
 description: "For discussions, inquiries, or clarifications that aren't bug reports"
+type: TASK
 labels:
   - question
 body:
