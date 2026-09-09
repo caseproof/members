@@ -69,7 +69,7 @@ on:
       - review_requested
 
 concurrency:
-  group: ai-code-review-${{ github.event.pull_request.number }}
+  group: ai-code-review-${{ github.event.pull_request.number }}-${{ github.event.requested_reviewer.login || github.event.requested_team.slug || 'no-reviewer' }}
   cancel-in-progress: true
 
 env:
