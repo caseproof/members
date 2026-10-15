@@ -10,45 +10,82 @@
 # the bot back to the PR review request list.
 #
 # If you wish to see the raw review files from each model (or the merged review file) you can download the artifacts
-# from the workflow run. One artifact will be created for each model, eg `review-$modelSlug` and a final `code-review-pr-$prNumber`
+# from the workflow run. One artifact will be created for each model, eg `review-$modelSlug` and a final `code-reviews-pr-$prNumber`
 # artifact will contain all review files, the merged file, and the GitHub review JSON payload (useful for debugging failed API calls).
 #
-# This workflow uses two Actions Variables, both are defined with default values on the organization level and can
-# be overridden on a per-repository basis:
+# This workflow uses Actions variables, defined with a default value on the organization level and overridable
+# on a per-repository basis:
 
+#   AI_REVIEW_ANALYTICS_URL
+#     Hostname only, such as aicr-analytics.cspf.co. The report action posts to
+#     https://<host>/v1/reviews and accepts cspf.co or a subdomain of that host.
+#     A missing value fails that job.
+#
 #   AI_CODE_REVIEW_MODELS
-#     Specifies the list of models to use for code review.
+#     Pool of review models. Each run scores the pull request and selects at most 4
+#     models from this pool. Score 0 runs one model at high reasoning. Each next
+#     point adds a medium model, then promotes that model to high.
 #
-#     The default value includes one (close to latest) medium-thinking model from each of these families:
-#     composer, gpt, and sonnet (gemini is excluded from org defaults).
+#     Each entry has:
+#       - slug: short name used for file names, eg `sonnet`.
+#       - medium: model id used at medium reasoning.
+#       - high: model id used at high reasoning.
+#       - merge: "medium" or "high" on one or more entries. The plan picks one of
+#         those entries for merging reviews and building the GitHub payload. The
+#         same pull request keeps that choice. Omit the key, or set false, on
+#         entries that should not merge. "medium" selects the medium id, including
+#         a pool entry whose medium id uses a lower variant such as `#low`.
 #
-#     Example default:
-#       [{"model":"composer-2.5","slug":"composer"},{"model":"gpt-5.5-medium-fast","slug":"gpt"},{"model":"claude-4.6-sonnet-medium","slug":"sonnet"}]
+#     Model ids are OpenRouter slugs, without the `openrouter/` provider prefix.
+#     opencode-run passes them to OpenCode as `openrouter/<id>`.
+#     Replace a Cursor model id with the OpenRouter slug from `opencode models`.
+#     Prefixing a Cursor id yields `openrouter/<cursor-id>`, which is not a catalog model.
+#     OpenCode's `--model` form is `provider/model#variant`. The `#variant` suffix is optional.
+#     Put it on the medium or high id when that catalog model has a reasoning variant.
+#     Do not put the variant in `opencode.json`; the root model setting does not keep one.
+#     Variant names come from that model's catalog (`high` is common; `medium` is not guaranteed).
+#     An unknown variant fails the run. Omit `#variant` to use the model's default.
 #
-#     The value must be a JSON array of objects with the following properties:
-#       - model: The actual API model name to use for the code review, eg `composer-2.5`.
-#       - slug: The slug of the model, used for file names and colloquial references, eg `composer`.
+#     Example (the org variable holds the full pool; a fourth family is added when its id is chosen):
+#       [
+#         {"slug":"sonnet","medium":"anthropic/claude-sonnet-5#medium","high":"anthropic/claude-sonnet-5#high","merge":"medium"},
+#         {"slug":"gpt","medium":"openai/gpt-6.1-sol#medium","high":"openai/gpt-6.1-sol#high","merge":"medium"},
+#         {"slug":"kimi","medium":"moonshotai/kimi-k3#low","high":"moonshotai/kimi-k3#high","merge":false}
+#       ]
 #
-#     The available models can be viewed by using the Cursor Agent CLI: `agent models`.
+#     List models with `opencode models`.
 #
-#   AI_CODE_REVIEW_MERGE_MODEL
-#     Specifies the model to use for merging the reviews and posting the final review to GitHub.
-#
-#     The default org value is a (close to latest) Opus variant — chosen for merge quality on multi-file
-#     synthesis despite higher cost/latency vs Sonnet or Composer.
-#
-#     The value must be a string with the API model name passed to the Cursor agent CLI (eg an Opus model id).
-#
-#  For both variables, the available models can be viewed by using the Cursor Agent CLI: `agent models`.
+#     A repository may set riskyPaths, keywords, excludePaths, and additionalExcludePaths in
+#     `.github/ai-code-review.yml` or `.github/ai-code-review.json` on the base ref.
+#     A pull request label `no review` skips review. The same label on a linked issue does not.
 #
 # Secrets:
+#   The team's OpenRouter API key. Sync writes that secret name into this file in place of the
+#     OPENROUTER_API_KEY placeholder. The install step imports the key with
+#     `opencode auth import` for later steps in that job.
+#   CSPF_REPO_READ_PAT — PAT used by the OpenCode install step to clone caseproof-ai-plugins.
 #   AI_CODE_REVIEW_PR_WRITE — PAT for the service bot (cspf-services). Pull requests: write only.
-#     Used in ai-code-review-request (add reviewer) and merge submit (post review) so actions run as the bot,
-#     not github-actions[bot], and review_requested events are not suppressed.
+#     Used to submit the review as the bot, not github-actions[bot].
+#   AI_REVIEW_ANALYTICS_CF_ACCESS_CLIENT_ID — Cloudflare Access client id for the analytics write token.
+#   AI_REVIEW_ANALYTICS_CF_ACCESS_CLIENT_SECRET — Cloudflare Access client secret for that token.
+#
+# Sync writes the repository's team slug into REVIEW_TEAM. A repository that is not on a team
+# leaves the placeholder in place, and the analytics record omits team.
+#
+# Each model run writes `code-review-<scope>-<slug>.usage.json` with the OpenCode exit status, cost in USD, and token counts
+# when OpenCode reports them. The merge and payload steps write `merge` and `submit` usage files.
+# A review file is collected only when its exit status is 0. A missing cost is sent as 0 and does not fail the run. The report job sends one analytics
+# record after the run. Each model row has role review, merge, or submit, plus status, effort, and cost.
+# A skipped review is not sent. A failed model with no cost is sent as 0.
 #
 # GITHUB_TOKEN permissions (job-scoped least privilege):
-#   review: contents:read, pull-requests:read — checkout, gh pr diff/view, upload-artifact
+#   plan:   contents:read, pull-requests:read, issues:read — score the PR and build the matrix
+#   review: contents:read, pull-requests:read, issues:read — checkout, gh pr diff/view, same-repo linked issues. The job fetches prior review threads before the agent starts.
 #   merge:  contents:read, pull-requests:read — checkout, gh pr diff; prepare payload via gh-submit-code-review; submit uses AI_CODE_REVIEW_PR_WRITE
+#   report: actions:read, contents:read — download artifacts, read review timing, and fetch this private action
+#
+# When GitHub rejects the inline review, submit posts the source review with no line comments and the same event.
+# If that event is rejected, it posts the same body as COMMENT. The review ends with a link to the raw payload artifact.
 #
 #
 #
@@ -75,47 +112,66 @@ concurrency:
 env:
   REVIEWS_DIR: .caseproof-dev/reviews
   REVIEWER_LOGIN: cspf-services
+  REVIEW_TEAM: "membercore"
 
 jobs:
-  gate:
-    name: Check review request
-    # This runs on ubuntu-latest because it will be faster than waiting for a runs-on runner to be available.
-    runs-on: ubuntu-latest
+  plan:
+    name: Plan review
+    # This job does not check out the repo or attach the s3-cache extra. The plan action takes models as an input.
+    runs-on: runs-on=${{ github.run_id }}/runner=4cpu-linux-x64
     outputs:
-      proceed: ${{ steps.check.outputs.proceed }}
-    steps:
-      - name: Check requested reviewer
-        id: check
-        run: |
-          if [ "${{ github.event.requested_reviewer.login }}" = "${{ env.REVIEWER_LOGIN }}" ]; then
-            echo "proceed=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "proceed=false" >> "$GITHUB_OUTPUT"
-            echo "Review requested from ${{ github.event.requested_reviewer.login }}; expected ${{ env.REVIEWER_LOGIN }}. Skipping."
-          fi
-
-  review:
-    runs-on: runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache
-    needs: gate
-    # Fork PRs are unsupported: head ref may not exist in the base repo and PR content is not trusted for agent execution.
-    if: needs.gate.outputs.proceed == 'true' && github.event.pull_request.head.repo.full_name == github.repository
+      shouldReview: ${{ steps.plan.outputs.shouldReview }}
+      reason: ${{ steps.plan.outputs.reason }}
+      matrix: ${{ steps.plan.outputs.matrix }}
+      riskScore: ${{ steps.plan.outputs.riskScore }}
+      breakdown: ${{ steps.plan.outputs.breakdown }}
+      mergeModel: ${{ steps.plan.outputs.mergeModel }}
+      mergeSlug: ${{ steps.plan.outputs.mergeSlug }}
+      mergeEffort: ${{ steps.plan.outputs.mergeEffort }}
     permissions:
       contents: read
       pull-requests: read
-    name: Review by ${{ matrix.slug }}
-    outputs:
-      pr_number: ${{ steps.meta.outputs.pr_number }}
-      head_ref: ${{ steps.meta.outputs.head_ref }}
-      base_ref: ${{ steps.meta.outputs.base_ref }}
-      head_sha: ${{ steps.meta.outputs.head_sha }}
-      review_scope: ${{ steps.meta.outputs.review_scope }}
+      issues: read
+    steps:
+      - name: Plan review
+        id: plan
+        uses: caseproof/org-admin/.github/actions/ai-code-review-plan@main
+        with:
+          models: ${{ vars.AI_CODE_REVIEW_MODELS }}
+
+      - name: Log plan
+        env:
+          REASON: ${{ steps.plan.outputs.reason }}
+          BREAKDOWN: ${{ steps.plan.outputs.breakdown }}
+          RISK_SCORE: ${{ steps.plan.outputs.riskScore }}
+          MATRIX: ${{ steps.plan.outputs.matrix }}
+          MERGE_MODEL: ${{ steps.plan.outputs.mergeModel }}
+          MERGE_SLUG: ${{ steps.plan.outputs.mergeSlug }}
+          MERGE_EFFORT: ${{ steps.plan.outputs.mergeEffort }}
+        run: |
+          echo "reason: $REASON"
+          echo "breakdown: $BREAKDOWN"
+          echo "riskScore: $RISK_SCORE"
+          echo "matrix: $MATRIX"
+          echo "mergeModel: $MERGE_SLUG $MERGE_EFFORT $MERGE_MODEL"
+
+  review:
+    runs-on: runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache
+    needs: plan
+    # Fork PRs are unsupported: head ref may not exist in the base repo and PR content is not trusted for agent execution.
+    if: needs.plan.outputs.shouldReview == 'true' && github.event.pull_request.head.repo.full_name == github.repository
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+    name: AI Code Review by ${{ matrix.slug }}
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(vars.AI_CODE_REVIEW_MODELS) }}
+        include: ${{ fromJSON(needs.plan.outputs.matrix) }}
 
     steps:
-      - uses: runs-on/action@v2
+      - uses: runs-on/action@46910bf61b41721b0579f237e186afb35477007a # v2.3.0
 
       - name: Resolve pull request metadata
         id: meta
@@ -133,46 +189,133 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
+          persist-credentials: false
           ref: ${{ steps.meta.outputs.head_sha }}
 
-      - name: Install plugins
-        env:
-          GIT_TOKEN: ${{ secrets.CSPF_REPO_READ_PAT }}
-        run: |
-          PLUGIN_ROOT="${HOME}/.ai/plugins/caseproof-ai-plugins"
-          rm -rf "$PLUGIN_ROOT"
-          mkdir -p "$(dirname "$PLUGIN_ROOT")"
-          git clone --depth 1 "https://x-access-token:${GIT_TOKEN}@github.com/caseproof/caseproof-ai-plugins.git" "$PLUGIN_ROOT"
-          test -d "${PLUGIN_ROOT}/devkit"
-          echo "PLUGIN_DIR=${PLUGIN_ROOT}/devkit" >> "$GITHUB_ENV"
+      - name: Install OpenCode & Caseproof AI Plugins
+        uses: caseproof/org-admin/.github/actions/install-opencode@main
+        with:
+          openrouter-api-key: ${{ secrets.MC_OPENROUTER_API_KEY }}
+          repo-token: ${{ secrets.CSPF_REPO_READ_PAT }}
+          plugins: devkit
 
-      - name: Install Cursor CLI
+      - name: Prefetch prior review threads
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ steps.meta.outputs.pr_number }}
         run: |
-          curl https://cursor.com/install -fsS | bash
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-          echo "$HOME/.cursor/bin" >> "$GITHUB_PATH"
+          set -euo pipefail
+          mkdir -p "$REVIEWS_DIR"
+          threads="$REVIEWS_DIR/review-threads.json"
+          classified="$REVIEWS_DIR/prior-feedback-pr-${PR_NUMBER}.json"
+          owner="${GITHUB_REPOSITORY%%/*}"
+          repo="${GITHUB_REPOSITORY#*/}"
+          thread_query=$(cat <<'EOF'
+          query($owner: String!, $repo: String!, $number: Int!, $after: String = null) {
+            repository(owner: $owner, name: $repo) {
+              pullRequest(number: $number) {
+                reviewThreads(first: 100, after: $after) {
+                  pageInfo { hasNextPage endCursor }
+                  nodes {
+                    id
+                    isResolved
+                    isOutdated
+                    path
+                    line
+                    originalLine
+                    comments(first: 50) {
+                      pageInfo { hasNextPage endCursor }
+                      nodes {
+                        id
+                        databaseId
+                        body
+                        createdAt
+                        startLine
+                        author { login }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          EOF
+          )
+          comment_query=$(cat <<'EOF'
+          query($id: ID!, $after: String!) {
+            node(id: $id) {
+              ... on PullRequestReviewThread {
+                comments(first: 50, after: $after) {
+                  pageInfo { hasNextPage endCursor }
+                  nodes {
+                    id
+                    databaseId
+                    body
+                    createdAt
+                    startLine
+                    author { login }
+                  }
+                }
+              }
+            }
+          }
+          EOF
+          )
+          echo '{"nodes":[]}' > "$threads"
+          cursor=""
+          while true; do
+            if [ -n "$cursor" ]; then
+              page=$(gh api graphql -f owner="$owner" -f repo="$repo" -F number="$PR_NUMBER" -f after="$cursor" -f query="$thread_query")
+            else
+              page=$(gh api graphql -f owner="$owner" -f repo="$repo" -F number="$PR_NUMBER" -f query="$thread_query")
+            fi
+            jq --argjson page "$page" '.nodes += [$page.data.repository.pullRequest.reviewThreads.nodes[]]' "$threads" > "$threads.next"
+            mv "$threads.next" "$threads"
+            has_next=$(printf '%s' "$page" | jq -r '.data.repository.pullRequest.reviewThreads.pageInfo.hasNextPage')
+            cursor=$(printf '%s' "$page" | jq -r '.data.repository.pullRequest.reviewThreads.pageInfo.endCursor // empty')
+            [ "$has_next" = "true" ] && [ -n "$cursor" ] || break
+          done
+          while true; do
+            pending=$(jq -r '.nodes[] | select(.comments.pageInfo.hasNextPage == true) | "\(.id)\t\(.comments.pageInfo.endCursor)"' "$threads" | head -n 1)
+            [ -n "$pending" ] || break
+            thread_id=${pending%%$'\t'*}
+            comment_cursor=${pending#*$'\t'}
+            [ -n "$comment_cursor" ] && [ "$comment_cursor" != "null" ] || break
+            page=$(gh api graphql -f id="$thread_id" -f after="$comment_cursor" -f query="$comment_query")
+            jq --arg id "$thread_id" --argjson page "$page" '
+              .nodes |= map(
+                if .id == $id then
+                  .comments.nodes += [$page.data.node.comments.nodes[]]
+                  | .comments.pageInfo = $page.data.node.comments.pageInfo
+                else . end
+              )
+            ' "$threads" > "$threads.next"
+            mv "$threads.next" "$threads"
+          done
+          "${PLUGIN_DIR}/skills/gh-pr-review-parse/scripts/classify-review-threads.sh" --file "$threads" > "$classified"
+          test -s "$classified"
 
       - name: Review PR
         env:
-          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
           GH_TOKEN: ${{ github.token }}
-          AGENT_MODEL: ${{ matrix.model }}
-          AGENT_SLUG: ${{ matrix.slug }}
-          REVIEW_FILE: ${{ env.REVIEWS_DIR }}/code-review-${{ steps.meta.outputs.review_scope }}-${{ matrix.slug }}.md
+          USAGE_FILE: ${{ env.REVIEWS_DIR }}/code-review-${{ steps.meta.outputs.review_scope }}-${{ matrix.slug }}.usage.json
+          USAGE_ROLE: review
+          USAGE_SLUG: ${{ matrix.slug }}
+          REVIEW_MODEL: ${{ matrix.model }}
           AGENT_PROMPT: |
-            Perform this pull request code review using the code-reviewer agent (/code-reviewer).
+            Perform this pull request code review as the devkit-code-reviewer agent.
 
-            ## Subagent rules (required)
-            - Invoke /code-reviewer as a subagent with model set to `inherit` only (same as parent: ${{ matrix.model }}).
-            - Model slug below is ONLY for the output filename — never pass it as a subagent or Task model.
-            - Valid model IDs look like `${{ matrix.model }}`, not `${{ matrix.slug }}`.
-            - If subagent dispatch fails, follow `devkit/agents/code-reviewer.md` directly in this session (do not substitute another model).
+            ## Agent
+            Read and follow: ${{ env.PLUGIN_DIR }}/agents/code-reviewer.md
+            Paths in that file written as `devkit/...` are under ${{ env.PLUGIN_ROOT }}.
+            OpenCode skill ids use the same prefix, for example `devkit-gh-pr-review-parse`.
+            Do not switch models. The model for this run is `${{ matrix.model }}`.
 
             ## Review parameters
-            Follow `devkit/agents/code-reviewer.md` for scope, linked issues, checklist, output format, and file paths.
+            Follow that agent file for scope, linked issues, checklist, output format, and file paths.
 
             - Review target: pr
             - Review output: markdown_file
@@ -185,51 +328,54 @@ jobs:
             - Scope: ${{ steps.meta.outputs.review_scope }}
             - Model slug: ${{ matrix.slug }}
 
-            ## Linked issues and task type
-            - Discover and load linked issues per code-reviewer (closing keywords, `closingIssuesReferences`, `gh issue view`).
-            - Infer task type (bugfix / feature / refactor / docs) from linked issues when present; otherwise from the PR title/body.
-
             ## Output
-            Write the full structured review (Critical, Warning, Suggestion, Linked issues, Summary, Verdict) to exactly:
-            ${{ env.REVIEWS_DIR }}/code-review-${{ steps.meta.outputs.review_scope }}-${{ matrix.slug }}.md
-
-            This matches `.caseproof-dev/reviews/code-review-<scope>-<modelSlug>.md` with scope `${{ steps.meta.outputs.review_scope }}` and model slug `${{ matrix.slug }}`. Create parent directories if needed.
+            Write the full structured review to exactly: ${{ env.REVIEWS_DIR }}/code-review-${{ steps.meta.outputs.review_scope }}-${{ matrix.slug }}.md
 
             ## CI constraints
             - Use `gh pr diff ${{ steps.meta.outputs.pr_number }}` and `gh pr view ${{ steps.meta.outputs.pr_number }}` with `--repo ${{ github.repository }}`.
+            - Load issues in `${{ github.repository }}` only. If an issue is in another repository, continue without it.
+            - Prior review threads are classified in `${{ env.REVIEWS_DIR }}/prior-feedback-pr-${{ steps.meta.outputs.pr_number }}.json`. Read that file. Do not run `gh api` or `classify-review-threads.sh`.
+            - If a shell command is denied, continue with `gh pr diff ${{ steps.meta.outputs.pr_number }}` and `gh pr view ${{ steps.meta.outputs.pr_number }}` with `--repo ${{ github.repository }}`.
             - Do not post a PR comment. Do not invoke gh-submit-code-review — a later workflow job posts the merged review.
             - Do not modify application code — review only.
         run: |
           mkdir -p "${{ env.REVIEWS_DIR }}"
-
-          agent --print --force --trust \
-            --plugin-dir "$PLUGIN_DIR" \
-            --model "$AGENT_MODEL" \
-            "$AGENT_PROMPT"
+          opencode-run --standalone --log-level error --auto --title "AI code review ${{ github.repository }}#${{ steps.meta.outputs.pr_number }} ${USAGE_SLUG}" --agent devkit-code-reviewer --model "$REVIEW_MODEL" "$AGENT_PROMPT"
 
       - name: Verify review file
+        env:
+          REVIEW_SLUG: ${{ matrix.slug }}
         run: |
-          test -s "${{ env.REVIEWS_DIR }}/code-review-${{ steps.meta.outputs.review_scope }}-${{ matrix.slug }}.md"
+          review="${{ env.REVIEWS_DIR }}/code-review-${{ steps.meta.outputs.review_scope }}-${REVIEW_SLUG}.md"
+          if [ ! -s "$review" ]; then
+            echo "::error::Review file is missing: $review"
+          fi
+          test -s "$review"
 
       - name: Upload review artifact
-        uses: actions/upload-artifact@v4
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: review-${{ matrix.slug }}
-          path: ${{ env.REVIEWS_DIR }}/code-review-${{ steps.meta.outputs.review_scope }}-${{ matrix.slug }}.md
-          if-no-files-found: error
+          path: |
+            ${{ env.REVIEWS_DIR }}/code-review-${{ steps.meta.outputs.review_scope }}-${{ matrix.slug }}.md
+            ${{ env.REVIEWS_DIR }}/code-review-${{ steps.meta.outputs.review_scope }}-${{ matrix.slug }}.usage.json
+            ${{ env.REVIEWS_DIR }}/prior-feedback-pr-${{ github.event.pull_request.number }}.json
+            ~/.local/share/opencode/log
+          if-no-files-found: warn
 
   merge:
     runs-on: runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache
     name: Merge reviews and post review
-    needs: [gate, review]
+    needs: [plan, review]
     # Run after the review matrix even when some models fail; count step errors if zero files collected.
-    if: ${{ always() && !cancelled() && needs.gate.outputs.proceed == 'true' && github.event.pull_request.head.repo.full_name == github.repository }}
+    if: ${{ always() && !cancelled() && needs.plan.outputs.shouldReview == 'true' && github.event.pull_request.head.repo.full_name == github.repository }}
     permissions:
       contents: read
       pull-requests: read
 
     steps:
-      - uses: runs-on/action@v2
+      - uses: runs-on/action@46910bf61b41721b0579f237e186afb35477007a # v2.3.0
 
       - name: Resolve pull request metadata
         id: meta
@@ -248,13 +394,14 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Checkout pull request head
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ steps.meta.outputs.head_sha }}
-          fetch-depth: 0
+          fetch-depth: 1
+          persist-credentials: false
 
       - name: Download review artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         continue-on-error: true
         with:
           pattern: review-*
@@ -262,40 +409,37 @@ jobs:
           path: artifact-reviews
 
       - name: Collect review files
-        run: |
-          mkdir -p artifact-reviews "${{ env.REVIEWS_DIR }}"
-          find artifact-reviews -type f -name 'code-review-${{ steps.meta.outputs.review_scope }}-*.md' ! -name '*-merged.md' -exec cp {} "${{ env.REVIEWS_DIR }}/" \;
-          ls -la "${{ env.REVIEWS_DIR }}/"
-
-      - name: Install plugins
-        env:
-          GIT_TOKEN: ${{ secrets.CSPF_REPO_READ_PAT }}
-        run: |
-          PLUGIN_ROOT="${HOME}/.ai/plugins/caseproof-ai-plugins"
-          rm -rf "$PLUGIN_ROOT"
-          mkdir -p "$(dirname "$PLUGIN_ROOT")"
-          git clone --depth 1 "https://x-access-token:${GIT_TOKEN}@github.com/caseproof/caseproof-ai-plugins.git" "$PLUGIN_ROOT"
-          test -d "${PLUGIN_ROOT}/devkit"
-          echo "PLUGIN_DIR=${PLUGIN_ROOT}/devkit" >> "$GITHUB_ENV"
-
-      - name: Install Cursor CLI
-        run: |
-          curl https://cursor.com/install -fsS | bash
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-          echo "$HOME/.cursor/bin" >> "$GITHUB_PATH"
-
-      - name: Count and validate review files
         id: reviews
         run: |
-          mapfile -t REVIEW_FILES < <(find "${{ env.REVIEWS_DIR }}" -maxdepth 1 -type f -name 'code-review-${{ steps.meta.outputs.review_scope }}-*.md' ! -name '*-merged.md' | sort)
-          COUNT=${#REVIEW_FILES[@]}
+          mkdir -p artifact-reviews "${{ env.REVIEWS_DIR }}"
+          mapfile -t FOUND_FILES < <(find artifact-reviews -type f -name 'code-review-${{ steps.meta.outputs.review_scope }}-*.md' ! -name 'code-review-${{ steps.meta.outputs.review_scope }}-merged.md' | sort)
+          REVIEW_FILES=()
+          for file in "${FOUND_FILES[@]}"; do
+            usage="${file%.md}.usage.json"
+            exit_status="$(jq -r '.exitStatus // empty' "$usage" 2>/dev/null || true)"
+            if [ "$exit_status" != "0" ] || [ ! -s "$file" ]; then
+              echo "Skipping $(basename "$file"): OpenCode exit status is ${exit_status:-missing} or the review file is empty."
+              continue
+            fi
+            dest="${{ env.REVIEWS_DIR }}/$(basename "$file")"
+            cp "$file" "$dest"
+            REVIEW_FILES+=("$dest")
+          done
+          find artifact-reviews -type f -name 'code-review-${{ steps.meta.outputs.review_scope }}-*.usage.json' -exec cp {} "${{ env.REVIEWS_DIR }}/" \;
+          ls -la "${{ env.REVIEWS_DIR }}/"
 
+          COUNT=${#REVIEW_FILES[@]}
           if [ "$COUNT" -eq 0 ]; then
             echo "::error::No review files were produced (all review jobs may have failed)."
             exit 1
           fi
 
           echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+          {
+            echo "review_files<<REVIEW_FILES_EOF"
+            printf '%s\n' "${REVIEW_FILES[@]}"
+            echo "REVIEW_FILES_EOF"
+          } >> "$GITHUB_OUTPUT"
           printf '%s\n' "${REVIEW_FILES[@]}"
 
           if [ "$COUNT" -eq 1 ]; then
@@ -307,34 +451,46 @@ jobs:
             echo "Found ${COUNT} review files; will merge before posting."
           fi
 
+      - name: Check merge model
+        env:
+          MERGE_MODEL: ${{ needs.plan.outputs.mergeModel }}
+          MERGE_SLUG: ${{ needs.plan.outputs.mergeSlug }}
+        run: |
+          if [ -z "$MERGE_MODEL" ] || [ -z "$MERGE_SLUG" ]; then
+            echo "::error::Plan did not resolve a merge model. Set merge to \"medium\" or \"high\" on at least one AI_CODE_REVIEW_MODELS entry."
+            exit 1
+          fi
+          echo "Merge model: $MERGE_SLUG $MERGE_MODEL"
+
+      - name: Install OpenCode & Caseproof AI Plugins
+        uses: caseproof/org-admin/.github/actions/install-opencode@main
+        with:
+          openrouter-api-key: ${{ secrets.MC_OPENROUTER_API_KEY }}
+          repo-token: ${{ secrets.CSPF_REPO_READ_PAT }}
+          plugins: devkit
+
       - name: Merge reviews
         if: steps.reviews.outputs.use_merge == 'true'
         env:
-          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
-          MERGED_FILE: ${{ env.REVIEWS_DIR }}/code-review-${{ steps.meta.outputs.review_scope }}-merged.md
+          USAGE_FILE: ${{ env.REVIEWS_DIR }}/code-review-${{ steps.meta.outputs.review_scope }}-merge.usage.json
+          USAGE_ROLE: merge
+          USAGE_SLUG: ${{ needs.plan.outputs.mergeSlug }}
+          MERGE_MODEL: ${{ needs.plan.outputs.mergeModel }}
+          AGENT_PROMPT: |
+            Load the devkit-code-review-merge skill and follow ${{ env.PLUGIN_DIR }}/skills/code-review-merge/SKILL.md.
+            Merge these parallel code review files into one report.
+
+            ## Input files
+            ${{ steps.reviews.outputs.review_files }}
+
+            ## Scope
+            ${{ steps.meta.outputs.review_scope }}
+
+            ## Output
+            Write the merged review to exactly:
+            ${{ env.REVIEWS_DIR }}/code-review-${{ steps.meta.outputs.review_scope }}-merged.md
         run: |
-          mapfile -t REVIEW_FILES < <(find "${{ env.REVIEWS_DIR }}" -maxdepth 1 -type f -name 'code-review-${{ steps.meta.outputs.review_scope }}-*.md' ! -name '*-merged.md' | sort)
-          REVIEW_LIST=$(printf '%s\n' "${REVIEW_FILES[@]}")
-
-          agent --print --force --trust \
-            --plugin-dir "$PLUGIN_DIR" \
-            --model "${{ vars.AI_CODE_REVIEW_MERGE_MODEL }}" \
-            "$(cat <<EOF
-          Use the code-review-merge skill (/code-review-merge) to merge these parallel code review files into one report.
-
-          ## Input files
-          ${REVIEW_LIST}
-
-          ## Scope
-          ${{ steps.meta.outputs.review_scope }}
-
-          ## Output
-          Write the merged review to exactly:
-          ${MERGED_FILE}
-
-          Follow the skill rules: deduplicate similar findings, preserve unique items, note multi-model consensus, and include a verdict synthesis.
-          EOF
-          )"
+          opencode-run --standalone --log-level error --auto --title "AI code review merge ${{ github.repository }}#${{ steps.meta.outputs.pr_number }}" --model "$MERGE_MODEL" "$AGENT_PROMPT"
 
       - name: Verify merged review
         if: steps.reviews.outputs.use_merge == 'true'
@@ -352,16 +508,18 @@ jobs:
 
           test -s "$FILE"
           echo "file=$FILE" >> "$GITHUB_OUTPUT"
-          echo "SOURCE_FILE=$FILE" >> "$GITHUB_ENV"
 
       - name: Prepare pull request review payload
         env:
-          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
           GH_TOKEN: ${{ github.token }}
-          AGENT_MODEL: ${{ vars.AI_CODE_REVIEW_MERGE_MODEL }}
           REVIEW_PAYLOAD: ${{ env.REVIEWS_DIR }}/code-review-${{ steps.meta.outputs.review_scope }}-github-payload.json
+          USAGE_FILE: ${{ env.REVIEWS_DIR }}/code-review-${{ steps.meta.outputs.review_scope }}-submit.usage.json
+          USAGE_ROLE: submit
+          USAGE_SLUG: ${{ needs.plan.outputs.mergeSlug }}
+          MERGE_MODEL: ${{ needs.plan.outputs.mergeModel }}
           AGENT_PROMPT: |
-            Use the gh-submit-code-review skill (/gh-submit-code-review) in CI payload-only mode.
+            Load the devkit-gh-submit-code-review skill and follow ${{ env.PLUGIN_DIR }}/skills/gh-submit-code-review/SKILL.md in CI payload-only mode.
+            Paths in that file written as `devkit/...` are under ${{ env.PLUGIN_ROOT }}.
 
             ## Parameters
             - sourceFile: ${{ steps.source.outputs.file }}
@@ -382,39 +540,223 @@ jobs:
             - Write the validated JSON payload to exactly ${{ env.REVIEWS_DIR }}/code-review-${{ steps.meta.outputs.review_scope }}-github-payload.json. Do not call the GitHub API.
             - Do not post `gh pr comment`. Do not modify application source files.
         run: |
-          agent --print --force --trust \
-            --plugin-dir "$PLUGIN_DIR" \
-            --model "$AGENT_MODEL" \
-            "$AGENT_PROMPT"
+          opencode-run --standalone --log-level error --auto --title "AI code review submit ${{ github.repository }}#${{ steps.meta.outputs.pr_number }}" --model "$MERGE_MODEL" "$AGENT_PROMPT"
 
       - name: Submit pull request review
         env:
           GH_TOKEN: ${{ secrets.AI_CODE_REVIEW_PR_WRITE }}
           REVIEW_PAYLOAD: ${{ env.REVIEWS_DIR }}/code-review-${{ steps.meta.outputs.review_scope }}-github-payload.json
+          SOURCE_FILE: ${{ steps.source.outputs.file }}
+          HEAD_SHA: ${{ steps.meta.outputs.head_sha }}
+          ARTIFACT_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          ARTIFACT_NAME: code-reviews-${{ steps.meta.outputs.review_scope }}
+          PAYLOAD_NAME: code-review-${{ steps.meta.outputs.review_scope }}-github-payload.json
         run: |
           set -euo pipefail
+          API_URL="repos/${{ github.repository }}/pulls/${{ steps.meta.outputs.pr_number }}/reviews"
           REVIEW_PAYLOAD_API="${REVIEW_PAYLOAD}.api.json"
-          jq '{commit_id, event, body, comments}' "$REVIEW_PAYLOAD" > "$REVIEW_PAYLOAD_API"
+          FALLBACK_BODY="${REVIEW_PAYLOAD}.fallback.md"
 
-          if ! gh api \
-            --method POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2026-03-10" \
-            "repos/${{ github.repository }}/pulls/${{ steps.meta.outputs.pr_number }}/reviews" \
-            --input "$REVIEW_PAYLOAD_API"; then
-            echo "::error::Failed to submit pull request review (see payload below)."
-            echo "::group::Review payload JSON"
+          submit_review() {
+            local response url
+            if response=$(gh api \
+              --method POST \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2026-03-10" \
+              "$API_URL" \
+              --input "$1"); then
+              url=$(printf '%s\n' "$response" | jq -r '.html_url // empty' || true)
+              if [ -z "$url" ] || [ "$url" = "null" ]; then
+                echo "::warning::The review was posted, and its URL was not captured."
+                url=""
+              fi
+              printf '%s\n' "$url" > "${{ env.REVIEWS_DIR }}/review-url.txt"
+              return 0
+            fi
+            return 1
+          }
+
+          write_fallback() {
+            local event="$1"
+            local note note_bytes max
+            note=$(printf '\n---\n\nSubmission of the GitHub review API payload failed. Review the raw JSON `%s` in the `%s` artifact: %s' \
+              "$PAYLOAD_NAME" "$ARTIFACT_NAME" "$ARTIFACT_URL")
+            note_bytes=$((${#note} + 1))
+            cat "$SOURCE_FILE" > "$FALLBACK_BODY"
+            max=$((65536 - note_bytes - 64))
+            if [ "$(wc -c < "$FALLBACK_BODY")" -gt "$max" ]; then
+              head -c "$max" "$FALLBACK_BODY" \
+                | python3 -c 'import sys; sys.stdout.buffer.write(sys.stdin.buffer.read().decode("utf-8", "ignore").encode())' \
+                > "${FALLBACK_BODY}.trim"
+              mv "${FALLBACK_BODY}.trim" "$FALLBACK_BODY"
+              printf '\n\nReview body truncated to fit the GitHub limit.\n' >> "$FALLBACK_BODY"
+            fi
+            printf '%s\n' "$note" >> "$FALLBACK_BODY"
+            jq -n \
+              --arg commit_id "$HEAD_SHA" \
+              --arg event "$event" \
+              --rawfile body "$FALLBACK_BODY" \
+              '{commit_id: $commit_id, event: $event, body: $body, comments: []}' \
+              > "$REVIEW_PAYLOAD_API"
+          }
+
+          EVENT=""
+          if [ -f "$REVIEW_PAYLOAD" ] && jq -e 'type == "object" and (.event | type == "string") and (.body | type == "string")' "$REVIEW_PAYLOAD" >/dev/null 2>&1; then
+            EVENT="$(jq -r '.event // empty' "$REVIEW_PAYLOAD")"
+            if jq '{commit_id, event, body, comments}' "$REVIEW_PAYLOAD" > "$REVIEW_PAYLOAD_API"; then
+              if submit_review "$REVIEW_PAYLOAD_API"; then
+                exit 0
+              fi
+            fi
+          fi
+
+          echo "::warning::Inline pull request review was rejected. Posting the source review without line comments."
+          echo "::group::Rejected review payload"
+          stop_token="$(openssl rand -hex 16)"
+          if [ -f "$REVIEW_PAYLOAD" ]; then
+            while grep -qF "$stop_token" "$REVIEW_PAYLOAD"; do
+              stop_token="$(openssl rand -hex 16)"
+            done
+          fi
+          echo "::stop-commands::${stop_token}"
+          if [ -f "$REVIEW_PAYLOAD" ]; then
             cat "$REVIEW_PAYLOAD"
-            echo "::endgroup::"
+          else
+            echo "Review payload file is missing."
+          fi
+          echo "::${stop_token}::"
+          echo "::endgroup::"
+
+          if [ -n "$EVENT" ] && [ "$EVENT" != "COMMENT" ]; then
+            write_fallback "$EVENT"
+            if submit_review "$REVIEW_PAYLOAD_API"; then
+              exit 0
+            fi
+            echo "::warning::Review event ${EVENT} was rejected. Posting the source review as a comment."
+          fi
+
+          write_fallback "COMMENT"
+          if ! submit_review "$REVIEW_PAYLOAD_API"; then
+            echo "::error::Failed to submit the source review."
             exit 1
           fi
 
       - name: Upload review artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: code-reviews-${{ steps.meta.outputs.review_scope }}
           path: |
             ${{ env.REVIEWS_DIR }}/code-review-${{ steps.meta.outputs.review_scope }}-*.md
+            ${{ env.REVIEWS_DIR }}/code-review-${{ steps.meta.outputs.review_scope }}-*.usage.json
             ${{ env.REVIEWS_DIR }}/code-review-${{ steps.meta.outputs.review_scope }}-github-payload.json
+            ${{ env.REVIEWS_DIR }}/review-url.txt
+            ~/.local/share/opencode/log
           if-no-files-found: warn
+
+  report:
+    name: Report review analytics
+    needs: [plan, review, merge]
+    if: ${{ always() && !cancelled() && needs.plan.outputs.shouldReview == 'true' && github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: runs-on=${{ github.run_id }}/runner=4cpu-linux-x64
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - uses: runs-on/action@46910bf61b41721b0579f237e186afb35477007a # v2.3.0
+
+      - name: Download model artifacts
+        id: model-artifacts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        continue-on-error: true
+        with:
+          pattern: review-*
+          path: model-artifacts
+
+      - name: Download merge artifacts
+        id: merge-artifacts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        continue-on-error: true
+        with:
+          pattern: code-reviews-*
+          path: merge-artifacts
+
+      - name: Keep a failed download off the analytics record
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MODEL_DOWNLOAD: ${{ steps.model-artifacts.outcome }}
+          MERGE_DOWNLOAD: ${{ steps.merge-artifacts.outcome }}
+        run: |
+          set -euo pipefail
+          artifact_count() {
+            gh api --paginate "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts" \
+              --jq '.artifacts[] | select(.expired == false) | .name' \
+              | awk -v prefix="$1" 'index($0, prefix) == 1' \
+              | wc -l \
+              | tr -d ' '
+          }
+          require_download() {
+            local outcome="$1"
+            local prefix="$2"
+            local label="$3"
+            local count
+            if [ "$outcome" = "success" ]; then
+              return 0
+            fi
+            count=$(artifact_count "$prefix")
+            if [ "$count" != "0" ]; then
+              echo "::error::${label} exist for this run and were not downloaded."
+              return 1
+            fi
+          }
+          require_download "$MODEL_DOWNLOAD" "review-" "Model artifacts"
+          require_download "$MERGE_DOWNLOAD" "code-reviews-" "Merge artifacts"
+
+      - name: Collect analytics files
+        run: |
+          mkdir -p analytics-reviews
+          if [ -d model-artifacts ]; then
+            find model-artifacts -type f \( -name 'code-review-*' -o -name 'review-url.txt' \) ! -path '*/log/*' -exec cp -f {} analytics-reviews/ \;
+          fi
+          if [ -d merge-artifacts ]; then
+            find merge-artifacts -type f \( -name 'code-review-*' -o -name 'review-url.txt' \) ! -path '*/log/*' -exec cp -f {} analytics-reviews/ \;
+          fi
+
+      - name: Read review timing
+        id: timing
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          started=$(gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}" --jq .run_started_at)
+          ended=$(gh api --paginate "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs?filter=all" \
+            --jq '.jobs[] | select(.status == "completed" and .name != "Report review analytics" and .completed_at != null) | .completed_at' \
+            | sort | tail -n 1)
+          if [ -z "$ended" ]; then
+            ended="$started"
+          fi
+          echo "started_at=$started" >> "$GITHUB_OUTPUT"
+          echo "ended_at=$ended" >> "$GITHUB_OUTPUT"
+
+      - name: Report review
+        uses: caseproof/org-admin/.github/actions/report-review-analytics@main
+        with:
+          analytics-url: ${{ vars.AI_REVIEW_ANALYTICS_URL }}
+          access-client-id: ${{ secrets.AI_REVIEW_ANALYTICS_CF_ACCESS_CLIENT_ID }}
+          access-client-secret: ${{ secrets.AI_REVIEW_ANALYTICS_CF_ACCESS_CLIENT_SECRET }}
+          team: ${{ env.REVIEW_TEAM }}
+          matrix: ${{ needs.plan.outputs.matrix }}
+          merge-slug: ${{ needs.plan.outputs.mergeSlug }}
+          merge-effort: ${{ needs.plan.outputs.mergeEffort }}
+          risk-score: ${{ needs.plan.outputs.riskScore }}
+          reviews-dir: analytics-reviews
+          review-scope: pr-${{ github.event.pull_request.number }}
+          repository: ${{ github.repository }}
+          author: ${{ github.event.pull_request.user.login }}
+          pull-request-number: ${{ github.event.pull_request.number }}
+          head-sha: ${{ github.event.pull_request.head.sha }}
+          workflow-run-id: ${{ github.run_id }}
+          workflow-run-attempt: ${{ github.run_attempt }}
+          started-at: ${{ steps.timing.outputs.started_at }}
+          ended-at: ${{ steps.timing.outputs.ended_at }}
+          run-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
