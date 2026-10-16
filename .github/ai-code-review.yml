@@ -1,0 +1,16 @@
+# Paths the AI code review planner treats as sensitive (auth, payments, permissions).
+# Each changed file that matches adds 1 to the PR risk score (max 2), so it gets a deeper review.
+# Read from the PR base branch. Docs: https://github.com/caseproof/org-admin/blob/main/docs/ai-code-review.md#repository-config
+riskyPaths:
+  - 'addons/members-acf-integration/src/*role*.php'
+  - 'addons/members-edd-integration/src/*role*.php'
+  - 'addons/members-givewp-integration/src/*role*.php'
+  - 'addons/members-meta-box-integration/src/*role*.php'
+  - 'addons/members-role-hierarchy/admin/*role*.php'
+  - 'addons/members-woocommerce-integration/src/*role*.php'
+  - 'admin/*permission*.php'
+  - 'admin/*role*.php'
+  - 'inc/*capabilit*.php'
+  - 'inc/*login*.php'
+  - 'inc/*permission*.php'
+  - 'inc/*role*.php'
