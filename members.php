@@ -267,8 +267,8 @@ final class Members_Plugin {
 		$addons = get_option( 'members_active_addons', array() );
 
 		if ( ! empty( $addons ) ) {
-			foreach ( $addons as $addon ) {
-				if ( file_exists( __DIR__ . "/addons/{$addon}/addon.php" ) ) {
+			foreach ( array_unique( (array) $addons ) as $addon ) {
+				if ( $this->is_valid_addon( $addon ) ) {
 					include __DIR__ . "/addons/{$addon}/addon.php";
 				}
 			}
@@ -475,7 +475,7 @@ final class Members_Plugin {
 	 */
 	public function run_addon_activator( $addon ) {
 
-		if ( file_exists( trailingslashit( __DIR__ ) . "addons/{$addon}/src/Activator.php" ) ) {
+		if ( $this->is_valid_addon( $addon ) && file_exists( trailingslashit( __DIR__ ) . "addons/{$addon}/src/Activator.php" ) ) {
 
 			// Require the add-on file
 			include trailingslashit( __DIR__ ) . "addons/{$addon}/src/Activator.php";
@@ -490,6 +490,22 @@ final class Members_Plugin {
 				$namespace::activate();
 			}
 		}
+	}
+
+	/**
+	 * Checks that an add-on name is a bundled add-on directory.
+	 *
+	 * Rejects path separators and dots so stored values cannot point outside `addons/`.
+	 *
+	 * @since  3.2.27
+	 * @access public
+	 * @param  string $addon Add-on directory name.
+	 * @return bool
+	 */
+	public function is_valid_addon( $addon ) {
+		return is_string( $addon )
+			&& 1 === preg_match( '/^[a-z0-9-]+$/D', $addon )
+			&& file_exists( __DIR__ . "/addons/{$addon}/addon.php" );
 	}
 
 	public function block_editor_assets() {

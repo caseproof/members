@@ -170,6 +170,12 @@ final class Settings_Page {
 		$active_addons = get_option( 'members_active_addons', array() );
 
 		if ( ! in_array( $addon, $active_addons ) ) { // Activate the addon
+			if ( ! members_plugin()->is_valid_addon( $addon ) ) {
+				wp_send_json_error( array(
+					'msg' => esc_html__( 'Invalid add-on.', 'members' )
+				) );
+			}
+
 			$active_addons[] = $addon;
 			$response = array(
 				'status' => 'active',
