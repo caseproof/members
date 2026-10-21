@@ -6,7 +6,7 @@ Tags: permissions, memberships, roles, capabilities, access
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 3.2.26
+Stable tag: 3.2.27
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -161,6 +161,9 @@ If that doesn't apply or didn't work, stop by our [support forums](https://wordp
 5. Select multiple roles per user (edit user screen)
 
 == Changelog ==
+
+= 3.2.27 =
+* Security: Hardened the add-on settings so only add-ons that ship with Members can be enabled, and invalid saved values are ignored.
 
 = 3.2.26 =
 * Fixed: On the user profile / edit-user screen with Multiple User Roles enabled, the role checkboxes could appear to have no checkmark — looking "unresponsive" — when another plugin's admin CSS overrode core checkbox styles (e.g. line-height: 0). The checkboxes always toggled and saved; only the checkmark was hidden. The Members role checkboxes now defensively assert their own rendering so the checkmark shows regardless of such global overrides.
