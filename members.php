@@ -267,7 +267,7 @@ final class Members_Plugin {
 		$addons = get_option( 'members_active_addons', array() );
 
 		if ( ! empty( $addons ) ) {
-			foreach ( array_unique( (array) $addons ) as $addon ) {
+			foreach ( array_unique( array_filter( (array) $addons, 'is_string' ) ) as $addon ) {
 				if ( $this->is_valid_addon( $addon ) ) {
 					include __DIR__ . "/addons/{$addon}/addon.php";
 				}
