@@ -93,7 +93,7 @@ The integrations listed above (ACF, EDD, GiveWP, Meta Box, WooCommerce, Block Pe
 - **Active list:** the active add-ons are stored in the `members_active_addons` option.
 - **Loading:** on every request `members.php` (`includes()`) loads `addons/<slug>/addon.php` for each active add-on. Inactive add-ons cost nothing.
 - **Validation:** only slugs of folders that exist in `addons/` are accepted (`is_valid_addon()`).
-- **Activation:** switching an add-on on runs `addons/<slug>/src/Activator.php` (`<namespace>\Activator::activate()`) if it exists. Switching it off doesn't undo anything.
+- **Activation:** switching an add-on on runs `addons/<slug>/src/Activator.php` (`<namespace>\Activator::activate()`) if it exists. Switching it off doesn't undo anything. Activators should only add caps a role has no entry for yet, so running one again never overrides a site owner's choices.
 - **Screen listing:** titles and descriptions on the Add-Ons screen come from `admin/config/addons.php`. Its icons are `img/<slug>.svg`.
 
 To add a bundled add-on:
