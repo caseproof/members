@@ -435,6 +435,9 @@ function members_enable_content_permissions() {
 		// Filter the comments template to make sure comments aren't shown to users without access.
 		add_filter( 'comments_template', 'members_content_permissions_comments', 95 );
 
+		// Bricks Builder renders its pages without `the_content`.
+		add_filter( 'bricks/render_with_bricks', 'members_bricks_render_with_bricks', 10, 2 );
+
 		// Use WP formatting filters on the post error message.
 		add_filter( 'members_post_error_message', array( $wp_embed, 'run_shortcode' ),   5 );
 		add_filter( 'members_post_error_message', array( $wp_embed, 'autoembed'     ),   5 );
@@ -445,6 +448,31 @@ function members_enable_content_permissions() {
 		add_filter( 'members_post_error_message',                   'do_shortcode',      30 );
 		add_filter( 'members_post_error_message',                   'shortcode_unautop', 35 );
 	}
+}
+
+/**
+ * Stops Bricks Builder from rendering a post's Bricks content for users who can't view the post.
+ *
+ * Bricks then falls back to the regular WordPress template, which runs `the_content` and shows
+ * the Members error message. Bricks headers and footers are rendered separately and still show.
+ * This is the same hook Bricks uses for its own Paid Memberships Pro integration, and it covers
+ * Bricks templates applied to the post as well as pages built directly in Bricks.
+ *
+ * @since  3.2.28
+ * @access public
+ * @param  bool|null  $render   Whether to render with Bricks (null = let Bricks decide).
+ * @param  int        $post_id  ID Bricks is checking.
+ * @return bool|null
+ */
+function members_bricks_render_with_bricks( $render, $post_id ) {
+
+	// Only act on the single post being viewed. Bricks also passes term IDs on archives, which
+	// could match an unrelated post ID.
+	if ( false === $render || ! is_singular() || (int) $post_id !== (int) get_queried_object_id() ) {
+		return $render;
+	}
+
+	return members_can_current_user_view_post( (int) $post_id ) ? $render : false;
 }
 
 /**
