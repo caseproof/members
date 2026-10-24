@@ -490,8 +490,8 @@ final class Members_Plugin {
 
 		$class = $matches[1] . '\Activator';
 
-		// Some add-ons load their activator on every request, and Reset Roles runs
-		// activators for add-ons that are already on, so don't declare it twice.
+		// Safe to call more than once in a request (Reset Roles runs it for every
+		// active add-on), so don't declare the class twice.
 		if ( ! class_exists( $class, false ) ) {
 			include_once $file;
 		}
