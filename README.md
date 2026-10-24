@@ -23,7 +23,7 @@ From the WordPress plugin directory, or via WP-CLI:
 wp plugin install members --activate
 ```
 
-Then visit **Settings → Members**.
+Then visit **Members → Settings**.
 
 ## Need to charge for access?
 
@@ -38,59 +38,94 @@ Members handles **who can do what**. If you also need to handle **who can pay fo
 
 ## Contributing
 
-See [contributing.md](./contributing.md). Open an issue before sending a PR.
+See [contributing.md](./contributing.md). Open an issue before sending a PR, and target the `develop` branch.
 
-## Developer notes
+## Developers
 
-Plugin entry point is `members.php` (current version 3.2.21, requires PHP 7.4+). Core functions and classes live in `inc/`, admin screens in `admin/`, bundled add-ons in `addons/`, and shared PHP view partials in `templates/`.
+Everything is built and run from the plugin root. No add-on has its own build, `package.json` or `node_modules`.
 
-### Add-ons
+### Requirements
 
-The integrations listed above (ACF, EDD, GiveWP, Meta Box, WooCommerce, Block Permissions, Privacy Caps, Admin Access, Role Hierarchy, Role Levels, Category & Tag Caps, Core Create Caps) ship inside `addons/` and are enabled per-site from **Members → Add-Ons**.
+- **PHP 7.4+** and **WordPress 6.0+** (the minimums in `readme.txt`).
+- **Node 20+ and npm**, only to rebuild CSS/JS.
+- **Composer**, only to update the bundled PHP dependencies. `vendor-prefixed/` is committed, so you don't need Composer to run or work on the plugin.
 
-How it works:
+### Getting set up
 
-- The list of active add-ons is stored in the `members_active_addons` WordPress option.
-- On every load, `members.php` walks that option and `include`s `addons/<name>/addon.php` for each active add-on (see `members.php:266`). Inactive add-ons cost nothing at runtime.
-- Activation runs `addons/<name>/src/Activator.php` if present.
-- Add-on metadata (title, description, icon, etc.) is registered through `members_register_addon()` in `admin/functions-addons.php`, driven by `admin/config/addons.php`.
+1. Clone or symlink this repo into `wp-content/plugins/members` of any local WordPress site and activate it. [LocalWP](https://localwp.com/) works well, and [WP-CLI](https://wp-cli.org/) (`wp plugin list`, `wp user list`, …) is handy from its Site Shell.
+2. Run `npm install` once, before you change any CSS or JS.
 
-To add a new bundled add-on: drop a folder under `addons/` containing at least an `addon.php` bootstrap, optionally `src/Activator.php`, and register it in `admin/config/addons.php`. Block Permissions' editor scripts are built from `addons/members-block-permissions/resources/` into `public/js/` with `npm run build:block-permissions` (`@wordpress/scripts`, see below).
+### Where things live
 
-### Dependencies
-
-- **Composer** — runtime deps are prefixed via [Strauss](https://github.com/BrianHenryIE/strauss) into `vendor-prefixed/` to avoid collisions with other plugins. Don't edit that directory by hand.
-
-  ```bash
-  composer install
-  composer run strauss    # re-run after changing composer.json deps
-  ```
-
-- **npm** — used only for the asset build pipeline (Gulp 5 + Terser + uglifycss + autoprefixer).
-
-  ```bash
-  npm install
-  ```
+| Path | What it is |
+|---|---|
+| `members.php` | Plugin bootstrap: loads files, add-ons, activation and Reset Roles. |
+| `inc/` | Core functions and classes (roles, caps, content permissions, private site…). Loaded on every request. |
+| `admin/` | Admin screens, settings views (`admin/views/`) and the add-on list (`admin/config/addons.php`). Mostly loaded in wp-admin only; notifications and the block-editor Content Permissions meta load everywhere (see `includes()`). |
+| `addons/<slug>/` | Bundled add-ons (PHP only). See [Add-ons](#add-ons). |
+| `templates/` | PHP view partials. |
+| `css/*.css`, `js/*.js` | Hand-written admin CSS/JS. Built to `*.min.css` / `*.min.js` next to them. |
+| `src-js/` | JS/SCSS sources built with `@wordpress/scripts` (currently `src-js/block-permissions/`). |
+| `js/build/` | Built output from `src-js/`, with `*.asset.php` files used for script versions. |
+| `vendor-prefixed/` | Composer dependencies, namespaced with Strauss. Generated; don't edit. |
+| `gulpfile.js`, `babel.config.js` | Build config (see below). |
 
 ### Building assets
 
-CSS and JS sources live in `css/` and `js/`. The build reads non-`.min` files in those folders, runs them through autoprefixer + uglifycss (CSS) or Terser (JS, ES6+ supported), and writes `*.min.css` / `*.min.js` alongside the sources. See `gulpfile.js`.
+| Command | What it does |
+|---|---|
+| `npm run build` | Everything: `gulp build`, then `build:block-permissions`. |
+| `npm run build:styles` | `css/*.css` → `css/*.min.css` (autoprefixer + uglifycss). |
+| `npm run build:scripts` | `js/*.js` → `js/*.min.js` (Terser). |
+| `npm run watch` | Rebuilds `css/` and `js/` on change. |
+| `npm run build:block-permissions` | `src-js/block-permissions/` → `js/build/block-permissions/` (the Block Permissions editor panel and the MemberPress upsell panel). |
+| `npm run watch:block-permissions` | Same, rebuilding on change (unminified). |
+
+- Edit the sources (`css/*.css`, `js/*.js`, `src-js/**`), never the built files.
+- Commit both the sources and the built files (`*.min.*` and `js/build/**`). Production loads the built files, and the release doesn't run a build.
+- The `@wordpress/scripts` builds use the root `babel.config.js`. It keeps classic JSX (`wp.element.createElement`), so the output doesn't depend on the `react-jsx-runtime` script that only exists on WordPress 6.6+. Don't remove it while Members supports older WordPress versions.
+- The Block Permissions sources use the `wp.*` globals rather than `@wordpress/*` imports, so their `*.asset.php` dependency lists are empty. The PHP that enqueues them lists the dependencies by hand: `addons/members-block-permissions/src/Editor.php`, and `block_editor_assets()` in `members.php` for the upsell.
+
+### Add-ons
+
+The integrations listed above (ACF, EDD, GiveWP, Meta Box, WooCommerce, Block Permissions, Privacy Caps, Admin Access, Role Hierarchy, Role Levels, Category & Tag Caps, Core Create Caps) live in `addons/` and are switched on per site in **Members → Settings → Add-Ons**.
+
+- **Active list:** the active add-ons are stored in the `members_active_addons` option.
+- **Loading:** on every request `members.php` (`includes()`) loads `addons/<slug>/addon.php` for each active add-on. Inactive add-ons cost nothing.
+- **Validation:** only slugs of folders that exist in `addons/` are accepted (`is_valid_addon()`).
+- **Activation:** switching an add-on on runs `addons/<slug>/src/Activator.php` (`<namespace>\Activator::activate()`) if it exists. Switching it off doesn't undo anything.
+- **Screen listing:** titles and descriptions on the Add-Ons screen come from `admin/config/addons.php`. Its icons are `img/<slug>.svg`.
+
+To add a bundled add-on:
+1. Create `addons/<slug>/addon.php`, plus `src/Activator.php` if it needs to grant caps.
+2. Add it to `admin/config/addons.php`.
+3. Add its icon to `img/`.
+4. If it has JS, put the sources in `src-js/<slug>/` and add a root `npm` script that builds them to `js/build/<slug>/`.
+
+### PHP dependencies
+
+Runtime Composer dependencies (currently `caseproof/growth-tools`, from Caseproof's private package repo `pkgs.cspf.co`) are prefixed into the `Members\` namespace with [Strauss](https://github.com/BrianHenryIE/strauss) and committed in `vendor-prefixed/`. To update them, you need access to that repo:
 
 ```bash
-npm run build           # one-off build of styles + scripts
-npm run build:styles    # CSS only
-npm run build:scripts   # JS only
-npm run watch           # rebuild on change
-npm run build:block-permissions  # Block Permissions editor scripts (also part of `npm run build`)
+composer install
+composer run strauss    # rebuilds vendor-prefixed/ and fixes its text domain
 ```
 
-`npm run build` also runs `build:block-permissions`. That build uses `@wordpress/scripts` with the root `babel.config.js`, which keeps classic JSX (`wp.element.createElement`) so the scripts don't need the `react-jsx-runtime` script that only exists on WordPress 6.6+.
+### Releasing
 
-Commit both the source and the matching minified file — production loads the `.min` versions.
+Work lands in `develop` through PRs. `master` is the release branch.
 
-### Local development
+1. Bump the version in `members.php` and `readme.txt` (`Stable tag`), and add a changelog entry to `readme.txt`.
+2. Merge `develop` into `master`.
+3. Push a bare `X.Y.Z` tag. The **Deploy to WordPress.org** workflow (`.github/workflows/main.yml`) then copies the repo to WordPress.org SVN, leaving out everything listed in `.distignore`.
 
-Clone or symlink this repo into `wp-content/plugins/members` of any local WordPress install, run `composer install` + `npm install` + `npm run build`, and activate from the Plugins screen. [LocalWP](https://localwp.com/) works well — once activated you can drive the site with [WP-CLI](https://wp-cli.org/) (`wp plugin list`, `wp user list`, etc.) from its Site Shell.
+Notes:
+- **What the release contains:** `.distignore` keeps out development-only files (`node_modules`, `src-js/`, `package*.json`, `composer.*`, `gulpfile.js`, `babel.config.js`, READMEs, `.github`). Built files must already be committed.
+- **Readme and asset changes:** pushing `readme.txt` or `.wordpress-org/` changes to `master` also runs the readme/asset update workflow (`nonupdate.yml`).
+
+### Tests
+
+There is no automated test suite yet. Check changes on a local site, including PHP warnings with `WP_DEBUG_LOG` on.
 
 ### Translations
 

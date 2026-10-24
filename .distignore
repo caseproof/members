@@ -11,6 +11,5 @@
 *composer.lock
 *composer.json
 *gulpfile.js
-*webpack.mix.js
 babel.config.js
-/addons/members-block-permissions/resources
+/src-js

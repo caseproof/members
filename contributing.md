@@ -8,7 +8,7 @@ Problem first.  Solution second.
 
 Pull requests should have a ticket open for discussion first.  I rarely accept pull requests that aren't for a specific issue for various reasons.  It's far better to post an issue and let me or the community provide feedback prior to creating a pull request.
 
-Please don't make pull requests against the `master` branch.  This is the latest, stable code.  You can make a pull request against one of the point branches or the `dev` (future release) branch.
+Please don't make pull requests against the `master` branch.  This is the latest, stable code.  Make pull requests against the `develop` (future release) branch.
 
 ## Coding standards
 
@@ -16,7 +16,7 @@ In general, the project follows all WordPress [coding standards](https://make.wo
 
 ## Script and style files
 
-The project consists of several script and style files.  When making patches or pull requests with changes to these files, only do so to the primary file.  Don't create patches for the minified (`.min`) versions of the files.  Those will be minified after a patch is merged into the code base.
+The project consists of several script and style files.  Make your changes to the source files (`css/*.css`, `js/*.js`, `src-js/`), never to the built ones, then run `npm run build` and commit the rebuilt files (`.min` files and `js/build/`) with your change.  Releases don't run a build.  See the Developers section of [README.md](./README.md).
 
 ## Language
 

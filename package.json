@@ -8,7 +8,8 @@
     "build:styles": "gulp styles",
     "build:scripts": "gulp scripts",
     "watch": "gulp",
-    "build:block-permissions": "wp-scripts build editor=./addons/members-block-permissions/resources/js/editor.js upsell=./addons/members-block-permissions/resources/js/upsell.js --output-path=addons/members-block-permissions/public/js"
+    "build:block-permissions": "wp-scripts build editor=./src-js/block-permissions/editor.js upsell=./src-js/block-permissions/upsell.js --output-path=js/build/block-permissions",
+    "watch:block-permissions": "wp-scripts start editor=./src-js/block-permissions/editor.js upsell=./src-js/block-permissions/upsell.js --output-path=js/build/block-permissions"
   },
   "repository": {
     "type": "git",

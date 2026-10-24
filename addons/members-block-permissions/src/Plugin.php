@@ -22,24 +22,6 @@ defined('ABSPATH') || exit;
 class Plugin {
 
 	/**
-	 * Stores the plugin directory path.
-	 *
-	 * @since  1.0.0
-	 * @access protected
-	 * @var    string
-	 */
-	protected $path;
-
-	/**
-	 * Stores the plugin directory URI.
-	 *
-	 * @since  1.0.0
-	 * @access protected
-	 * @var    string
-	 */
-	protected $uri;
-
-	/**
 	 * Holds an array of the plugin component objects.
 	 *
 	 * @since  1.0.0
@@ -49,18 +31,13 @@ class Plugin {
 	protected $components = [];
 
 	/**
-	 * Sets up the object properties.
+	 * Registers the plugin components.
 	 *
 	 * @since  1.0.0
 	 * @access public
-	 * @param  string  $path  Plugin directory path.
-	 * @param  string  $uri   Plugin directory URI.
 	 * @return void
 	 */
-	public function __construct( $path, $uri ) {
-
-		$this->path = untrailingslashit( $path );
-		$this->uri  = untrailingslashit( $uri );
+	public function __construct() {
 
 		$this->registerDefaultComponents();
 	}
@@ -78,71 +55,6 @@ class Plugin {
 		foreach ( $this->components as $component ) {
 			$component->boot();
 		}
-	}
-
-	/**
-	 * Returns the plugin path.
-	 *
-	 * @since  1.0.0
-	 * @access public
-	 * @param  string  $file
-	 * @return string
-	 */
-	public function path( $file = '' ) {
-
-		$file = ltrim( $file, '/' );
-
-		return $file ? $this->path . "/{$file}" : $this->path;
-	}
-
-	/**
-	 * Returns the plugin URI.
-	 *
-	 * @since  1.0.0
-	 * @access public
-	 * @param  string  $file
-	 * @return string
-	 */
-	public function uri( $file = '' ) {
-
-		$file = ltrim( $file, '/' );
-
-		return $file ? $this->uri . "/{$file}" : $this->uri;
-	}
-
-	/**
-	 * Helper function for outputting an asset URL in the plugin.
-	 *
-	 * @since  1.0.0
-	 * @access public
-	 * @param  string  $path  A relative path/file to append to the `public` folder.
-	 * @return string
-	 */
-	function asset( $path ) {
-
-		return $this->uri( 'public/' . ltrim( $path, '/' ) );
-	}
-
-	/**
-	 * Version of a built script, from the `*.asset.php` file `wp-scripts` writes
-	 * next to it, for cache busting.
-	 *
-	 * @since  3.2.28
-	 * @access public
-	 * @param  string  $name  Entry name, e.g. `editor`.
-	 * @return string|null
-	 */
-	function assetVersion( $name ) {
-
-		$file = $this->path( "public/js/{$name}.asset.php" );
-
-		if ( ! file_exists( $file ) ) {
-			return null;
-		}
-
-		$asset = include $file;
-
-		return isset( $asset['version'] ) ? $asset['version'] : null;
 	}
 
 	/**

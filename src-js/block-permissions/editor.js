@@ -8,7 +8,7 @@
  * @link      https://members-plugin.com/
  */
 
-import '../scss/editor.scss';
+import './editor.scss';
 
 import './editor/filter-block-edit';
 import './editor/filter-block-register';

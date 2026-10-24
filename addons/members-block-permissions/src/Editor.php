@@ -22,6 +22,14 @@ defined('ABSPATH') || exit;
 class Editor {
 
 	/**
+	 * Where `npm run build:block-permissions` writes the editor files, relative to
+	 * the Members plugin root.
+	 *
+	 * @since 3.2.28
+	 */
+	const BUILD_DIR = 'js/build/block-permissions/';
+
+	/**
 	 * Bootstraps the component.
 	 *
 	 * @since  1.0.0
@@ -43,7 +51,7 @@ class Editor {
 
 		wp_enqueue_script(
 			'members-block-permissions-editor',
-			plugin()->asset( 'js/editor.js' ),
+			members_plugin()->uri . self::BUILD_DIR . 'editor.js',
 			[
 				'lodash',
 				'wp-block-editor',
@@ -52,7 +60,7 @@ class Editor {
 				'wp-element',
 				'wp-hooks'
 			],
-			plugin()->assetVersion( 'editor' ),
+			$this->version(),
 			true
 		);
 
@@ -64,9 +72,9 @@ class Editor {
 
 		wp_enqueue_style(
 			'members-block-permissions-editor',
-			plugin()->asset( 'js/editor.css' ),
+			members_plugin()->uri . self::BUILD_DIR . 'editor.css',
 			[],
-			plugin()->assetVersion( 'editor' )
+			$this->version()
 		);
 	}
 
@@ -148,5 +156,26 @@ class Editor {
 		}
 
 		return $data;
+	}
+
+	/**
+	 * Version of the built editor files, from the `editor.asset.php` file that
+	 * `wp-scripts` writes next to them, for cache busting.
+	 *
+	 * @since  3.2.28
+	 * @access private
+	 * @return string|null
+	 */
+	private function version() {
+
+		$file = members_plugin()->dir . self::BUILD_DIR . 'editor.asset.php';
+
+		if ( ! file_exists( $file ) ) {
+			return null;
+		}
+
+		$asset = include $file;
+
+		return isset( $asset['version'] ) ? $asset['version'] : null;
 	}
 }

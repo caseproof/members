@@ -460,7 +460,7 @@ final class Members_Plugin {
 
 		$active_addons = get_option( 'members_active_addons', array() );
 		if ( ! in_array( 'members-block-permissions', $active_addons ) && ! members_is_memberpress_active() ) {
-			$upsell_dir = 'addons/members-block-permissions/public/js/';
+			$upsell_dir = 'js/build/block-permissions/'; // npm run build:block-permissions
 			$upsell     = file_exists( __DIR__ . "/{$upsell_dir}upsell.asset.php" ) ? include __DIR__ . "/{$upsell_dir}upsell.asset.php" : array();
 			$version    = isset( $upsell['version'] ) ? $upsell['version'] : null;
 

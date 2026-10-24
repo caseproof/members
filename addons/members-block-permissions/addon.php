@@ -16,10 +16,7 @@ function plugin() {
 	static $instance = null;
 
 	if ( is_null( $instance ) ) {
-		$instance = new Plugin(
-			__DIR__,
-			plugin_dir_url( __FILE__ )
-		);
+		$instance = new Plugin();
 	}
 
 	return $instance;
