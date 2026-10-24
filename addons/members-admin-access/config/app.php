@@ -5,7 +5,7 @@
  * @package   MembersAdminAccess
  * @author    The MemberPress Team 
  * @copyright Copyright (c) 2018, The MemberPress Team
- * @link      https://members-plugin.com/-admin-access
+ * @link      https://members-plugin.com/
  * @license   http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  */
 if (!defined('ABSPATH')) {

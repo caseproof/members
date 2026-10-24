@@ -7,7 +7,7 @@
  * @package   MembersBlockPermissions
  * @author    The MemberPress Team 
  * @copyright 2019, The MemberPress Team
- * @link      https://members-plugin.com/-block-permissions
+ * @link      https://members-plugin.com/
  * @license   https://www.gnu.org/licenses/gpl-2.0.html GPL-2.0-or-later
  */
 namespace Members\BlockPermissions;
@@ -38,15 +38,6 @@ class Plugin {
 	 * @var    string
 	 */
 	protected $uri;
-
-	/**
-	 * Stores the the `public/mix-manifest.json` data as an array.
-	 *
-	 * @since  1.0.0
-	 * @access private
-	 * @var    array
-	 */
-	private $mix = [];
 
 	/**
 	 * Holds an array of the plugin component objects.
@@ -129,19 +120,29 @@ class Plugin {
 	 */
 	function asset( $path ) {
 
-		if ( ! $this->mix ) {
-			$file      = $this->path( 'public/mix-manifest.json' );
-			$this->mix = (array) json_decode( file_get_contents( $file ), true );
+		return $this->uri( 'public/' . ltrim( $path, '/' ) );
+	}
+
+	/**
+	 * Version of a built script, from the `*.asset.php` file `wp-scripts` writes
+	 * next to it, for cache busting.
+	 *
+	 * @since  3.2.28
+	 * @access public
+	 * @param  string  $name  Entry name, e.g. `editor`.
+	 * @return string|null
+	 */
+	function assetVersion( $name ) {
+
+		$file = $this->path( "public/js/{$name}.asset.php" );
+
+		if ( ! file_exists( $file ) ) {
+			return null;
 		}
 
-		// Make sure to trim any slashes from the front of the path.
-		$path = '/' . ltrim( $path, '/' );
+		$asset = include $file;
 
-		if ( $this->mix && isset( $this->mix[ $path ] ) ) {
-			$path = $this->mix[ $path ];
-		}
-
-		return $this->uri( 'public' . $path );
+		return isset( $asset['version'] ) ? $asset['version'] : null;
 	}
 
 	/**
@@ -162,18 +163,6 @@ class Plugin {
 		foreach ( $components as $component ) {
 			$this->registerComponent( $component );
 		}
-	}
-
-	/**
-	 * Returns a plugin component.
-	 *
-	 * @since  1.0.0
-	 * @access public
-	 * @param  string  $abstract
-	 * @return object
-	 */
-	public function getComponent( $abstract ) {
-		return $this->components[ $abstract ];
 	}
 
 	/**

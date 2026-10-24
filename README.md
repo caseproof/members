@@ -54,9 +54,8 @@ How it works:
 - On every load, `members.php` walks that option and `include`s `addons/<name>/addon.php` for each active add-on (see `members.php:266`). Inactive add-ons cost nothing at runtime.
 - Activation runs `addons/<name>/src/Activator.php` if present.
 - Add-on metadata (title, description, icon, etc.) is registered through `members_register_addon()` in `admin/functions-addons.php`, driven by `admin/config/addons.php`.
-- A one-time `migrate_addons()` routine (`members.php:406`) detects users who previously had the stand-alone integration plugins installed and auto-activates the bundled equivalents.
 
-To add a new bundled add-on: drop a folder under `addons/` containing at least an `addon.php` bootstrap, optionally `src/Activator.php`, and register it in `admin/config/addons.php`. A few add-ons (e.g. `members-block-permissions`) ship their own JS build with `webpack.mix.js` / `package.json` — those are independent of the root Gulp build below.
+To add a new bundled add-on: drop a folder under `addons/` containing at least an `addon.php` bootstrap, optionally `src/Activator.php`, and register it in `admin/config/addons.php`. Block Permissions' editor scripts are built from `addons/members-block-permissions/resources/` into `public/js/` with `npm run build:block-permissions` (`@wordpress/scripts`, see below).
 
 ### Dependencies
 
@@ -82,7 +81,10 @@ npm run build           # one-off build of styles + scripts
 npm run build:styles    # CSS only
 npm run build:scripts   # JS only
 npm run watch           # rebuild on change
+npm run build:block-permissions  # Block Permissions editor scripts (also part of `npm run build`)
 ```
+
+`npm run build` also runs `build:block-permissions`. That build uses `@wordpress/scripts` with the root `babel.config.js`, which keeps classic JSX (`wp.element.createElement`) so the scripts don't need the `react-jsx-runtime` script that only exists on WordPress 6.6+.
 
 Commit both the source and the matching minified file — production loads the `.min` versions.
 

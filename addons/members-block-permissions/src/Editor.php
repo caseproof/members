@@ -7,7 +7,7 @@
  * @package   MembersBlockPermissions
  * @author    The MemberPress Team 
  * @copyright 2019, The MemberPress Team
- * @link      https://members-plugin.com/-block-permissions
+ * @link      https://members-plugin.com/
  * @license   https://www.gnu.org/licenses/gpl-2.0.html GPL-2.0-or-later
  */
 namespace Members\BlockPermissions;
@@ -52,7 +52,7 @@ class Editor {
 				'wp-element',
 				'wp-hooks'
 			],
-			null,
+			plugin()->assetVersion( 'editor' ),
 			true
 		);
 
@@ -64,9 +64,9 @@ class Editor {
 
 		wp_enqueue_style(
 			'members-block-permissions-editor',
-			plugin()->asset( 'css/editor.css' ),
-		 	[],
-			null
+			plugin()->asset( 'js/editor.css' ),
+			[],
+			plugin()->assetVersion( 'editor' )
 		);
 	}
 

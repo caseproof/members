@@ -5,7 +5,7 @@
  * @package   MembersIntegrationGiveWP
  * @author    The MemberPress Team 
  * @copyright 2019, The MemberPress Team
- * @link      https://members-plugin.com/-givewp-integration
+ * @link      https://members-plugin.com/
  * @license   https://www.gnu.org/licenses/gpl-2.0.html GPL-2.0-or-later
  */
 
@@ -111,6 +111,11 @@ function givewp_caps() {
 		'view_give_form_stats'        => [
 			'label'       => __( 'Forms: View Stats', 'members' ),
 			'description' => __( 'Allows users to view donation form stats.', 'members' )
+		],
+
+		'view_give_forms'             => [
+			'label'       => __( 'Forms: View', 'members' ),
+			'description' => __( 'Allows users to view donation forms.', 'members' )
 		],
 
 		// Form taxonomy caps.

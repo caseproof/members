@@ -4,10 +4,11 @@
   "description": "Members plugin for WordPress",
   "main": "index.js",
   "scripts": {
-    "build": "gulp build",
+    "build": "gulp build && npm run build:block-permissions",
     "build:styles": "gulp styles",
     "build:scripts": "gulp scripts",
-    "watch": "gulp"
+    "watch": "gulp",
+    "build:block-permissions": "wp-scripts build editor=./addons/members-block-permissions/resources/js/editor.js upsell=./addons/members-block-permissions/resources/js/upsell.js --output-path=addons/members-block-permissions/public/js"
   },
   "repository": {
     "type": "git",
@@ -20,6 +21,9 @@
   },
   "homepage": "https://github.com/caseproof/members#readme",
   "devDependencies": {
+    "@babel/plugin-transform-react-jsx": "^7.29.7",
+    "@babel/runtime": "^8.0.8",
+    "@wordpress/scripts": "^28.6.0",
     "gulp": "^5.0.0",
     "gulp-autoprefixer": "^8.0.0",
     "gulp-line-ending-corrector": "^1.0.3",

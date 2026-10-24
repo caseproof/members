@@ -283,9 +283,6 @@ final class Members_Plugin {
 	 * @return void
 	 */
 	private function setup_actions() {
-		// Migrate add-ons
-		add_action( 'plugins_loaded', array( $this, 'migrate_addons' ) );
-
 		// Administrator Rescue (Magic Link)
 		add_action( 'plugins_loaded', array( $this, 'init_rescue_magic_link' ), 5 );
 
@@ -400,59 +397,6 @@ final class Members_Plugin {
 	}
 
 	/**
-	 * Transition separate add-on plugins into the included add-ons
-	 *
-	 * @return void
-	 */
-	public function migrate_addons() {
-
-		// Bail if we've already migrated the add-ons
-		if ( ! empty( get_option( 'members_addons_migrated' ) ) ) {
-			return;
-		}
-
-		$addons = array();
-
-		$plugins = array(
-			'members-acf-integration' => 'plugin.php',
-			'members-admin-access' => 'members-admin-access.php',
-			'members-block-permissions' => 'plugin.php',
-			'members-category-and-tag-caps' => 'plugin.php',
-			'members-core-create-caps' => 'members-core-create-caps.php',
-			'members-edd-integration' => 'plugin.php',
-			'members-givewp-integration' => 'plugin.php',
-			'members-meta-box-integration' => 'plugin.php',
-			'members-privacy-caps' => 'members-privacy-caps.php',
-			'members-role-hierarchy' => 'members-role-hierarchy.php',
-			'members-role-levels' => 'members-role-levels.php',
-			'members-woocommerce-integration' => 'plugin.php'
-		);
-
-		require_once ABSPATH . 'wp-admin/includes/file.php';
-		require_once ABSPATH . 'wp-admin/includes/plugin.php';
-
-		foreach ( $plugins as $dir => $file ) {
-			if ( is_plugin_active( "{$dir}/{$file}" ) ) {
-
-				// Deactive it
-				deactivate_plugins( "{$dir}/{$file}", true );
-
-				// Delete it
-				delete_plugins( array( "{$dir}/{$file}" ) );
-
-				// Make sure it's stored in our option for active add-ons
-				$addons[] = $dir;
-			}
-		}
-
-		if ( ! empty( $addons ) ) {
-			update_option( 'members_active_addons', $addons );
-		}
-
-		update_option( 'members_addons_migrated', true );
-	}
-
-	/**
 	 * Initialize Administrator Rescue (Magic Link).
 	 * Only runs when the class was loaded (i.e. PHP version requirement met).
 	 *
@@ -516,12 +460,18 @@ final class Members_Plugin {
 
 		$active_addons = get_option( 'members_active_addons', array() );
 		if ( ! in_array( 'members-block-permissions', $active_addons ) && ! members_is_memberpress_active() ) {
-			wp_enqueue_script( 'block-editor-mp-upsell', plugin_dir_url( __FILE__ ) . '/addons/members-block-permissions/public/js/upsell.js' , array(
+			$upsell_dir = 'addons/members-block-permissions/public/js/';
+			$upsell     = file_exists( __DIR__ . "/{$upsell_dir}upsell.asset.php" ) ? include __DIR__ . "/{$upsell_dir}upsell.asset.php" : array();
+			$version    = isset( $upsell['version'] ) ? $upsell['version'] : null;
+
+			wp_enqueue_script( 'block-editor-mp-upsell', plugin_dir_url( __FILE__ ) . $upsell_dir . 'upsell.js', array(
+				'wp-block-editor',
 				'wp-compose',
 				'wp-element',
 				'wp-hooks',
 				'wp-components'
-			), null, true );
+			), $version, true );
+			wp_enqueue_style( 'block-editor-mp-upsell', plugin_dir_url( __FILE__ ) . $upsell_dir . 'upsell.css', array(), $version );
 			wp_localize_script( 'block-editor-mp-upsell', 'membersUpsell', array(
 				'title' => __( 'Permissions', 'members' ),
 				'message' => __( 'To protect this block by paid membership or centrally with a content protection rule, add MemberPress.', 'members' )

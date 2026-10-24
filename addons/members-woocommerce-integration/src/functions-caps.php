@@ -5,7 +5,7 @@
  * @package   MembersIntegrationWooCommerce
  * @author    The MemberPress Team 
  * @copyright 2019, The MemberPress Team
- * @link      https://members-plugin.com/-woocommerce-integration
+ * @link      https://members-plugin.com/
  * @license   https://www.gnu.org/licenses/gpl-2.0.html GPL-2.0-or-later
  */
 
@@ -34,6 +34,12 @@ function woocommerce_caps() {
 		'view_woocommerce_reports'    => [
 			'label'       => __( 'Reports: View', 'members' ),
 			'description' => __( 'Allows access to view reports.', 'members' )
+		],
+
+		// Customer caps.
+		'create_customers'            => [
+			'label'       => __( 'Customers: Create', 'members' ),
+			'description' => __( 'Allows users to create new customers.', 'members' )
 		],
 
 		// Product caps.

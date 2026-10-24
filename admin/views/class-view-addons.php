@@ -179,30 +179,12 @@ class View_Addons extends View {
 		// Get the current screen.
 		$screen = get_current_screen();
 
-		// Roles/Caps help tab.
+		// Overview help tab.
 		$screen->add_help_tab(
 			array(
 				'id'       => 'overview',
 				'title'    => esc_html__( 'Overview', 'members' ),
 				'callback' => array( $this, 'help_tab_overview' )
-			)
-		);
-
-		// Roles/Caps help tab.
-		$screen->add_help_tab(
-			array(
-				'id'       => 'download',
-				'title'    => esc_html__( 'Download', 'members' ),
-				'callback' => array( $this, 'help_tab_download' )
-			)
-		);
-
-		// Roles/Caps help tab.
-		$screen->add_help_tab(
-			array(
-				'id'       => 'purchase',
-				'title'    => esc_html__( 'Purchase', 'members' ),
-				'callback' => array( $this, 'help_tab_purchase' )
 			)
 		);
 
@@ -220,35 +202,7 @@ class View_Addons extends View {
 	public function help_tab_overview() { ?>
 
 		<p>
-			<?php esc_html_e( 'The Add-Ons screen allows you to view available add-ons for the Members plugin. You can download some plugins directly. Others may be available to purchase.', 'members' ); ?>
-		</p>
-	<?php }
-
-	/**
-	 * Displays the download help tab.
-	 *
-	 * @since  2.0.0
-	 * @access public
-	 * @return void
-	 */
-	public function help_tab_download() { ?>
-
-		<p>
-			<?php esc_html_e( 'Some plugins may be available for direct download. In such cases, you can click the download button to get a ZIP file of the plugin.', 'members' ); ?>
-		</p>
-	<?php }
-
-	/**
-	 * Displays the purchase help tab.
-	 *
-	 * @since  2.0.0
-	 * @access public
-	 * @return void
-	 */
-	public function help_tab_purchase() { ?>
-
-		<p>
-			<?php esc_html_e( 'Some add-ons may require purchase before downloading them. Clicking the purchase button will take you off-site to view the add-on in more detail.', 'members' ); ?>
+			<?php esc_html_e( 'The Add-Ons screen lists the add-ons that come with Members. Click an add-on to turn it on or off.', 'members' ); ?>
 		</p>
 	<?php }
 }
