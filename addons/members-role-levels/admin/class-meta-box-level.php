@@ -99,7 +99,8 @@ final class Members_Role_Levels_Meta_Box_Level {
 				$role_level = $_POST['mrl-role-level'];
 
 			// If we're cloning a new role.
-			else if ( isset( $_GET['page'] ) && 'role-new' === $_GET['page'] && ! empty( $_GET['clone'] ) )
+			// The Add New Role screen's slug is `members`.
+			else if ( isset( $_GET['page'] ) && 'members' === $_GET['page'] && ! empty( $_GET['clone'] ) )
 				$role_level = mrl_get_role_level( members_sanitize_role( $_GET['clone'] ) );
 		}
 

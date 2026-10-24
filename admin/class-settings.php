@@ -151,9 +151,12 @@ final class Settings_Page {
 	public function toggle_addon() {
 		
 		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( $_POST['nonce'], 'mbrs_toggle_addon' ) ) {
-			die();
+			wp_send_json_error( array(
+				'msg' => esc_html__( 'Your session has expired. Please reload the page and try again.', 'members' )
+			) );
 		}
-		if ( ! current_user_can( 'manage_options' ) ) {
+		// Same capability as the Add-Ons screen itself.
+		if ( ! current_user_can( apply_filters( 'members_settings_capability', 'manage_options' ) ) ) {
 			wp_send_json_error( array(
 				'msg' => esc_html__( 'You are not allowed to make these changes.', 'members' )
 			) );

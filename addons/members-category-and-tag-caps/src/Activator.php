@@ -30,22 +30,41 @@ class Activator {
 	 */
 	public static function activate() {
 
-		// Get the administrator role.
-		$role = get_role( 'administrator' );
+		// WordPress normally maps these caps to `manage_categories` (managing terms)
+		// and `edit_posts` (assigning them). Once this add-on is on they stand on
+		// their own, so give them to every role that could already do those things,
+		// otherwise editors, authors and contributors lose access.
+		$caps = [
+			'manage_categories' => [
+				'manage_categories',
+				'edit_categories',
+				'delete_categories',
+				'manage_post_tags',
+				'edit_post_tags',
+				'delete_post_tags',
+			],
+			'edit_posts' => [
+				'assign_categories',
+				'assign_post_tags',
+			],
+		];
 
-		// If the administrator role exists, add required capabilities
-		// for the plugin.
-		if ( ! empty( $role ) ) {
+		foreach ( wp_roles()->role_objects as $role ) {
 
-			$role->add_cap( 'manage_categories' );
-			$role->add_cap( 'assign_categories' );
-			$role->add_cap( 'edit_categories'   );
-			$role->add_cap( 'delete_categories' );
+			foreach ( $caps as $had => $new_caps ) {
 
-			$role->add_cap( 'manage_post_tags' );
-			$role->add_cap( 'assign_post_tags' );
-			$role->add_cap( 'edit_post_tags'   );
-			$role->add_cap( 'delete_post_tags' );
+				if ( 'administrator' !== $role->name && empty( $role->capabilities[ $had ] ) ) {
+					continue;
+				}
+
+				foreach ( $new_caps as $cap ) {
+
+					// Leave caps a site owner has already granted or denied alone.
+					if ( ! isset( $role->capabilities[ $cap ] ) ) {
+						$role->add_cap( $cap );
+					}
+				}
+			}
 		}
 	}
 }
