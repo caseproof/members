@@ -25,10 +25,8 @@ add_action( 'admin_init', 'mrh_register_settings', 15 );
  */
 function mrh_register_settings() {
 
-	// Register our plugin setting to the `members_settings` group (defined in Members plugin).
-	register_setting( 'members_settings', 'mrh_plugin_settings', 'mrh_validate_settings' );
-
-	// Adds the Role Hierarchy setting field.
+	// Adds the Role Hierarchy setting field. It saves as `members_settings[comparison_operator]`
+	// and is read with mrh_get_comparison_operator().
 	add_settings_field(
 		'mrh_role_hierarchy',
 		esc_html__( 'Role Hierarchy', 'members' ),
@@ -36,23 +34,6 @@ function mrh_register_settings() {
 		'members-settings',
 		'roles_caps'
 	);
-}
-
-/**
- * Callback function for validating plugin settings.
- *
- * @since  1.0.0
- * @access public
- * @param  array  $settings
- * @return array
- */
-function mrh_validate_settings( $settings ) {
-
-	$allowed = array( '>', '>=' );
-
-	$settings['comparison_operator'] = isset( $settings['comparison_operater'] ) && in_array( $settings['comparison_operater'], $allowed ) ? $settings['comparison_operater'] : '>';
-
-	return $settings;
 }
 
 /**

@@ -5,7 +5,7 @@
  * @package   MembersIntegrationEDD
  * @author    The MemberPress Team 
  * @copyright 2019, The MemberPress Team
- * @link      https://members-plugin.com/-edd-integration
+ * @link      https://members-plugin.com/
  * @license   https://www.gnu.org/licenses/gpl-2.0.html GPL-2.0-or-later
  */
 
@@ -68,7 +68,8 @@ add_action( 'members_register_cap_groups', function() {
 		// Register a cap group for the EDD plugin.
 		members_register_cap_group( 'plugin-edd',[
 			'label'    => esc_html__( 'Downloads', 'members' ),
-			'icon'     => $type->menu_icon,
+			// EDD registers its menu icon as 'none' (it styles its own), so use a dashicon.
+			'icon'     => $type->menu_icon && 'none' !== $type->menu_icon ? $type->menu_icon : 'dashicons-download',
 			'priority' => 11
 		] );
 	}

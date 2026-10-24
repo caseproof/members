@@ -38,10 +38,10 @@ If you're looking to build a business out of your membership site by creating pa
 
 #### All Add-ons are now included
 
-Members now includes ALL of it's add-ons completely free of charge! Here are some of the awesome features they add to Members:
+Members now includes ALL of its add-ons completely free of charge! Here are some of the awesome features they add to Members:
 
 * **Block Permissions:** Allows site owners to hide or show blocks based on user logged-in status, user role, or capability.
-* **Privacy Caps:** Creates additional capabilities for control over WordPressâ€™ privacy and personal data features (GDPR).
+* **Privacy Caps:** Creates additional capabilities for control over WordPress' privacy and personal data features (GDPR).
 * **Admin Access:** Allows site administrators to control which users have access to the WordPress admin via role.
 * **Core Create Caps:** Adds the create_posts and create_pages caps to posts/pages to separate them from their edit_* counterparts, providing more flexible editing capabilities.
 * **Categories and Tag Caps:** The Category and Tag Caps add-on creates custom capabilities for the core category and post tag taxonomies. This allows site owners to have precise control over who can manage, edit, delete, or assign categories/tags.

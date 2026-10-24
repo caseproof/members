@@ -11,4 +11,5 @@
 *composer.lock
 *composer.json
 *gulpfile.js
-*webpack.mix.js
+babel.config.js
+/src-js

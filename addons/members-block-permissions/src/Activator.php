@@ -7,7 +7,7 @@
  * @package   MembersBlockPermissions
  * @author    The MemberPress Team 
  * @copyright 2019, The MemberPress Team
- * @link      https://members-plugin.com/-block-permissions
+ * @link      https://members-plugin.com/
  * @license   https://www.gnu.org/licenses/gpl-2.0.html GPL-2.0-or-later
  */
 namespace Members\BlockPermissions;
@@ -34,9 +34,19 @@ class Activator {
 		$role = get_role( 'administrator' );
 
 		// If the administrator role exists, add required capabilities
-		// for the plugin.
+		// for the plugin. Leave caps a site owner has already granted or
+		// denied alone, since this runs again whenever the add-on is
+		// switched back on.
 		if ( ! empty( $role ) ) {
-			$role->add_cap( 'assign_block_permissions' );
+
+			foreach ( [
+				'assign_block_permissions',
+			] as $cap ) {
+
+				if ( ! isset( $role->capabilities[ $cap ] ) ) {
+					$role->add_cap( $cap );
+				}
+			}
 		}
 	}
 }

@@ -27,34 +27,3 @@ function mrh_get_comparison_operator() {
 
 	return in_array( $operator, $allowed ) ? $operator : '>';
 }
-
-/**
- * Gets a setting from from the plugin settings in the database.
- *
- * @since  1.0.0
- * @access public
- * @return mixed
- */
-function mrh_get_setting( $option = '' ) {
-
-	$defaults = members_get_default_settings();
-
-	$settings = wp_parse_args( get_option( 'mrh_plugin_settings', $defaults ), $defaults );
-
-	return isset( $settings[ $option ] ) ? $settings[ $option ] : false;
-}
-
-/**
- * Returns an array of the default plugin settings.
- *
- * @since  1.0.0
- * @access public
- * @return array
- */
-function mrh_get_default_settings() {
-
-	return array(
-		// @since 1.0.0
-		'comparison_operator' => '>'
-	);
-}

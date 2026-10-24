@@ -7,7 +7,7 @@
  * @package   MembersBlockPermissions
  * @author    The MemberPress Team 
  * @copyright 2019, The MemberPress Team
- * @link      https://members-plugin.com/-block-permissions
+ * @link      https://members-plugin.com/
  * @license   https://www.gnu.org/licenses/gpl-2.0.html GPL-2.0-or-later
  */
 namespace Members\BlockPermissions;
@@ -45,13 +45,6 @@ class Block {
 	 * @return mixed
 	 */
 	public function renderBlock( $content, $block ) {
-
-		// Check if we have nested blocks (e.g. columns)
-		if ( ! empty( $block['innerBlocks'] ) && is_array( $block['innerBlocks'] ) ) {
-			foreach ( $block['innerBlocks'] as $inner_block ) {
-				$this->renderBlock( $content, $inner_block );
-			}
-		}
 
 		// Bail if we're in the admin or there are no block attributes.
 		if ( is_admin() || ! isset( $block['attrs'] ) ) {

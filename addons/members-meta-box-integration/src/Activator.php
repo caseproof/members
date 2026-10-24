@@ -7,7 +7,7 @@
  * @package   MembersIntegrationMetaBox
  * @author    The MemberPress Team 
  * @copyright 2019, The MemberPress Team
- * @link      https://members-plugin.com/-metabox-integration
+ * @link      https://members-plugin.com/
  * @license   https://www.gnu.org/licenses/gpl-2.0.html GPL-2.0-or-later
  */
 namespace Members\Integration\MetaBox;
@@ -34,12 +34,21 @@ class Activator {
 		$role = get_role( 'administrator' );
 
 		// If the administrator role exists, add required capabilities
-		// for the plugin.
+		// for the plugin. Leave caps a site owner has already granted or
+		// denied alone, since this runs again whenever the add-on is
+		// switched back on.
 		if ( ! empty( $role ) ) {
 
-			$role->add_cap( 'create_metabox_field_groups' );
-			$role->add_cap( 'edit_metabox_field_groups'   );
-			$role->add_cap( 'delete_metabox_field_groups' );
+			foreach ( [
+				'create_metabox_field_groups',
+				'edit_metabox_field_groups',
+				'delete_metabox_field_groups',
+			] as $cap ) {
+
+				if ( ! isset( $role->capabilities[ $cap ] ) ) {
+					$role->add_cap( $cap );
+				}
+			}
 		}
 	}
 }

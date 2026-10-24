@@ -7,7 +7,7 @@
  * @package   MembersBlockPermissions
  * @author    The MemberPress Team 
  * @copyright 2019, The MemberPress Team
- * @link      https://members-plugin.com/-block-permissions
+ * @link      https://members-plugin.com/
  * @license   https://www.gnu.org/licenses/gpl-2.0.html GPL-2.0-or-later
  */
 namespace Members\BlockPermissions;
@@ -20,6 +20,14 @@ defined('ABSPATH') || exit;
  * @access public
  */
 class Editor {
+
+	/**
+	 * Where `npm run build:block-permissions` writes the editor files, relative to
+	 * the Members plugin root.
+	 *
+	 * @since 3.2.28
+	 */
+	const BUILD_DIR = 'js/build/block-permissions/';
 
 	/**
 	 * Bootstraps the component.
@@ -43,7 +51,7 @@ class Editor {
 
 		wp_enqueue_script(
 			'members-block-permissions-editor',
-			plugin()->asset( 'js/editor.js' ),
+			members_plugin()->uri . self::BUILD_DIR . 'editor.js',
 			[
 				'lodash',
 				'wp-block-editor',
@@ -52,7 +60,7 @@ class Editor {
 				'wp-element',
 				'wp-hooks'
 			],
-			null,
+			$this->version(),
 			true
 		);
 
@@ -64,10 +72,13 @@ class Editor {
 
 		wp_enqueue_style(
 			'members-block-permissions-editor',
-			plugin()->asset( 'css/editor.css' ),
-		 	[],
-			null
+			members_plugin()->uri . self::BUILD_DIR . 'editor.css',
+			[],
+			$this->version()
 		);
+
+		// Use editor-rtl.css on right-to-left sites.
+		wp_style_add_data( 'members-block-permissions-editor', 'rtl', 'replace' );
 	}
 
 	/**
@@ -148,5 +159,26 @@ class Editor {
 		}
 
 		return $data;
+	}
+
+	/**
+	 * Version of the built editor files, from the `editor.asset.php` file that
+	 * `wp-scripts` writes next to them, for cache busting.
+	 *
+	 * @since  3.2.28
+	 * @access private
+	 * @return string|null
+	 */
+	private function version() {
+
+		$file = members_plugin()->dir . self::BUILD_DIR . 'editor.asset.php';
+
+		if ( ! file_exists( $file ) ) {
+			return null;
+		}
+
+		$asset = include $file;
+
+		return isset( $asset['version'] ) ? $asset['version'] : null;
 	}
 }

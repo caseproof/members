@@ -21,15 +21,6 @@ final class Members_Role_Hierarchy_Plugin {
 	public $dir = '';
 
 	/**
-	 * Plugin directory URI.
-	 *
-	 * @since  1.0.0
-	 * @access public
-	 * @var    string
-	 */
-	public $uri = '';
-
-	/**
 	 * Returns the instance.
 	 *
 	 * @since  1.0.0
@@ -44,7 +35,6 @@ final class Members_Role_Hierarchy_Plugin {
 			$instance = new self;
 			$instance->setup();
 			$instance->includes();
-			$instance->setup_actions();
 		}
 
 		return $instance;
@@ -60,17 +50,6 @@ final class Members_Role_Hierarchy_Plugin {
 	private function __construct() {}
 
 	/**
-	 * Magic method to output a string if trying to use the object as a string.
-	 *
-	 * @since  1.0.0
-	 * @access public
-	 * @return void
-	 */
-	public function __toString() {
-		return 'members-role-hierarchy';
-	}
-
-	/**
 	 * Sets up globals.
 	 *
 	 * @since  1.0.0
@@ -79,9 +58,8 @@ final class Members_Role_Hierarchy_Plugin {
 	 */
 	private function setup() {
 
-		// Main plugin directory path and URI.
+		// Main plugin directory path.
 		$this->dir = trailingslashit( plugin_dir_path( __FILE__ ) );
-		$this->uri = trailingslashit( plugin_dir_url(  __FILE__ ) );
 	}
 
 	/**
@@ -106,15 +84,6 @@ final class Members_Role_Hierarchy_Plugin {
 			require_once( $this->dir . 'admin/class-manage-roles.php' );
 		}
 	}
-
-	/**
-	 * Sets up main plugin actions and filters.
-	 *
-	 * @since  1.0.0
-	 * @access public
-	 * @return void
-	 */
-	private function setup_actions() {}
 }
 
 Members_Role_Hierarchy_Plugin::get_instance();
