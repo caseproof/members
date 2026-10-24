@@ -118,7 +118,9 @@ final class Meta_Box_Content_Permissions {
 		if ( ! current_user_can( 'restrict_content' ) )
 			return;
 
-		// Classic meta boxes conflict with the block editor save state; use the document panel instead.
+		// The block editor uses the Content Permissions document panel instead. Any classic meta box
+		// makes the block editor re-fetch the whole edit screen after every save, which hangs the
+		// editor on heavy screens. See Content_Permissions_Editor.
 		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 
 		if ( $screen && method_exists( $screen, 'is_block_editor' ) && $screen->is_block_editor() ) {
@@ -296,48 +298,10 @@ final class Meta_Box_Content_Permissions {
 		if ( ! current_user_can( 'restrict_content' ) || ! current_user_can( 'edit_post', $post_id ) )
 			return;
 
-		/* === Roles === */
+		$roles   = isset( $_POST['members_access_role'] ) ? wp_unslash( $_POST['members_access_role'] ) : array();
+		$message = isset( $_POST['members_access_error'] ) ? wp_unslash( $_POST['members_access_error'] ) : '';
 
-		// Get the current roles.
-		$current_roles = members_get_post_roles( $post_id );
-
-		// Get the checked roles from the meta box. The list sanitizer drops non-string entries,
-		// so a crafted nested-array payload cannot fatal members_sanitize_role() on PHP 8.
-		$posted    = isset( $_POST['members_access_role'] ) ? wp_unslash( $_POST['members_access_role'] ) : array();
-		$new_roles = is_array( $posted ) ? members_sanitize_access_role_meta_list( $posted ) : array();
-
-		// The meta box only renders roles allowed by the members_wp_roles filter, so a stored role
-		// that was hidden from the UI (registered but filtered out) is absent from the checkboxes
-		// and would be silently deleted by members_set_post_roles(). Carry those forward. Deleted
-		// custom roles (orphans) are already retained by members_set_post_roles(), which only
-		// removes currently-registered roles.
-		$roles     = wp_roles()->role_names;
-		$displayed = array_keys( (array) apply_filters( 'members_wp_roles', $roles, members_get_post_for_content_permissions( $post ) ) );
-
-		foreach ( (array) $current_roles as $stored ) {
-			if ( is_string( $stored ) && '' !== $stored && isset( $roles[ $stored ] ) && ! in_array( $stored, $displayed, true ) ) {
-				$new_roles[] = members_sanitize_role( $stored );
-			}
-		}
-
-		// Set the merged role list (empty clears registered roles while leaving orphans intact).
-		members_set_post_roles( $post_id, array_values( array_unique( $new_roles ) ) );
-
-		/* === Error Message === */
-
-		// Get the old access message.
-		$old_message = members_get_post_access_message( $post_id );
-
-		// Get the new message.
-		$new_message = isset( $_POST['members_access_error'] ) ? wp_kses_post( wp_unslash( $_POST['members_access_error'] ) ) : '';
-
-		// If we have don't have a new message but do have an old one, delete it.
-		if ( '' == $new_message && $old_message )
-			members_delete_post_access_message( $post_id );
-
-		// If the new message doesn't match the old message, set it.
-		else if ( $new_message !== $old_message )
-			members_set_post_access_message( $post_id, $new_message );
+		members_save_post_content_permissions( $post_id, $roles, $message );
 	}
 
 	/**
