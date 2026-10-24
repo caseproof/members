@@ -119,7 +119,20 @@ function members_unregister_role( $name ) {
  */
 function members_get_role( $name ) {
 
-	return members_role_registry()->get( $name );
+	$role = members_role_registry()->get( $name );
+
+	// A role added after `wp_roles_init` (e.g. by another plugin on `admin_init`) isn't in the
+	// registry yet. Register it from WordPress so callers always get a role object for a real role.
+	if ( ! $role && is_string( $name ) && isset( wp_roles()->roles[ $name ] ) ) {
+
+		$object = wp_roles()->roles[ $name ];
+
+		members_register_role( $name, array( 'label' => $object['name'], 'caps' => $object['capabilities'] ) );
+
+		$role = members_role_registry()->get( $name );
+	}
+
+	return $role;
 }
 
 /**
