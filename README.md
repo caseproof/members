@@ -52,7 +52,7 @@ How it works:
 
 - The list of active add-ons is stored in the `members_active_addons` WordPress option.
 - On every load, `members.php` walks that option and `include`s `addons/<name>/addon.php` for each active add-on (see `members.php:266`). Inactive add-ons cost nothing at runtime.
-- Activation runs `addons/<name>/src/Activator.php` if present. So does **Reset Roles** for every active add-on, so activators must be safe to run more than once (only add caps a role has no entry for).
+- Activation runs `addons/<name>/src/Activator.php` if present.
 - Add-on metadata (title, description, icon, etc.) is registered through `members_register_addon()` in `admin/functions-addons.php`, driven by `admin/config/addons.php`.
 - A one-time `migrate_addons()` routine (`members.php:406`) detects users who previously had the stand-alone integration plugins installed and auto-activates the bundled equivalents.
 
