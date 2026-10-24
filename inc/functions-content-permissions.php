@@ -350,6 +350,68 @@ function members_delete_post_roles( $post_id ) {
 }
 
 /**
+ * Saves a post's Content Permissions (roles and custom error message). Shared by the classic
+ * meta box and the block editor panel's REST route so both save exactly the same way.
+ *
+ * Callers are responsible for the capability check.
+ *
+ * @since  3.2.28
+ * @access public
+ * @param  int    $post_id  Post ID.
+ * @param  mixed  $roles    Role slugs chosen in the UI.
+ * @param  mixed  $message  Custom error message.
+ * @return void
+ */
+function members_save_post_content_permissions( $post_id, $roles, $message ) {
+
+	$post = get_post( $post_id );
+
+	if ( ! $post instanceof \WP_Post ) {
+		return;
+	}
+
+	// Migrate any legacy `_role` meta first so it isn't lost or left behind.
+	members_convert_old_post_meta( $post_id );
+
+	/* === Roles === */
+
+	// The list sanitizer drops non-string entries, so a crafted nested-array payload cannot
+	// fatal members_sanitize_role() on PHP 8.
+	// Only registered roles can be newly added; the UI never offers anything else.
+	$wp_role_names = wp_roles()->role_names;
+	$new_roles     = array_values( array_intersect( members_sanitize_access_role_meta_list( $roles ), array_keys( $wp_role_names ) ) );
+	$current_roles = members_get_post_roles( $post_id );
+
+	// The UI only shows roles allowed by the members_wp_roles filter, so a stored role that was
+	// hidden from it (registered but filtered out) would be silently deleted by
+	// members_set_post_roles(). Carry those forward. Deleted custom roles (orphans) are already
+	// retained by members_set_post_roles(), which only removes currently-registered roles.
+	$displayed = array_keys( (array) apply_filters( 'members_wp_roles', $wp_role_names, $post ) );
+
+	foreach ( (array) $current_roles as $stored ) {
+		if ( is_string( $stored ) && '' !== $stored && isset( $wp_role_names[ $stored ] ) && ! in_array( $stored, $displayed, true ) ) {
+			$new_roles[] = members_sanitize_role( $stored );
+		}
+	}
+
+	// Set the merged role list (empty clears registered roles while leaving orphans intact).
+	members_set_post_roles( $post_id, array_values( array_unique( $new_roles ) ) );
+
+	/* === Error Message === */
+
+	$old_message = members_get_post_access_message( $post_id );
+	$new_message = is_string( $message ) ? wp_kses_post( $message ) : '';
+
+	// If we don't have a new message but do have an old one, delete it.
+	if ( '' === $new_message && $old_message )
+		members_delete_post_access_message( $post_id );
+
+	// If the new message doesn't match the old message, set it.
+	else if ( $new_message !== $old_message )
+		members_set_post_access_message( $post_id, $new_message );
+}
+
+/**
  * Adds required filters for the content permissions feature if it is active.
  *
  * @since  0.2.0

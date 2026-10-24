@@ -1,10 +1,13 @@
 /**
  * Content Permissions document panel for the block editor.
  *
+ * Changes save on their own through Members' private REST route (see
+ * admin/class-content-permissions-editor.php), not as part of the post save.
+ *
  * @package Members
  */
 ( function () {
-	if ( ! window.wp || ! wp.plugins ) {
+	if ( ! window.wp || ! wp.plugins || ! wp.apiFetch ) {
 		return;
 	}
 
@@ -17,95 +20,103 @@
 	}
 
 	const { registerPlugin } = wp.plugins;
-	const { CheckboxControl, TextareaControl } = wp.components;
-	const { useSelect } = wp.data;
-	const { useEntityProp } = wp.coreData;
-	const { createElement: el, useEffect, useRef } = wp.element;
+	const { CheckboxControl, TextareaControl, Notice } = wp.components;
+	const { createElement: el, useEffect, useRef, useState } = wp.element;
 	const { __ } = wp.i18n;
 
 	const panelConfig = window.membersCpPanel || {};
-	const roleLabels = panelConfig.roles ? panelConfig.roles : {};
-	const defaultRoles = panelConfig.defaultRoles ? panelConfig.defaultRoles : [];
+	const roleLabels = panelConfig.roles || {};
+	const saved = panelConfig.saved || {};
 	const memberPressUpsell = panelConfig.memberPressUpsell || null;
-	const visibleRoleKeys = Object.keys( roleLabels );
 
-	function uniqueRoles( roles ) {
-		return roles.filter( function ( value, index, list ) {
-			return list.indexOf( value ) === index;
-		} );
-	}
+	// Wait this long after the last change before saving, so clicking several boxes is one save.
+	const SAVE_DELAY = 500;
 
 	function ContentPermissionsPanel() {
-		const postType = useSelect( function ( select ) {
-			return select( 'core/editor' ).getCurrentPostType();
-		} );
+		const [ roles, setRoles ] = useState( Array.isArray( saved.roles ) ? saved.roles : [] );
+		const [ message, setMessage ] = useState( saved.message || '' );
+		const [ status, setStatus ] = useState( 'idle' );
 
-		const isNewPost = useSelect( function ( select ) {
-			return select( 'core/editor' ).isEditedPostNew();
-		} );
+		// Latest values for the save to send, plus save bookkeeping that must not re-render.
+		const latest = useRef( { roles, message } );
+		const timer = useRef( null );
+		const inFlight = useRef( false );
+		const queued = useRef( false );
 
-		const defaultsApplied = useRef( false );
+		function save() {
+			if ( inFlight.current ) {
+				queued.current = true;
+				return;
+			}
 
-		const [ meta, setMeta ] = useEntityProp( 'postType', postType, 'meta' );
+			inFlight.current = true;
+			setStatus( 'saving' );
 
-		const editedMeta = useSelect(
-			function ( select ) {
-				return select( 'core/editor' ).getEditedPostAttribute( 'meta' ) || meta || {};
-			},
-			[ meta ]
-		);
+			wp.apiFetch( {
+				path: panelConfig.path,
+				method: 'POST',
+				data: { roles: latest.current.roles, message: latest.current.message },
+			} )
+				.then( function () {
+					setStatus( queued.current ? 'saving' : 'saved' );
+				} )
+				.catch( function () {
+					setStatus( 'error' );
+				} )
+				.finally( function () {
+					inFlight.current = false;
 
-		const storedRoles = editedMeta._members_access_role;
-		const roleList = Array.isArray( storedRoles ) ? storedRoles : storedRoles ? [ storedRoles ] : [];
-
-		function patchMeta( changes ) {
-			const editor = wp.data.select( 'core/editor' );
-			const currentMeta = editor.getEditedPostAttribute( 'meta' ) || meta || {};
-
-			setMeta( Object.assign( {}, currentMeta, changes ) );
+					if ( queued.current ) {
+						queued.current = false;
+						save();
+					}
+				} );
 		}
 
-		function setAccessRoles( nextRoles ) {
-			patchMeta( { _members_access_role: uniqueRoles( nextRoles ) } );
+		function scheduleSave( next ) {
+			latest.current = Object.assign( {}, latest.current, next );
+			setStatus( 'pending' );
+			clearTimeout( timer.current );
+			timer.current = setTimeout( save, SAVE_DELAY );
 		}
 
-		// Apply default roles to a brand-new post so a post shown as restricted actually saves
-		// restricted. This marks the new post as changed (like the classic editor's pre-checked
-		// boxes, which save on publish) — necessary so the default restriction is not silently
-		// dropped when the author publishes without toggling a checkbox.
+		// Warn before leaving the page while a change hasn't been saved yet.
 		useEffect(
 			function () {
-				if ( ! postType || defaultsApplied.current || ! isNewPost || ! defaultRoles.length || roleList.length ) {
-					return;
+				function warn( event ) {
+					event.preventDefault();
+					event.returnValue = '';
 				}
 
-				defaultsApplied.current = true;
-				setAccessRoles( defaultRoles.slice() );
+				if ( 'pending' === status || 'saving' === status ) {
+					window.addEventListener( 'beforeunload', warn );
+				}
+
+				return function () {
+					window.removeEventListener( 'beforeunload', warn );
+				};
 			},
-			[ postType, isNewPost, roleList.length ]
+			[ status ]
 		);
 
-		if ( ! postType ) {
-			return null;
-		}
-
-		const message = editedMeta._members_access_error;
-
 		function toggleRole( role, checked ) {
-			const hidden = roleList.filter( function ( r ) {
-				return visibleRoleKeys.indexOf( r ) === -1;
-			} );
-			const visible = roleList.filter( function ( r ) {
-				return visibleRoleKeys.indexOf( r ) !== -1;
-			} );
-			const nextVisible = checked
-				? uniqueRoles( visible.concat( role ) )
-				: visible.filter( function ( r ) {
+			const next = checked
+				? roles.concat( role ).filter( function ( value, index, list ) {
+						return list.indexOf( value ) === index;
+				  } )
+				: roles.filter( function ( r ) {
 						return r !== role;
 				  } );
 
-			setAccessRoles( hidden.concat( nextVisible ) );
+			setRoles( next );
+			scheduleSave( { roles: next } );
 		}
+
+		const statusText = {
+			pending: __( 'Saving…', 'members' ),
+			saving: __( 'Saving…', 'members' ),
+			saved: __( 'Saved.', 'members' ),
+		}[ status ];
 
 		return el(
 			PluginDocumentSettingPanel,
@@ -118,7 +129,7 @@
 				'p',
 				{ className: 'description' },
 				__(
-					'Limit access to users with the selected roles. If none are selected, everyone can view the content.',
+					'Limit access to users with the selected roles. If none are selected, everyone can view the content. Changes save automatically.',
 					'members'
 				)
 			),
@@ -126,7 +137,7 @@
 				return el( CheckboxControl, {
 					key: role,
 					label: roleLabels[ role ],
-					checked: roleList.indexOf( role ) !== -1,
+					checked: roles.indexOf( role ) !== -1,
 					onChange: function ( checked ) {
 						toggleRole( role, checked );
 					},
@@ -156,11 +167,19 @@
 				label: __( 'Error Message', 'members' ),
 				help: __( 'Shown to users who cannot view this content.', 'members' ),
 				className: 'members-cp-error-message',
-				value: message || '',
+				value: message,
 				onChange: function ( newMessage ) {
-					patchMeta( { _members_access_error: newMessage } );
+					setMessage( newMessage );
+					scheduleSave( { message: newMessage } );
 				},
-			} )
+			} ),
+			'error' === status
+				? el(
+						Notice,
+						{ status: 'error', isDismissible: false, className: 'members-cp-save-status' },
+						__( 'Content Permissions could not be saved. Please try again.', 'members' )
+				  )
+				: el( 'p', { className: 'members-cp-save-status', 'aria-live': 'polite' }, statusText || '' )
 		);
 	}
 

@@ -228,7 +228,7 @@ final class Members_Plugin {
 		// Notifications (cannot be included inside is_admin() check or cron won't work)
 		require_once( $this->dir . 'admin/class-notifications.php' );
 
-		// Block editor REST saves run outside is_admin(); post meta + REST routes must load on every request.
+		// The block editor panel saves through a REST route, which runs outside is_admin(), so load on every request.
 		require_once( $this->dir . 'admin/class-content-permissions-editor.php' );
 
 		// Load admin files.

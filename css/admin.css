@@ -12,6 +12,12 @@
 	text-align: center;
 }
 
+.members-cp-document-panel .members-cp-save-status {
+	min-height: 1.5em;
+	margin: 8px 0 0;
+	color: #757575;
+}
+
 .members-cp-error-message-control {
 	margin-top: 12px;
 }
