@@ -139,8 +139,16 @@ class Widget_Login extends \WP_Widget {
 			if ( $logged_out_text )
 				echo do_shortcode( shortcode_unautop( wpautop( $logged_out_text ) ) );
 
+			// Let two-factor and CAPTCHA plugins hook into this form like they do on wp-login.php.
+			members_login_form_enqueue_scripts();
+
+			// Send failed logins back to this page with an error, like the login form shortcode.
+			add_filter( 'login_form_bottom', 'members_login_form_bottom' );
+
 			// Output the login form.
 			echo '<div class="members-login-form">' . wp_login_form( $args ) . '</div>';
+
+			remove_filter( 'login_form_bottom', 'members_login_form_bottom' );
 		}
 
 		// Close the theme's widget wrapper.
