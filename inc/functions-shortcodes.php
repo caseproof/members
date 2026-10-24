@@ -221,7 +221,7 @@ function members_login_form_shortcode( $attr = [] ) {
     // Default attributes
     $defaults = array(
         'echo'     => false,
-        'redirect' => ( is_ssl() ? 'https://' : 'http://' ) . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'],
+        'redirect' => members_get_login_form_page_url(),
     );
     
     // Merge user attributes with defaults
@@ -247,6 +247,9 @@ function members_login_form_shortcode( $attr = [] ) {
             }
         </style>
     <?php } else {
+        // Let two-factor and CAPTCHA plugins hook into this form like they do on wp-login.php.
+        members_login_form_enqueue_scripts();
+
         // Add the login_form_bottom filter only for this specific Members shortcode form
         add_filter( 'login_form_bottom', 'members_login_form_bottom' );
         ?>
@@ -313,9 +316,105 @@ function members_login_form_shortcode( $attr = [] ) {
 }
 
 /**
- * Filters the login redirect URL to send failed logins back to the
- * referrer with a query arg of `login=failed`.
- * Only applies to Members shortcode forms (verified via nonce).
+ * Returns the URL of the page the login form is on, minus the query args Members adds after a
+ * failed login.
+ *
+ * @since  3.2.28
+ * @access public
+ * @return string
+ */
+function members_get_login_form_page_url() {
+
+    $url = ( is_ssl() ? 'https://' : 'http://' ) . ( isset( $_SERVER['HTTP_HOST'] ) ? wp_unslash( $_SERVER['HTTP_HOST'] ) : '' ) . ( isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '' );
+
+    return esc_url_raw( remove_query_arg( array( 'login', 'members_login_error' ), $url ) );
+}
+
+/**
+ * Loads the login scripts two-factor and CAPTCHA plugins normally add only to wp-login.php, so
+ * they also work on Members login forms. Runs once per page.
+ *
+ * @since  3.2.28
+ * @access public
+ * @return void
+ */
+function members_login_form_enqueue_scripts() {
+
+    static $done = false;
+
+    if ( $done ) {
+        return;
+    }
+
+    $done = true;
+
+    // Wordfence Login Security: its login script finds any form with the standard WordPress login
+    // fields and adds the 2FA code prompt (and its CAPTCHA) to it.
+    if ( class_exists( '\WordfenceLS\Controller_WordfenceLS' ) && method_exists( '\WordfenceLS\Controller_WordfenceLS', 'shared' ) ) {
+        $wordfence = \WordfenceLS\Controller_WordfenceLS::shared();
+
+        if ( is_callable( array( $wordfence, '_login_enqueue_scripts' ) ) ) {
+            $wordfence->_login_enqueue_scripts();
+        }
+    }
+
+    /**
+     * Fires when a Members login form is shown, for plugins that need to add their login scripts.
+     *
+     * @since 3.2.28
+     */
+    do_action( 'members_login_form_enqueue_scripts' );
+}
+
+/**
+ * Whether the current login request came from a Members login form.
+ *
+ * @since  3.2.28
+ * @access public
+ * @return bool
+ */
+function members_is_login_form_request() {
+
+    if ( ! empty( $_POST['members_login_form'] ) ) {
+        return true;
+    }
+
+    // Forms rendered before 3.2.28 (e.g. still in a page cache) send a nonce instead.
+    return isset( $_POST['members_login_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['members_login_nonce'] ) ), 'members_login_form' );
+}
+
+/**
+ * Returns the message to show for a failed login. Errors that would reveal whether a username or
+ * email exists all get the same generic message.
+ *
+ * @since  3.2.28
+ * @access public
+ * @param  \WP_Error|mixed  $error  Login error.
+ * @return string
+ */
+function members_get_login_error_message( $error ) {
+
+    $generic = __( 'Invalid username or password.', 'members' );
+
+    if ( ! is_wp_error( $error ) ) {
+        return $generic;
+    }
+
+    $code = $error->get_error_code();
+
+    if ( ! $code || in_array( $code, array( 'invalid_username', 'invalid_email', 'incorrect_password', 'invalidcombo' ), true ) ) {
+        return $generic;
+    }
+
+    // Other errors (e.g. a security plugin's lockout notice) are shown, minus any username.
+    $message = preg_replace( '/<strong>[^<]+<\/strong>\s*(is not registered|was not found)/i', __( 'the username or email', 'members' ), $error->get_error_message() );
+
+    return '' !== trim( wp_strip_all_tags( $message ) ) ? $message : $generic;
+}
+
+/**
+ * Sends failed logins from a Members login form back to the form with an error message, and
+ * successful logins on to the form's redirect URL.
  *
  * @since 3.2.18
  *
@@ -325,80 +424,63 @@ function members_login_form_shortcode( $attr = [] ) {
  * @return string                The redirect URL.
  */
 function members_login_redirect( $redirect_to, $request, $user ) {
-    // Only handle redirects for Members shortcode forms (verified by nonce)
-    if ( ! isset( $_POST['members_login_nonce'] ) ||
-         ! wp_verify_nonce( $_POST['members_login_nonce'], 'members_login_form' ) ) {
-        return $redirect_to;
-    } elseif ( empty( $user ) || is_wp_error( $user ) ) {
-        // Start session if not already started
-        if (!session_id()) {
-            session_start();
-        }
-        
-        // Get the referrer URL
-        $redirect_to = $_SERVER['HTTP_REFERER'];
-        
-        // If we have a WP_Error object, capture the error message
-        if (is_wp_error($user)) {
-            $error_code = $user->get_error_code();
-            
-            if (empty(trim($error_code)) || $error_code == 'incorrect_password' || $error_code == 'invalid_username') {
-                // Don't store specific message, we'll use default in the display function
-                $_SESSION['members_login_error_message'] = __('Invalid username or password.', 'members');
-            } else {
-                $_SESSION['members_login_error_message'] = $user->get_error_message();
-            }
-        }
-        
-        // Add login=failed parameter
-        $redirect_to = add_query_arg('login', 'failed', $redirect_to);
-        
-        wp_redirect($redirect_to);
-        exit;
-    } else {
-        // On success, clear any error session data
-        if (!session_id()) {
-            session_start();
-        }
-        if (isset($_SESSION['members_login_error_message'])) {
-            unset($_SESSION['members_login_error_message']);
-        }
 
-        if (isset($_POST['redirect_to'])) {
-            return remove_query_arg('login', esc_url($_POST['redirect_to']));
-        }
-        
-        // On success, return to the redirect_to URL
-        return remove_query_arg('login', $redirect_to);
+    if ( ! members_is_login_form_request() ) {
+        return $redirect_to;
     }
+
+    if ( $user instanceof \WP_User ) {
+        return remove_query_arg( array( 'login', 'members_login_error' ), $redirect_to );
+    }
+
+    // Send them back to the page the form is on. Only same-site URLs are allowed.
+    $form_page = isset( $_POST['members_login_page'] ) ? wp_validate_redirect( esc_url_raw( wp_unslash( $_POST['members_login_page'] ) ) ) : '';
+
+    if ( ! $form_page ) {
+        $form_page = wp_get_referer() ? wp_get_referer() : home_url( '/' );
+    }
+
+    // Keep the message for the next page load. A random key in the URL (instead of a PHP session)
+    // keeps it tied to this one redirect and doesn't stop the page from being cached.
+    $key = wp_generate_password( 20, false );
+
+    set_transient( 'members_login_error_' . $key, members_get_login_error_message( $user ), 5 * MINUTE_IN_SECONDS );
+
+    $form_page = add_query_arg(
+        array(
+            'login'               => 'failed',
+            'members_login_error' => $key,
+        ),
+        remove_query_arg( array( 'login', 'members_login_error' ), $form_page )
+    );
+
+    wp_safe_redirect( $form_page );
+    exit;
 }
 
 /**
- * Filters the login form bottom output to add a nonce and error message if the login has failed.
- * This is only added to Members shortcode forms, not all WordPress login forms.
+ * Filters the login form bottom output to mark the form as a Members form and show the error
+ * message after a failed login. This is only added to Members shortcode forms.
  *
  * @since 3.2.18
  *
  * @return string The HTML to output below the login form.
  */
 function members_login_form_bottom() {
-    // Start session if not already started
-    if (!session_id()) {
-        session_start();
-    }
 
-    // Add a nonce to verify this is a Members shortcode submission
-    $output = wp_nonce_field( 'members_login_form', 'members_login_nonce', true, false );
+    // Marks the submission as a Members form and tells us where to send failed logins.
+    $output  = '<input type="hidden" name="members_login_form" value="1" />';
+    $output .= '<input type="hidden" name="members_login_page" value="' . esc_url( members_get_login_form_page_url() ) . '" />';
 
-    if ( isset( $_REQUEST['login'] ) && $_REQUEST['login'] == 'failed' ) {
-        // Get error message from session
-        if (isset($_SESSION['members_login_error_message']) && !empty($_SESSION['members_login_error_message'])) {
-            $error_message = $_SESSION['members_login_error_message'];
-        } else {
-            // Default message if no specific error is found
-            $error_message = __('Invalid username or password.', 'members');
+    if ( isset( $_GET['login'] ) && 'failed' === $_GET['login'] ) {
+
+        $key           = isset( $_GET['members_login_error'] ) ? sanitize_key( wp_unslash( $_GET['members_login_error'] ) ) : '';
+        $error_message = $key ? get_transient( 'members_login_error_' . $key ) : '';
+
+        if ( ! $error_message || ! is_string( $error_message ) ) {
+            $error_message = __( 'Invalid username or password.', 'members' );
         }
-        
+
         // Allow specific HTML tags in error messages
         $allowed_html = array(
             'a' => array(
@@ -415,8 +497,8 @@ function members_login_form_bottom() {
             'span' => array('class' => array()),
             'div' => array('class' => array()),
         );
-        
-        $output .= '<p class="members-login-notice members-login-error">' . wp_kses($error_message, $allowed_html) . '</p>';
+
+        $output .= '<p class="members-login-notice members-login-error">' . wp_kses( $error_message, $allowed_html ) . '</p>';
     }
 
     return $output;
