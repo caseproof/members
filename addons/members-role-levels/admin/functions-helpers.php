@@ -95,6 +95,10 @@ function mrl_get_role_level( $role ) {
 	if ( ! is_object( $role ) )
 		$role = get_role( $role );
 
+	// Bail if the role doesn't exist.
+	if ( ! $role )
+		return '';
+
 	// Get all the role's levels.
 	$levels = array_intersect( array_keys( $role->capabilities ), array_keys( mrl_get_role_levels() ) );
 

@@ -50,11 +50,12 @@ jQuery(document).ready(function($) {
 				svg.removeClass();
 				svg.addClass(response.data.status);
 			} else {
-				alert(response.data.msg);
+				alert(response && response.data && response.data.msg ? response.data.msg : membersAddons.error);
 			}
 		})
-		.fail(function(response) {
-			alert(response.data.msg);
+		.fail(function(xhr) {
+			var json = xhr && xhr.responseJSON;
+			alert(json && json.data && json.data.msg ? json.data.msg : membersAddons.error);
 		})
 		.always(function(response) {
 			$this.removeClass('processing');
