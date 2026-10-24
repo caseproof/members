@@ -31,7 +31,8 @@ class View_Addons extends View {
 		wp_enqueue_style( 'members-admin' );
 		wp_enqueue_script( 'members-settings' );
 		wp_localize_script( 'members-settings', 'membersAddons', array(
-			'nonce' => wp_create_nonce( 'mbrs_toggle_addon' )
+			'nonce' => wp_create_nonce( 'mbrs_toggle_addon' ),
+			'error' => esc_html__( 'Something went wrong. Please reload the page and try again.', 'members' )
 		) );
 	}
 

@@ -26,7 +26,11 @@ add_action( 'members_register_settings_views', __NAMESPACE__ . '\register_views'
  */
 function access_check() {
 
-	if ( ! current_user_has_access() && ! wp_doing_ajax() ) {
+	// admin-post.php fires `admin_init` too, but it's how front-end forms submit
+	// (including logged-out visitors), so it isn't wp-admin access.
+	$is_form_post = isset( $GLOBALS['pagenow'] ) && 'admin-post.php' === $GLOBALS['pagenow'];
+
+	if ( ! current_user_has_access() && ! wp_doing_ajax() && ! $is_form_post ) {
 		wp_redirect( esc_url_raw( get_redirect_url() ) );
 		exit;
 	}

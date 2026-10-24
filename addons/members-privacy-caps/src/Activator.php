@@ -11,12 +11,22 @@ class Activator {
 			return;
 		}
 
-		$role = get_role( 'administrator' );
+		// On single site WordPress maps these caps to `manage_options`, so every role
+		// with it could use the privacy tools. Keep it that way once they stand on
+		// their own.
+		foreach ( wp_roles()->role_objects as $role ) {
 
-		if ( $role ) {
-			$role->add_cap( 'export_others_personal_data' );
-			$role->add_cap( 'erase_others_personal_data'  );
-			$role->add_cap( 'manage_privacy_options'      );
+			if ( 'administrator' !== $role->name && empty( $role->capabilities['manage_options'] ) ) {
+				continue;
+			}
+
+			foreach ( [ 'export_others_personal_data', 'erase_others_personal_data', 'manage_privacy_options' ] as $cap ) {
+
+				// Leave caps a site owner has already granted or denied alone.
+				if ( ! isset( $role->capabilities[ $cap ] ) ) {
+					$role->add_cap( $cap );
+				}
+			}
 		}
 	}
 }

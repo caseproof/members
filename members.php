@@ -475,20 +475,29 @@ final class Members_Plugin {
 	 */
 	public function run_addon_activator( $addon ) {
 
-		if ( $this->is_valid_addon( $addon ) && file_exists( trailingslashit( __DIR__ ) . "addons/{$addon}/src/Activator.php" ) ) {
+		$file = trailingslashit( __DIR__ ) . "addons/{$addon}/src/Activator.php";
 
-			// Require the add-on file
-			include trailingslashit( __DIR__ ) . "addons/{$addon}/src/Activator.php";
+		if ( ! $this->is_valid_addon( $addon ) || ! file_exists( $file ) ) {
+			return;
+		}
 
-			// Read the file contents into memory, and determine the namespace
-			$contents = file_get_contents( trailingslashit( __DIR__ ) . "addons/{$addon}/src/Activator.php" );
-			preg_match( '/[\r\n]namespace\W(.+);[\r\n]/', $contents, $matches );
-			$namespace = $matches[1];
-			// Run the activator
-			if ( ! empty( $namespace ) ) {
-				$namespace .= '\Activator';
-				$namespace::activate();
-			}
+		// Determine the activator's namespace from the file.
+		preg_match( '/[\r\n]namespace\W(.+);[\r\n]/', (string) file_get_contents( $file ), $matches );
+
+		if ( empty( $matches[1] ) ) {
+			return;
+		}
+
+		$class = $matches[1] . '\Activator';
+
+		// Safe to call more than once in a request (Reset Roles runs it for every
+		// active add-on), so don't declare the class twice.
+		if ( ! class_exists( $class, false ) ) {
+			include_once $file;
+		}
+
+		if ( class_exists( $class, false ) ) {
+			$class::activate();
 		}
 	}
 
@@ -605,6 +614,11 @@ final class Members_Plugin {
 				$admin_role->add_cap( 'delete_roles' ); // Delete existing roles
 				$admin_role->add_cap( 'edit_roles'   ); // Edit existing roles/caps
 			}
+		}
+
+		// Re-run active add-ons' activators so the caps they granted come back.
+		foreach ( array_unique( array_filter( (array) get_option( 'members_active_addons', array() ), 'is_string' ) ) as $addon ) {
+			$this->run_addon_activator( $addon );
 		}
 
 		wp_send_json_success();

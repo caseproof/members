@@ -56,7 +56,7 @@ function admin_bar_menu( $wp_admin_bar ) {
 		'user-info'
 	];
 
-	apply_filters( app()->namespace . '/remove_toolbar_items', $items );
+	$items = (array) apply_filters( app()->namespace . '/remove_toolbar_items', $items );
 
 	foreach ( $items as $item )
 		$wp_admin_bar->remove_menu( $item );
