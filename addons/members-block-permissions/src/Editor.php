@@ -76,6 +76,9 @@ class Editor {
 			[],
 			$this->version()
 		);
+
+		// Use editor-rtl.css on right-to-left sites.
+		wp_style_add_data( 'members-block-permissions-editor', 'rtl', 'replace' );
 	}
 
 	/**

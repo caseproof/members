@@ -34,14 +34,23 @@ class Activator {
 		$role = get_role( 'administrator' );
 
 		// If the administrator role exists, add required capabilities
-		// for the plugin.
+		// for the plugin. Leave caps a site owner has already granted or
+		// denied alone, since this runs again whenever the add-on is
+		// switched back on.
 		if ( ! empty( $role ) ) {
 
-			$role->add_cap( 'manage_acf'                     );
-			$role->add_cap( 'edit_acf_field_groups'          );
-			$role->add_cap( 'edit_others_acf_field_groups'   );
-			$role->add_cap( 'delete_acf_field_groups'        );
-			$role->add_cap( 'delete_others_acf_field_groups' );
+			foreach ( [
+				'manage_acf',
+				'edit_acf_field_groups',
+				'edit_others_acf_field_groups',
+				'delete_acf_field_groups',
+				'delete_others_acf_field_groups',
+			] as $cap ) {
+
+				if ( ! isset( $role->capabilities[ $cap ] ) ) {
+					$role->add_cap( $cap );
+				}
+			}
 		}
 	}
 }

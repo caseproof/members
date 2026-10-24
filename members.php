@@ -472,6 +472,7 @@ final class Members_Plugin {
 				'wp-components'
 			), $version, true );
 			wp_enqueue_style( 'block-editor-mp-upsell', plugin_dir_url( __FILE__ ) . $upsell_dir . 'upsell.css', array(), $version );
+			wp_style_add_data( 'block-editor-mp-upsell', 'rtl', 'replace' );
 			wp_localize_script( 'block-editor-mp-upsell', 'membersUpsell', array(
 				'title' => __( 'Permissions', 'members' ),
 				'message' => __( 'To protect this block by paid membership or centrally with a content protection rule, add MemberPress.', 'members' )

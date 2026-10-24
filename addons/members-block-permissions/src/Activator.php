@@ -34,9 +34,19 @@ class Activator {
 		$role = get_role( 'administrator' );
 
 		// If the administrator role exists, add required capabilities
-		// for the plugin.
+		// for the plugin. Leave caps a site owner has already granted or
+		// denied alone, since this runs again whenever the add-on is
+		// switched back on.
 		if ( ! empty( $role ) ) {
-			$role->add_cap( 'assign_block_permissions' );
+
+			foreach ( [
+				'assign_block_permissions',
+			] as $cap ) {
+
+				if ( ! isset( $role->capabilities[ $cap ] ) ) {
+					$role->add_cap( $cap );
+				}
+			}
 		}
 	}
 }

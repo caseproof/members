@@ -1,5 +1,7 @@
 
-.edit-post-settings-sidebar__panel-block .members-bp-controls {
+// Scoped to the Permissions panel itself. The old `.edit-post-settings-sidebar__panel-block`
+// wrapper no longer exists in the block editor, so rules nested under it never applied.
+.members-bp-controls {
 
 	.members-bp-notice {
 		margin-bottom: 24px;

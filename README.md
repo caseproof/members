@@ -92,7 +92,7 @@ The integrations listed above (ACF, EDD, GiveWP, Meta Box, WooCommerce, Block Pe
 
 - **Active list:** the active add-ons are stored in the `members_active_addons` option.
 - **Loading:** on every request `members.php` (`includes()`) loads `addons/<slug>/addon.php` for each active add-on. Inactive add-ons cost nothing.
-- **Validation:** only slugs of folders that exist in `addons/` are accepted (`is_valid_addon()`).
+- **Validation:** only slugs matching `[a-z0-9-]+` that have an `addons/<slug>/addon.php` are accepted (`is_valid_addon()`).
 - **Activation:** switching an add-on on runs `addons/<slug>/src/Activator.php` (`<namespace>\Activator::activate()`) if it exists. Switching it off doesn't undo anything. Activators should only add caps a role has no entry for yet, so running one again never overrides a site owner's choices.
 - **Screen listing:** titles and descriptions on the Add-Ons screen come from `admin/config/addons.php`. Its icons are `img/<slug>.svg`.
 
@@ -129,7 +129,7 @@ There is no automated test suite yet. Check changes on a local site, including P
 
 ### Translations
 
-Text domain is `members`. `loco.xml` configures Loco Translate; POT files are no longer bundled in the repo (generated at release time).
+Text domain is `members`. `loco.xml` configures Loco Translate. No POT file is bundled; translations come from [translate.wordpress.org](https://translate.wordpress.org/projects/wp-plugins/members/).
 
 ## License
 
