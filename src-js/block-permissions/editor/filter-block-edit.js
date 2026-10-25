@@ -47,6 +47,13 @@ const MembersBlockPermissionsBlockEdit = createHigherOrderComponent( ( BlockEdit
 
 		let { blockPermissionsCondition = '', blockPermissionsType = '' } = props.attributes;
 
+		// MemberPress can turn its Content Protection panel off, or skip it for some blocks
+		// (like its own Protected Content block), so check its settings before pointing there.
+		const memberPressPanel = membersBlockPermissions.memberPressActive
+			&& typeof memberpressBlocks !== 'undefined'
+			&& memberpressBlocks.block_protection
+			&& ! ( memberpressBlocks.block_protection_exclude || [] ).includes( props.name );
+
 		// If the user doesn't have permission to access Block Permissions
 		// and there are no existing permissions set, just return the
 		// block edit component.
@@ -103,7 +110,7 @@ const MembersBlockPermissionsBlockEdit = createHigherOrderComponent( ( BlockEdit
 					}
 
 					{
-						blockPermissionsCondition && membersBlockPermissions.memberPressActive
+						blockPermissionsCondition && memberPressPanel
 						? <p className="description">{ labels.memberPressActive }</p>
 						: null
 					}

@@ -169,6 +169,10 @@ If that doesn't apply or didn't work, stop by our [support forums](https://wordp
 * Fixed: Fatal error on Roles → Editable when a role is added after roles are initialized.
 * Fixed: Several bugs in the bundled add-ons (Admin Access, Reset Roles, Category & Tag Caps, Core Create Caps, and more).
 * Changed: The block editor Content Permissions panel now saves through its own REST route, so page builders can no longer overwrite its settings.
+* Fixed: With MemberPress active, Block Permissions no longer shows an "add MemberPress" prompt; it points to MemberPress' own Content Protection panel instead.
+* Fixed: The Role Hierarchy add-on no longer stops front-end registration forms from assigning the role they're set to.
+* Removed: The [avatar] and [get_avatar] shortcodes, deprecated since 0.2.0, which output nothing. Posts that still contain them will show the shortcode as text.
+* Removed: The Login Form widget's undocumented `redirect` instance setting, which had no field on the widget screen. Code that passed it to the_widget() now gets the default (back to the current page).
 * Other bug fixes and improvements.
 
 = 3.2.27 =

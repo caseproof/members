@@ -149,7 +149,7 @@ class Editor {
 			'userCanAssignPermissions' => current_user_can( 'assign_block_permissions' ),
 			// MemberPress adds its own per-block Content Protection panel, so the
 			// "add MemberPress" types are only offered when it isn't active.
-			'memberPressActive'        => defined( 'MEPR_PLUGIN_SLUG' )
+			'memberPressActive'        => function_exists( 'members_is_memberpress_active' ) && members_is_memberpress_active()
 		];
 
 		$_roles = wp_roles()->roles;
