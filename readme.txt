@@ -6,7 +6,7 @@ Tags: permissions, memberships, roles, capabilities, access
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 3.2.27
+Stable tag: 3.2.28
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -161,6 +161,15 @@ If that doesn't apply or didn't work, stop by our [support forums](https://wordp
 5. Select multiple roles per user (edit user screen)
 
 == Changelog ==
+
+= 3.2.28 =
+* Fixed: Redirect loop on private sites when the login page has been moved (e.g. WP Ghost).
+* Fixed: The [members_login_form] shortcode now works with two-factor authentication plugins such as Wordfence.
+* Fixed: Content Permissions now protect pages built with Bricks Builder.
+* Fixed: Fatal error on Roles → Editable when a role is added after roles are initialized.
+* Fixed: Several bugs in the bundled add-ons (Admin Access, Reset Roles, Category & Tag Caps, Core Create Caps, and more).
+* Changed: The block editor Content Permissions panel now saves through its own REST route, so page builders can no longer overwrite its settings.
+* Other bug fixes and improvements.
 
 = 3.2.27 =
 * Security: Hardened the add-on settings so only add-ons that ship with Members can be enabled, and invalid saved values are ignored.
