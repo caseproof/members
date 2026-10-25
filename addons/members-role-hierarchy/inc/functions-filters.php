@@ -29,6 +29,13 @@ add_filter( 'map_meta_cap', 'mrh_map_meta_cap', 95, 4 );
  */
 function mrh_editable_roles( $editable ) {
 
+	// The hierarchy ranks users against their own role. A logged-out visitor has no role, so
+	// ranking would remove every role. Leave the list as WordPress built it, the same as without
+	// this add-on; front-end registration forms rely on it to check which role a new user gets.
+	if ( ! is_user_logged_in() ) {
+		return $editable;
+	}
+
 	// Gets the roles.
 	$roles = array_keys( $editable );
 

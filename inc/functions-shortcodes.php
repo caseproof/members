@@ -45,10 +45,6 @@ function members_register_shortcodes() {
 
 	// Add the `[members_not_logged_in]` shortcode.
 	add_shortcode( 'members_not_logged_in', 'members_not_logged_in_shortcode' );
-
-	// @deprecated 0.2.0.
-	add_shortcode( 'get_avatar', 'members_get_avatar_shortcode' );
-	add_shortcode( 'avatar',     'members_get_avatar_shortcode' );
 }
 
 /**

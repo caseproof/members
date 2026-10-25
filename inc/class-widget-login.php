@@ -106,9 +106,6 @@ class Widget_Login extends \WP_Widget {
 			'echo'           => false,
 		);
 
-		if ( ! empty( $instance['redirect'] ) )
-			$args['redirect'] = esc_url( $instance['redirect'] );
-
 		// Get the logged in/out text.
 		$logged_in_text  = apply_filters( 'widget_text', $instance['logged_in_text'] );
 		$logged_out_text = apply_filters( 'widget_text', $instance['logged_out_text'] );

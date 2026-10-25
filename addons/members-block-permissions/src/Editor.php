@@ -141,11 +141,15 @@ class Editor {
 		$labels['notices']['notAllowed'] = __( 'Your user account does not have access to assign permissions to this block.', 'members' );
 		$labels['paidMembership'] = __( 'To protect this block by paid membership or centrally with a content protection rule, add MemberPress.', 'members' );
 		$labels['contentRule'] = __( 'To protect this block by paid membership or centrally with a content protection rule, add MemberPress.', 'members' );
+		$labels['memberPressActive'] = __( 'To protect this block by membership or with an access rule, use the MemberPress Content Protection panel.', 'members' );
 
 		$data = [
 			'roles'                    => [],
 			'labels'                   => $labels,
-			'userCanAssignPermissions' => current_user_can( 'assign_block_permissions' )
+			'userCanAssignPermissions' => current_user_can( 'assign_block_permissions' ),
+			// MemberPress adds its own per-block Content Protection panel, so the
+			// "add MemberPress" types are only offered when it isn't active.
+			'memberPressActive'        => function_exists( 'members_is_memberpress_active' ) && members_is_memberpress_active()
 		];
 
 		$_roles = wp_roles()->roles;
