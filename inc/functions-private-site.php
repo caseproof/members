@@ -112,6 +112,10 @@ function members_is_private_page() {
 
 	$is_private = true;
 
+	// The login page must stay reachable, or logged-out visitors loop back to it forever.
+	if ( members_is_login_page_request() )
+		$is_private = false;
+
 	if ( function_exists( 'bp_is_current_component' ) && ( bp_is_current_component( 'register' ) || bp_is_current_component( 'activate' ) ) )
 		$is_private = false;
 
@@ -124,6 +128,37 @@ function members_is_private_page() {
 	}
 
 	return apply_filters( 'members_is_private_page', $is_private );
+}
+
+/**
+ * Whether the current request is for the site's login, lost password, or registration page.
+ *
+ * Plugins that move the login page (e.g. WP Ghost, WPS Hide Login) or sites that use a regular
+ * page for it serve it through a normal front-end request, so private site mode would otherwise
+ * redirect the login page to itself. Those plugins report the new URL through the core
+ * `login_url`, `lostpassword_url`, and `register_url` filters, so compare against those.
+ *
+ * @since  3.2.28
+ * @access public
+ * @return bool
+ */
+function members_is_login_page_request() {
+
+	if ( empty( $_SERVER['REQUEST_URI'] ) ) {
+		return false;
+	}
+
+	$request_path = untrailingslashit( rawurldecode( (string) wp_parse_url( wp_unslash( $_SERVER['REQUEST_URI'] ), PHP_URL_PATH ) ) );
+
+	foreach ( array( wp_login_url(), wp_lostpassword_url(), wp_registration_url() ) as $url ) {
+		$path = untrailingslashit( rawurldecode( (string) wp_parse_url( $url, PHP_URL_PATH ) ) );
+
+		if ( '' !== $path && $path === $request_path ) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 /**
