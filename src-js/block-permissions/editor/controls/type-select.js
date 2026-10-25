@@ -20,10 +20,15 @@ class TypeSelect extends Component {
 		let options = [
 			{ label: labels.options.userStatus, 		value: 'user-status' 	},
 			{ label: labels.options.role,       		value: 'role'        	},
-			{ label: labels.options.cap,        		value: 'cap'         	},
-			{ label: labels.options.paidMembership,    value: 'paidMembership'},
-			{ label: labels.options.contentRule,        value: 'contentRule' 	}
+			{ label: labels.options.cap,        		value: 'cap'         	}
 		];
+
+		if ( ! membersBlockPermissions.memberPressActive ) {
+			options.push(
+				{ label: labels.options.paidMembership, value: 'paidMembership' },
+				{ label: labels.options.contentRule,    value: 'contentRule'    }
+			);
+		}
 
 		let { blockPermissionsType } = props.attributes;
 

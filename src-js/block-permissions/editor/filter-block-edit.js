@@ -103,13 +103,19 @@ const MembersBlockPermissionsBlockEdit = createHigherOrderComponent( ( BlockEdit
 					}
 
 					{
-						blockPermissionsCondition && 'paidMembership' === blockPermissionsType
+						blockPermissionsCondition && membersBlockPermissions.memberPressActive
+						? <p className="description">{ labels.memberPressActive }</p>
+						: null
+					}
+
+					{
+						blockPermissionsCondition && ! membersBlockPermissions.memberPressActive && 'paidMembership' === blockPermissionsType
 						? <UpgradePrompt message={ labels.paidMembership } />
 						: null
 					}
 
 					{
-						blockPermissionsCondition && 'contentRule' === blockPermissionsType
+						blockPermissionsCondition && ! membersBlockPermissions.memberPressActive && 'contentRule' === blockPermissionsType
 						? <UpgradePrompt message={ labels.contentRule } />
 						: null
 					}
