@@ -13,6 +13,7 @@ If you've ever written `add_cap()` calls by hand or wished the role editor was l
 - **Shortcodes and widgets.** Gate content inline or in sidebars.
 - **Private site mode.** Make the site, its feed, and its REST API visible to logged-in users only.
 - **Admin rescue link.** Locked out after editing roles? Email yourself a time-limited link to restore admin access. No SSH or database access required.
+- **AI assistants (MCP).** Let Claude Desktop, Claude Code, Cursor, VS Code, OpenAI Codex and other MCP apps manage roles, users' roles and content restrictions through the official WordPress MCP Adapter plugin (WP 6.9+). Read-only by default, with "are you sure?" checks, a self-lockout guard and an activity log. Code lives in `inc/abilities/`.
 - **Bundled integrations.** ACF, EDD, GiveWP, Meta Box, WooCommerce, Block Permissions, Privacy Caps, and more — previously separate add-ons, now included.
 
 ## Installation
@@ -65,7 +66,8 @@ Everything is built and run from the plugin root. No add-on has its own build, `
 | `addons/<slug>/` | Bundled add-ons (PHP only). See [Add-ons](#add-ons). |
 | `templates/` | PHP view partials. |
 | `css/*.css`, `js/*.js` | Hand-written admin CSS/JS. Built to `*.min.css` / `*.min.js` next to them. |
-| `src-js/` | JS/SCSS sources built with `@wordpress/scripts` (currently `src-js/block-permissions/`). |
+| `inc/abilities/` | AI (MCP) abilities for the WordPress Abilities API (WP 6.9+), plus the REST routes behind the AI (MCP) settings tab. See [AI (MCP) abilities](#ai-mcp-abilities). |
+| `src-js/` | JS/SCSS sources built with `@wordpress/scripts`: `src-js/block-permissions/` and `src-js/ai/` (the AI (MCP) settings tab). |
 | `js/build/` | Built output from `src-js/`, with `*.asset.php` files used for script versions. |
 | `vendor-prefixed/` | Composer dependencies, namespaced with Strauss. Generated; don't edit. |
 | `gulpfile.js`, `babel.config.js` | Build config (see below). |
@@ -74,12 +76,15 @@ Everything is built and run from the plugin root. No add-on has its own build, `
 
 | Command | What it does |
 |---|---|
-| `npm run build` | Everything: `gulp build`, then `build:block-permissions`. |
+| `npm run build` | Everything: `gulp build`, then `build:block-permissions` and `build:ai`. |
 | `npm run build:styles` | `css/*.css` → `css/*.min.css` (autoprefixer + uglifycss). |
 | `npm run build:scripts` | `js/*.js` → `js/*.min.js` (Terser). |
 | `npm run watch` | Rebuilds `css/` and `js/` on change. |
 | `npm run build:block-permissions` | `src-js/block-permissions/` → `js/build/block-permissions/` (the Block Permissions editor panel and the MemberPress upsell panel). |
 | `npm run watch:block-permissions` | Same, rebuilding on change (unminified). |
+| `npm run build:ai` | `src-js/ai/` → `js/build/ai/` (the AI (MCP) settings tab). |
+| `npm run watch:ai` | Same, rebuilding on change (unminified). |
+| `npm run test:js` | Jest unit tests in `src-js/**/__tests__/`. |
 
 - Edit the sources (`css/*.css`, `js/*.js`, `src-js/**`), never the built files.
 - Commit both the sources and the built files (`*.min.*` and `js/build/**`). Production loads the built files, and the release doesn't run a build.
@@ -101,6 +106,20 @@ To add a bundled add-on:
 2. Add it to `admin/config/addons.php`.
 3. Add its icon to `img/`.
 4. If it has JS, put the sources in `src-js/<slug>/` and add a root `npm` script that builds them to `js/build/<slug>/`.
+
+### AI (MCP) abilities
+
+On WordPress 6.9+, Members registers abilities (`members/list-roles`, `members/restrict-content`, …) with the Abilities API. The official [MCP Adapter](https://wordpress.org/plugins/mcp-adapter/) plugin exposes them to AI assistants. Nothing registers below 6.9.
+
+- **Where:** `inc/abilities/`. `class-registrar.php` hooks everything up. Abilities are grouped by area: `class-role-abilities.php`, `class-user-abilities.php`, `class-content-abilities.php`, `class-site-abilities.php`, plus `class-addon-abilities.php` for active add-ons.
+- **Same code as the admin screens.** Abilities call the shared helpers the screens use (`members_create_role()`, `members_update_role_caps()`, `members_set_user_roles()`, `members_set_post_roles()`, `members_validate_settings()`, `members_plugin()->set_addon_active()`…), so there's no second code path.
+- **Settings and safety:**
+  - read-only mode and on/off switches: `class-settings.php`, option `members_mcp_settings`;
+  - the "are you sure?" step for risky changes: `class-confirmation.php`;
+  - the self-lockout refusal: `class-lockout.php`;
+  - the 90-day activity log: `class-activity-log.php`, table `{prefix}members_mcp_log`.
+- **Settings tab:** Members → Settings → AI (MCP) is `admin/views/class-view-ai.php` plus the React app in `src-js/ai/`, backed by the `members/v1/ai*` REST routes in `class-rest-controller.php`.
+- **Extending:** add abilities from the `members_register_abilities` action with `Ability::args()`, and change any Members ability's args with the `members_ability_args` filter.
 
 ### PHP dependencies
 
@@ -125,7 +144,7 @@ Notes:
 
 ### Tests
 
-There is no automated test suite yet. Check changes on a local site, including PHP warnings with `WP_DEBUG_LOG` on.
+There is no PHP test suite yet. The only automated tests are a few Jest tests for the AI (MCP) tab's JS (`npm run test:js`). Check PHP changes on a local site, including PHP warnings with `WP_DEBUG_LOG` on.
 
 ### Translations
 

@@ -231,6 +231,13 @@ final class Members_Plugin {
 		// The block editor panel saves through a REST route, which runs outside is_admin(), so load on every request.
 		require_once( $this->dir . 'admin/class-content-permissions-editor.php' );
 
+		// AI (MCP) abilities. Only does anything on WordPress 6.9+ (Abilities API), but the
+		// settings tab's REST routes load everywhere so it can say what's needed.
+		foreach ( array( 'ability', 'settings', 'confirmation', 'lockout', 'activity-log', 'connection', 'announcement', 'rest-controller', 'role-abilities', 'user-abilities', 'content-abilities', 'site-abilities', 'addon-abilities', 'registrar' ) as $file ) {
+			require_once( $this->dir . "inc/abilities/class-{$file}.php" );
+		}
+		\Members\Abilities\Registrar::boot();
+
 		// Load admin files.
 		if ( is_admin() ) {
 
@@ -455,6 +462,40 @@ final class Members_Plugin {
 	 * @param  string $addon Add-on directory name.
 	 * @return bool
 	 */
+	/**
+	 * Turns a bundled add-on on or off, running its activator when turned on. Shared by the
+	 * Add-Ons screen and the AI (MCP) abilities. The change takes effect on the next request.
+	 *
+	 * @since  3.3.0
+	 * @access public
+	 * @param  string  $addon   Add-on slug, e.g. `members-admin-access`.
+	 * @param  bool    $active  Whether it should be on.
+	 * @return true|\WP_Error
+	 */
+	public function set_addon_active( $addon, $active ) {
+
+		$active_addons = array_values( array_filter( (array) get_option( 'members_active_addons', array() ), 'is_string' ) );
+		$is_active     = in_array( $addon, $active_addons, true );
+
+		// Turning off an add-on whose folder is gone must still work.
+		if ( ! $is_active && ! $this->is_valid_addon( $addon ) ) {
+			return new \WP_Error( 'members_invalid_addon', esc_html__( 'Invalid add-on.', 'members' ) );
+		}
+
+		if ( $active && ! $is_active ) {
+			$active_addons[] = $addon;
+
+			// Run the add-on's activation hook.
+			$this->run_addon_activator( $addon );
+		} elseif ( ! $active && $is_active ) {
+			$active_addons = array_values( array_diff( $active_addons, array( $addon ) ) );
+		}
+
+		update_option( 'members_active_addons', $active_addons );
+
+		return true;
+	}
+
 	public function is_valid_addon( $addon ) {
 		return is_string( $addon )
 			&& 1 === preg_match( '/^[a-z0-9-]+$/D', $addon )

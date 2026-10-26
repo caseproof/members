@@ -97,54 +97,6 @@ function members_admin_register_styles() {
 }
 
 /**
- * Function for safely deleting a role and transferring the deleted role's users to the default
- * role.  Note that this function can be extremely intensive.  Whenever a role is deleted, it's
- * best for the site admin to assign the user's of the role to a different role beforehand.
- *
- * @since  0.2.0
- * @access public
- * @param  string  $role
- * @return void
- */
-function members_delete_role( $role ) {
-
-	// Get the default role.
-	$default_role = get_option( 'default_role' );
-
-	// Don't delete the default role. Site admins should change the default before attempting to delete the role.
-	if ( $role == $default_role )
-		return;
-
-	// Get all users with the role to be deleted.
-	$users = get_users( array( 'role' => $role ) );
-
-	// Check if there are any users with the role we're deleting.
-	if ( is_array( $users ) ) {
-
-		// If users are found, loop through them.
-		foreach ( $users as $user ) {
-
-			// If the user has the role and no other roles, set their role to the default.
-			if ( $user->has_cap( $role ) && 1 >= count( $user->roles ) )
-				$user->set_role( $default_role );
-
-			// Else, remove the role.
-			else if ( $user->has_cap( $role ) )
-				$user->remove_role( $role );
-		}
-	}
-
-	// Remove the role.
-	remove_role( $role );
-
-	// Stop tracking as Members-created (if it was).
-	members_untrack_created_role( $role );
-
-	// Remove the role from the role factory.
-	members_unregister_role( $role );
-}
-
-/**
  * Returns an array of all the user meta keys in the $wpdb->usermeta table.
  *
  * @since  0.2.0

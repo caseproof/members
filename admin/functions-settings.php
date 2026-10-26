@@ -41,6 +41,17 @@ function members_register_default_settings_views( $manager ) {
 		)
 	);
 
+	// Register AI (MCP) view.
+	$manager->register_view(
+		new \Members\Admin\View_Ai(
+			'ai',
+			array(
+				'label'    => esc_html__( 'AI (MCP)', 'members' ),
+				'priority' => 90
+			)
+		)
+	);
+
 	// Register add-ons view.
 	$manager->register_view(
 		new \Members\Admin\View_Addons(

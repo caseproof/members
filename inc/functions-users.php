@@ -164,3 +164,33 @@ function members_get_user_role_names( $user_id ) {
 
 	return $names;
 }
+
+/**
+ * Sets a user's roles to exactly `$roles`, touching only roles the current user may edit (the
+ * same rule as the Edit User screen). Shared by that screen and the AI (MCP) abilities.
+ *
+ * @since  3.3.0
+ * @access public
+ * @param  \WP_User  $user   User to change.
+ * @param  array     $roles  Role slugs the user should end up with.
+ * @return void
+ */
+function members_set_user_roles( $user, $roles ) {
+
+	$new_roles = members_sanitize_access_role_meta_list( (array) $roles );
+	$old_roles = (array) $user->roles;
+
+	foreach ( $new_roles as $new_role ) {
+
+		// If the user doesn't already have the role, add it.
+		if ( members_is_role_editable( $new_role ) && ! in_array( $new_role, $old_roles, true ) )
+			$user->add_role( $new_role );
+	}
+
+	foreach ( $old_roles as $old_role ) {
+
+		// If the role is editable and not in the new roles array, remove it.
+		if ( members_is_role_editable( $old_role ) && ! in_array( $old_role, $new_roles, true ) )
+			$user->remove_role( $old_role );
+	}
+}

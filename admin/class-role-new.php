@@ -228,13 +228,8 @@ final class Role_New {
 			// Add a new role with the data input.
 			if ( $this->role && $this->role_name && ! $is_duplicate ) {
 
-				add_role( $this->role, $this->role_name, $new_caps );
-
-				// Track as created by Members UI (for reset-roles to only remove these).
-				members_track_created_role( $this->role );
-
-				// Action hook for when a role is added.
-				do_action( 'members_role_added', $this->role );
+				// Creates, tracks and fires `members_role_added`.
+				members_create_role( $this->role, $this->role_name, $new_caps );
 
 				// If the current user can edit roles, redirect to edit role screen.
 				if ( current_user_can( 'edit_roles' ) ) {

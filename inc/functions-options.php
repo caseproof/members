@@ -160,3 +160,35 @@ function members_get_default_settings() {
         'hide_posts_rest_api'  => true,
 	);
 }
+
+/**
+ * Validates and sanitizes the plugin settings before saving. Shared by the settings screen and
+ * the AI (MCP) abilities.
+ *
+ * @since  3.3.0
+ * @access public
+ * @param  array  $settings  Submitted settings.
+ * @return array
+ */
+function members_validate_settings( $settings ) {
+
+	$settings = is_array( $settings ) ? $settings : array();
+
+	// Validate true/false checkboxes.
+	$settings['role_manager']         = ! empty( $settings['role_manager'] )         ? true : false;
+	$settings['explicit_denied_caps'] = ! empty( $settings['explicit_denied_caps'] ) ? true : false;
+	$settings['show_human_caps']      = ! empty( $settings['show_human_caps'] )      ? true : false;
+	$settings['multi_roles']          = ! empty( $settings['multi_roles'] )          ? true : false;
+	$settings['content_permissions']  = ! empty( $settings['content_permissions'] )  ? true : false;
+	$settings['private_blog']         = ! empty( $settings['private_blog'] )         ? true : false;
+	$settings['private_rest_api']     = ! empty( $settings['private_rest_api'] )     ? true : false;
+	$settings['hide_posts_rest_api']  = ! empty( $settings['hide_posts_rest_api'] )  ? true : false;
+	$settings['private_feed']         = ! empty( $settings['private_feed'] )         ? true : false;
+
+	// Kill evil scripts.
+	$settings['content_permissions_error'] = stripslashes( wp_filter_post_kses( addslashes( isset( $settings['content_permissions_error'] ) ? (string) $settings['content_permissions_error'] : '' ) ) );
+	$settings['private_feed_error']        = stripslashes( wp_filter_post_kses( addslashes( isset( $settings['private_feed_error'] )        ? (string) $settings['private_feed_error']        : '' ) ) );
+
+	// Return the validated/sanitized settings.
+	return apply_filters( 'members_validate_settings', $settings );
+}
