@@ -462,9 +462,11 @@ function members_enable_content_permissions() {
  * - the Members access, logged-in/out, and login form shortcodes;
  * - blocks with Block Permissions, when that add-on is active.
  *
- * Covers single posts, archives, and feeds. In feeds, protected posts and the access and logged-in
- * shortcodes show the same thing to everyone, so only the rest are checked there. robots.txt, the
- * favicon, sitemaps, and 404s are the same for everyone, so they're skipped.
+ * Covers single posts, archives, and feeds. In feeds, protected posts show everyone their error
+ * message, a private feed shows everyone its message, and the access and logged-in shortcodes show
+ * nothing, so only the remaining shortcodes and blocks are checked there, in the content and in
+ * those messages. robots.txt, the favicon, sitemaps, and 404s are the same for everyone, so they're
+ * skipped.
  *
  * @since  3.2.29
  * @access public
@@ -479,8 +481,10 @@ function members_do_not_cache_personal_content() {
 	}
 
 	$is_feed      = is_feed();
-	$check_roles  = ! $is_feed && members_content_permissions_enabled();
+	$protects     = members_content_permissions_enabled();
+	$check_roles  = ! $is_feed && $protects;
 	$check_blocks = class_exists( '\Members\BlockPermissions\Block', false );
+	$feed_message = $is_feed && members_is_private_feed() ? (string) members_get_setting( 'private_feed_error' ) : '';
 	$shortcodes   = array( 'members_not_logged_in', 'members_login_form', 'login-form' );
 
 	if ( ! $is_feed ) {
@@ -495,6 +499,17 @@ function members_do_not_cache_personal_content() {
 
 		$personal = $check_roles && members_post_or_ancestor_has_role_meta( $post->ID );
 		$content  = members_get_content_with_synced_patterns( $post->post_content );
+
+		// The feed messages run shortcodes, so a login form in one makes the feed differ by login.
+		if ( $is_feed ) {
+
+			if ( $protects && members_post_or_ancestor_has_role_meta( $post->ID ) ) {
+				$message  = members_get_post_access_message( $post->ID );
+				$content .= "\n" . ( $message ? $message : members_get_setting( 'content_permissions_error' ) );
+			}
+
+			$content .= "\n" . $feed_message;
+		}
 
 		foreach ( $shortcodes as $tag ) {
 			$personal = $personal || has_shortcode( $content, $tag );
