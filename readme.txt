@@ -162,9 +162,6 @@ If that doesn't apply or didn't work, stop by our [support forums](https://wordp
 
 == Changelog ==
 
-= 3.2.29 =
-* Fixed: Logged-in members could see "Sorry, but you do not have permission to view this content." on sites with a page cache that ignores login cookies (for example, a CDN "cache everything" rule). Pages showing protected content, and pages using the Members access shortcodes or Block Permissions, are now marked so caches don't store them. Developers can turn this off with the `members_do_not_cache_page` filter.
-
 = 3.2.28 =
 * Fixed: Redirect loop on private sites when the login page has been moved (e.g. WP Ghost).
 * Fixed: The [members_login_form] shortcode now works with two-factor authentication plugins such as Wordfence.
