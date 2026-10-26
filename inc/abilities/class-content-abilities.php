@@ -185,7 +185,7 @@ final class Content_Abilities {
 				),
 				$protect[0],
 				$protect[1],
-				array( __( 'Lock every post in the Premium category to Subscribers.', 'members' ) )
+				array( __( 'Restrict the posts in my Premium category to Subscribers.', 'members' ) )
 			),
 		);
 	}

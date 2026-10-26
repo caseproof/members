@@ -24,7 +24,7 @@ You can now ask an AI assistant to handle your roles, capabilities and content r
 
 * *"Why can't Jane see the Members Area page?"*
 * *"Create a Course Manager role that can edit pages but not publish them."*
-* *"Lock every post in the Premium category to Subscribers."*
+* *"Restrict the posts in my Premium category to Subscribers."*
 * *"Make jane@example.com an Editor."*
 * *"Which roles can publish pages?"*
 * *"Keep Subscribers out of wp-admin."*
