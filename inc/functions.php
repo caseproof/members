@@ -14,6 +14,45 @@ if (!defined('ABSPATH')) {
 }
 
 /**
+ * Marks the current page as personal, so shared caches don't store it.
+ *
+ * Call this whenever Members renders something that differs between visitors, like protected
+ * content or a logged-in-only shortcode. Otherwise a cache that ignores login cookies (such as a
+ * CDN "cache everything" rule) can store the logged-out version and serve it to members.
+ *
+ * Defines `DONOTCACHEPAGE`, which page-caching plugins honor, and sends WordPress' no-cache
+ * headers if they haven't been sent yet.
+ *
+ * @since  3.2.29
+ * @access public
+ * @param  string  $context  What made the page personal (for the filter).
+ * @return void
+ */
+function members_do_not_cache_page( $context = '' ) {
+
+	/**
+	 * Filters whether Members marks a personal page as uncacheable. Return false if your cache
+	 * already varies pages by login (for example, it bypasses logged-in visitors and never caches
+	 * protected URLs).
+	 *
+	 * @since 3.2.29
+	 * @param bool    $do_not_cache Whether to mark the page as uncacheable.
+	 * @param string  $context      What made the page personal.
+	 */
+	if ( ! apply_filters( 'members_do_not_cache_page', true, $context ) ) {
+		return;
+	}
+
+	if ( ! defined( 'DONOTCACHEPAGE' ) ) {
+		define( 'DONOTCACHEPAGE', true );
+	}
+
+	if ( ! headers_sent() ) {
+		nocache_headers();
+	}
+}
+
+/**
  * Validates a value as a boolean.  This way, strings such as "true" or "false" will be converted
  * to their correct boolean values.
  *

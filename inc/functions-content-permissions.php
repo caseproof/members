@@ -435,6 +435,9 @@ function members_enable_content_permissions() {
 		// Filter the comments template to make sure comments aren't shown to users without access.
 		add_filter( 'comments_template', 'members_content_permissions_comments', 95 );
 
+		// Pages showing protected posts differ per visitor, so keep them out of shared caches.
+		add_action( 'template_redirect', 'members_do_not_cache_protected_content', 1 );
+
 		// Bricks Builder renders its pages without `the_content`.
 		add_filter( 'bricks/render_with_bricks', 'members_bricks_render_with_bricks', 10, 2 );
 
@@ -447,6 +450,33 @@ function members_enable_content_permissions() {
 		add_filter( 'members_post_error_message',                   'wpautop',           25 );
 		add_filter( 'members_post_error_message',                   'do_shortcode',      30 );
 		add_filter( 'members_post_error_message',                   'shortcode_unautop', 35 );
+	}
+}
+
+/**
+ * Marks the page as uncacheable when the main query shows a protected post (directly or through
+ * a protected parent). That covers single posts and archives showing protected excerpts, which
+ * look different to logged-out visitors and to members.
+ *
+ * Runs on `template_redirect`, before any output, so the no-cache headers can still be sent.
+ *
+ * @since  3.2.29
+ * @access public
+ * @global \WP_Query $wp_query
+ * @return void
+ */
+function members_do_not_cache_protected_content() {
+	global $wp_query;
+
+	if ( is_feed() || empty( $wp_query->posts ) ) {
+		return;
+	}
+
+	foreach ( $wp_query->posts as $post ) {
+		if ( $post instanceof \WP_Post && members_post_or_ancestor_has_role_meta( $post->ID ) ) {
+			members_do_not_cache_page( 'content_permissions' );
+			return;
+		}
 	}
 }
 
