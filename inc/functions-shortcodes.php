@@ -76,7 +76,8 @@ function members_is_user_logged_in_shortcode( $attr, $content = null ) {
  */
 function members_not_logged_in_shortcode( $attr, $content = null ) {
 
-	if ( ! is_null( $content ) && ! is_feed() )
+	// Unlike [members_logged_in], this shows in feeds too, so feeds differ by login as well.
+	if ( ! is_null( $content ) )
 		members_do_not_cache_page( 'members_not_logged_in' );
 
 	return is_user_logged_in() || is_null( $content ) ? '' : do_shortcode( $content );

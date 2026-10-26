@@ -488,19 +488,55 @@ function members_do_not_cache_personal_content() {
 		}
 
 		$personal = $check_roles && members_post_or_ancestor_has_role_meta( $post->ID );
+		$content  = members_get_content_with_synced_patterns( $post->post_content );
 
 		foreach ( $shortcodes as $tag ) {
-			$personal = $personal || has_shortcode( $post->post_content, $tag );
+			$personal = $personal || has_shortcode( $content, $tag );
 		}
 
 		// Only the types that show a block to some visitors and not others.
-		$personal = $personal || ( $check_blocks && preg_match( '/"blockPermissionsCondition":"(=|!=)"/', $post->post_content ) && preg_match( '/"blockPermissionsType":"(user-status|role|cap)"/', $post->post_content ) );
+		$personal = $personal || ( $check_blocks && preg_match( '/"blockPermissionsCondition":"(=|!=)"/', $content ) && preg_match( '/"blockPermissionsType":"(user-status|role|cap)"/', $content ) );
 
 		if ( $personal ) {
 			members_do_not_cache_page( 'content' );
 			return;
 		}
 	}
+}
+
+/**
+ * Returns the content with the content of any synced patterns it uses appended, since the post
+ * itself only stores a `<!-- wp:block {"ref":123} /-->` pointer to them. Follows nested patterns,
+ * and skips any pattern already on the current path so a pattern that includes itself can't loop.
+ *
+ * @since  3.2.29
+ * @access public
+ * @param  string  $content  Post content.
+ * @param  array   $seen     Pattern IDs already on the current path.
+ * @return string
+ */
+function members_get_content_with_synced_patterns( $content, $seen = array() ) {
+
+	if ( ! str_contains( $content, '<!-- wp:block' ) ) {
+		return $content;
+	}
+
+	preg_match_all( '/<!-- wp:block \{[^}]*"ref":(\d+)/', $content, $matches );
+
+	foreach ( array_unique( array_map( 'intval', $matches[1] ) ) as $ref ) {
+
+		if ( isset( $seen[ $ref ] ) ) {
+			continue;
+		}
+
+		$pattern = get_post( $ref );
+
+		if ( $pattern instanceof \WP_Post && 'wp_block' === $pattern->post_type ) {
+			$content .= "\n" . members_get_content_with_synced_patterns( $pattern->post_content, $seen + array( $ref => true ) );
+		}
+	}
+
+	return $content;
 }
 
 /**
