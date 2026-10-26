@@ -231,6 +231,9 @@ function members_login_form_shortcode( $attr = [] ) {
     // Merge user attributes with defaults
     $attr = shortcode_atts( $defaults, $attr, 'members_login_form' );
 
+    // Visitors see the form; members see "You are already logged in."
+    members_do_not_cache_page( 'login_form' );
+
     ob_start();
     if ( is_user_logged_in() ) { ?>
         <div class="members-login-form">

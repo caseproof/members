@@ -13,6 +13,9 @@ if (!defined('ABSPATH')) {
 # Enable the content permissions features.
 add_action( 'after_setup_theme', 'members_enable_content_permissions', 0 );
 
+# Keep pages that differ per visitor out of shared caches.
+add_action( 'template_redirect', 'members_do_not_cache_personal_content', 1 );
+
 /**
  * Conditional check to determine if a post any permissions rules assigned
  * to it.
@@ -435,9 +438,6 @@ function members_enable_content_permissions() {
 		// Filter the comments template to make sure comments aren't shown to users without access.
 		add_filter( 'comments_template', 'members_content_permissions_comments', 95 );
 
-		// Pages showing protected posts differ per visitor, so keep them out of shared caches.
-		add_action( 'template_redirect', 'members_do_not_cache_protected_content', 1 );
-
 		// Bricks Builder renders its pages without `the_content`.
 		add_filter( 'bricks/render_with_bricks', 'members_bricks_render_with_bricks', 10, 2 );
 
@@ -454,27 +454,50 @@ function members_enable_content_permissions() {
 }
 
 /**
- * Marks the page as uncacheable when the main query shows a protected post (directly or through
- * a protected parent). That covers single posts and archives showing protected excerpts, which
- * look different to logged-out visitors and to members.
+ * Before any output, marks the page as uncacheable when the main query shows content that differs
+ * per visitor, so the no-cache headers can still be sent (output that's rendered later can only set
+ * `DONOTCACHEPAGE`, which a CDN never sees). It looks for:
  *
- * Runs on `template_redirect`, before any output, so the no-cache headers can still be sent.
+ * - posts protected with Content Permissions, directly or through a protected parent;
+ * - the Members access, logged-in/out, and login form shortcodes;
+ * - blocks with Block Permissions, when that add-on is active.
+ *
+ * Covers single posts and archives. Feeds, robots.txt, the favicon, sitemaps, and 404s are the same
+ * for everyone, so they're skipped.
  *
  * @since  3.2.29
  * @access public
  * @global \WP_Query $wp_query
  * @return void
  */
-function members_do_not_cache_protected_content() {
+function members_do_not_cache_personal_content() {
 	global $wp_query;
 
-	if ( is_feed() || empty( $wp_query->posts ) ) {
+	if ( is_feed() || is_robots() || is_favicon() || is_404() || get_query_var( 'sitemap' ) || empty( $wp_query->posts ) ) {
 		return;
 	}
 
+	$check_roles  = members_content_permissions_enabled();
+	$check_blocks = class_exists( '\Members\BlockPermissions\Block', false );
+	$shortcodes   = array( 'members_access', 'access', 'members_logged_in', 'is_user_logged_in', 'members_not_logged_in', 'members_login_form', 'login-form' );
+
 	foreach ( $wp_query->posts as $post ) {
-		if ( $post instanceof \WP_Post && members_post_or_ancestor_has_role_meta( $post->ID ) ) {
-			members_do_not_cache_page( 'content_permissions' );
+
+		if ( ! $post instanceof \WP_Post ) {
+			continue;
+		}
+
+		$personal = $check_roles && members_post_or_ancestor_has_role_meta( $post->ID );
+
+		foreach ( $shortcodes as $tag ) {
+			$personal = $personal || has_shortcode( $post->post_content, $tag );
+		}
+
+		// Only the types that show a block to some visitors and not others.
+		$personal = $personal || ( $check_blocks && preg_match( '/"blockPermissionsCondition":"(=|!=)"/', $post->post_content ) && preg_match( '/"blockPermissionsType":"(user-status|role|cap)"/', $post->post_content ) );
+
+		if ( $personal ) {
+			members_do_not_cache_page( 'content' );
 			return;
 		}
 	}
@@ -517,6 +540,12 @@ function members_bricks_render_with_bricks( $render, $post_id ) {
 function members_content_permissions_protect( $content ) {
 
 	$post_id = get_the_ID();
+
+	// Protected posts can appear in any loop (related posts, Query Loop blocks, widgets), not just
+	// the main query that members_do_not_cache_personal_content() checks before output.
+	if ( $post_id && ! is_feed() && members_post_or_ancestor_has_role_meta( $post_id ) ) {
+		members_do_not_cache_page( 'content_permissions' );
+	}
 
 	return members_can_current_user_view_post( $post_id ) ? $content : members_get_post_error_message( $post_id );
 }

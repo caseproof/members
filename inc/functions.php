@@ -17,8 +17,11 @@ if (!defined('ABSPATH')) {
  * Marks the current page as personal, so shared caches don't store it.
  *
  * Call this whenever Members renders something that differs between visitors, like protected
- * content or a logged-in-only shortcode. Otherwise a cache that ignores login cookies (such as a
- * CDN "cache everything" rule) can store the logged-out version and serve it to members.
+ * content, a logged-in-only shortcode, or the login form. Otherwise a cache that ignores login
+ * cookies (such as a CDN "cache everything" rule) can store the logged-out version and serve it to
+ * members. The Login Form widget is the one exception: it sits in sidebars on every page, so
+ * marking it would switch off caching for the whole site, and a cached copy only shows a logged-in
+ * member a login form.
  *
  * Defines `DONOTCACHEPAGE`, which page-caching plugins honor, and sends WordPress' no-cache
  * headers if they haven't been sent yet.
@@ -29,6 +32,12 @@ if (!defined('ABSPATH')) {
  * @return void
  */
 function members_do_not_cache_page( $context = '' ) {
+
+	static $done = false;
+
+	if ( $done ) {
+		return;
+	}
 
 	/**
 	 * Filters whether Members marks a personal page as uncacheable. Return false if your cache
@@ -50,6 +59,8 @@ function members_do_not_cache_page( $context = '' ) {
 	if ( ! headers_sent() ) {
 		nocache_headers();
 	}
+
+	$done = true;
 }
 
 /**
