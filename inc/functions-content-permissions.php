@@ -462,8 +462,9 @@ function members_enable_content_permissions() {
  * - the Members access, logged-in/out, and login form shortcodes;
  * - blocks with Block Permissions, when that add-on is active.
  *
- * Covers single posts and archives. Feeds, robots.txt, the favicon, sitemaps, and 404s are the same
- * for everyone, so they're skipped.
+ * Covers single posts, archives, and feeds. In feeds, protected posts and the access and logged-in
+ * shortcodes show the same thing to everyone, so only the rest are checked there. robots.txt, the
+ * favicon, sitemaps, and 404s are the same for everyone, so they're skipped.
  *
  * @since  3.2.29
  * @access public
@@ -473,13 +474,18 @@ function members_enable_content_permissions() {
 function members_do_not_cache_personal_content() {
 	global $wp_query;
 
-	if ( is_feed() || is_robots() || is_favicon() || is_404() || get_query_var( 'sitemap' ) || empty( $wp_query->posts ) ) {
+	if ( is_robots() || is_favicon() || is_404() || get_query_var( 'sitemap' ) || empty( $wp_query->posts ) ) {
 		return;
 	}
 
-	$check_roles  = members_content_permissions_enabled();
+	$is_feed      = is_feed();
+	$check_roles  = ! $is_feed && members_content_permissions_enabled();
 	$check_blocks = class_exists( '\Members\BlockPermissions\Block', false );
-	$shortcodes   = array( 'members_access', 'access', 'members_logged_in', 'is_user_logged_in', 'members_not_logged_in', 'members_login_form', 'login-form' );
+	$shortcodes   = array( 'members_not_logged_in', 'members_login_form', 'login-form' );
+
+	if ( ! $is_feed ) {
+		$shortcodes = array_merge( $shortcodes, array( 'members_access', 'access', 'members_logged_in', 'is_user_logged_in' ) );
+	}
 
 	foreach ( $wp_query->posts as $post ) {
 
@@ -531,7 +537,8 @@ function members_get_content_with_synced_patterns( $content, $seen = array() ) {
 
 		$pattern = get_post( $ref );
 
-		if ( $pattern instanceof \WP_Post && 'wp_block' === $pattern->post_type ) {
+		// Core only renders published patterns without a password.
+		if ( $pattern instanceof \WP_Post && 'wp_block' === $pattern->post_type && 'publish' === $pattern->post_status && '' === $pattern->post_password ) {
 			$content .= "\n" . members_get_content_with_synced_patterns( $pattern->post_content, $seen + array( $ref => true ) );
 		}
 	}
