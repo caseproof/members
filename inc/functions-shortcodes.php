@@ -59,6 +59,9 @@ function members_register_shortcodes() {
  */
 function members_is_user_logged_in_shortcode( $attr, $content = null ) {
 
+	if ( ! is_null( $content ) && ! is_feed() )
+		members_do_not_cache_page( 'members_logged_in' );
+
 	return is_feed() || ! is_user_logged_in() || is_null( $content ) ? '' : do_shortcode( $content );
 }
 
@@ -72,6 +75,10 @@ function members_is_user_logged_in_shortcode( $attr, $content = null ) {
  * @return string
  */
 function members_not_logged_in_shortcode( $attr, $content = null ) {
+
+	// Unlike [members_logged_in], this shows in feeds too, so feeds differ by login as well.
+	if ( ! is_null( $content ) )
+		members_do_not_cache_page( 'members_not_logged_in' );
 
 	return is_user_logged_in() || is_null( $content ) ? '' : do_shortcode( $content );
 }
@@ -108,6 +115,8 @@ function members_access_check_shortcode( $attr, $content = null ) {
 	// If there's no content or if viewing a feed, return an empty string.
 	if ( is_null( $content ) || is_feed() )
 		return '';
+
+	members_do_not_cache_page( 'members_access' );
 
 	$user_can = false;
 
@@ -222,6 +231,9 @@ function members_login_form_shortcode( $attr = [] ) {
     
     // Merge user attributes with defaults
     $attr = shortcode_atts( $defaults, $attr, 'members_login_form' );
+
+    // Visitors see the form; members see "You are already logged in."
+    members_do_not_cache_page( 'login_form' );
 
     ob_start();
     if ( is_user_logged_in() ) { ?>

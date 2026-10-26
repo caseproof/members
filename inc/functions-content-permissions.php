@@ -13,6 +13,9 @@ if (!defined('ABSPATH')) {
 # Enable the content permissions features.
 add_action( 'after_setup_theme', 'members_enable_content_permissions', 0 );
 
+# Keep pages that differ per visitor out of shared caches.
+add_action( 'template_redirect', 'members_do_not_cache_personal_content', 1 );
+
 /**
  * Conditional check to determine if a post any permissions rules assigned
  * to it.
@@ -451,6 +454,112 @@ function members_enable_content_permissions() {
 }
 
 /**
+ * Before any output, marks the page as uncacheable when the main query shows content that differs
+ * per visitor, so the no-cache headers can still be sent (output that's rendered later can only set
+ * `DONOTCACHEPAGE`, which a CDN never sees). It looks for:
+ *
+ * - posts protected with Content Permissions, directly or through a protected parent;
+ * - the Members access, logged-in/out, and login form shortcodes;
+ * - blocks with Block Permissions, when that add-on is active.
+ *
+ * Covers single posts, archives, and feeds. In feeds, protected posts show everyone their error
+ * message, a private feed shows everyone its message, and the access and logged-in shortcodes show
+ * nothing, so only the remaining shortcodes and blocks are checked there, in the content and in
+ * those messages. robots.txt, the favicon, sitemaps, and 404s are the same for everyone, so they're
+ * skipped.
+ *
+ * @access public
+ * @global \WP_Query $wp_query
+ * @return void
+ */
+function members_do_not_cache_personal_content() {
+	global $wp_query;
+
+	if ( is_robots() || is_favicon() || is_404() || get_query_var( 'sitemap' ) || empty( $wp_query->posts ) ) {
+		return;
+	}
+
+	$is_feed      = is_feed();
+	$protects     = members_content_permissions_enabled();
+	$check_roles  = ! $is_feed && $protects;
+	$check_blocks = class_exists( '\Members\BlockPermissions\Block', false );
+	$feed_message = $is_feed && members_is_private_feed() ? (string) members_get_setting( 'private_feed_error' ) : '';
+	$shortcodes   = array( 'members_not_logged_in', 'members_login_form', 'login-form' );
+
+	if ( ! $is_feed ) {
+		$shortcodes = array_merge( $shortcodes, array( 'members_access', 'access', 'members_logged_in', 'is_user_logged_in' ) );
+	}
+
+	foreach ( $wp_query->posts as $post ) {
+
+		if ( ! $post instanceof \WP_Post ) {
+			continue;
+		}
+
+		$personal = $check_roles && members_post_or_ancestor_has_role_meta( $post->ID );
+		$content  = members_get_content_with_synced_patterns( $post->post_content );
+
+		// The feed messages run shortcodes, so a login form in one makes the feed differ by login.
+		if ( $is_feed ) {
+
+			if ( $protects && members_post_or_ancestor_has_role_meta( $post->ID ) ) {
+				$message  = members_get_post_access_message( $post->ID );
+				$content .= "\n" . ( $message ? $message : members_get_setting( 'content_permissions_error' ) );
+			}
+
+			$content .= "\n" . $feed_message;
+		}
+
+		foreach ( $shortcodes as $tag ) {
+			$personal = $personal || has_shortcode( $content, $tag );
+		}
+
+		// Only the types that show a block to some visitors and not others.
+		$personal = $personal || ( $check_blocks && preg_match( '/"blockPermissionsCondition":"(=|!=)"/', $content ) && preg_match( '/"blockPermissionsType":"(user-status|role|cap)"/', $content ) );
+
+		if ( $personal ) {
+			members_do_not_cache_page( 'content' );
+			return;
+		}
+	}
+}
+
+/**
+ * Returns the content with the content of any synced patterns it uses appended, since the post
+ * itself only stores a `<!-- wp:block {"ref":123} /-->` pointer to them. Follows nested patterns,
+ * and skips any pattern already on the current path so a pattern that includes itself can't loop.
+ *
+ * @access public
+ * @param  string  $content  Post content.
+ * @param  array   $seen     Pattern IDs already on the current path.
+ * @return string
+ */
+function members_get_content_with_synced_patterns( $content, $seen = array() ) {
+
+	if ( ! str_contains( $content, '<!-- wp:block' ) ) {
+		return $content;
+	}
+
+	preg_match_all( '/<!-- wp:block \{[^}]*"ref":(\d+)/', $content, $matches );
+
+	foreach ( array_unique( array_map( 'intval', $matches[1] ) ) as $ref ) {
+
+		if ( isset( $seen[ $ref ] ) ) {
+			continue;
+		}
+
+		$pattern = get_post( $ref );
+
+		// Core only renders published patterns without a password.
+		if ( $pattern instanceof \WP_Post && 'wp_block' === $pattern->post_type && 'publish' === $pattern->post_status && '' === $pattern->post_password ) {
+			$content .= "\n" . members_get_content_with_synced_patterns( $pattern->post_content, $seen + array( $ref => true ) );
+		}
+	}
+
+	return $content;
+}
+
+/**
  * Stops Bricks Builder from rendering a post's Bricks content for users who can't view the post.
  *
  * Bricks then falls back to the regular WordPress template, which runs `the_content` and shows
@@ -487,6 +596,12 @@ function members_bricks_render_with_bricks( $render, $post_id ) {
 function members_content_permissions_protect( $content ) {
 
 	$post_id = get_the_ID();
+
+	// Protected posts can appear in any loop (related posts, Query Loop blocks, widgets), not just
+	// the main query that members_do_not_cache_personal_content() checks before output.
+	if ( $post_id && ! is_feed() && members_post_or_ancestor_has_role_meta( $post_id ) ) {
+		members_do_not_cache_page( 'content_permissions' );
+	}
 
 	return members_can_current_user_view_post( $post_id ) ? $content : members_get_post_error_message( $post_id );
 }

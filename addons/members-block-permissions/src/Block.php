@@ -64,6 +64,11 @@ class Block {
 		// Gets the permissions type.
 		$type = $block['attrs']['blockPermissionsType'];
 
+		// These types show the block to some visitors and not others.
+		if ( in_array( $type, [ 'user-status', 'role', 'cap' ], true ) && function_exists( 'members_do_not_cache_page' ) ) {
+			members_do_not_cache_page( 'block_permissions' );
+		}
+
 		// Assume that we will render this block by default.
 		$maybe_render = true;
 
