@@ -468,7 +468,6 @@ function members_enable_content_permissions() {
  * those messages. robots.txt, the favicon, sitemaps, and 404s are the same for everyone, so they're
  * skipped.
  *
- * @since  3.2.29
  * @access public
  * @global \WP_Query $wp_query
  * @return void
@@ -530,7 +529,6 @@ function members_do_not_cache_personal_content() {
  * itself only stores a `<!-- wp:block {"ref":123} /-->` pointer to them. Follows nested patterns,
  * and skips any pattern already on the current path so a pattern that includes itself can't loop.
  *
- * @since  3.2.29
  * @access public
  * @param  string  $content  Post content.
  * @param  array   $seen     Pattern IDs already on the current path.
