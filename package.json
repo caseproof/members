@@ -4,12 +4,15 @@
   "description": "Members plugin for WordPress",
   "main": "index.js",
   "scripts": {
-    "build": "gulp build && npm run build:block-permissions",
+    "build": "gulp build && npm run build:block-permissions && npm run build:ai",
     "build:styles": "gulp styles",
     "build:scripts": "gulp scripts",
     "watch": "gulp",
     "build:block-permissions": "wp-scripts build editor=./src-js/block-permissions/editor.js upsell=./src-js/block-permissions/upsell.js --output-path=js/build/block-permissions",
-    "watch:block-permissions": "wp-scripts start editor=./src-js/block-permissions/editor.js upsell=./src-js/block-permissions/upsell.js --output-path=js/build/block-permissions"
+    "watch:block-permissions": "wp-scripts start editor=./src-js/block-permissions/editor.js upsell=./src-js/block-permissions/upsell.js --output-path=js/build/block-permissions",
+    "build:ai": "wp-scripts build index=./src-js/ai/index.js --output-path=js/build/ai",
+    "watch:ai": "wp-scripts start index=./src-js/ai/index.js --output-path=js/build/ai",
+    "test:js": "wp-scripts test-unit-js src-js"
   },
   "repository": {
     "type": "git",
@@ -24,6 +27,7 @@
   "devDependencies": {
     "@babel/plugin-transform-react-jsx": "^7.29.7",
     "@babel/runtime": "^8.0.8",
+    "@wordpress/i18n": "^6.30.0",
     "@wordpress/scripts": "^28.6.0",
     "gulp": "^5.0.0",
     "gulp-autoprefixer": "^8.0.0",

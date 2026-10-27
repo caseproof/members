@@ -1,0 +1,289 @@
+.members-ai {
+	max-width: 960px;
+	margin-top: 20px;
+
+	&__panel {
+		background: #fff;
+		border: 1px solid #dcdcde;
+		border-radius: 4px;
+		padding: 8px 24px 24px;
+	}
+
+	&__loading {
+		display: flex;
+		justify-content: center;
+		padding: 40px;
+	}
+
+	&__section {
+		padding: 20px 0;
+		border-bottom: 1px solid #f0f0f1;
+
+		&:last-of-type {
+			border-bottom: 0;
+		}
+	}
+
+	&__section-head {
+		margin-bottom: 16px;
+
+		h2 {
+			margin: 0 0 4px;
+			font-size: 15px;
+		}
+
+		p {
+			margin: 0;
+			max-width: 720px;
+		}
+	}
+
+	&__muted {
+		color: #646970;
+	}
+
+	&__error {
+		color: #b32d2e;
+	}
+
+	&__ok {
+		color: #00762f;
+	}
+
+	&__ext {
+		font-size: 14px;
+		width: 14px;
+		height: 14px;
+		margin-left: 2px;
+		vertical-align: text-bottom;
+		text-decoration: none;
+	}
+
+	&__card {
+		border: 1px solid #dcdcde;
+		border-radius: 4px;
+		padding: 16px;
+		margin-bottom: 16px;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 16px;
+		flex-wrap: wrap;
+	}
+
+	&__card-head {
+		display: flex;
+		gap: 12px;
+		align-items: flex-start;
+		flex: 1 1 360px;
+
+		p {
+			margin: 4px 0 0;
+		}
+	}
+
+	&__card-title {
+		margin: 0;
+		font-size: 14px;
+	}
+
+	&__card-icon {
+		flex: 0 0 auto;
+		width: 32px;
+		height: 32px;
+		line-height: 32px;
+		font-size: 20px;
+		text-align: center;
+		border-radius: 50%;
+		background: #f0f0f1;
+		color: #50575e;
+
+		&.is-ready {
+			background: #edfaef;
+			color: #00762f;
+		}
+
+		&.is-info {
+			background: #f0f6fc;
+			color: #2271b1;
+		}
+	}
+
+	&__intro {
+		margin: 0 0 12px;
+
+		p {
+			margin: 0 0 4px;
+		}
+	}
+
+	&__field {
+		display: grid;
+		grid-template-columns: 220px 1fr;
+		gap: 16px;
+		padding: 12px 0;
+
+		@media (max-width: 782px) {
+			grid-template-columns: 1fr;
+			gap: 8px;
+		}
+	}
+
+	&__field-label {
+		font-weight: 600;
+	}
+
+	&__field-body {
+		min-width: 0;
+	}
+
+	&__buttons {
+		display: flex;
+		gap: 8px;
+		flex-wrap: wrap;
+	}
+
+	&__code {
+		display: flex;
+		align-items: flex-start;
+		gap: 8px;
+
+		pre {
+			flex: 1 1 auto;
+			min-width: 0;
+			margin: 0;
+			padding: 12px;
+			background: #f6f7f7;
+			border: 1px solid #dcdcde;
+			border-radius: 4px;
+			overflow-x: auto;
+			font-size: 12px;
+		}
+	}
+
+	&__placeholder {
+		background: #fcf9e8;
+		outline: 1px dashed #dba617;
+	}
+
+	&__secret {
+		background: #edfaef;
+	}
+
+	&__url {
+		display: flex;
+		gap: 8px;
+		flex-wrap: wrap;
+	}
+
+	&__switch {
+		padding: 10px 0;
+		border-bottom: 1px solid #f6f7f7;
+
+		&:last-child {
+			border-bottom: 0;
+		}
+	}
+
+	&__badge {
+		display: inline-block;
+		margin-left: 6px;
+		padding: 0 6px;
+		border-radius: 10px;
+		font-size: 11px;
+		font-weight: 400;
+		line-height: 18px;
+		background: #f0f6fc;
+		color: #2271b1;
+
+		&.is-write {
+			background: #fcf0f1;
+			color: #b32d2e;
+		}
+	}
+
+	&__examples .components-button.is-link {
+		font-size: 12px;
+	}
+
+	&__log {
+		margin-top: 12px;
+
+		td {
+			vertical-align: top;
+		}
+	}
+
+	&__outcome {
+		display: inline-block;
+		padding: 0 6px;
+		border-radius: 10px;
+		font-size: 11px;
+		line-height: 18px;
+		background: #f0f0f1;
+
+		&.is-ok {
+			background: #edfaef;
+			color: #00762f;
+		}
+
+		&.is-error,
+		&.is-refused {
+			background: #fcf0f1;
+			color: #b32d2e;
+		}
+
+		&.is-confirm {
+			background: #fcf9e8;
+			color: #8a6d00;
+		}
+	}
+
+	&__details {
+		margin-top: 4px;
+
+		pre {
+			white-space: pre-wrap;
+			word-break: break-word;
+			max-height: 200px;
+			overflow: auto;
+			font-size: 11px;
+		}
+	}
+
+	&__pagination {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		margin-top: 12px;
+	}
+
+	&__snackbars {
+		position: fixed;
+		bottom: 24px;
+		left: 50%;
+		transform: translateX(-50%);
+		z-index: 100000;
+	}
+}
+
+.members-ai__popover ul {
+	margin: 0;
+	padding: 12px 16px;
+	max-width: 320px;
+
+	li {
+		margin: 0 0 6px;
+	}
+}
+
+.members-ai__modal-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+	margin-top: 16px;
+}
+
+.members-ai-snackbar.is-error .components-snackbar {
+	background: #b32d2e;
+}

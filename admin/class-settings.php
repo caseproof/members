@@ -128,6 +128,7 @@ final class Settings_Page {
 		require_once( members_plugin()->dir . 'admin/views/class-view.php'         );
 		require_once( members_plugin()->dir . 'admin/views/class-view-general.php' );
 		require_once( members_plugin()->dir . 'admin/views/class-view-addons.php'  );
+		require_once( members_plugin()->dir . 'admin/views/class-view-ai.php'      );
 	}
 
 	/**
@@ -169,37 +170,26 @@ final class Settings_Page {
 			) );
 		}
 
-		// Grab the currently active add-ons
-		$active_addons = get_option( 'members_active_addons', array() );
+		$activate = ! in_array( $addon, (array) get_option( 'members_active_addons', array() ), true );
+		$result   = members_plugin()->set_addon_active( $addon, $activate );
 
-		if ( ! in_array( $addon, $active_addons ) ) { // Activate the addon
-			if ( ! members_plugin()->is_valid_addon( $addon ) ) {
-				wp_send_json_error( array(
-					'msg' => esc_html__( 'Invalid add-on.', 'members' )
-				) );
-			}
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( array(
+				'msg' => $result->get_error_message()
+			) );
+		}
 
-			$active_addons[] = $addon;
-			$response = array(
+		$response = $activate
+			? array(
 				'status' => 'active',
 				'action_label' => esc_html__( 'Active', 'members' ),
 				'msg' => esc_html__( 'Add-on activated', 'members' )
-			);
-
-			// Run the add-on's activation hook
-			members_plugin()->run_addon_activator( $addon );
-
-		} else { // Deactivate the addon
-			$key = array_search( $addon, $active_addons );
-			unset( $active_addons[$key] );
-			$response = array(
+			)
+			: array(
 				'status' => 'inactive',
 				'action_label' => esc_html__( 'Activate', 'members' ),
 				'msg' => esc_html__( 'Add-on deactivated', 'members' )
 			);
-		}
-
-		update_option( 'members_active_addons', $active_addons );
 
 		wp_send_json_success( $response );
 	}

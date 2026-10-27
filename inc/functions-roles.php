@@ -628,3 +628,196 @@ function members_untrack_created_role( $role ) {
 		update_option( 'members_created_roles', $roles );
 	}
 }
+
+/**
+ * Function for safely deleting a role and transferring the deleted role's users to the default
+ * role.  Note that this function can be extremely intensive.  Whenever a role is deleted, it's
+ * best for the site admin to assign the user's of the role to a different role beforehand.
+ *
+ * @since  0.2.0
+ * @access public
+ * @param  string  $role
+ * @return void
+ */
+function members_delete_role( $role ) {
+
+	// Get the default role.
+	$default_role = get_option( 'default_role' );
+
+	// Don't delete the default role. Site admins should change the default before attempting to delete the role.
+	if ( $role == $default_role )
+		return;
+
+	// Get all users with the role to be deleted.
+	$users = get_users( array( 'role' => $role ) );
+
+	// Check if there are any users with the role we're deleting.
+	if ( is_array( $users ) ) {
+
+		// If users are found, loop through them.
+		foreach ( $users as $user ) {
+
+			// If the user has the role and no other roles, set their role to the default.
+			if ( $user->has_cap( $role ) && 1 >= count( $user->roles ) )
+				$user->set_role( $default_role );
+
+			// Else, remove the role.
+			else if ( $user->has_cap( $role ) )
+				$user->remove_role( $role );
+		}
+	}
+
+	// Remove the role.
+	remove_role( $role );
+
+	// Stop tracking as Members-created (if it was).
+	members_untrack_created_role( $role );
+
+	// Remove the role from the role factory.
+	members_unregister_role( $role );
+}
+
+/**
+ * Creates a role and tracks it as created by Members. Shared by the New Role screen and the
+ * AI (MCP) abilities.
+ *
+ * @since  3.3.0
+ * @access public
+ * @param  string  $role   Role slug. Sanitized with members_sanitize_role().
+ * @param  string  $label  Role name shown in the admin.
+ * @param  array   $caps   Capability => bool (true grants, false denies).
+ * @return string|WP_Error The new role's slug, or an error.
+ */
+function members_create_role( $role, $label, $caps = array() ) {
+
+	$label = wp_strip_all_tags( (string) $label );
+	$role  = members_sanitize_role( $role ? $role : $label );
+
+	if ( ! $role ) {
+		return new WP_Error( 'members_invalid_role', esc_html__( 'You must enter a valid role.', 'members' ) );
+	}
+
+	if ( ! $label ) {
+		return new WP_Error( 'members_invalid_role_name', esc_html__( 'You must enter a valid role name.', 'members' ) );
+	}
+
+	if ( members_role_exists( $role ) || get_role( $role ) ) {
+		/* translators: %s: role slug. */
+		return new WP_Error( 'members_duplicate_role', sprintf( esc_html__( 'The %s role already exists.', 'members' ), $role ) );
+	}
+
+	$clean = array();
+
+	foreach ( (array) $caps as $cap => $grant ) {
+		$cap = members_sanitize_cap( $cap );
+
+		if ( $cap && 'do_not_allow' !== $cap && ! in_array( $cap, members_get_hidden_caps(), true ) ) {
+			$clean[ $cap ] = (bool) $grant;
+		}
+	}
+
+	add_role( $role, $label, $clean );
+
+	members_register_role( $role, array( 'label' => $label, 'caps' => $clean ) );
+
+	// Track as created by Members UI (for reset-roles to only remove these).
+	members_track_created_role( $role );
+
+	// Action hook for when a role is added.
+	do_action( 'members_role_added', $role );
+
+	return $role;
+}
+
+/**
+ * Grants, denies and/or removes capabilities on a role, and optionally renames it. Shared by the
+ * AI (MCP) abilities; mirrors what the Edit Role screen does after saving.
+ *
+ * Hidden caps (see members_get_hidden_caps()) are never touched. A cap listed in more than one
+ * list wins in this order: remove, deny, grant.
+ *
+ * @since  3.3.0
+ * @access public
+ * @param  string  $role    Role slug.
+ * @param  array   $grant   Caps to grant.
+ * @param  array   $deny    Caps to explicitly deny.
+ * @param  array   $remove  Caps to clear (neither granted nor denied).
+ * @param  string  $label   New role name, or '' to keep it.
+ * @return true|WP_Error
+ */
+function members_update_role_caps( $role, $grant = array(), $deny = array(), $remove = array(), $label = '' ) {
+	global $wp_roles;
+
+	$role_obj = get_role( $role );
+
+	if ( ! $role_obj ) {
+		return new WP_Error( 'members_no_role', esc_html__( 'The requested role does not exist.', 'members' ) );
+	}
+
+	$hidden = members_get_hidden_caps();
+	$clean  = static function ( $caps ) use ( $hidden ) {
+		$out = array();
+		foreach ( (array) $caps as $cap ) {
+			$cap = members_sanitize_cap( $cap );
+			if ( $cap && 'do_not_allow' !== $cap && ! in_array( $cap, $hidden, true ) ) {
+				$out[] = $cap;
+			}
+		}
+		return array_values( array_unique( $out ) );
+	};
+
+	$remove = $clean( $remove );
+	$deny   = array_diff( $clean( $deny ), $remove );
+	$grant  = array_diff( $clean( $grant ), $remove, $deny );
+
+	foreach ( $grant as $cap ) {
+		$role_obj->add_cap( $cap );
+	}
+
+	foreach ( $deny as $cap ) {
+		$role_obj->add_cap( $cap, false );
+	}
+
+	foreach ( $remove as $cap ) {
+		$role_obj->remove_cap( $cap );
+	}
+
+	$label = wp_strip_all_tags( (string) $label );
+
+	if ( $label && isset( $wp_roles->roles[ $role ] ) ) {
+		$wp_roles->roles[ $role ]['name'] = $label;
+		$wp_roles->role_names[ $role ]    = $label;
+		update_option( $wp_roles->role_key, $wp_roles->roles );
+	}
+
+	// New caps go in the "all" and "custom" groups, like on the Edit Role screen.
+	$known = members_get_capabilities();
+	foreach ( members_get_cap_groups() as $group ) {
+		$known = array_merge( $known, $group->caps );
+	}
+
+	foreach ( array( 'all', 'custom' ) as $group_name ) {
+		$group = members_get_cap_group( $group_name );
+		if ( $group ) {
+			$group->caps = array_values( array_unique( array_merge( $group->caps, array_diff( array_merge( $grant, $deny ), $known ) ) ) );
+			sort( $group->caps );
+		}
+	}
+
+	$members_role = members_get_role( $role );
+
+	members_unregister_role( $role );
+
+	members_register_role(
+		$role,
+		array(
+			'label' => $label ? $label : ( $members_role ? $members_role->get( 'label' ) : $role ),
+			'caps'  => get_role( $role )->capabilities,
+		)
+	);
+
+	// Action hook for when a role is updated.
+	do_action( 'members_role_updated', $role );
+
+	return true;
+}

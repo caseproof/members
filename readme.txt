@@ -2,7 +2,7 @@
 
 Contributors: supercleanse, cartpauj
 Donate link: https://memberpress.com/plans/pricing/?utm_source=members_plugin&utm_medium=link&utm_campaign=readme&utm_content=donation_link
-Tags: permissions, memberships, roles, capabilities, access
+Tags: permissions, memberships, roles, capabilities, ai
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
@@ -10,13 +10,39 @@ Stable tag: 3.2.28
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-The best WordPress membership and user role editor plugin. User Roles & Capabilities editor helps you restrict content in just a few clicks.
+The best WordPress membership and user role editor plugin. Edit roles, restrict content, and now manage it all with an AI assistant.
 
 == Description ==
 
 Members is a roles and capabilities based WordPress membership plugin. It gives your users the ultimate member experience by giving you powerful tools to add roles and capabilities and assign them to your users.
 
 Members allows you to set permissions to restrict content on your site by providing a simple user interface (UI) for WordPress' powerful roles and capabilities system, which has traditionally only been available to developers who know how to code this by hand.
+
+### New: manage roles and access with AI 🤖
+
+You can now ask an AI assistant to handle your roles, capabilities and content restrictions for you. Members works with **Claude Desktop**, **Claude Code**, **Cursor**, **VS Code**, **OpenAI Codex** and other apps that can run local MCP (Model Context Protocol) servers. Connect it once, then just ask:
+
+* *"Why can't Jane see the Members Area page?"*
+* *"Create a Course Manager role that can edit pages but not publish them."*
+* *"Restrict the posts in my Premium category to Subscribers."*
+* *"Make jane@example.com an Editor."*
+* *"Which roles can publish pages?"*
+* *"Keep Subscribers out of wp-admin."*
+
+It all happens on your own WordPress site, using your own account's permissions.
+
+**Already connected Claude or another assistant to your WordPress site?** Then you're done. Members shows up there on its own.
+
+**It's free, and you stay in charge:**
+
+* **Read-only to start.** Out of the box it can look things up, but it can't change anything until you let it.
+* **You decide what's allowed.** Switch whole areas on or off, like "Manage roles" or "Protect content", and turn read-only back on any time.
+* **It double-checks risky changes.** Before it takes powers away from people, deletes a role, makes content public or changes key settings, it tells you exactly what will happen and asks "Are you really sure?"
+* **It won't lock you out.** Any change that would cost you your admin access, or your ability to undo it, is always refused.
+* **You can see what it did.** An activity log shows every action from the last 90 days, with the old values so you can undo a change.
+* **No extra accounts or fees from us.** It runs on the free official WordPress MCP Adapter plugin, and Members can install that for you in one click.
+
+To set it up, go to **Members → Settings → AI (MCP)**, install the MCP Adapter plugin, click **Create password & fill it in**, and paste the result into your assistant. It takes a couple of minutes. Needs WordPress 6.9 or newer.
 
 ### What people use Members for
 
@@ -40,6 +66,7 @@ Members allows you to set permissions to restrict content on your site by provid
 * **Private Site:** You can make your site and its feed completely private if you want. Works with custom login URLs from plugins like WP Ghost and WPS Hide Login.
 * **Administrator Rescue (Magic Link):** If you lose access to the WordPress admin (e.g. after editing roles), you can request a secure, time-limited link by email to restore your Administrator role and Members capabilities, with no support ticket or database access required.
 * **Reset Roles:** Put the five default WordPress roles back to their original capabilities in one click.
+* **AI Assistants (MCP):** Let Claude Desktop, Claude Code, Cursor, VS Code, OpenAI Codex or another MCP-compatible assistant look up and manage roles, users' roles, content restrictions, settings and add-ons. Read-only mode, on/off switches, "are you sure?" checks and an activity log keep you in control.
 * **Plugin Integration:** Members is highly recommended by other WordPress developers. Many existing plugins integrate their custom roles and capabilities directly into it.
 
 #### Seamless MemberPress Integration
@@ -187,6 +214,16 @@ When the plugin is first activated, it runs a script that sets specific capabili
 
 Also check that **Role Manager** is turned on under **Members > Settings**. If you do have the administrator role and the role manager is still inaccessible to you, deactivate the plugin, then reactivate it.
 
+### Is it safe to let an AI assistant manage my roles?
+
+You decide how much it can do. It starts in read-only mode, so it can only look things up until you turn that off in **Members → Settings → AI (MCP)**. You can also switch off whole areas, like managing users' roles. It can only do what your own account is allowed to do.
+
+When changes are allowed, risky ones (taking capabilities away from people, deleting a role, making restricted content public, turning on a private site and so on) aren't made straight away. The assistant first gets a plain-words warning to show you, and the change only happens if you say yes. Changes that would lock you out of your own site are always refused. Every action is listed in the activity log on that tab, with the old values.
+
+### Which AI assistants work with Members?
+
+Any app that can run local MCP (Model Context Protocol) servers, including Claude Desktop, Claude Code, Cursor, VS Code and OpenAI Codex. They connect through the free official WordPress MCP Adapter plugin, which needs WordPress 6.9 or newer. Apps that only connect to remote servers with OAuth sign-in, like ChatGPT and Claude on the web, don't work yet.
+
 ### How do I use Administrator Rescue (Magic Link) if I'm locked out?
 
 If you can no longer access the WordPress admin (for example, after changing your role or capabilities), you can restore your Administrator access yourself:
@@ -224,6 +261,11 @@ So, we just built something we actually enjoyed using.
 5. Select multiple roles per user (edit user screen)
 
 == Changelog ==
+
+= 3.3.0 =
+* New: AI assistants (MCP). Claude Desktop, Claude Code, Cursor, VS Code, OpenAI Codex and other MCP apps can look up and manage roles, capabilities, users' roles, content restrictions, settings and add-ons (plus Admin Access, Role Hierarchy, Role Levels and Block Permissions when those add-ons are on), through the free official WordPress MCP Adapter plugin. Needs WordPress 6.9+.
+* New: AI (MCP) settings tab with one-click MCP Adapter install, one-click Application Password setup, read-only mode (on by default), on/off switches for each area, and a 90-day activity log.
+* New: Risky AI changes ask "Are you really sure?" first, and changes that would lock you out of your site are always refused.
 
 = 3.2.28 =
 * Fixed: Redirect loop on private sites when the login page has been moved (e.g. WP Ghost).

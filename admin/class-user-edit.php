@@ -144,44 +144,13 @@ final class User_Edit {
 		// Create a new user object.
 		//$user = new WP_User( $user_id );
 
-		// If we have an array of roles.
-		if ( ! empty( $_POST['members_user_roles'] ) ) {
+		// Sanitize the posted roles. The list sanitizer (rather than a raw array_map over
+		// members_sanitize_role) drops non-string entries, so a crafted nested-array payload
+		// cannot fatal members_sanitize_role() with a TypeError on PHP 8. Empty clears every
+		// editable role.
+		$new_roles = ! empty( $_POST['members_user_roles'] ) ? wp_unslash( (array) $_POST['members_user_roles'] ) : array();
 
-			// Get the current user roles.
-			$old_roles = (array) $old_user_data->roles;
-
-			// Sanitize the posted roles. Using the list sanitizer (rather than a raw array_map
-			// over members_sanitize_role) drops non-string entries, so a crafted nested-array
-			// payload cannot fatal members_sanitize_role() with a TypeError on PHP 8.
-			$new_roles = members_sanitize_access_role_meta_list( wp_unslash( (array) $_POST['members_user_roles'] ) );
-
-			// Loop through the posted roles.
-			foreach ( $new_roles as $new_role ) {
-
-				// If the user doesn't already have the role, add it.
-				if ( members_is_role_editable( $new_role ) && ! in_array( $new_role, (array) $old_user_data->roles ) )
-					$old_user_data->add_role( $new_role );
-			}
-
-			// Loop through the current user roles.
-			foreach ( $old_roles as $old_role ) {
-
-				// If the role is editable and not in the new roles array, remove it.
-				if ( members_is_role_editable( $old_role ) && ! in_array( $old_role, $new_roles ) )
-					$old_user_data->remove_role( $old_role );
-			}
-
-		// If the posted roles are empty.
-		} else {
-
-			// Loop through the current user roles.
-			foreach ( (array) $old_user_data->roles as $old_role ) {
-
-				// Remove the role if it is editable.
-				if ( members_is_role_editable( $old_role ) )
-					$old_user_data->remove_role( $old_role );
-			}
-		}
+		members_set_user_roles( $old_user_data, $new_roles );
 	}
 
 	/**
