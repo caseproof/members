@@ -6,7 +6,7 @@ Tags: permissions, memberships, roles, capabilities, ai
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 3.2.28
+Stable tag: 3.3.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -266,6 +266,8 @@ So, we just built something we actually enjoyed using.
 * New: AI assistants (MCP). Claude Desktop, Claude Code, Cursor, VS Code, OpenAI Codex and other MCP apps can look up and manage roles, capabilities, users' roles, content restrictions, settings and add-ons (plus Admin Access, Role Hierarchy, Role Levels and Block Permissions when those add-ons are on), through the free official WordPress MCP Adapter plugin. Needs WordPress 6.9+.
 * New: AI (MCP) settings tab with one-click MCP Adapter install, one-click Application Password setup, read-only mode (on by default), on/off switches for each area, and a 90-day activity log.
 * New: Risky AI changes ask "Are you really sure?" first, and changes that would lock you out of your site are always refused.
+* Fixed: Logged-in members could see the "no permission" message on sites that use page caching or a CDN (a regression in 3.2.28).
+* Fixed: Block Permissions now defers to MemberPress when it is active, and Role Hierarchy works for guests.
 
 = 3.2.28 =
 * Fixed: Redirect loop on private sites when the login page has been moved (e.g. WP Ghost).
