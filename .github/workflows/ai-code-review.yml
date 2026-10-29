@@ -63,7 +63,10 @@
 #   The team's OpenRouter API key. Sync writes that secret name into this file in place of the
 #     OPENROUTER_API_KEY placeholder. The install step imports the key with
 #     `opencode auth import` for later steps in that job.
-#   CSPF_REPO_READ_PAT — PAT used by the OpenCode install step to clone caseproof-ai-plugins.
+#   AI_CODE_REVIEW_READ_APP_ID — organization variable. App id for the read-only app
+#     installed on caseproof-ai-plugins.
+#   AI_CODE_REVIEW_READ_APP_PKEY — organization secret. Private key for that app.
+#     The OpenCode install step clones caseproof-ai-plugins with its token.
 #   AI_CODE_REVIEW_PR_WRITE — PAT for the service bot (cspf-services). Pull requests: write only.
 #     Used to submit the review as the bot, not github-actions[bot].
 #   AI_REVIEW_ANALYTICS_CF_ACCESS_CLIENT_ID — Cloudflare Access client id for the analytics write token.
@@ -195,11 +198,20 @@ jobs:
           persist-credentials: false
           ref: ${{ steps.meta.outputs.head_sha }}
 
+      - name: Generate a token to read caseproof-ai-plugins
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2.2.2
+        id: plugins-read-token
+        with:
+          app-id: ${{ vars.AI_CODE_REVIEW_READ_APP_ID }}
+          private-key: ${{ secrets.AI_CODE_REVIEW_READ_APP_PKEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: caseproof-ai-plugins
+
       - name: Install OpenCode & Caseproof AI Plugins
         uses: caseproof/org-admin/.github/actions/install-opencode@main
         with:
           openrouter-api-key: ${{ secrets.MC_OPENROUTER_API_KEY }}
-          repo-token: ${{ secrets.CSPF_REPO_READ_PAT }}
+          repo-token: ${{ steps.plugins-read-token.outputs.token }}
           plugins: devkit
 
       - name: Prefetch prior review threads
@@ -462,11 +474,20 @@ jobs:
           fi
           echo "Merge model: $MERGE_SLUG $MERGE_MODEL"
 
+      - name: Generate a token to read caseproof-ai-plugins
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2.2.2
+        id: plugins-read-token
+        with:
+          app-id: ${{ vars.AI_CODE_REVIEW_READ_APP_ID }}
+          private-key: ${{ secrets.AI_CODE_REVIEW_READ_APP_PKEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: caseproof-ai-plugins
+
       - name: Install OpenCode & Caseproof AI Plugins
         uses: caseproof/org-admin/.github/actions/install-opencode@main
         with:
           openrouter-api-key: ${{ secrets.MC_OPENROUTER_API_KEY }}
-          repo-token: ${{ secrets.CSPF_REPO_READ_PAT }}
+          repo-token: ${{ steps.plugins-read-token.outputs.token }}
           plugins: devkit
 
       - name: Merge reviews
