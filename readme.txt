@@ -6,7 +6,7 @@ Tags: permissions, memberships, roles, capabilities, ai
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 3.3.0
+Stable tag: 3.3.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -261,6 +261,11 @@ So, we just built something we actually enjoyed using.
 5. Select multiple roles per user (edit user screen)
 
 == Changelog ==
+
+= 3.3.1 =
+* Security: Content Permissions now protect posts shown in the Latest Posts block's full-content mode. Thanks to Nathan Cross (CyberBadger) for reporting this.
+* Security: Comments on restricted posts are now hidden in the Latest Comments block. Thanks to Nathan Cross (CyberBadger) for reporting this.
+* Security: Fixed a fatal error when a Block Permissions block was saved with an invalid message or capability. Thanks to Nathan Cross (CyberBadger) for reporting this.
 
 = 3.3.0 =
 * New: AI assistants (MCP). Claude Desktop, Claude Code, Cursor, VS Code, OpenAI Codex and other MCP apps can look up and manage roles, capabilities, users' roles, content restrictions, settings and add-ons (plus Admin Access, Role Hierarchy, Role Levels and Block Permissions when those add-ons are on), through the free official WordPress MCP Adapter plugin. Needs WordPress 6.9+.
