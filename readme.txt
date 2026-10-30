@@ -5,7 +5,7 @@ Donate link: https://memberpress.com/plans/pricing/?utm_source=members_plugin&ut
 Tags: permissions, memberships, roles, capabilities, ai
 Requires at least: 6.0
 Tested up to: 7.1
-Requires PHP: 7.4
+Requires PHP: 8.0
 Stable tag: 3.3.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -206,7 +206,7 @@ If you have a multisite installation, only Super Admins can create, edit, and de
 
 ### Minimum PHP requirements.
 
-Members requires PHP 7.4 or later.
+Members requires PHP 8.0 or later.
 
 ### I can't access the "Role Manager" features.
 
@@ -263,6 +263,7 @@ So, we just built something we actually enjoyed using.
 == Changelog ==
 
 = 3.3.1 =
+* Changed: Now requires PHP 8.0 minimum.
 * Security: Content Permissions now protect posts shown in the Latest Posts block's full-content mode. Thanks to Nathan Cross (CyberBadger) for reporting this.
 * Security: Comments on restricted posts are now hidden in the Latest Comments block. Thanks to Nathan Cross (CyberBadger) for reporting this.
 * Security: Fixed a fatal error when a Block Permissions block was saved with an invalid message or capability. Thanks to Nathan Cross (CyberBadger) for reporting this.
