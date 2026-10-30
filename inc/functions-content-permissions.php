@@ -433,7 +433,13 @@ function members_enable_content_permissions() {
 		add_filter( 'get_the_excerpt',  'members_content_permissions_protect', 95 );
 		add_filter( 'the_excerpt',      'members_content_permissions_protect', 95 );
 		add_filter( 'the_content_feed', 'members_content_permissions_protect', 95 );
-		add_filter( 'get_comment_text', 'members_content_permissions_protect', 95 );
+
+		// Check comments against their own post, not the page showing them (e.g. Latest Comments block).
+		add_filter( 'get_comment_text',    'members_content_permissions_protect_comment', 95, 2 );
+		add_filter( 'get_comment_excerpt', 'members_content_permissions_protect_comment', 95, 2 );
+
+		// The Latest Posts block's full-content mode renders posts without `the_content`.
+		add_filter( 'register_block_type_args', 'members_protect_latest_posts_block', 10, 2 );
 
 		// Filter the comments template to make sure comments aren't shown to users without access.
 		add_filter( 'comments_template', 'members_content_permissions_comments', 95 );
@@ -604,6 +610,99 @@ function members_content_permissions_protect( $content ) {
 	}
 
 	return members_can_current_user_view_post( $post_id ) ? $content : members_get_post_error_message( $post_id );
+}
+
+/**
+ * Denies/Allows access to a comment's text depending on whether the user can view the post the
+ * comment was left on. Comments can be listed away from their post (e.g. the Latest Comments block),
+ * so the check uses the comment's own post rather than the post being viewed.
+ *
+ * @since  3.3.1
+ * @access public
+ * @param  string               $text     Comment text or excerpt.
+ * @param  WP_Comment|int|null  $comment  Comment object or ID.
+ * @return string
+ */
+function members_content_permissions_protect_comment( $text, $comment = null ) {
+
+	$comment = get_comment( $comment );
+	$post_id = $comment ? (int) $comment->comment_post_ID : get_the_ID();
+
+	if ( $post_id && members_post_or_ancestor_has_role_meta( $post_id ) ) {
+		members_do_not_cache_page( 'content_permissions' );
+	}
+
+	return members_can_current_user_view_post( $post_id ) ? $text : members_get_post_error_message( $post_id );
+}
+
+/**
+ * Wraps the core Latest Posts block's render callback so its full-content mode can't show posts
+ * the user can't view. That mode renders each post's blocks without running `the_content`, so
+ * while it renders, the top-level blocks of a protected post are swapped for the error message.
+ *
+ * @since  3.3.1
+ * @access public
+ * @param  array   $args  Block type arguments.
+ * @param  string  $name  Block type name.
+ * @return array
+ */
+function members_protect_latest_posts_block( $args, $name ) {
+
+	if ( 'core/latest-posts' !== $name || empty( $args['render_callback'] ) || ! is_callable( $args['render_callback'] ) ) {
+		return $args;
+	}
+
+	$render_callback = $args['render_callback'];
+
+	$args['render_callback'] = function( $attributes, $content = '', $block = null ) use ( $render_callback ) {
+
+		$full_content = ! empty( $attributes['displayPostContent'] )
+		                && isset( $attributes['displayPostContentRadio'] )
+		                && 'full_post' === $attributes['displayPostContentRadio'];
+
+		if ( ! $full_content ) {
+			return call_user_func( $render_callback, $attributes, $content, $block );
+		}
+
+		// Posts that already got the error message, so it shows once per post, not once per block.
+		$protected = array();
+
+		$protect = function( $pre_render, $parsed_block, $parent_block = null ) use ( &$protected ) {
+
+			// Inner blocks never render once their top-level block is replaced.
+			if ( null !== $parent_block ) {
+				return $pre_render;
+			}
+
+			$post_id = get_the_ID();
+
+			if ( $post_id && members_post_or_ancestor_has_role_meta( $post_id ) ) {
+				members_do_not_cache_page( 'content_permissions' );
+			}
+
+			if ( members_can_current_user_view_post( $post_id ) ) {
+				return $pre_render;
+			}
+
+			if ( isset( $protected[ $post_id ] ) ) {
+				return '';
+			}
+
+			$protected[ $post_id ] = true;
+
+			return members_get_post_error_message( $post_id );
+		};
+
+		add_filter( 'pre_render_block', $protect, 10, 3 );
+
+		try {
+			return call_user_func( $render_callback, $attributes, $content, $block );
+		} finally {
+			remove_filter( 'pre_render_block', $protect, 10 );
+		}
+	};
+
+	return $args;
 }
 
 /**
