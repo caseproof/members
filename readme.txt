@@ -204,10 +204,6 @@ Yes. Each site has its own roles, so use Import / Export to copy them between si
 
 If you have a multisite installation, only Super Admins can create, edit, and delete roles by default. This is a security measure to make sure that you absolutely trust sub-site admins to make these types of changes to roles. If you're certain you want to allow this, add the Create Roles (`create_roles`), Edit Roles (`edit_roles`), and/or Delete Roles (`delete_roles`) capabilities to the role on each sub-site where you want to allow this.
 
-### Minimum PHP requirements.
-
-Members requires PHP 8.0 or later.
-
 ### I can't access the "Role Manager" features.
 
 When the plugin is first activated, it runs a script that sets specific capabilities to the "Administrator" role on your site that grants you access to this feature. So, you must be logged in with the administrator account to access the role manager.

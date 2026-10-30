@@ -47,7 +47,7 @@ Everything is built and run from the plugin root. No add-on has its own build, `
 
 ### Requirements
 
-- **PHP 8.0+** and **WordPress 6.0+** (the minimums in `readme.txt`).
+- **PHP and WordPress:** see the `Requires PHP` and `Requires at least` minimums in `readme.txt`.
 - **Node 20+ and npm**, only to rebuild CSS/JS.
 - **Composer**, only to update the bundled PHP dependencies. `vendor-prefixed/` is committed, so you don't need Composer to run or work on the plugin.
 

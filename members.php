@@ -311,7 +311,7 @@ final class Members_Plugin {
 	 * @return void
 	 */
 	public function init_growth_tools() {
-		if ( version_compare( phpversion(), '7.4', '>=' ) && class_exists( '\Members\Caseproof\GrowthTools\App' ) ) {
+		if ( class_exists( '\Members\Caseproof\GrowthTools\App' ) ) {
 			$config = new \Members\Caseproof\GrowthTools\Config( [
 				'parentMenuSlug' => 'members',
 				'instanceId'     => 'members',
