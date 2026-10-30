@@ -5,8 +5,8 @@ Donate link: https://memberpress.com/plans/pricing/?utm_source=members_plugin&ut
 Tags: permissions, memberships, roles, capabilities, ai
 Requires at least: 6.0
 Tested up to: 7.1
-Requires PHP: 7.4
-Stable tag: 3.3.0
+Requires PHP: 8.0
+Stable tag: 3.3.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -204,10 +204,6 @@ Yes. Each site has its own roles, so use Import / Export to copy them between si
 
 If you have a multisite installation, only Super Admins can create, edit, and delete roles by default. This is a security measure to make sure that you absolutely trust sub-site admins to make these types of changes to roles. If you're certain you want to allow this, add the Create Roles (`create_roles`), Edit Roles (`edit_roles`), and/or Delete Roles (`delete_roles`) capabilities to the role on each sub-site where you want to allow this.
 
-### Minimum PHP requirements.
-
-Members requires PHP 7.4 or later.
-
 ### I can't access the "Role Manager" features.
 
 When the plugin is first activated, it runs a script that sets specific capabilities to the "Administrator" role on your site that grants you access to this feature. So, you must be logged in with the administrator account to access the role manager.
@@ -261,6 +257,12 @@ So, we just built something we actually enjoyed using.
 5. Select multiple roles per user (edit user screen)
 
 == Changelog ==
+
+= 3.3.1 =
+* Changed: Now requires PHP 8.0 minimum.
+* Security: Content Permissions now protect posts shown in the Latest Posts block's full-content mode. Thanks to Nathan Cross (CyberBadger) for reporting this.
+* Security: Comments on restricted posts are now hidden in the Latest Comments block. Thanks to Nathan Cross (CyberBadger) for reporting this.
+* Security: Fixed a fatal error when a Block Permissions block was saved with an invalid message or capability. Thanks to Nathan Cross (CyberBadger) for reporting this.
 
 = 3.3.0 =
 * New: AI assistants (MCP). Claude Desktop, Claude Code, Cursor, VS Code, OpenAI Codex and other MCP apps can look up and manage roles, capabilities, users' roles, content restrictions, settings and add-ons (plus Admin Access, Role Hierarchy, Role Levels and Block Permissions when those add-ons are on), through the free official WordPress MCP Adapter plugin. Needs WordPress 6.9+.

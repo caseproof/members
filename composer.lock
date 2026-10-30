@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "5f2eb0fb100c8f96583252790d5214c2",
+    "content-hash": "02f683067b772d09de5a373fdedbd5d7",
     "packages": [
         {
             "name": "caseproof/growth-tools",
@@ -3615,7 +3615,7 @@
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
-        "php": ">=7.4"
+        "php": ">=8.0"
     },
     "platform-dev": [],
     "plugin-api-version": "2.3.0"

@@ -107,6 +107,9 @@ class Block {
 			$block
 		);
 
+		// Block attributes are stored by post authors, so don't trust their type.
+		$message = is_scalar( $message ) ? (string) $message : '';
+
 		// Check if there's an error message and use it if so.
 		if ( $message ) {
 
@@ -264,10 +267,13 @@ class Block {
 
 		$condition = $block['attrs']['blockPermissionsCondition'];
 
+		// A non-string cap (stored outside the editor) is one nobody has, rather than a fatal error.
+		$has_cap = is_string( $cap ) && current_user_can( $cap );
+
 		if ( '=' === $condition ) {
-			$maybe_render = current_user_can( $cap );
+			$maybe_render = $has_cap;
 		} elseif ( '!=' === $condition ) {
-			$maybe_render = ! current_user_can( $cap );
+			$maybe_render = ! $has_cap;
 		}
 
 		return $maybe_render;
