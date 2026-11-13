@@ -6,7 +6,7 @@ Tags: permissions, memberships, roles, capabilities, ai
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 3.3.1
+Stable tag: 3.3.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -257,6 +257,9 @@ So, we just built something we actually enjoyed using.
 5. Select multiple roles per user (edit user screen)
 
 == Changelog ==
+
+= 3.3.2 =
+* Security: Private Site mode no longer leaves content reachable through the login page's exemption on sites whose login URL is served from a front-end path. Thanks to Nathan Cross (CyberBadger) for reporting this.
 
 = 3.3.1 =
 * Changed: Now requires PHP 8.0 minimum.
