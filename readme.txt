@@ -259,7 +259,7 @@ So, we just built something we actually enjoyed using.
 == Changelog ==
 
 = 3.3.2 =
-* Security: Private Site mode no longer leaves content reachable when the site's login page is a regular WordPress page. Thanks to Nathan Cross (CyberBadger) for reporting this.
+* Security: Private Site mode no longer leaves content reachable through the login page's exemption on sites whose login URL is served from a front-end path. Thanks to Nathan Cross (CyberBadger) for reporting this.
 
 = 3.3.1 =
 * Changed: Now requires PHP 8.0 minimum.

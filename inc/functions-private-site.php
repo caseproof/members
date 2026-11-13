@@ -143,7 +143,9 @@ function members_is_private_page() {
  * or in a POST body, so a request such as `/login/?pagename=some-page` keeps the exempt path
  * while the main query resolves to other content. Once the main query has run, also confirm
  * that the request really did land on the login page, and that nothing else was rendered in
- * its place, before exempting it.
+ * its place, before exempting it. Requests that WordPress answers itself without the main
+ * loop, such as feeds and sitemaps, are refused before those checks, because nothing they
+ * return can be seen there.
  *
  * @since  3.2.28
  * @access public
@@ -178,26 +180,31 @@ function members_is_login_page_request() {
 		return true;
 	}
 
-	// Sitemaps, robots.txt, and trackbacks render their own output later in `template_redirect`
-	// without going through the main loop, so the checks below cannot see them. None of them is
-	// the login page.
-	if ( is_robots() || is_trackback() || get_query_var( 'sitemap' ) || get_query_var( 'sitemap-stylesheet' ) ) {
+	// WordPress answers robots.txt, the favicon, feeds, trackbacks, and sitemaps itself, either
+	// from `template_redirect` or straight after it, and none of them goes through the main
+	// loop, so the checks below cannot see what they return. None of them is the login page.
+	if ( is_robots() || is_favicon() || is_feed() || is_trackback() || get_query_var( 'sitemap' ) || get_query_var( 'sitemap-stylesheet' ) ) {
 		return false;
 	}
+
+	global $wp_query;
 
 	$login_page_id = url_to_postid( $matched_url );
 
 	// The login URL belongs to a real page on the site, so the request must have resolved to
 	// that page and the loop must hold nothing else. The queried object is not enough on its
 	// own: a query var such as `page_id` leaves it pointing at the login page while the loop
-	// renders other content.
+	// renders other content, and `WP_Query::set_404()` resets only the `is_` flags, leaving
+	// both of them in place while the theme renders its 404 template instead.
 	if ( $login_page_id ) {
+
+		if ( is_404() || empty( $wp_query->posts ) ) {
+			return false;
+		}
 
 		if ( get_queried_object_id() !== $login_page_id ) {
 			return false;
 		}
-
-		global $wp_query;
 
 		foreach ( (array) $wp_query->posts as $queried_post ) {
 
@@ -214,7 +221,7 @@ function members_is_login_page_request() {
 	// No page of our own sits behind the login URL, which is how login plugins that serve a
 	// virtual page behave. Keep the exemption, but only while the request has not resolved to
 	// real content of any kind.
-	return ! is_singular() && ! is_archive() && ! is_search() && ! is_home() && ! is_feed() && ! get_queried_object_id();
+	return ! is_singular() && ! is_archive() && ! is_search() && ! is_home() && ! get_queried_object_id();
 }
 
 /**
