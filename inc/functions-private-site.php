@@ -138,6 +138,12 @@ function members_is_private_page() {
  * redirect the login page to itself. Those plugins report the new URL through the core
  * `login_url`, `lostpassword_url`, and `register_url` filters, so compare against those.
  *
+ * Matching the request path on its own is not enough. Query vars passed in the URL take
+ * precedence over the ones the rewrite rules produce, so a request such as
+ * `/login/?pagename=some-page` keeps the exempt path while the main query resolves to other
+ * content. Once the main query has run, also confirm that the request really did land on the
+ * login page before exempting it.
+ *
  * @since  3.2.28
  * @access public
  * @return bool
@@ -150,15 +156,46 @@ function members_is_login_page_request() {
 
 	$request_path = untrailingslashit( rawurldecode( (string) wp_parse_url( wp_unslash( $_SERVER['REQUEST_URI'] ), PHP_URL_PATH ) ) );
 
+	$matched_url = '';
+
 	foreach ( array( wp_login_url(), wp_lostpassword_url(), wp_registration_url() ) as $url ) {
 		$path = untrailingslashit( rawurldecode( (string) wp_parse_url( $url, PHP_URL_PATH ) ) );
 
 		if ( '' !== $path && $path === $request_path ) {
-			return true;
+			$matched_url = $url;
+			break;
 		}
 	}
 
-	return false;
+	// The path is not one of the login paths, so nothing is exempt.
+	if ( '' === $matched_url ) {
+		return false;
+	}
+
+	// The main query has not run yet, so there is nothing else to check against.
+	if ( ! did_action( 'wp' ) ) {
+		return true;
+	}
+
+	$login_page_id = url_to_postid( $matched_url );
+
+	// `url_to_postid()` does not resolve the site's front page, so pick it up separately for
+	// sites that put the login page there.
+	if ( ! $login_page_id && is_front_page() ) {
+		$login_page_id = (int) get_option( 'page_on_front' );
+	}
+
+	// The login URL belongs to a real page on the site, so the request must have resolved to
+	// that page. Anything else means a query var pointed the main query somewhere it should
+	// not go while keeping the login path.
+	if ( $login_page_id ) {
+		return get_queried_object_id() === $login_page_id;
+	}
+
+	// No page of our own sits behind the login URL, which is how login plugins that serve a
+	// virtual page behave. Keep the exemption, but only while the request has not resolved to
+	// real content of any kind.
+	return ! is_singular() && ! is_archive() && ! is_search() && ! is_home() && ! is_feed() && ! get_queried_object_id();
 }
 
 /**
