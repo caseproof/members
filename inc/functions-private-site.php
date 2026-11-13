@@ -138,11 +138,12 @@ function members_is_private_page() {
  * redirect the login page to itself. Those plugins report the new URL through the core
  * `login_url`, `lostpassword_url`, and `register_url` filters, so compare against those.
  *
- * Matching the request path on its own is not enough. Query vars passed in the URL take
- * precedence over the ones the rewrite rules produce, so a request such as
- * `/login/?pagename=some-page` keeps the exempt path while the main query resolves to other
- * content. Once the main query has run, also confirm that the request really did land on the
- * login page before exempting it.
+ * Matching the request path on its own is not enough. Query vars sent with the request take
+ * precedence over the ones the rewrite rules produce, whether they arrive in the query string
+ * or in a POST body, so a request such as `/login/?pagename=some-page` keeps the exempt path
+ * while the main query resolves to other content. Once the main query has run, also confirm
+ * that the request really did land on the login page, and that nothing else was rendered in
+ * its place, before exempting it.
  *
  * @since  3.2.28
  * @access public
@@ -175,6 +176,13 @@ function members_is_login_page_request() {
 	// The main query has not run yet, so there is nothing else to check against.
 	if ( ! did_action( 'wp' ) ) {
 		return true;
+	}
+
+	// Sitemaps, robots.txt, and trackbacks render their own output later in `template_redirect`
+	// without going through the main loop, so the checks below cannot see them. None of them is
+	// the login page.
+	if ( is_robots() || is_trackback() || get_query_var( 'sitemap' ) || get_query_var( 'sitemap-stylesheet' ) ) {
+		return false;
 	}
 
 	$login_page_id = url_to_postid( $matched_url );
