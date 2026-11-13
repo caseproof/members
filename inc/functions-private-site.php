@@ -179,17 +179,28 @@ function members_is_login_page_request() {
 
 	$login_page_id = url_to_postid( $matched_url );
 
-	// `url_to_postid()` does not resolve the site's front page, so pick it up separately for
-	// sites that put the login page there.
-	if ( ! $login_page_id && is_front_page() ) {
-		$login_page_id = (int) get_option( 'page_on_front' );
-	}
-
 	// The login URL belongs to a real page on the site, so the request must have resolved to
-	// that page. Anything else means a query var pointed the main query somewhere it should
-	// not go while keeping the login path.
+	// that page and the loop must hold nothing else. The queried object is not enough on its
+	// own: a query var such as `page_id` leaves it pointing at the login page while the loop
+	// renders other content.
 	if ( $login_page_id ) {
-		return get_queried_object_id() === $login_page_id;
+
+		if ( get_queried_object_id() !== $login_page_id ) {
+			return false;
+		}
+
+		global $wp_query;
+
+		foreach ( (array) $wp_query->posts as $queried_post ) {
+
+			$queried_post_id = is_object( $queried_post ) ? $queried_post->ID : $queried_post;
+
+			if ( (int) $queried_post_id !== $login_page_id ) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	// No page of our own sits behind the login URL, which is how login plugins that serve a
