@@ -196,6 +196,10 @@ function members_is_login_page_request() {
 	// own: a query var such as `page_id` leaves it pointing at the login page while the loop
 	// renders other content, and `WP_Query::set_404()` resets only the `is_` flags, leaving
 	// both of them in place while the theme renders its 404 template instead.
+	//
+	// A login page that is also the posts page is refused here, because the loop holds the blog
+	// posts rather than the page. That leaves such a site redirecting to itself, which is the
+	// lesser of the two: exempting it would serve the whole blog to logged-out visitors.
 	if ( $login_page_id ) {
 
 		if ( is_404() || empty( $wp_query->posts ) ) {
@@ -221,6 +225,10 @@ function members_is_login_page_request() {
 	// No page of our own sits behind the login URL, which is how login plugins that serve a
 	// virtual page behave. Keep the exemption, but only while the request has not resolved to
 	// real content of any kind.
+	//
+	// Unlike the branch above, a 404 stays exempt here on purpose. A login path that WordPress
+	// cannot route is a 404 to the main query, so the login page itself arrives in that state;
+	// refusing it would redirect the login page to itself, which is the loop from #154.
 	return ! is_singular() && ! is_archive() && ! is_search() && ! is_home() && ! get_queried_object_id();
 }
 
