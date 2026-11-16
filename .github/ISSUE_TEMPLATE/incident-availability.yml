@@ -1,0 +1,62 @@
+name: "Incident: Availability"
+description: "After-Action Review for unplanned downtime or material degradation of a monitored system (docs/kpi-definitions.md)"
+type: TASK
+labels:
+  - incident
+  - "incident type: availability"
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: A short description of the incident and the affected system(s)
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact
+      description: Who and what was affected, and for how long (duration, scope, severity of degradation)
+    validations:
+      required: true
+
+  - type: textarea
+    id: detection
+    attributes:
+      label: Detection
+      description: How and when the incident was detected (monitor, alert, customer report, etc.)
+    validations:
+      required: true
+
+  - type: textarea
+    id: timeline
+    attributes:
+      label: Timeline
+      description: Key events from detection to resolution
+      value: |
+        - YYYY-MM-DD HH:mm UTC — Detected: ...
+        - YYYY-MM-DD HH:mm UTC — Mitigated: ...
+        - YYYY-MM-DD HH:mm UTC — Resolved: ...
+    validations:
+      required: true
+
+  - type: input
+    id: caused-by
+    attributes:
+      label: Caused by
+      description: "Single attribution value: `org/repo@vX.Y.Z` when a release caused the incident, `none` when the cause was external (host failure, third-party outage, credential expiry), or `unknown`. Enter `unknown` if unsure; update it as part of the After-Action Review."
+    validations:
+      required: true
+
+  - type: textarea
+    id: resolution
+    attributes:
+      label: Resolution
+      description: What was done to resolve the incident. Completed as part of the After-Action Review before the issue is closed.
+
+  - type: textarea
+    id: follow-up-work
+    attributes:
+      label: Follow-up Work
+      description: Any follow-up tasks to prevent recurrence (link issues where applicable)
