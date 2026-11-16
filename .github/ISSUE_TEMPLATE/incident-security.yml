@@ -1,0 +1,62 @@
+name: "Incident: Security"
+description: "After-Action Review for a security event requiring same-day response, such as a compromise, credential exposure, or active exploitation (docs/kpi-definitions.md)"
+type: TASK
+labels:
+  - incident
+  - "incident type: security"
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: A short description of the security incident and the affected system(s). Do not include sensitive details (credentials, exploit payloads) in the issue.
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact
+      description: Who and what was affected, and for how long (data exposure, scope of compromise, etc.)
+    validations:
+      required: true
+
+  - type: textarea
+    id: detection
+    attributes:
+      label: Detection
+      description: How and when the incident was detected (monitor, alert, external report, etc.)
+    validations:
+      required: true
+
+  - type: textarea
+    id: timeline
+    attributes:
+      label: Timeline
+      description: Key events from detection to resolution
+      value: |
+        - YYYY-MM-DD HH:mm UTC — Detected: ...
+        - YYYY-MM-DD HH:mm UTC — Contained: ...
+        - YYYY-MM-DD HH:mm UTC — Resolved: ...
+    validations:
+      required: true
+
+  - type: input
+    id: caused-by
+    attributes:
+      label: Caused by
+      description: "Single attribution value: `org/repo@vX.Y.Z` when a release caused the incident, `none` when the cause was external (host failure, third-party outage, credential expiry), or `unknown`. Enter `unknown` if unsure; update it as part of the After-Action Review."
+    validations:
+      required: true
+
+  - type: textarea
+    id: resolution
+    attributes:
+      label: Resolution
+      description: What was done to resolve the incident (credentials rotated, patches deployed, access revoked, etc.). Completed as part of the After-Action Review before the issue is closed.
+
+  - type: textarea
+    id: follow-up-work
+    attributes:
+      label: Follow-up Work
+      description: Any follow-up tasks to prevent recurrence (link issues where applicable)
