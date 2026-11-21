@@ -42,6 +42,22 @@ function woocommerce_caps() {
 			'description' => __( 'Allows users to create new customers.', 'members' )
 		],
 
+		// Product meta caps. Checked for one product, then mapped to the primitive caps below.
+		'edit_product' => [
+			'label'       => __( 'Products: Edit One', 'members' ),
+			'description' => __( 'Meta capability for editing one product. WordPress maps this to the primitive product capabilities.', 'members' )
+		],
+
+		'read_product' => [
+			'label'       => __( 'Products: Read One', 'members' ),
+			'description' => __( 'Meta capability for reading one product. WordPress maps this to the primitive product capabilities.', 'members' )
+		],
+
+		'delete_product' => [
+			'label'       => __( 'Products: Delete One', 'members' ),
+			'description' => __( 'Meta capability for deleting one product. WordPress maps this to the primitive product capabilities.', 'members' )
+		],
+
 		// Product caps.
 		'edit_products' => [
 			'label'       => __( 'Products: Edit',   'members' ),
@@ -120,6 +136,22 @@ function woocommerce_caps() {
 			'description' => __( 'Allows access to product taxonomy management screens.', 'members' )
 		],
 
+		// Order meta caps. Checked for one order, then mapped to the primitive caps below.
+		'edit_shop_order' => [
+			'label'       => __( 'Orders: Edit One', 'members' ),
+			'description' => __( 'Meta capability for editing one order. WordPress maps this to the primitive order capabilities.', 'members' )
+		],
+
+		'read_shop_order' => [
+			'label'       => __( 'Orders: Read One', 'members' ),
+			'description' => __( 'Meta capability for reading one order. WordPress maps this to the primitive order capabilities.', 'members' )
+		],
+
+		'delete_shop_order' => [
+			'label'       => __( 'Orders: Delete One', 'members' ),
+			'description' => __( 'Meta capability for deleting one order. WordPress maps this to the primitive order capabilities.', 'members' )
+		],
+
 		// Order caps.
 		'edit_shop_orders' => [
 			'label'       => __( 'Orders: Edit',   'members' ),
@@ -196,6 +228,22 @@ function woocommerce_caps() {
 		'manage_shop_order_terms' => [
 			'label'       => __( 'Orders: Manage Taxonomy Terms', 'members' ),
 			'description' => __( 'Allows access to order taxonomy management screens.', 'members' )
+		],
+
+		// Coupon meta caps. Checked for one coupon, then mapped to the primitive caps below.
+		'edit_shop_coupon' => [
+			'label'       => __( 'Coupons: Edit One', 'members' ),
+			'description' => __( 'Meta capability for editing one coupon. WordPress maps this to the primitive coupon capabilities.', 'members' )
+		],
+
+		'read_shop_coupon' => [
+			'label'       => __( 'Coupons: Read One', 'members' ),
+			'description' => __( 'Meta capability for reading one coupon. WordPress maps this to the primitive coupon capabilities.', 'members' )
+		],
+
+		'delete_shop_coupon' => [
+			'label'       => __( 'Coupons: Delete One', 'members' ),
+			'description' => __( 'Meta capability for deleting one coupon. WordPress maps this to the primitive coupon capabilities.', 'members' )
 		],
 
 		// Coupon caps.
