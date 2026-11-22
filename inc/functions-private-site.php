@@ -312,10 +312,34 @@ function members_is_login_page_request() {
 	// virtual page behave. Keep the exemption, but only while the request has not resolved to
 	// real content of any kind.
 	//
+	// Start with the loop, because that is what the theme renders. A post that came out of the
+	// database always has an ID, so one in the loop means the request was pointed at real
+	// content, whatever the `is_` flags and the queried object say.
+	foreach ( (array) $wp_query->posts as $queried_post ) {
+
+		$queried_post_id = is_object( $queried_post ) ? $queried_post->ID : $queried_post;
+
+		if ( 0 !== (int) $queried_post_id ) {
+			return false;
+		}
+	}
+
+	if ( is_archive() || is_search() || is_home() || get_queried_object_id() ) {
+		return false;
+	}
+
+	// Some login plugins (e.g. Theme My Login) serve the virtual page as a made-up page: they
+	// flag the main query as singular and swap the loop for a single post that is not in the
+	// database and has no ID. That is the login page itself, so it stays exempt. A singular
+	// request can only get this far with such a post, because a real one was refused above.
+	if ( is_singular() ) {
+		return ! empty( $wp_query->posts );
+	}
+
 	// Unlike the branch above, a 404 stays exempt here on purpose. A login path that WordPress
 	// cannot route is a 404 to the main query, so the login page itself arrives in that state;
 	// refusing it would redirect the login page to itself, which is the loop from #154.
-	return ! is_singular() && ! is_archive() && ! is_search() && ! is_home() && ! get_queried_object_id();
+	return true;
 }
 
 /**
