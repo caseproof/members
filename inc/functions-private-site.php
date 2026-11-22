@@ -116,18 +116,104 @@ function members_is_private_page() {
 	if ( members_is_login_page_request() )
 		$is_private = false;
 
-	if ( function_exists( 'bp_is_current_component' ) && ( bp_is_current_component( 'register' ) || bp_is_current_component( 'activate' ) ) )
+	// BuddyPress swaps the loop for its own registration or activation screen, so no other page
+	// can render in their place. The routes WordPress answers without the loop never reach that
+	// screen though, so a request such as `/register/?sitemap=index` must not be exempt.
+	if ( function_exists( 'bp_is_current_component' ) && ( bp_is_current_component( 'register' ) || bp_is_current_component( 'activate' ) ) && ! members_is_loop_free_request() )
 		$is_private = false;
 
-	// WooCommerce support.
+	// WooCommerce support. The My Account page holds the login, registration, and lost password
+	// forms, and its endpoints (e.g. `/my-account/lost-password/`) are query vars on that same
+	// page, so they all pass the check below. `is_page()` alone does not: it reads the queried
+	// object, which a `page_id` sent with the request leaves in place while the loop renders
+	// another page.
 	if ( class_exists( 'WooCommerce' ) ) {
 		$page_id = get_option( 'woocommerce_myaccount_page_id' );
 
-		if ( $page_id && is_page( $page_id ) )
+		if ( $page_id && is_page( $page_id ) && members_main_query_renders_only( $page_id ) )
 			$is_private = false;
 	}
 
 	return apply_filters( 'members_is_private_page', $is_private );
+}
+
+/**
+ * Whether WordPress answers the current request itself, without going through the main loop.
+ *
+ * robots.txt, the favicon, feeds, trackbacks, and sitemaps are all served either from
+ * `template_redirect` or straight after it. A query var sent with the request is enough to turn
+ * any URL into one of them, and neither the queried object nor the posts in the main query
+ * show what they return, so no page exemption should cover them.
+ *
+ * @since  3.3.3
+ * @access public
+ * @return bool
+ */
+function members_is_loop_free_request() {
+
+	// The conditional tags below only work once the main query has run.
+	if ( ! did_action( 'wp' ) ) {
+		return false;
+	}
+
+	return is_robots() || is_favicon() || is_feed() || is_trackback() || get_query_var( 'sitemap' ) || get_query_var( 'sitemap-stylesheet' );
+}
+
+/**
+ * Whether the main query renders the given post or page and nothing else.
+ *
+ * Conditional tags such as `is_page( $id )` only look at the queried object. Query vars sent
+ * with the request, in the query string or in a POST body, take precedence over the ones the
+ * rewrite rules produce, so a request can keep an exempt page as its queried object while
+ * WordPress renders something else in its place. This applies the same checks that
+ * `members_is_login_page_request()` applies to a login page that is a real page on the site:
+ *
+ * - Requests that WordPress answers itself without the main loop, such as feeds and sitemaps,
+ *   are refused, because nothing they return can be seen in the main query.
+ * - 404s and empty loops are refused. `WP_Query::set_404()` resets only the `is_` flags, so the
+ *   queried object and the loop can still point at the page while the theme renders its 404
+ *   template instead. A real page is never a 404 when it is requested normally, so unlike a
+ *   virtual login path there is no legitimate request to keep working here.
+ * - The queried object and every post in the loop must be the given post.
+ *
+ * @since  3.3.3
+ * @access public
+ * @param  int   $post_id
+ * @return bool
+ */
+function members_main_query_renders_only( $post_id ) {
+
+	global $wp_query;
+
+	$post_id = (int) $post_id;
+
+	// Without a post to compare against, or before the main query has run, nothing is confirmed.
+	if ( ! $post_id || ! did_action( 'wp' ) ) {
+		return false;
+	}
+
+	if ( members_is_loop_free_request() ) {
+		return false;
+	}
+
+	if ( is_404() || empty( $wp_query->posts ) ) {
+		return false;
+	}
+
+	if ( get_queried_object_id() !== $post_id ) {
+		return false;
+	}
+
+	foreach ( (array) $wp_query->posts as $queried_post ) {
+
+		$queried_post_id = is_object( $queried_post ) ? $queried_post->ID : $queried_post;
+
+		if ( (int) $queried_post_id !== $post_id ) {
+			return false;
+		}
+	}
+
+	return true;
 }
 
 /**
