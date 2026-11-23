@@ -258,6 +258,9 @@ So, we just built something we actually enjoyed using.
 
 == Changelog ==
 
+= 3.3.4 =
+* Security: Private Site mode no longer leaves content reachable through the BuddyPress registration and activation exemption. Thanks to Nathan Cross (CyberBadger) for reporting this.
+
 = 3.3.3 =
 * Security: Private Site mode no longer leaves content reachable through the WooCommerce My Account page's exemption. Thanks to HUMIN KANG for reporting this.
 * Fixed: Login, lost password, and registration pages served by Theme My Login no longer redirect to themselves in Private Site mode.
