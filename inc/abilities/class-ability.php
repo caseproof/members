@@ -130,6 +130,8 @@ final class Ability {
 	 * Object input schema. With no required properties, the empty-array default lets clients
 	 * call the ability with no input at all.
 	 *
+	 * An empty property map is an object, so it JSON-encodes as {} rather than [].
+	 *
 	 * @param array    $properties Property schemas.
 	 * @param string[] $required   Required property names.
 	 * @return array
@@ -137,7 +139,7 @@ final class Ability {
 	public static function object_schema( array $properties, array $required = array() ) {
 		$schema = array(
 			'type'       => 'object',
-			'properties' => $properties,
+			'properties' => array() === $properties ? (object) array() : $properties,
 			'default'    => array(),
 		);
 
