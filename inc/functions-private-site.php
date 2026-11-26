@@ -98,6 +98,15 @@ function members_please_log_in() {
 		auth_redirect();
 		exit;
 	}
+
+	// The page is exempt, but feeds are still private to logged-out visitors, so their links
+	// are no use to them. They also give content away: on the BuddyPress registration screen
+	// the main query still holds the latest posts, so the comments feed link carries the
+	// newest post's title.
+	if ( ! is_user_logged_in() ) {
+		remove_action( 'wp_head', 'feed_links', 2 );
+		remove_action( 'wp_head', 'feed_links_extra', 3 );
+	}
 }
 
 /**
@@ -116,10 +125,8 @@ function members_is_private_page() {
 	if ( members_is_login_page_request() )
 		$is_private = false;
 
-	// BuddyPress swaps the loop for its own registration or activation screen, so no other page
-	// can render in their place. The routes WordPress answers without the loop never reach that
-	// screen though, so a request such as `/register/?sitemap=index` must not be exempt.
-	if ( function_exists( 'bp_is_current_component' ) && ( bp_is_current_component( 'register' ) || bp_is_current_component( 'activate' ) ) && ! members_is_loop_free_request() )
+	// BuddyPress registration and activation screens.
+	if ( members_is_buddypress_signup_request() )
 		$is_private = false;
 
 	// WooCommerce support. The My Account page holds the login, registration, and lost password
@@ -157,6 +164,76 @@ function members_is_loop_free_request() {
 	}
 
 	return is_robots() || is_favicon() || is_feed() || is_trackback() || get_query_var( 'sitemap' ) || get_query_var( 'sitemap-stylesheet' );
+}
+
+/**
+ * Whether the current request is a plain BuddyPress registration or activation request.
+ *
+ * BuddyPress decides it is on the registration or activation screen from public query vars
+ * (`bp_register`, `bp_activate`, `bp_activate_key`) that any URL can carry, and at
+ * `template_redirect` the main query still holds whatever the other query vars selected:
+ * BuddyPress only swaps in its own screen later, at `template_include`. Embeds, feeds, and
+ * sitemaps never reach that screen at all. So `bp_is_current_component()` alone can be paired
+ * with `p`, `embed`, `s`, and the like to have WordPress render other content while the
+ * request still counts as the registration page.
+ *
+ * Only exempt the request when it carries nothing but the BuddyPress query vars for those
+ * screens. Sites that serve them from a regular page (the legacy URL parser) must request that
+ * page and nothing else.
+ *
+ * @since  3.3.4
+ * @access public
+ * @return bool
+ */
+function members_is_buddypress_signup_request() {
+
+	if ( ! function_exists( 'bp_is_current_component' ) || ! function_exists( 'buddypress' ) ) {
+		return false;
+	}
+
+	if ( ! bp_is_current_component( 'register' ) && ! bp_is_current_component( 'activate' ) ) {
+		return false;
+	}
+
+	// The conditional tags below only work once the main query has run.
+	if ( ! did_action( 'wp' ) || members_is_loop_free_request() || is_embed() ) {
+		return false;
+	}
+
+	global $wp;
+
+	$query_vars = array_keys( array_filter( (array) $wp->query_vars, static function ( $value ) {
+		return '' !== $value && null !== $value && array() !== $value;
+	} ) );
+
+	// BuddyPress 12+ routes these screens through its own rewrite rules and query vars.
+	$members     = buddypress()->members ?? null;
+	$rewrite_ids = isset( $members->rewrite_ids ) && is_array( $members->rewrite_ids ) ? $members->rewrite_ids : array();
+	$allowed     = array_filter( array(
+		$rewrite_ids['member_register']     ?? '',
+		$rewrite_ids['member_activate']     ?? '',
+		$rewrite_ids['member_activate_key'] ?? '',
+	) );
+
+	if ( $allowed && $query_vars && ! array_diff( $query_vars, $allowed ) ) {
+		return true;
+	}
+
+	// The legacy URL parser serves them from regular WordPress pages instead.
+	$pages = function_exists( 'bp_core_get_directory_page_ids' ) ? bp_core_get_directory_page_ids() : array();
+
+	foreach ( array( 'register', 'activate' ) as $component ) {
+
+		if ( ! bp_is_current_component( $component ) || empty( $pages[ $component ] ) ) {
+			continue;
+		}
+
+		if ( ! array_diff( $query_vars, array( 'pagename', 'page_id' ) ) && members_main_query_renders_only( $pages[ $component ] ) ) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 /**
