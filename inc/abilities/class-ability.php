@@ -130,7 +130,8 @@ final class Ability {
 	 * Object input schema. With no required properties, the empty-array default lets clients
 	 * call the ability with no input at all.
 	 *
-	 * An empty property map is an object, so it JSON-encodes as {} rather than [].
+	 * An empty property map is left out: PHP would JSON-encode it as [], which strict MCP clients
+	 * reject, and a stdClass would fatal in WordPress's schema validation.
 	 *
 	 * @param array    $properties Property schemas.
 	 * @param string[] $required   Required property names.
@@ -138,10 +139,13 @@ final class Ability {
 	 */
 	public static function object_schema( array $properties, array $required = array() ) {
 		$schema = array(
-			'type'       => 'object',
-			'properties' => array() === $properties ? (object) array() : $properties,
-			'default'    => array(),
+			'type'    => 'object',
+			'default' => array(),
 		);
+
+		if ( $properties ) {
+			$schema['properties'] = $properties;
+		}
 
 		if ( $required ) {
 			$schema['required'] = $required;
