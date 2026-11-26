@@ -6,7 +6,7 @@ Tags: permissions, memberships, roles, capabilities, ai
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 3.3.3
+Stable tag: 3.3.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -257,6 +257,9 @@ So, we just built something we actually enjoyed using.
 5. Select multiple roles per user (edit user screen)
 
 == Changelog ==
+
+= 3.3.4 =
+* Fixed: AI tools with no inputs no longer cause Cursor and OpenCode to reject the Members tool list.
 
 = 3.3.3 =
 * Security: Private Site mode no longer leaves content reachable through the WooCommerce My Account page's exemption. Thanks to HUMIN KANG for reporting this.
